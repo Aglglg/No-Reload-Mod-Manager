@@ -1,0 +1,204 @@
+;vx.x.x
+namespace = modmanageragl\group_manager
+
+[Constants]
+global $active_group_id = 0
+
+;KEYS
+[KeyGroup1]
+key = NO_RETURN NO_BACK VK_CLEAR F13
+$active_group_id = 1
+
+[KeyGroup2]
+key = NO_RETURN NO_BACK VK_CLEAR F14
+$active_group_id = 2
+
+[KeyGroup3]
+key = NO_RETURN NO_BACK VK_CLEAR F15
+$active_group_id = 3
+
+[KeyGroup4]
+key = NO_RETURN NO_BACK VK_CLEAR F16
+$active_group_id = 4
+
+[KeyGroup5]
+key = NO_RETURN NO_BACK VK_CLEAR F17
+$active_group_id = 5
+
+[KeyGroup6]
+key = NO_RETURN NO_BACK VK_CLEAR F18
+$active_group_id = 6
+
+[KeyGroup7]
+key = NO_RETURN NO_BACK VK_CLEAR F19
+$active_group_id = 7
+
+[KeyGroup8]
+key = NO_RETURN NO_BACK VK_CLEAR F20
+$active_group_id = 8
+
+[KeyGroup9]
+key = NO_RETURN NO_BACK VK_CLEAR F21
+$active_group_id = 9
+
+[KeyGroup10]
+key = NO_RETURN NO_BACK VK_CLEAR F22
+$active_group_id = 10
+
+[KeyGroup11]
+key = NO_RETURN NO_BACK VK_CLEAR F23
+$active_group_id = 11
+
+[KeyGroup12]
+key = NO_RETURN NO_BACK VK_CLEAR F24
+$active_group_id = 12
+
+
+
+[KeyGroup13]
+key = NO_BACK VK_CLEAR RETURN F13
+$active_group_id = 13
+
+[KeyGroup14]
+key = NO_BACK VK_CLEAR RETURN F14
+$active_group_id = 14
+
+[KeyGroup15]
+key = NO_BACK VK_CLEAR RETURN F15
+$active_group_id = 15
+
+[KeyGroup16]
+key = NO_BACK VK_CLEAR RETURN F16
+$active_group_id = 16
+
+[KeyGroup17]
+key = NO_BACK VK_CLEAR RETURN F17
+$active_group_id = 17
+
+[KeyGroup18]
+key = NO_BACK VK_CLEAR RETURN F18
+$active_group_id = 18
+
+[KeyGroup19]
+key = NO_BACK VK_CLEAR RETURN F19
+$active_group_id = 19
+
+[KeyGroup20]
+key = NO_BACK VK_CLEAR RETURN F20
+$active_group_id = 20
+
+[KeyGroup21]
+key = NO_BACK VK_CLEAR RETURN F21
+$active_group_id = 21
+
+[KeyGroup22]
+key = NO_BACK VK_CLEAR RETURN F22
+$active_group_id = 22
+
+[KeyGroup23]
+key = NO_BACK VK_CLEAR RETURN F23
+$active_group_id = 23
+
+[KeyGroup24]
+key = NO_BACK VK_CLEAR RETURN F24
+$active_group_id = 24
+
+
+
+[KeyGroup25]
+key = NO_RETURN VK_CLEAR BACK F13
+$active_group_id = 25
+
+[KeyGroup26]
+key = NO_RETURN VK_CLEAR BACK F14
+$active_group_id = 26
+
+[KeyGroup27]
+key = NO_RETURN VK_CLEAR BACK F15
+$active_group_id = 27
+
+[KeyGroup28]
+key = NO_RETURN VK_CLEAR BACK F16
+$active_group_id = 28
+
+[KeyGroup29]
+key = NO_RETURN VK_CLEAR BACK F17
+$active_group_id = 29
+
+[KeyGroup30]
+key = NO_RETURN VK_CLEAR BACK F18
+$active_group_id = 30
+
+[KeyGroup31]
+key = NO_RETURN VK_CLEAR BACK F19
+$active_group_id = 31
+
+[KeyGroup32]
+key = NO_RETURN VK_CLEAR BACK F20
+$active_group_id = 32
+
+[KeyGroup33]
+key = NO_RETURN VK_CLEAR BACK F21
+$active_group_id = 33
+
+[KeyGroup34]
+key = NO_RETURN VK_CLEAR BACK F22
+$active_group_id = 34
+
+[KeyGroup35]
+key = NO_RETURN VK_CLEAR BACK F23
+$active_group_id = 35
+
+[KeyGroup36]
+key = NO_RETURN VK_CLEAR BACK F24
+$active_group_id = 36
+
+
+
+[KeyGroup37]
+key = VK_CLEAR RETURN BACK F13
+$active_group_id = 37
+
+[KeyGroup38]
+key = VK_CLEAR RETURN BACK F14
+$active_group_id = 38
+
+[KeyGroup39]
+key = VK_CLEAR RETURN BACK F15
+$active_group_id = 39
+
+[KeyGroup40]
+key = VK_CLEAR RETURN BACK F16
+$active_group_id = 40
+
+[KeyGroup41]
+key = VK_CLEAR RETURN BACK F17
+$active_group_id = 41
+
+[KeyGroup42]
+key = VK_CLEAR RETURN BACK F18
+$active_group_id = 42
+
+[KeyGroup43]
+key = VK_CLEAR RETURN BACK F19
+$active_group_id = 43
+
+[KeyGroup44]
+key = VK_CLEAR RETURN BACK F20
+$active_group_id = 44
+
+[KeyGroup45]
+key = VK_CLEAR RETURN BACK F21
+$active_group_id = 45
+
+[KeyGroup46]
+key = VK_CLEAR RETURN BACK F22
+$active_group_id = 46
+
+[KeyGroup47]
+key = VK_CLEAR RETURN BACK F23
+$active_group_id = 47
+
+[KeyGroup48]
+key = VK_CLEAR RETURN BACK F24
+$active_group_id = 48

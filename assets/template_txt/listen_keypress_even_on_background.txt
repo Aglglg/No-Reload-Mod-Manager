@@ -1,0 +1,2 @@
+[System]
+check_foreground_window = 0
