@@ -5,7 +5,6 @@ import 'package:no_reload_mod_manager/utils/hotkey_handler.dart';
 import 'package:path/path.dart' as p;
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:no_reload_mod_manager/tabs/keybinds_tab.dart';
@@ -16,7 +15,6 @@ import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:system_tray/system_tray.dart';
 import 'package:url_launcher/url_launcher.dart';
-// import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:animated_segmented_tab_control/animated_segmented_tab_control.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';

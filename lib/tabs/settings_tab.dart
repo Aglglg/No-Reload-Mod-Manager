@@ -720,7 +720,8 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
 
   Future<void> _pickFolder() async {
     if (_isPickingFolder) return; // Prevent multiple triggers
-
+    bool wasPinned = ref.read(fromTrayProvider);
+    ref.read(fromTrayProvider.notifier).state = true;
     setState(() {
       _isPickingFolder = true;
     });
@@ -746,6 +747,9 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
         isModsPathValid(selectedDirectory);
       }
     } finally {
+      if (!wasPinned) {
+        ref.read(fromTrayProvider.notifier).state = false;
+      }
       setState(() {
         _isPickingFolder = false;
       });
