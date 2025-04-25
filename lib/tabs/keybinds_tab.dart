@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 final List<Map<String, String>> keys = const [
@@ -40,66 +39,51 @@ class TabKeybinds extends StatefulWidget {
 class _TabKeybindsState extends State<TabKeybinds> {
   @override
   Widget build(BuildContext context) {
-    return ExcludeFocusTraversal(
-      child: Stack(
-        children: [
-          Container(
-            color: Colors.transparent,
-            child: MoveWindow(onDoubleTap: () {}),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(
-              top: 85,
-              right: 49,
-              left: 49,
-              bottom: 30,
-            ),
-            child: Align(
+    return Padding(
+      padding: const EdgeInsets.only(top: 85, right: 49, left: 49, bottom: 30),
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: Stack(
+          children: [
+            Align(
               alignment: Alignment.topCenter,
-              child: Stack(
-                children: [
-                  Align(
-                    alignment: Alignment.topCenter,
-                    child: Text(
-                      "Rover - Rover Evelyn",
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 30),
-                    child: ScrollConfiguration(
-                      behavior: ScrollConfiguration.of(context).copyWith(
-                        dragDevices: {
-                          PointerDeviceKind.touch,
-                          PointerDeviceKind.mouse,
-                          PointerDeviceKind.trackpad,
-                        },
-                        scrollbars: false,
-                      ),
-                      child: SingleChildScrollView(
-                        child: Wrap(
-                          spacing: 9,
-                          runSpacing: 9,
-                          children:
-                              keys.map((keyData) {
-                                return _KeyCard(
-                                  title: keyData['title']!,
-                                  subtitle: keyData['subtitle']!,
-                                );
-                              }).toList(),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              child: Text(
+                "Rover - Rover Evelyn",
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
               ),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.only(top: 30),
+              child: ScrollConfiguration(
+                behavior: ScrollConfiguration.of(context).copyWith(
+                  dragDevices: {
+                    PointerDeviceKind.touch,
+                    PointerDeviceKind.mouse,
+                    PointerDeviceKind.trackpad,
+                  },
+                  scrollbars: false,
+                ),
+                child: SingleChildScrollView(
+                  child: Wrap(
+                    spacing: 9,
+                    runSpacing: 9,
+                    children:
+                        keys.map((keyData) {
+                          return _KeyCard(
+                            title: keyData['title']!,
+                            subtitle: keyData['subtitle']!,
+                          );
+                        }).toList(),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

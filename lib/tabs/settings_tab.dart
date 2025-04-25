@@ -13,7 +13,6 @@ import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:bitsdojo_window/bitsdojo_window.dart';
 
 class TabSettings extends ConsumerStatefulWidget {
   const TabSettings({super.key});
@@ -38,404 +37,387 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
   }
 
   String _getRevertInfoText() {
-    return ref.watch(fromTrayProvider)
+    return ref.watch(windowIsPinnedProvider)
         ? 'Drag & Drop mod folders here, to revert any modifications caused by this tool.'
-        : 'Drag & Drop mod folders here, to revert any modifications caused by this tool.\nRight-click and pin this window to use this.';
+        : 'Drag & Drop mod folders here, to revert any modifications caused by this tool.\nRight-click on empty area and pin this window to use this.';
   }
 
   @override
   Widget build(BuildContext context) {
-    return ExcludeFocusTraversal(
-      child: Stack(
-        children: [
-          Container(
-            color: Colors.transparent,
-            child: MoveWindow(onDoubleTap: () {}),
-          ),
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(
-                top: 85,
-                bottom: 15,
-                left: 50,
-                right: 50,
+    return Stack(
+      children: [
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.only(
+              top: 85,
+              bottom: 15,
+              left: 50,
+              right: 50,
+            ),
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(
+                dragDevices: {
+                  PointerDeviceKind.touch,
+                  PointerDeviceKind.mouse,
+                  PointerDeviceKind.trackpad,
+                },
+                scrollbars: false,
               ),
-              child: ScrollConfiguration(
-                behavior: ScrollConfiguration.of(context).copyWith(
-                  dragDevices: {
-                    PointerDeviceKind.touch,
-                    PointerDeviceKind.mouse,
-                    PointerDeviceKind.trackpad,
-                  },
-                  scrollbars: false,
-                ),
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      GameSettings(),
-                      Container(height: 20),
-                      Container(
-                        height: 105,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            width: 3,
-                            color: const Color.fromARGB(127, 255, 255, 255),
-                          ),
-                          borderRadius: BorderRadius.circular(20),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    GameSettings(),
+                    Container(height: 20),
+                    Container(
+                      height: 105,
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          width: 3,
+                          color: const Color.fromARGB(127, 255, 255, 255),
                         ),
-                        child: Stack(
-                          children: [
-                            if (ref.watch(tabIndexProvider) == 2 &&
-                                !ref.watch(alertDialogShownProvider))
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(20),
-                                child: ModsDropZone(
-                                  dialogTitleText: "Revert mods",
-                                  onConfirmFunction:
-                                      (validFolder) => print("CONFIRM REVERT"),
-                                ),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Stack(
+                        children: [
+                          if (ref.watch(tabIndexProvider) == 2 &&
+                              !ref.watch(alertDialogShownProvider))
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: ModsDropZone(
+                                dialogTitleText: "Revert mods",
+                                onConfirmFunction:
+                                    (validFolder) => print("CONFIRM REVERT"),
                               ),
-                            Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.folder,
+                            ),
+                          Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.folder,
+                                  color: const Color.fromARGB(
+                                    127,
+                                    255,
+                                    255,
+                                    255,
+                                  ),
+                                  size: 30,
+                                ),
+                                Text(
+                                  _getRevertInfoText(),
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.poppins(
                                     color: const Color.fromARGB(
                                       127,
                                       255,
                                       255,
                                       255,
                                     ),
-                                    size: 30,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 12,
                                   ),
-                                  Text(
-                                    _getRevertInfoText(),
-                                    textAlign: TextAlign.center,
-                                    style: GoogleFonts.poppins(
-                                      color: const Color.fromARGB(
-                                        127,
-                                        255,
-                                        255,
-                                        255,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(height: 2),
+                    Text(
+                      "Only for mods that are directly removed via File Explorer (without right-click on “Mods” tab)",
+                      textAlign: TextAlign.end,
+                      style: GoogleFonts.poppins(
+                        color: const Color.fromARGB(200, 255, 255, 255),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Container(height: 15),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Keyboard Toggle Window',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              color: const Color.fromARGB(200, 255, 255, 255),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        Container(width: 20),
+                        Expanded(
+                          child: Text(
+                            'Gamepad(XInput) Toggle Window',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              color: const Color.fromARGB(200, 255, 255, 255),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            height: 42,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: const Color.fromARGB(127, 255, 255, 255),
+                                width: 3,
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: DropdownButton(
+                              itemHeight: 48,
+                              isExpanded: true,
+                              value: ref.watch(hotkeyKeyboardProvider),
+                              borderRadius: BorderRadius.circular(20),
+                              dropdownColor: Colors.grey,
+                              underline: SizedBox(),
+                              items: [
+                                DropdownMenuItem(
+                                  value: HotkeyKeyboard.altW,
+                                  child: Center(
+                                    child: Text(
+                                      "Alt+W",
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 12,
                                       ),
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 12,
                                     ),
                                   ),
-                                ],
+                                ),
+                                DropdownMenuItem(
+                                  value: HotkeyKeyboard.altS,
+                                  child: Center(
+                                    child: Text(
+                                      "Alt+S",
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: HotkeyKeyboard.altA,
+                                  child: Center(
+                                    child: Text(
+                                      "Alt+A",
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: HotkeyKeyboard.altD,
+                                  child: Center(
+                                    child: Text(
+                                      "Alt+D",
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                if (value != null) {
+                                  ref
+                                      .read(hotkeyKeyboardProvider.notifier)
+                                      .state = value;
+                                  SharedPrefUtils().setHotkeyKeyboard(value);
+                                }
+                              },
+                              style: GoogleFonts.poppins(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        Container(width: 20),
+                        Expanded(
+                          child: Container(
+                            height: 42,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: const Color.fromARGB(127, 255, 255, 255),
+                                width: 3,
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: DropdownButton(
+                              itemHeight: 48,
+                              isExpanded: true,
+                              value: ref.watch(hotkeyGamepadProvider),
+                              borderRadius: BorderRadius.circular(20),
+                              dropdownColor: Colors.grey,
+
+                              underline: SizedBox(),
+                              items: [
+                                DropdownMenuItem(
+                                  value: HotkeyGamepad.none,
+                                  child: Center(
+                                    child: Text(
+                                      "None",
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: HotkeyGamepad.lsB,
+                                  child: Center(
+                                    child: Text(
+                                      "LeftStick+B",
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: HotkeyGamepad.lsA,
+                                  child: Center(
+                                    child: Text(
+                                      "LeftStick+A",
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: HotkeyGamepad.lsRb,
+                                  child: Center(
+                                    child: Text(
+                                      "LeftStick+RB",
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                if (value != null) {
+                                  ref
+                                      .read(hotkeyGamepadProvider.notifier)
+                                      .state = value;
+                                  SharedPrefUtils().setHotkeyGamepad(value);
+                                }
+                              },
+                              style: GoogleFonts.poppins(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Column(
+                          children: [
+                            Text(
+                              "Support me",
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
+                            Container(height: 8),
+                            CustomImageButtonLink(
+                              link: ref.watch(supportLinkProvider),
+                              imageNormal: Image.network(
+                                ConstantVar.urlSupportIcon,
+                                height: 25,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Icon(Icons.error);
+                                },
+                              ),
+                              imageOnHover: Image.network(
+                                ConstantVar.urlSupportIconOnHover,
+                                height: 25,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Icon(Icons.error);
+                                },
+                              ),
+                            ),
+                            Container(height: 15),
                           ],
                         ),
-                      ),
-                      Container(height: 2),
-                      Text(
-                        "Only for mods that are directly removed via File Explorer (without right-click on “Mods” tab)",
-                        textAlign: TextAlign.end,
-                        style: GoogleFonts.poppins(
-                          color: const Color.fromARGB(200, 255, 255, 255),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
+                        Container(width: 30),
+                        Column(
+                          children: [
+                            Text(
+                              "Tutorial",
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Container(height: 8),
+                            CustomImageButtonLink(
+                              link: ref.watch(tutorialLinkProvider),
+                              imageNormal: Image.network(
+                                ConstantVar.urlTutorialIcon,
+                                height: 25,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Icon(Icons.error);
+                                },
+                              ),
+                              imageOnHover: Image.network(
+                                ConstantVar.urlTutorialIconOnHover,
+                                height: 25,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Icon(Icons.error);
+                                },
+                              ),
+                            ),
+                            Container(height: 15),
+                          ],
                         ),
-                      ),
-                      Container(height: 15),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'Keyboard Toggle Window',
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.poppins(
-                                color: const Color.fromARGB(200, 255, 255, 255),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          Container(width: 20),
-                          Expanded(
-                            child: Text(
-                              'Gamepad(XInput) Toggle Window',
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.poppins(
-                                color: const Color.fromARGB(200, 255, 255, 255),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              height: 42,
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: const Color.fromARGB(
-                                    127,
-                                    255,
-                                    255,
-                                    255,
-                                  ),
-                                  width: 3,
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: DropdownButton(
-                                itemHeight: 48,
-                                isExpanded: true,
-                                value: ref.watch(hotkeyKeyboardProvider),
-                                borderRadius: BorderRadius.circular(20),
-                                dropdownColor: Colors.grey,
-
-                                underline: SizedBox(),
-                                items: [
-                                  DropdownMenuItem(
-                                    value: HotkeyKeyboard.altW,
-                                    child: Center(
-                                      child: Text(
-                                        "Alt+W",
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: HotkeyKeyboard.altS,
-                                    child: Center(
-                                      child: Text(
-                                        "Alt+S",
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: HotkeyKeyboard.altA,
-                                    child: Center(
-                                      child: Text(
-                                        "Alt+A",
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: HotkeyKeyboard.altD,
-                                    child: Center(
-                                      child: Text(
-                                        "Alt+D",
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                                onChanged: (value) {
-                                  if (value != null) {
-                                    ref
-                                        .read(hotkeyKeyboardProvider.notifier)
-                                        .state = value;
-                                    SharedPrefUtils().setHotkeyKeyboard(value);
-                                  }
-                                },
-                                style: GoogleFonts.poppins(color: Colors.white),
-                              ),
-                            ),
-                          ),
-                          Container(width: 20),
-                          Expanded(
-                            child: Container(
-                              height: 42,
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: const Color.fromARGB(
-                                    127,
-                                    255,
-                                    255,
-                                    255,
-                                  ),
-                                  width: 3,
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: DropdownButton(
-                                itemHeight: 48,
-                                isExpanded: true,
-                                value: ref.watch(hotkeyGamepadProvider),
-                                borderRadius: BorderRadius.circular(20),
-                                dropdownColor: Colors.grey,
-
-                                underline: SizedBox(),
-                                items: [
-                                  DropdownMenuItem(
-                                    value: HotkeyGamepad.none,
-                                    child: Center(
-                                      child: Text(
-                                        "None",
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: HotkeyGamepad.lsB,
-                                    child: Center(
-                                      child: Text(
-                                        "LeftStick+B",
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: HotkeyGamepad.lsA,
-                                    child: Center(
-                                      child: Text(
-                                        "LeftStick+A",
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: HotkeyGamepad.lsRb,
-                                    child: Center(
-                                      child: Text(
-                                        "LeftStick+RB",
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                                onChanged: (value) {
-                                  if (value != null) {
-                                    ref
-                                        .read(hotkeyGamepadProvider.notifier)
-                                        .state = value;
-                                    SharedPrefUtils().setHotkeyGamepad(value);
-                                  }
-                                },
-                                style: GoogleFonts.poppins(color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Container(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Column(
-                            children: [
-                              Text(
-                                "Support me",
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              Container(height: 8),
-                              CustomImageButtonLink(
-                                link: ref.watch(supportLinkProvider),
-                                imageNormal: Image.network(
-                                  ConstantVar.urlSupportIcon,
-                                  height: 25,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Icon(Icons.error);
-                                  },
-                                ),
-                                imageOnHover: Image.network(
-                                  ConstantVar.urlSupportIconOnHover,
-                                  height: 25,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Icon(Icons.error);
-                                  },
-                                ),
-                              ),
-                              Container(height: 15),
-                            ],
-                          ),
-                          Container(width: 30),
-                          Column(
-                            children: [
-                              Text(
-                                "Tutorial",
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              Container(height: 8),
-                              CustomImageButtonLink(
-                                link: ref.watch(tutorialLinkProvider),
-                                imageNormal: Image.network(
-                                  ConstantVar.urlTutorialIcon,
-                                  height: 25,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Icon(Icons.error);
-                                  },
-                                ),
-                                imageOnHover: Image.network(
-                                  ConstantVar.urlTutorialIconOnHover,
-                                  height: 25,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Icon(Icons.error);
-                                  },
-                                ),
-                              ),
-                              Container(height: 15),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
+        ),
 
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Text(
-              appVersion,
-              style: GoogleFonts.poppins(color: Colors.white, fontSize: 10),
-            ),
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: Text(
+            appVersion,
+            style: GoogleFonts.poppins(color: Colors.white, fontSize: 10),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -720,8 +702,8 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
 
   Future<void> _pickFolder() async {
     if (_isPickingFolder) return; // Prevent multiple triggers
-    bool wasPinned = ref.read(fromTrayProvider);
-    ref.read(fromTrayProvider.notifier).state = true;
+    bool wasPinned = ref.read(windowIsPinnedProvider);
+    ref.read(windowIsPinnedProvider.notifier).state = true;
     setState(() {
       _isPickingFolder = true;
     });
@@ -748,7 +730,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
       }
     } finally {
       if (!wasPinned) {
-        ref.read(fromTrayProvider.notifier).state = false;
+        ref.read(windowIsPinnedProvider.notifier).state = false;
       }
       setState(() {
         _isPickingFolder = false;

@@ -12,10 +12,12 @@ import 'package:path/path.dart' as p;
 class ModsDropZone extends ConsumerStatefulWidget {
   final String dialogTitleText;
   final void Function(List<Directory> validFolders) onConfirmFunction;
+  final bool acceptArchived;
   const ModsDropZone({
     super.key,
     required this.dialogTitleText,
     required this.onConfirmFunction,
+    this.acceptArchived = false,
   });
 
   @override

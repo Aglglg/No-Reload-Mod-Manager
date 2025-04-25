@@ -10,7 +10,12 @@ class XInputComboDetector {
   bool _wasComboPressed = false;
 
   void register(HotkeyGamepad hotkeyGamepad, void Function() onComboPressed) {
+    if (hotkeyGamepad == HotkeyGamepad.none) {
+      unregister();
+      return;
+    }
     _pollingTimer = Timer.periodic(_pollingInterval, (_) {
+      print("polling");
       final xinputState = calloc<XINPUT_STATE>();
       bool comboCurrentlyPressed = false;
 
@@ -35,9 +40,7 @@ class XInputComboDetector {
             case HotkeyGamepad.lsRb:
               comboCurrentlyPressed = leftThumbPressed && rbPressed;
               break;
-            case HotkeyGamepad.none:
-              comboCurrentlyPressed = false;
-              unregister();
+            default:
               break;
           }
 

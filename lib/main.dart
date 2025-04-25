@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/get_cloud_data.dart';
 import 'package:no_reload_mod_manager/utils/hotkey_handler.dart';
+import 'package:no_reload_mod_manager/utils/mods_dropzone.dart';
+import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:path/path.dart' as p;
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
@@ -27,7 +29,7 @@ final StateProvider<TargetGame> targetGameProvider = StateProvider<TargetGame>(
   (ref) => TargetGame.none,
 );
 
-final StateProvider<bool> fromTrayProvider = StateProvider<bool>(
+final StateProvider<bool> windowIsPinnedProvider = StateProvider<bool>(
   (ref) => false,
 );
 
@@ -101,8 +103,6 @@ Future<void> setupWindow() async {
       appWindow.minSize = initialSize;
       appWindow.size = initialSize;
       appWindow.alignment = Alignment.center;
-
-      appWindow.hide(); // Only hide once here
     });
   });
 }
@@ -120,7 +120,7 @@ class Background extends ConsumerWidget {
   const Background({super.key});
 
   Color getBorderColor(WidgetRef ref) {
-    if (ref.watch(fromTrayProvider)) {
+    if (ref.watch(windowIsPinnedProvider)) {
       return const Color.fromARGB(255, 33, 149, 243);
     } else {
       return const Color.fromARGB(127, 255, 255, 255);
@@ -129,21 +129,88 @@ class Background extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Padding(
-        padding: const EdgeInsets.only(top: 1),
-        child: Container(
-          decoration: BoxDecoration(
-            color: const Color.fromARGB(127, 0, 0, 0),
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(
-              strokeAlign: BorderSide.strokeAlignInside,
-              width: 3,
-              color: getBorderColor(ref),
+    return ExcludeFocusTraversal(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Padding(
+          padding: const EdgeInsets.only(top: 1),
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(127, 0, 0, 0),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(
+                strokeAlign: BorderSide.strokeAlignInside,
+                width: 3,
+                color: getBorderColor(ref),
+              ),
+            ),
+            child: Stack(
+              children: [
+                if (ref.watch(windowIsPinnedProvider) &&
+                    ref.watch(tabIndexProvider) == 1 &&
+                    !ref.watch(alertDialogShownProvider))
+                  ModsDropZone(
+                    dialogTitleText: "Add mods",
+                    onConfirmFunction: (validFolders) => print("CONFIRM ADD"),
+                  ),
+                RightClickMenuWrapper(
+                  menuItems: [
+                    ref.watch(windowIsPinnedProvider)
+                        ? PopupMenuItem(
+                          onTap:
+                              () =>
+                                  ref
+                                      .watch(windowIsPinnedProvider.notifier)
+                                      .state = false,
+                          value: 'Unpin window',
+                          child: Text(
+                            'Unpin window',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 12,
+                            ),
+                          ),
+                        )
+                        : PopupMenuItem(
+                          onTap:
+                              () =>
+                                  ref
+                                      .watch(windowIsPinnedProvider.notifier)
+                                      .state = true,
+                          value: 'Pin window',
+                          child: Text(
+                            'Pin window',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                    PopupMenuItem(
+                      onTap: () async {
+                        ref.read(targetGameProvider.notifier).state =
+                            TargetGame.none;
+                        await windowManager.hide();
+                      },
+                      value: 'Hide window',
+                      child: Text(
+                        'Hide window',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                  child: MoveWindow(onDoubleTap: () {}),
+                ),
+                MainView(),
+              ],
             ),
           ),
-          child: MainView(),
         ),
       ),
     );
@@ -234,7 +301,7 @@ class _MainViewState extends ConsumerState<MainView>
         onClicked: (menuItem) async {
           ref.read(targetGameProvider.notifier).state =
               TargetGame.Wuthering_Waves;
-          ref.read(fromTrayProvider.notifier).state = true;
+          ref.read(windowIsPinnedProvider.notifier).state = true;
           await windowManager.show();
           await windowManager.focus();
         },
@@ -244,7 +311,7 @@ class _MainViewState extends ConsumerState<MainView>
         onClicked: (menuItem) async {
           ref.read(targetGameProvider.notifier).state =
               TargetGame.Genshin_Impact;
-          ref.read(fromTrayProvider.notifier).state = true;
+          ref.read(windowIsPinnedProvider.notifier).state = true;
           await windowManager.show();
           await windowManager.focus();
         },
@@ -254,7 +321,7 @@ class _MainViewState extends ConsumerState<MainView>
         onClicked: (menuItem) async {
           ref.read(targetGameProvider.notifier).state =
               TargetGame.Honkai_Star_Rail;
-          ref.read(fromTrayProvider.notifier).state = true;
+          ref.read(windowIsPinnedProvider.notifier).state = true;
           await windowManager.show();
           await windowManager.focus();
         },
@@ -264,7 +331,7 @@ class _MainViewState extends ConsumerState<MainView>
         onClicked: (menuItem) async {
           ref.read(targetGameProvider.notifier).state =
               TargetGame.Zenless_Zone_Zero;
-          ref.read(fromTrayProvider.notifier).state = true;
+          ref.read(windowIsPinnedProvider.notifier).state = true;
           await windowManager.show();
           await windowManager.focus();
         },
@@ -563,27 +630,27 @@ class _MainViewState extends ConsumerState<MainView>
       if (foregroundProcessName == SharedPrefUtils().getWuwaTargetProcess()) {
         ref.read(targetGameProvider.notifier).state =
             TargetGame.Wuthering_Waves;
-        ref.read(fromTrayProvider.notifier).state = false;
+        ref.read(windowIsPinnedProvider.notifier).state = false;
         await windowManager.show();
         await windowManager.focus();
       } else if (foregroundProcessName ==
           SharedPrefUtils().getGenshinTargetProcess()) {
         ref.read(targetGameProvider.notifier).state = TargetGame.Genshin_Impact;
-        ref.read(fromTrayProvider.notifier).state = false;
+        ref.read(windowIsPinnedProvider.notifier).state = false;
         await windowManager.show();
         await windowManager.focus();
       } else if (foregroundProcessName ==
           SharedPrefUtils().getHsrTargetProcess()) {
         ref.read(targetGameProvider.notifier).state =
             TargetGame.Honkai_Star_Rail;
-        ref.read(fromTrayProvider.notifier).state = false;
+        ref.read(windowIsPinnedProvider.notifier).state = false;
         await windowManager.show();
         await windowManager.focus();
       } else if (foregroundProcessName ==
           SharedPrefUtils().getZzzTargetProcess()) {
         ref.read(targetGameProvider.notifier).state =
             TargetGame.Zenless_Zone_Zero;
-        ref.read(fromTrayProvider.notifier).state = false;
+        ref.read(windowIsPinnedProvider.notifier).state = false;
         await windowManager.show();
         await windowManager.focus();
       }
@@ -591,7 +658,7 @@ class _MainViewState extends ConsumerState<MainView>
   }
 
   Future<void> checkToHideWindow() async {
-    if (!ref.read(fromTrayProvider)) {
+    if (!ref.read(windowIsPinnedProvider)) {
       ref.read(targetGameProvider.notifier).state = TargetGame.none;
       await windowManager.hide();
     }
