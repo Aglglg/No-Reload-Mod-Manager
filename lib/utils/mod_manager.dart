@@ -6,6 +6,75 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:path/path.dart' as p;
 
+Future<List<TextSpan>> revertManagedMod(List<Directory> modDirs) async {
+  List<TextSpan> operationLogs = [];
+  bool containsError = false;
+
+  for (Directory folder in modDirs) {
+    List<String> iniFilesBackup = await _findIniFilesManagedBackupRecursive(
+      folder.path,
+    );
+    for (final backupFilePath in iniFilesBackup) {
+      final originalFilePath = '${p.withoutExtension(backupFilePath)}.ini';
+      final backupFile = File(backupFilePath);
+      final originalFile = File(originalFilePath);
+
+      try {
+        if (await backupFile.exists()) {
+          await backupFile.copy(originalFile.path);
+          await backupFile.delete();
+        }
+      } catch (e) {
+        containsError = true;
+        operationLogs.add(
+          TextSpan(
+            text:
+                'Error reverting ${p.basename(folder.path)}.\n${ConstantVar.defaultErrorInfo}\n\n',
+            style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
+          ),
+        );
+      }
+    }
+
+    if (iniFilesBackup.isEmpty) {
+      operationLogs.add(
+        TextSpan(
+          text: 'No backup found on ${p.basename(folder.path)}.\nSkipped.\n\n',
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 189, 170, 0),
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      );
+    } else {
+      operationLogs.add(
+        TextSpan(
+          text: 'Backup found on ${p.basename(folder.path)}.\n\n',
+          style: GoogleFonts.poppins(color: Colors.green, fontSize: 14),
+        ),
+      );
+    }
+  }
+
+  operationLogs.add(
+    containsError
+        ? TextSpan(
+          text: 'Mods reverted. But there are some errors.',
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 189, 170, 0),
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        )
+        : TextSpan(
+          text: 'Mods reverted!',
+          style: GoogleFonts.poppins(color: Colors.green, fontSize: 14),
+        ),
+  );
+  return operationLogs;
+}
+
 //public method called from main()
 Future<List<TextSpan>> updateModData(
   String modsPath,
@@ -60,19 +129,20 @@ Future<List<TextSpan>> updateModData(
         }(),
     ]);
     operationLogs.add(
-      TextSpan(
-        text:
-            operationLogs.isEmpty
-                ? 'Mods successfully managed!'
-                : 'Mods managed but with some errors.\nRead error information above and try again.',
-        style: GoogleFonts.poppins(
-          color:
-              operationLogs.isEmpty
-                  ? Colors.green
-                  : const Color.fromARGB(255, 189, 170, 0),
-          fontSize: 14,
-        ),
-      ),
+      operationLogs.isEmpty
+          ? TextSpan(
+            text: 'Mods successfully managed!',
+            style: GoogleFonts.poppins(color: Colors.green, fontSize: 14),
+          )
+          : TextSpan(
+            text:
+                'Mods managed but with some errors.\nRead error information above and try again.',
+            style: GoogleFonts.poppins(
+              color: const Color.fromARGB(255, 189, 170, 0),
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
     );
 
     if (needReloadManual) {
@@ -82,6 +152,7 @@ Future<List<TextSpan>> updateModData(
           text: "\nPlease do manual reload with F10",
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
+            fontWeight: FontWeight.w600,
             fontSize: 14,
           ),
         ),
@@ -557,7 +628,6 @@ String _getLiteralIni(List<IniSection> sections) {
   return result.toString();
 }
 
-// ignore: unused_element
 Future<List<String>> _findIniFilesRecursive(String mainFolder) async {
   final directory = Directory(mainFolder);
   if (!await directory.exists()) return [];

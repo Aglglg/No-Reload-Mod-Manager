@@ -42,6 +42,15 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
         : 'Drag & Drop mod folders here, to revert any modifications caused by this tool.\nRight-click on empty area and pin this window to use this.';
   }
 
+  void _onModRevertConfirm(List<Directory> modDirs) {
+    ref.read(alertDialogShownProvider.notifier).state = true;
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (context) => RevertModDialog(modDirs: modDirs),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -86,8 +95,21 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                               borderRadius: BorderRadius.circular(20),
                               child: ModsDropZone(
                                 dialogTitleText: "Revert mods",
-                                onConfirmFunction:
-                                    (validFolder) => print("CONFIRM REVERT"),
+                                onConfirmFunction: _onModRevertConfirm,
+                                additionalContent: TextSpan(
+                                  text:
+                                      "\nReverting mods will remove all changes you made while these mods where managed.",
+                                  style: GoogleFonts.poppins(
+                                    color: const Color.fromARGB(
+                                      255,
+                                      189,
+                                      170,
+                                      0,
+                                    ),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
                               ),
                             ),
                           Center(
@@ -1104,8 +1126,8 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-        'Managing mod',
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 17),
+        'Manage mods',
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
       ),
       content: ConstrainedBox(
         constraints: BoxConstraints(
@@ -1152,6 +1174,99 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
                         style: GoogleFonts.poppins(color: Colors.blue),
                       ),
                     ),
+              ]
+              : [],
+    );
+  }
+}
+
+class RevertModDialog extends ConsumerStatefulWidget {
+  final List<Directory> modDirs;
+  const RevertModDialog({super.key, required this.modDirs});
+
+  @override
+  ConsumerState<RevertModDialog> createState() => _RevertModDialogState();
+}
+
+class _RevertModDialogState extends ConsumerState<RevertModDialog> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showClose = false;
+  List<TextSpan> contents = [];
+
+  @override
+  void initState() {
+    super.initState();
+    revertMods();
+  }
+
+  Future<void> revertMods() async {
+    setState(() {
+      contents = [];
+      contents.add(
+        TextSpan(
+          text: 'Reverting mods...\n',
+          style: GoogleFonts.poppins(color: Colors.black),
+        ),
+      );
+    });
+    final operationResults = await revertManagedMod(widget.modDirs);
+    setState(() {
+      _showClose = true;
+      contents = operationResults;
+    });
+    _scrollToBottom();
+  }
+
+  Future<void> _scrollToBottom() async {
+    // Wait until scrollController has a valid position
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (!_scrollController.hasClients) return;
+
+    await _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        'Revert mods',
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
+      ),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.trackpad,
+            },
+          ),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: RichText(text: TextSpan(children: contents)),
+          ),
+        ),
+      ),
+      actions:
+          _showClose
+              ? [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    ref.read(alertDialogShownProvider.notifier).state = false;
+                  },
+                  child: Text(
+                    'Close',
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
               ]
               : [],
     );

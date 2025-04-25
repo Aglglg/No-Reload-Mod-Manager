@@ -253,9 +253,15 @@ class _TabModsState extends ConsumerState<TabMods> with WindowListener {
                                               ),
                                               curve: Curves.easeOut,
                                             ),
-                                    child: Image.asset(
-                                      'assets/images/AAA.png',
-                                      fit: BoxFit.cover,
+                                    child: Icon(
+                                      size: 40,
+                                      Icons.image_outlined,
+                                      color: const Color.fromARGB(
+                                        127,
+                                        255,
+                                        255,
+                                        255,
+                                      ),
                                     ),
                                   ),
                                 ),

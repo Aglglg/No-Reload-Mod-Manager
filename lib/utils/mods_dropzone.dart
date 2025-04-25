@@ -10,6 +10,7 @@ import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:path/path.dart' as p;
 
 class ModsDropZone extends ConsumerStatefulWidget {
+  final TextSpan? additionalContent;
   final String dialogTitleText;
   final void Function(List<Directory> validFolders) onConfirmFunction;
   final bool acceptArchived;
@@ -18,6 +19,7 @@ class ModsDropZone extends ConsumerStatefulWidget {
     required this.dialogTitleText,
     required this.onConfirmFunction,
     this.acceptArchived = false,
+    this.additionalContent,
   });
 
   @override
@@ -90,6 +92,7 @@ class _ModsDropZoneState extends ConsumerState<ModsDropZone> {
                   foldersOnThisToolPath: foldersOnThisToolPath,
                   dialogTitleText: widget.dialogTitleText,
                   onConfirmFunction: widget.onConfirmFunction,
+                  additionalContent: widget.additionalContent,
                 ),
           );
         }
@@ -122,6 +125,7 @@ class OnDropModFolderDialog extends ConsumerStatefulWidget {
   final List<Directory> foldersOnThisToolPath;
   final List<Directory> foldersOnManagedPath;
   final Function onConfirmFunction;
+  final TextSpan? additionalContent;
 
   const OnDropModFolderDialog({
     super.key,
@@ -130,6 +134,7 @@ class OnDropModFolderDialog extends ConsumerStatefulWidget {
     required this.foldersOnThisToolPath,
     required this.foldersOnManagedPath,
     required this.onConfirmFunction,
+    required this.additionalContent,
   });
 
   @override
@@ -153,7 +158,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
       TextSpan(
         text: "Valid folders detected:\n",
         style: GoogleFonts.poppins(
-          color: Colors.black,
+          color: Colors.green,
           fontWeight: FontWeight.w600,
           fontSize: 14,
         ),
@@ -243,6 +248,10 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
           ),
         ),
       );
+    }
+
+    if (widget.additionalContent != null) {
+      contents.add(widget.additionalContent!);
     }
   }
 
