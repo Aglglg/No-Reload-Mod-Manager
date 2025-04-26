@@ -3,10 +3,16 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:path/path.dart' as p;
 
-void generateModAndGroupName() {}
+List<ModGroupData> refreshModData(Directory managedDir) {
+  return [
+    ModGroupData("groupPath", "groupName1", []),
+    ModGroupData("groupPath", "groupName2", []),
+  ];
+}
 
 Future<List<TextSpan>> revertManagedMod(List<Directory> modDirs) async {
   List<TextSpan> operationLogs = [];

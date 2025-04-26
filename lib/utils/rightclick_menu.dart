@@ -24,7 +24,7 @@ class RightClickMenuWrapper extends ConsumerWidget {
       ),
       constraints: const BoxConstraints(maxWidth: 120),
       menuPadding: EdgeInsets.all(0),
-      color: Colors.grey,
+      color: const Color(0xFF535356),
       context: context,
       position: RelativeRect.fromLTRB(
         position.dx,
