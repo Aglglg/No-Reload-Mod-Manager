@@ -6,6 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:path/path.dart' as p;
 
+void generateModAndGroupName() {}
+
 Future<List<TextSpan>> revertManagedMod(List<Directory> modDirs) async {
   List<TextSpan> operationLogs = [];
   bool containsError = false;
@@ -628,6 +630,7 @@ String _getLiteralIni(List<IniSection> sections) {
   return result.toString();
 }
 
+// ignore: unused_element
 Future<List<String>> _findIniFilesRecursive(String mainFolder) async {
   final directory = Directory(mainFolder);
   if (!await directory.exists()) return [];
