@@ -607,13 +607,13 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
       case TargetGame.Wuthering_Waves:
         return 'Wuthering Waves';
       case TargetGame.Genshin_Impact:
-        return 'Settings';
+        return 'Genshin Impact';
       case TargetGame.Honkai_Star_Rail:
         return 'Honkai Star Rail';
       case TargetGame.Zenless_Zone_Zero:
         return 'Zenless Zone Zero';
       default:
-        return 'unexpected_error(almost impossible that you see this) please report to dev';
+        return 'Please re-open from System Tray';
     }
   }
 

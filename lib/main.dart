@@ -84,25 +84,23 @@ Future<void> setupWindow() async {
   if (await FlutterSingleInstance().isFirstInstance() == false) {
     exit(0);
   }
+  doWhenWindowReady(() async {
+    const initialSize = Size(750, 330);
+    appWindow.minSize = initialSize;
+    appWindow.size = initialSize;
+    appWindow.alignment = Alignment.center;
 
-  WindowOptions windowOptions = WindowOptions(
-    backgroundColor: Colors.transparent,
-    skipTaskbar: true,
-    titleBarStyle: TitleBarStyle.hidden,
-    alwaysOnTop: true,
-  );
+    WindowOptions windowOptions = WindowOptions(
+      backgroundColor: Colors.transparent,
+      skipTaskbar: true,
+      titleBarStyle: TitleBarStyle.hidden,
+      alwaysOnTop: true,
+    );
 
-  await windowManager.waitUntilReadyToShow(windowOptions, () async {
-    await windowManager.setMaximizable(false);
-    await windowManager.setAsFrameless();
-    await windowManager.setClosable(false);
-
-    // Now safe to modify bitsdojo_window
-    doWhenWindowReady(() {
-      const initialSize = Size(750, 330);
-      appWindow.minSize = initialSize;
-      appWindow.size = initialSize;
-      appWindow.alignment = Alignment.center;
+    await windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.setMaximizable(false);
+      await windowManager.setAsFrameless();
+      await windowManager.setClosable(false);
     });
   });
 }
