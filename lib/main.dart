@@ -388,6 +388,7 @@ class _MainViewState extends ConsumerState<MainView>
       ref.read(tabIndexProvider.notifier).state = _tabController.index;
       if (_tabController.index == 1 && _tabController.indexIsChanging == true) {
         checkIsModsPathValidAndReady();
+        FocusScope.of(context).unfocus();
       }
     });
 

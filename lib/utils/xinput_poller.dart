@@ -15,7 +15,6 @@ class XInputComboDetector {
       return;
     }
     _pollingTimer = Timer.periodic(_pollingInterval, (_) {
-      print("polling");
       final xinputState = calloc<XINPUT_STATE>();
       bool comboCurrentlyPressed = false;
 
