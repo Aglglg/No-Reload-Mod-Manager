@@ -7,12 +7,125 @@ import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:path/path.dart' as p;
 
-List<ModGroupData> refreshModData(Directory managedDir) {
-  return [
-    ModGroupData("groupPath", "groupName1", []),
-    ModGroupData("groupPath", "groupName2", []),
-  ];
+Future<List<ModGroupData>> refreshModData(Directory managedDir) async {
+  List<Directory> validGroupFolders = await getGroupFolders(managedDir);
+
+  List<ModGroupData> results = await Future.wait(
+    validGroupFolders.map((groupDir) async {
+      return ModGroupData(
+        groupDir,
+        await getGroupName(groupDir),
+        await getModsOnGroup(groupDir),
+      );
+    }),
+  );
+
+  return results;
 }
+
+//////////////////////////
+
+Future<List<Directory>> getGroupFolders(Directory directory) async {
+  final List<Directory> matchingFolders = [];
+
+  try {
+    // List all contents of the directory (non-recursive)
+    final contents = await directory.list().toList();
+
+    for (var entity in contents) {
+      if (entity is Directory) {
+        final folderName = p.basename(entity.path);
+        final match = RegExp(
+          r'^group_([1-9]|[1-3][0-9]|4[0-8])$',
+          caseSensitive: true,
+        ).firstMatch(folderName);
+
+        if (match != null) {
+          matchingFolders.add(entity);
+        }
+      }
+    }
+
+    return matchingFolders;
+  } catch (e) {
+    print('Error reading directory: $e');
+    return [];
+  }
+}
+
+Future<String> getGroupName(Directory groupDir) async {
+  try {
+    final fileGroupName = File(p.join(groupDir.path, 'groupname'));
+
+    if (await fileGroupName.exists()) {
+      return await fileGroupName.readAsString();
+    } else {
+      final folderName = p.basename(groupDir.path);
+      await fileGroupName.writeAsString(folderName);
+
+      return folderName;
+    }
+  } catch (e) {
+    final folderName = p.basename(groupDir.path);
+    return folderName;
+  }
+}
+
+Future<void> setGroupName(Directory groupDir, String groupName) async {
+  try {
+    final fileGroupName = File(p.join(groupDir.path, 'groupname'));
+
+    await fileGroupName.writeAsString(groupName);
+  } catch (e) {}
+}
+
+//////////////////////////////
+
+Future<List<ModData>> getModsOnGroup(Directory groupDir) async {
+  try {
+    final List<Directory> modDirs = [];
+
+    // List all contents of the directory (non-recursive)
+    final contents = await groupDir.list().toList();
+
+    for (var entity in contents) {
+      if (entity is Directory) {
+        modDirs.add(entity);
+      }
+    }
+
+    final List<ModData> modDatas = await Future.wait(
+      modDirs.map((modDir) async {
+        return ModData(modDir, await getModName(modDir));
+      }).toList(),
+    );
+
+    return modDatas;
+  } catch (e) {
+    print('Error reading directory: $e');
+    return [];
+  }
+}
+
+Future<String> getModName(Directory modDir) async {
+  try {
+    final fileGroupName = File(p.join(modDir.path, 'modname'));
+
+    if (await fileGroupName.exists()) {
+      return await fileGroupName.readAsString();
+    } else {
+      final folderName = p.basename(modDir.path);
+      await fileGroupName.writeAsString(folderName);
+
+      return folderName;
+    }
+  } catch (e) {
+    final folderName = p.basename(modDir.path);
+    return folderName;
+  }
+}
+
+/////////////////////////////////////////////////////////////////////////////
 
 Future<List<TextSpan>> revertManagedMod(List<Directory> modDirs) async {
   List<TextSpan> operationLogs = [];
@@ -259,17 +372,14 @@ Future<List<(String, int)>> _getGroupFolders(String modsPath) async {
       if (entity is Directory) {
         final folderName = p.basename(entity.path);
         final match = RegExp(
-          r'^group_(\d+)$',
+          r'^group_([1-9]|[1-3][0-9]|4[0-8])$',
           caseSensitive: true,
         ).firstMatch(folderName);
 
         if (match != null) {
           final groupIndex = int.parse(match.group(1)!);
           final groupFullPath = entity.path;
-
-          if (groupIndex >= 1 && groupIndex <= 48) {
-            groupFullPathsAndIndexes.add((groupFullPath, groupIndex));
-          }
+          groupFullPathsAndIndexes.add((groupFullPath, groupIndex));
         }
       }
     }

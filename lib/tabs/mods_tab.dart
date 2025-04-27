@@ -4,11 +4,13 @@ import 'dart:math';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:no_reload_mod_manager/main.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:no_reload_mod_manager/utils/mod_manager.dart';
+import 'package:no_reload_mod_manager/utils/refreshable_image.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
+import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:path/path.dart' as p;
 
 class TabMods extends ConsumerStatefulWidget {
   const TabMods({super.key});
@@ -109,7 +111,36 @@ class GroupArea extends ConsumerStatefulWidget {
 class _GroupAreaState extends ConsumerState<GroupArea> {
   final CarouselSliderController _carouselSliderGroupController =
       CarouselSliderController();
+  final TextEditingController _groupNameTextFieldController =
+      TextEditingController();
+  bool groupTextFieldEnabled = false;
+  final FocusNode groupTextFieldFocusNode = FocusNode();
+  final initialPage = 0;
   String currentGroupName = '';
+  int currentPageIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    getCurrentGroupName(initialPage);
+  }
+
+  void getCurrentGroupName(int index) {
+    setState(() {
+      currentPageIndex = index;
+      _groupNameTextFieldController.text =
+          ref.read(modDataProvider)[index].groupName;
+    });
+  }
+
+  void setCurrentGroupName() {
+    ref.read(modDataProvider.notifier).state[currentPageIndex].groupName =
+        _groupNameTextFieldController.text;
+    setGroupName(
+      ref.read(modDataProvider)[currentPageIndex].groupDir,
+      ref.read(modDataProvider)[currentPageIndex].groupName,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -120,60 +151,189 @@ class _GroupAreaState extends ConsumerState<GroupArea> {
           width: 93.6,
           height: 130,
           color: Colors.transparent,
-          child: CarouselSlider(
-            carouselController: _carouselSliderGroupController,
-            options: CarouselOptions(
-              enableInfiniteScroll: true,
-              scrollDirection: Axis.vertical,
-              enlargeCenterPage: true,
-              enlargeFactor: .05,
-              onPageChanged: (index, reason) {
-                setState(() {
-                  currentGroupName = ref.read(modDataProvider)[index].groupName;
-                });
-              },
-            ),
-            items:
-                ref.watch(modDataProvider).map((i) {
-                  return Builder(
-                    builder: (BuildContext context) {
-                      return Container(
-                        height: 93.6,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(
-                            width: 3,
+          child: RightClickMenuWrapper(
+            menuItems: [
+              PopupMenuItem(
+                onTap: () => print("Add group"),
+                value: 'Add group',
+                child: Text(
+                  'Add group',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+            child: CarouselSlider.builder(
+              itemCount: ref.watch(modDataProvider).length,
+              itemBuilder: (context, index, realIndex) {
+                return RightClickMenuWrapper(
+                  menuItems: [
+                    PopupMenuItem(
+                      onTap: () => print("Add group"),
+                      value: 'Add group',
+                      child: Text(
+                        'Add group',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    PopupMenuItem(
+                      onTap: () {
+                        setState(() {
+                          groupTextFieldEnabled = true;
+                        });
+                        _groupNameTextFieldController.selection = TextSelection(
+                          baseOffset: 0,
+                          extentOffset:
+                              _groupNameTextFieldController.text.length,
+                        );
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          groupTextFieldFocusNode.requestFocus();
+                        });
+                      },
+                      value: 'Rename',
+                      child: Text(
+                        'Rename',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    PopupMenuItem(
+                      onTap: () => print("Change icon"),
+                      value: 'Change icon',
+                      child: Text(
+                        'Change icon',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    PopupMenuItem(
+                      onTap: () => print("Remove group"),
+                      value: 'Remove group',
+                      child: Text(
+                        'Remove group',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                  child: Container(
+                    height: 93.6,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        width: 3,
+                        color: const Color.fromARGB(127, 255, 255, 255),
+                        strokeAlign: BorderSide.strokeAlignInside,
+                      ),
+                      color: Colors.transparent,
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(999),
+                      child: RefreshableLocalImage(
+                        path: p.join(
+                          ref.watch(modDataProvider)[index].groupDir.path,
+                          "icon.png",
+                        ),
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(
+                            size: 35,
+                            Icons.image_outlined,
                             color: const Color.fromARGB(127, 255, 255, 255),
-                            strokeAlign: BorderSide.strokeAlignInside,
-                          ),
-                          color: Colors.transparent,
-                        ),
-                        child: Center(
-                          // child: Text(
-                          //   'Group $i',
-                          //   style: TextStyle(
-                          //     fontSize: 16.0,
-                          //     color: Colors.white,
-                          //   ),
-                          // ),
-                        ),
-                      );
-                    },
-                  );
-                }).toList(),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                );
+              },
+              carouselController: _carouselSliderGroupController,
+              options: CarouselOptions(
+                initialPage: initialPage,
+                enableInfiniteScroll: true,
+                scrollDirection: Axis.vertical,
+                enlargeCenterPage: true,
+                enlargeFactor: .05,
+                onPageChanged: (index, reason) {
+                  getCurrentGroupName(index);
+                },
+                scrollPhysics:
+                    groupTextFieldEnabled
+                        ? NeverScrollableScrollPhysics()
+                        : null,
+              ),
+            ),
           ),
         ),
         Container(height: 2),
 
         SizedBox(
           width: 93.6,
-          child: Text(
-            currentGroupName,
-            overflow: TextOverflow.fade,
-            softWrap: false,
-            maxLines: 1,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(color: Colors.white, fontSize: 13),
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              textSelectionTheme: TextSelectionThemeData(
+                selectionColor: const Color.fromARGB(127, 33, 149, 243),
+              ),
+            ),
+            child: TextField(
+              focusNode: groupTextFieldFocusNode,
+              enabled: groupTextFieldEnabled,
+              cursorColor: Colors.blue,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+              decoration: InputDecoration(
+                isDense: true,
+                contentPadding: EdgeInsets.all(0),
+                hintText: "Group Name",
+                hintStyle: GoogleFonts.poppins(
+                  color: const Color.fromARGB(90, 255, 255, 255),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: Colors.blue,
+                    style: BorderStyle.none,
+                  ),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.blue),
+                ),
+              ),
+              onEditingComplete: () {
+                setState(() {
+                  groupTextFieldEnabled = false;
+                });
+                setCurrentGroupName();
+              },
+              onTapOutside: (v) {
+                setState(() {
+                  groupTextFieldEnabled = false;
+                });
+                setCurrentGroupName();
+              },
+
+              controller: _groupNameTextFieldController,
+            ),
           ),
         ),
       ],
@@ -231,122 +391,158 @@ class _ModAreaState extends ConsumerState<ModArea> with WindowListener {
       child: Container(
         height: 200,
         color: Colors.transparent,
-        child: CarouselSlider.builder(
-          itemCount: 41,
-          carouselController: _carouselSliderModController,
-          options: CarouselOptions(
-            initialPage: 39,
-            enableInfiniteScroll: true,
-            scrollDirection: Axis.horizontal,
-            viewportFraction: getViewportFraction(),
-            onPageChanged: (index, reason) {
-              setState(() {
-                _currentModIndex = index;
-              });
+        child: RightClickMenuWrapper(
+          menuItems: [
+            if (!ref.watch(windowIsPinnedProvider))
+              PopupMenuItem(
+                onTap:
+                    () =>
+                        ref.read(windowIsPinnedProvider.notifier).state = true,
+                value: 'Add mod',
+                child: Text(
+                  'Add mod',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+          ],
+          child: CarouselSlider.builder(
+            itemCount: 41,
+            carouselController: _carouselSliderModController,
+            options: CarouselOptions(
+              initialPage: 39,
+              enableInfiniteScroll: true,
+              scrollDirection: Axis.horizontal,
+              viewportFraction: getViewportFraction(),
+              onPageChanged: (index, reason) {
+                setState(() {
+                  _currentModIndex = index;
+                });
+              },
+            ),
+            itemBuilder: (context, index, realIndex) {
+              bool isSelected = _currentModIndex == index;
+              double itemHeight = isSelected ? 150 * 1.1 : 108 * 1.1;
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  RightClickMenuWrapper(
+                    menuItems: [
+                      if (!ref.watch(windowIsPinnedProvider))
+                        PopupMenuItem(
+                          onTap:
+                              () =>
+                                  ref
+                                      .read(windowIsPinnedProvider.notifier)
+                                      .state = true,
+                          value: 'Add mod',
+                          child: Text(
+                            'Add mod',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      PopupMenuItem(
+                        onTap: () => print("Rename mod"),
+                        value: 'Rename',
+                        child: Text(
+                          'Rename',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        onTap: () => print("Change icon"),
+                        value: 'Change icon',
+                        child: Text(
+                          'Change icon',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        onTap: () => print("Remove mod"),
+                        value: 'Remove mod',
+                        child: Text(
+                          'Remove mod',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                    child: GestureDetector(
+                      onDoubleTap:
+                          _currentModIndex == index
+                              ? () {
+                                print("A");
+                              }
+                              : null,
+                      onTap:
+                          () => _carouselSliderModController.animateToPage(
+                            index,
+                            duration: Duration(milliseconds: 200),
+                            curve: Curves.easeOut,
+                          ),
+                      child: AnimatedContainer(
+                        duration: Duration(milliseconds: 300),
+                        curve: Curves.easeOut,
+                        height: itemHeight,
+                        width: 108 * 1.1,
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          border: Border.all(
+                            strokeAlign: BorderSide.strokeAlignInside,
+                            color: const Color.fromARGB(127, 255, 255, 255),
+                            width: 3,
+                          ),
+                          borderRadius: BorderRadius.circular(17),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          clipBehavior: Clip.antiAlias,
+                          child: Icon(
+                            size: 40,
+                            Icons.image_outlined,
+                            color: const Color.fromARGB(127, 255, 255, 255),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(height: 3),
+                  SizedBox(
+                    width: 120,
+                    child: Text(
+                      'Mod $index',
+                      overflow: TextOverflow.fade,
+                      softWrap: false,
+                      maxLines: 1,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              );
             },
           ),
-          itemBuilder: (context, index, realIndex) {
-            bool isSelected = _currentModIndex == index;
-            double itemHeight = isSelected ? 150 * 1.1 : 108 * 1.1;
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                RightClickMenuWrapper(
-                  menuItems: [
-                    PopupMenuItem(
-                      onTap: () => print("Add mod"),
-                      value: 'Add mod',
-                      child: Text(
-                        'Add mod',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                    PopupMenuItem(
-                      onTap: () => print("Change icon"),
-                      value: 'Change icon',
-                      child: Text(
-                        'Change icon',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                    PopupMenuItem(
-                      onTap: () => print("Remove mod"),
-                      value: 'Remove mod',
-                      child: Text(
-                        'Remove mod',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ],
-                  child: AnimatedContainer(
-                    duration: Duration(milliseconds: 300),
-                    curve: Curves.easeOut,
-                    height: itemHeight,
-                    width: 108 * 1.1,
-                    decoration: BoxDecoration(
-                      color: Colors.transparent,
-                      border: Border.all(
-                        strokeAlign: BorderSide.strokeAlignInside,
-                        color: const Color.fromARGB(127, 255, 255, 255),
-                        width: 3,
-                      ),
-                      borderRadius: BorderRadius.circular(17),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      clipBehavior: Clip.antiAlias,
-                      child: GestureDetector(
-                        onDoubleTap:
-                            _currentModIndex == index
-                                ? () {
-                                  print("A");
-                                }
-                                : null,
-                        onTap:
-                            () => _carouselSliderModController.animateToPage(
-                              index,
-                              duration: Duration(milliseconds: 200),
-                              curve: Curves.easeOut,
-                            ),
-                        child: Icon(
-                          size: 40,
-                          Icons.image_outlined,
-                          color: const Color.fromARGB(127, 255, 255, 255),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Container(height: 3),
-                SizedBox(
-                  width: 120,
-                  child: Text(
-                    'Mod $index',
-                    overflow: TextOverflow.fade,
-                    softWrap: false,
-                    maxLines: 1,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
         ),
       ),
     );

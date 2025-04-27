@@ -1,11 +1,12 @@
 import 'dart:io';
-import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/get_cloud_data.dart';
 import 'package:no_reload_mod_manager/utils/hotkey_handler.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/mods_dropzone.dart';
+import 'package:no_reload_mod_manager/utils/refreshable_image.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
+import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:path/path.dart' as p;
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
@@ -26,56 +27,6 @@ import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:no_reload_mod_manager/utils/xinput_poller.dart';
 
 import 'package:flutter/material.dart';
-
-final StateProvider<TargetGame> targetGameProvider = StateProvider<TargetGame>(
-  (ref) => TargetGame.none,
-);
-
-final StateProvider<bool> windowIsPinnedProvider = StateProvider<bool>(
-  (ref) => false,
-);
-
-final StateProvider<int> tabIndexProvider = StateProvider<int>((ref) => 1);
-
-final StateProvider<bool> alertDialogShownProvider = StateProvider<bool>(
-  (ref) => false,
-);
-
-final StateProvider<String> supportLinkProvider = StateProvider<String>(
-  (ref) => "",
-);
-final StateProvider<String> tutorialLinkProvider = StateProvider<String>(
-  (ref) => "",
-);
-
-final StateProvider<bool> messageWuwaDismissedProvider = StateProvider<bool>(
-  (ref) => false,
-);
-final StateProvider<bool> messageGenshinDismissedProvider = StateProvider<bool>(
-  (ref) => false,
-);
-final StateProvider<bool> messageHsrDismissedProvider = StateProvider<bool>(
-  (ref) => false,
-);
-final StateProvider<bool> messageZzzDismissedProvider = StateProvider<bool>(
-  (ref) => false,
-);
-
-final StateProvider<HotkeyKeyboard> hotkeyKeyboardProvider =
-    StateProvider<HotkeyKeyboard>((ref) {
-      SharedPrefUtils().init();
-      return SharedPrefUtils().getHotkeyKeyboard();
-    });
-final StateProvider<HotkeyGamepad> hotkeyGamepadProvider =
-    StateProvider<HotkeyGamepad>((ref) {
-      SharedPrefUtils().init();
-      return SharedPrefUtils().getHotkeyGamepad();
-    });
-
-final StateProvider<List<ModGroupData>> modDataProvider =
-    StateProvider<List<ModGroupData>>((ref) {
-      return [];
-    });
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -231,6 +182,25 @@ class Background extends ConsumerWidget {
                         ),
                       ),
                     ),
+                    if (ref.watch(tabIndexProvider) == 1)
+                      PopupMenuItem(
+                        onTap: () async {
+                          try {
+                            if (!await launchUrl(
+                              Uri.parse(ref.watch(tutorialLinkProvider)),
+                            )) {}
+                          } catch (e) {}
+                        },
+                        value: 'Tutorial',
+                        child: Text(
+                          'Tutorial',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
                   ],
                   child: MoveWindow(onDoubleTap: () {}),
                 ),
@@ -562,7 +532,8 @@ class _MainViewState extends ConsumerState<MainView>
   }
 
   Future<void> checkIsModsPathValidAndReady() async {
-    print("REFRESH");
+    ImageRefreshListener.notifyListeners();
+
     setState(() {
       _views[1] = TabModsLoading();
     });
@@ -631,7 +602,7 @@ class _MainViewState extends ConsumerState<MainView>
       }
 
       if (existAndValid) {
-        ref.read(modDataProvider.notifier).state = refreshModData(
+        ref.read(modDataProvider.notifier).state = await refreshModData(
           Directory(managedPath),
         );
       }

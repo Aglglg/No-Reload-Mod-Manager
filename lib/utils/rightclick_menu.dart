@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:no_reload_mod_manager/utils/state_providers.dart';
 
 class RightClickMenuWrapper extends ConsumerWidget {
   final Widget child;
@@ -18,6 +19,9 @@ class RightClickMenuWrapper extends ConsumerWidget {
     Offset position,
     WidgetRef ref,
   ) async {
+    if (ref.read(popupMenuShownProvider)) return;
+    if (menuItems.isEmpty) return;
+    ref.read(popupMenuShownProvider.notifier).state = true;
     await showMenu<String>(
       popUpAnimationStyle: AnimationStyle(
         duration: Duration(milliseconds: 150),
@@ -35,6 +39,8 @@ class RightClickMenuWrapper extends ConsumerWidget {
       items: menuItems,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     );
+
+    ref.read(popupMenuShownProvider.notifier).state = false;
   }
 
   @override

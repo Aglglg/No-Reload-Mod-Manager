@@ -1,7 +1,16 @@
-class ModGroupData {
-  String groupPath;
-  String groupName;
-  List<String> modsInGroup;
+import 'dart:io';
 
-  ModGroupData(this.groupPath, this.groupName, this.modsInGroup);
+class ModGroupData {
+  Directory groupDir;
+  String groupName;
+  List<ModData> modsInGroup;
+
+  ModGroupData(this.groupDir, this.groupName, this.modsInGroup);
+}
+
+class ModData {
+  Directory modDir;
+  String modName;
+
+  ModData(this.modDir, this.modName);
 }
