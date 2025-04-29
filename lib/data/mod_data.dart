@@ -1,16 +1,25 @@
 import 'dart:io';
 
-class ModGroupData {
-  Directory groupDir;
-  String groupName;
-  List<ModData> modsInGroup;
+import 'package:flutter/widgets.dart';
 
-  ModGroupData(this.groupDir, this.groupName, this.modsInGroup);
+class ModGroupData {
+  final Directory groupDir;
+  final ImageProvider? groupIcon;
+  final String groupName;
+  final List<ModData> modsInGroup;
+
+  ModGroupData({
+    required this.groupDir,
+    required this.groupIcon,
+    required this.groupName,
+    required this.modsInGroup,
+  });
 }
 
 class ModData {
-  Directory modDir;
-  String modName;
+  final Directory modDir;
+  final ImageProvider? modIcon;
+  final String modName;
 
-  ModData(this.modDir, this.modName);
+  ModData({required this.modDir, required this.modIcon, required this.modName});
 }

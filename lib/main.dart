@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/get_cloud_data.dart';
 import 'package:no_reload_mod_manager/utils/hotkey_handler.dart';
@@ -111,17 +112,32 @@ class Background extends ConsumerWidget {
                   ),
                 RightClickMenuWrapper(
                   menuItems: [
+                    if (ref.watch(tabIndexProvider) == 1 &&
+                        ref.watch(modGroupDataProvider).isEmpty)
+                      PopupMenuItem(
+                        onTap: () async {
+                          await addGroup(
+                            ref,
+                            p.join(
+                              getCurrentModsPath(ref.read(targetGameProvider)),
+                              ConstantVar.managedFolderName,
+                            ),
+                          );
+                        },
+                        value: 'Add group',
+                        child: Text(
+                          'Add group',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
                     if (ref.watch(tabIndexProvider) == 1)
                       PopupMenuItem(
                         onTap: () async {
-                          TargetGame currentTargetGame = ref.read(
-                            targetGameProvider,
-                          );
-                          ref.read(targetGameProvider.notifier).state =
-                              TargetGame.none;
-                          await Future.delayed(Duration(milliseconds: 100));
-                          ref.read(targetGameProvider.notifier).state =
-                              currentTargetGame;
+                          triggerRefresh(ref);
                         },
                         value: 'Refresh',
                         child: Text(
@@ -538,28 +554,13 @@ class _MainViewState extends ConsumerState<MainView>
     setState(() {
       _views[1] = TabModsLoading();
     });
+    ref.read(currentGroupIndexProvider.notifier).state = 0;
     TargetGame targetGame = ref.read(targetGameProvider);
     if (targetGame == TargetGame.none) return;
-    String modsPath = '';
-    bool existAndValid = false;
-    String notReadyReason = "Mods path empty/invalid/not ready/does not exist";
 
-    switch (targetGame) {
-      case TargetGame.Wuthering_Waves:
-        modsPath = SharedPrefUtils().getWuwaModsPath();
-        break;
-      case TargetGame.Genshin_Impact:
-        modsPath = SharedPrefUtils().getGenshinModsPath();
-        break;
-      case TargetGame.Honkai_Star_Rail:
-        modsPath = SharedPrefUtils().getHsrModsPath();
-        break;
-      case TargetGame.Zenless_Zone_Zero:
-        modsPath = SharedPrefUtils().getZzzModsPath();
-        break;
-      default:
-        break;
-    }
+    String modsPath = getCurrentModsPath(targetGame);
+    bool existAndValid = false;
+    String notReadyReason = "";
 
     if (!await Directory(modsPath).exists()) {
       existAndValid = false;
@@ -603,7 +604,7 @@ class _MainViewState extends ConsumerState<MainView>
       }
 
       if (existAndValid) {
-        ref.read(modDataProvider.notifier).state = await refreshModData(
+        ref.read(modGroupDataProvider.notifier).state = await refreshModData(
           Directory(managedPath),
         );
       }

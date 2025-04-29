@@ -4,17 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class RefreshableLocalImage extends ConsumerStatefulWidget {
-  final String path;
-  final Widget Function(
-    BuildContext context,
-    Object error,
-    StackTrace? stackTrace,
-  )
-  errorBuilder;
+  final ImageProvider? fileImage;
+  final Widget errorWidget;
 
   const RefreshableLocalImage({
-    required this.path,
-    required this.errorBuilder,
+    required this.fileImage,
+    required this.errorWidget,
     super.key,
   });
 
@@ -25,12 +20,9 @@ class RefreshableLocalImage extends ConsumerStatefulWidget {
 
 class _RefreshableLocalImageState extends ConsumerState<RefreshableLocalImage>
     with ImageRefreshListener {
-  late FileImage fileImage;
-
   @override
   void initState() {
     super.initState();
-    fileImage = FileImage(File(widget.path));
     ImageRefreshListener.addListener(this);
   }
 
@@ -42,17 +34,16 @@ class _RefreshableLocalImageState extends ConsumerState<RefreshableLocalImage>
 
   @override
   Widget build(BuildContext context) {
-    return Image(
-      image: fileImage,
-      fit: BoxFit.cover,
-      errorBuilder: widget.errorBuilder,
-    );
+    if (widget.fileImage != null) {
+      return Image(image: widget.fileImage!, fit: BoxFit.cover);
+    } else {
+      return widget.errorWidget;
+    }
   }
 
   @override
   void onRefresh() {
-    print("REFRESH");
-    fileImage.evict();
+    widget.fileImage?.evict();
   }
 }
 

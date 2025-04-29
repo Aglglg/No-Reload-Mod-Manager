@@ -2,10 +2,20 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/shared_pref.dart';
+import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:path/path.dart' as p;
+
+Future<void> triggerRefresh(WidgetRef ref) async {
+  TargetGame currentTargetGame = ref.read(targetGameProvider);
+  ref.read(targetGameProvider.notifier).state = TargetGame.none;
+  await Future.delayed(Duration(milliseconds: 100));
+  ref.read(targetGameProvider.notifier).state = currentTargetGame;
+}
 
 Future<List<ModGroupData>> refreshModData(Directory managedDir) async {
   List<Directory> validGroupFolders = await getGroupFolders(managedDir);
@@ -13,9 +23,10 @@ Future<List<ModGroupData>> refreshModData(Directory managedDir) async {
   List<ModGroupData> results = await Future.wait(
     validGroupFolders.map((groupDir) async {
       return ModGroupData(
-        groupDir,
-        await getGroupName(groupDir),
-        await getModsOnGroup(groupDir),
+        groupDir: groupDir,
+        groupIcon: getModOrGroupIcon(groupDir),
+        groupName: await getGroupName(groupDir),
+        modsInGroup: await getModsOnGroup(groupDir),
       );
     }),
   );
@@ -46,11 +57,63 @@ Future<List<Directory>> getGroupFolders(Directory directory) async {
       }
     }
 
+    // Sort the folders by the number after "group_"
+    matchingFolders.sort((a, b) {
+      final aName = p.basename(a.path);
+      final bName = p.basename(b.path);
+
+      final aMatch = RegExp(r'group_(\d+)').firstMatch(aName);
+      final bMatch = RegExp(r'group_(\d+)').firstMatch(bName);
+
+      if (aMatch != null && bMatch != null) {
+        final aNumber = int.parse(aMatch.group(1)!);
+        final bNumber = int.parse(bMatch.group(1)!);
+        return aNumber.compareTo(bNumber);
+      }
+
+      return 0;
+    });
+
     return matchingFolders;
   } catch (e) {
     print('Error reading directory: $e');
     return [];
   }
+}
+
+Future<int?> addGroup(WidgetRef ref, String managedPath) async {
+  for (int i = 1; i <= 48; i++) {
+    String folderName = 'group_$i';
+    Directory folder = Directory('$managedPath/$folderName');
+
+    if (!await folder.exists()) {
+      await folder.create();
+      _addGroupToRiverpod(ref, folder, i - 1);
+      return i;
+    }
+  }
+
+  return null;
+}
+
+void _addGroupToRiverpod(WidgetRef ref, Directory groupDir, int index) {
+  final currentList = ref.read(modGroupDataProvider);
+  final newGroup = ModGroupData(
+    groupDir: groupDir,
+    groupIcon: getModOrGroupIcon(groupDir),
+    groupName: p.basename(groupDir.path),
+    modsInGroup: [],
+  );
+
+  // Add the new group at the specified index
+  final updatedList = [
+    ...currentList.sublist(0, index), // All elements before the index
+    newGroup, // The new group to add
+    ...currentList.sublist(index), // All elements after the index
+  ];
+
+  // Write it back
+  ref.read(modGroupDataProvider.notifier).state = updatedList;
 }
 
 Future<String> getGroupName(Directory groupDir) async {
@@ -79,6 +142,21 @@ Future<void> setGroupName(Directory groupDir, String groupName) async {
   } catch (e) {}
 }
 
+ImageProvider? getModOrGroupIcon(Directory groupDir) {
+  final file = File(p.join(groupDir.path, "icon.png"));
+
+  if (file.existsSync()) {
+    try {
+      return FileImage(file);
+    } catch (e) {
+      // fallback in case FileImage fails
+      return null;
+    }
+  } else {
+    return null;
+  }
+}
+
 //////////////////////////////
 
 Future<List<ModData>> getModsOnGroup(Directory groupDir) async {
@@ -96,7 +174,11 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir) async {
 
     final List<ModData> modDatas = await Future.wait(
       modDirs.map((modDir) async {
-        return ModData(modDir, await getModName(modDir));
+        return ModData(
+          modDir: modDir,
+          modIcon: getModOrGroupIcon(modDir),
+          modName: await getModName(modDir),
+        );
       }).toList(),
     );
 
@@ -383,6 +465,9 @@ Future<List<(String, int)>> _getGroupFolders(String modsPath) async {
         }
       }
     }
+
+    // Sort by the group index
+    groupFullPathsAndIndexes.sort((a, b) => a.$2.compareTo(b.$2));
   }
 
   return groupFullPathsAndIndexes;
@@ -710,9 +795,7 @@ bool _isExcludedSection(String section) {
 
   final lowerSection = section.toLowerCase();
 
-  if (lowerSection == "constants" ||
-      lowerSection.startsWith("resource") ||
-      lowerSection.startsWith("key")) {
+  if (lowerSection == "constants" || lowerSection.startsWith("resource")) {
     return true;
   }
 
@@ -792,4 +875,19 @@ Future<List<String>> _findIniFilesManagedBackupRecursive(
         ),
       )
       .toList();
+}
+
+String getCurrentModsPath(TargetGame targetGame) {
+  switch (targetGame) {
+    case TargetGame.Wuthering_Waves:
+      return SharedPrefUtils().getWuwaModsPath();
+    case TargetGame.Genshin_Impact:
+      return SharedPrefUtils().getGenshinModsPath();
+    case TargetGame.Honkai_Star_Rail:
+      return SharedPrefUtils().getHsrModsPath();
+    case TargetGame.Zenless_Zone_Zero:
+      return SharedPrefUtils().getZzzModsPath();
+    default:
+      return '';
+  }
 }

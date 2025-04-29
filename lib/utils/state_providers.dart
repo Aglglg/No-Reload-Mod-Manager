@@ -52,7 +52,9 @@ final StateProvider<HotkeyGamepad> hotkeyGamepadProvider =
       return SharedPrefUtils().getHotkeyGamepad();
     });
 
-final StateProvider<List<ModGroupData>> modDataProvider =
+final StateProvider<List<ModGroupData>> modGroupDataProvider =
     StateProvider<List<ModGroupData>>((ref) {
       return [];
     });
+
+final currentGroupIndexProvider = StateProvider<int>((ref) => 0);

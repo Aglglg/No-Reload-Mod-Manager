@@ -5,13 +5,11 @@ import 'package:no_reload_mod_manager/utils/state_providers.dart';
 class RightClickMenuWrapper extends ConsumerWidget {
   final Widget child;
   final List<PopupMenuEntry<String>> menuItems;
-  final Function? onMenuClosed; // Callback for when menu is closed
 
   const RightClickMenuWrapper({
     super.key,
     required this.child,
     required this.menuItems,
-    this.onMenuClosed, // Optional callback
   });
 
   void _showContextMenu(
