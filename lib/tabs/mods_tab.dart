@@ -187,11 +187,14 @@ class _GroupAreaState extends ConsumerState<GroupArea> {
                   );
 
                   if (groupIndex != null) {
-                    _carouselSliderGroupController.jumpToPage(groupIndex - 1);
                     getCurrentGroupName(groupIndex - 1);
-                    WidgetsBinding.instance.addPostFrameCallback(
-                      (_) => ImageRefreshListener.notifyListeners(),
-                    );
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      ImageRefreshListener.notifyListeners();
+                      _carouselSliderGroupController.animateToPage(
+                        groupIndex - 1,
+                        duration: Duration(milliseconds: 250),
+                      );
+                    });
                   }
                 },
                 value: 'Add group',
@@ -221,13 +224,14 @@ class _GroupAreaState extends ConsumerState<GroupArea> {
                         );
 
                         if (groupIndex != null) {
-                          _carouselSliderGroupController.jumpToPage(
-                            groupIndex - 1,
-                          );
                           getCurrentGroupName(groupIndex - 1);
-                          WidgetsBinding.instance.addPostFrameCallback(
-                            (_) => ImageRefreshListener.notifyListeners(),
-                          );
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            ImageRefreshListener.notifyListeners();
+                            _carouselSliderGroupController.animateToPage(
+                              groupIndex - 1,
+                              duration: Duration(milliseconds: 250),
+                            );
+                          });
                         }
                       },
                       value: 'Add group',
