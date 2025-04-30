@@ -35,7 +35,11 @@ class _RefreshableLocalImageState extends ConsumerState<RefreshableLocalImage>
   @override
   Widget build(BuildContext context) {
     if (widget.fileImage != null) {
-      return Image(image: widget.fileImage!, fit: BoxFit.cover);
+      return Image(
+        image: widget.fileImage!,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => widget.errorWidget,
+      );
     } else {
       return widget.errorWidget;
     }

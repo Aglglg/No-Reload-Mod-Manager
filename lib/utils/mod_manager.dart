@@ -1,13 +1,16 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/refreshable_image.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
+import 'package:pasteboard/pasteboard.dart';
 import 'package:path/path.dart' as p;
 
 Future<void> triggerRefresh(WidgetRef ref) async {
@@ -102,7 +105,9 @@ void _addGroupToRiverpod(WidgetRef ref, Directory groupDir, int index) {
     groupDir: groupDir,
     groupIcon: getModOrGroupIcon(groupDir),
     groupName: p.basename(groupDir.path),
-    modsInGroup: [],
+    modsInGroup: [
+      ModData(modDir: Directory(""), modIcon: null, modName: "None"),
+    ],
   );
 
   // Add the new group at the specified index
@@ -157,6 +162,102 @@ ImageProvider? getModOrGroupIcon(Directory groupDir) {
   }
 }
 
+Future<void> setGroupIcon(
+  WidgetRef ref,
+  Directory groupDir, {
+  bool fromClipboard = false,
+}) async {
+  ImageRefreshListener.notifyListeners();
+  if (fromClipboard == false) {
+    bool windowWasPinned = ref.read(windowIsPinnedProvider);
+    ref.read(windowIsPinnedProvider.notifier).state = true;
+    final pickResult = await FilePicker.platform.pickFiles(
+      lockParentWindow: true,
+      dialogTitle: "Select an image file",
+      type: FileType.image,
+    );
+    if (pickResult != null) {
+      try {
+        File sourceFile = File(pickResult.files[0].path!);
+        String targetDest = p.join(groupDir.path, "icon.png");
+        await sourceFile.copy(targetDest);
+      } catch (e) {}
+      FileImage imgResult = FileImage(File(pickResult.files[0].path!));
+      _updateGroupIconProvider(ref, groupDir, imgResult);
+    }
+    ref.read(windowIsPinnedProvider.notifier).state = windowWasPinned;
+  } else {
+    try {
+      final imgBytes = await Pasteboard.image;
+      if (imgBytes != null) {
+        _updateGroupIconProvider(ref, groupDir, MemoryImage(imgBytes));
+        await File(
+          p.join(groupDir.path, "icon.png"),
+        ).writeAsBytes(imgBytes.toList());
+      }
+    } catch (e) {}
+  }
+}
+
+void _updateGroupIconProvider(
+  WidgetRef ref,
+  Directory groupDir,
+  ImageProvider newIcon,
+) {
+  final currentGroups = ref.read(modGroupDataProvider);
+
+  final updatedGroups =
+      currentGroups.map((group) {
+        if (group.groupDir.path == groupDir.path) {
+          return ModGroupData(
+            groupDir: group.groupDir,
+            groupIcon: newIcon,
+            groupName: group.groupName,
+            modsInGroup: group.modsInGroup,
+          );
+        }
+        return group;
+      }).toList();
+
+  ref.read(modGroupDataProvider.notifier).state = updatedGroups;
+}
+
+void _updateModIconProvider(
+  WidgetRef ref,
+  Directory groupDir,
+  Directory modDir,
+  ImageProvider newIcon,
+) {
+  final currentGroups = ref.read(modGroupDataProvider);
+
+  final updatedGroups =
+      currentGroups.map((group) {
+        if (group.groupDir.path == groupDir.path) {
+          final updatedMods =
+              group.modsInGroup.map((mod) {
+                if (mod.modDir.path == modDir.path) {
+                  return ModData(
+                    modDir: mod.modDir,
+                    modIcon: newIcon,
+                    modName: mod.modName,
+                  );
+                }
+                return mod;
+              }).toList();
+
+          return ModGroupData(
+            groupDir: group.groupDir,
+            groupIcon: group.groupIcon,
+            groupName: group.groupName,
+            modsInGroup: updatedMods,
+          );
+        }
+        return group;
+      }).toList();
+
+  ref.read(modGroupDataProvider.notifier).state = updatedGroups;
+}
+
 //////////////////////////////
 
 Future<List<ModData>> getModsOnGroup(Directory groupDir) async {
@@ -181,7 +282,10 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir) async {
         );
       }).toList(),
     );
-
+    modDatas.insert(
+      0,
+      ModData(modDir: Directory(""), modIcon: null, modName: "None"),
+    );
     return modDatas;
   } catch (e) {
     print('Error reading directory: $e');

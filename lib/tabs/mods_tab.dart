@@ -177,6 +177,7 @@ class _GroupAreaState extends ConsumerState<GroupArea> {
           child: RightClickMenuWrapper(
             menuItems: [
               PopupMenuItem(
+                height: 37,
                 onTap: () async {
                   int? groupIndex = await addGroup(
                     ref,
@@ -214,6 +215,7 @@ class _GroupAreaState extends ConsumerState<GroupArea> {
                 return RightClickMenuWrapper(
                   menuItems: [
                     PopupMenuItem(
+                      height: 37,
                       onTap: () async {
                         int? groupIndex = await addGroup(
                           ref,
@@ -246,6 +248,7 @@ class _GroupAreaState extends ConsumerState<GroupArea> {
                     ),
                     if (index == currentPageIndex)
                       PopupMenuItem(
+                        height: 37,
                         onTap: () {
                           setState(() {
                             groupTextFieldEnabled = true;
@@ -272,7 +275,13 @@ class _GroupAreaState extends ConsumerState<GroupArea> {
                       ),
                     if (index == currentPageIndex)
                       PopupMenuItem(
-                        onTap: () => print("Change icon"),
+                        height: 37,
+                        onTap: () {
+                          setGroupIcon(
+                            ref,
+                            ref.read(modGroupDataProvider)[index].groupDir,
+                          );
+                        },
                         value: 'Change icon',
                         child: Text(
                           'Change icon',
@@ -285,6 +294,27 @@ class _GroupAreaState extends ConsumerState<GroupArea> {
                       ),
                     if (index == currentPageIndex)
                       PopupMenuItem(
+                        height: 37,
+                        onTap: () async {
+                          await setGroupIcon(
+                            ref,
+                            ref.read(modGroupDataProvider)[index].groupDir,
+                            fromClipboard: true,
+                          );
+                        },
+                        value: 'Change icon (Clipboard)',
+                        child: Text(
+                          'Change icon (Clipboard)',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    if (index == currentPageIndex)
+                      PopupMenuItem(
+                        height: 37,
                         onTap: () => print("Remove group"),
                         value: 'Remove group',
                         child: Text(
@@ -507,6 +537,7 @@ class _ModAreaState extends ConsumerState<ModArea> with WindowListener {
           menuItems: [
             if (!ref.watch(windowIsPinnedProvider))
               PopupMenuItem(
+                height: 37,
                 onTap:
                     () =>
                         ref.read(windowIsPinnedProvider.notifier).state = true,
@@ -547,6 +578,7 @@ class _ModAreaState extends ConsumerState<ModArea> with WindowListener {
                           RightClickMenuWrapper(
                             menuItems: [
                               PopupMenuItem(
+                                height: 37,
                                 onTap: () {
                                   _carouselSliderModController.animateToPage(
                                     index,
@@ -567,6 +599,7 @@ class _ModAreaState extends ConsumerState<ModArea> with WindowListener {
                               ),
                               if (!ref.watch(windowIsPinnedProvider))
                                 PopupMenuItem(
+                                  height: 37,
                                   onTap:
                                       () =>
                                           ref
@@ -584,42 +617,48 @@ class _ModAreaState extends ConsumerState<ModArea> with WindowListener {
                                     ),
                                   ),
                                 ),
-                              PopupMenuItem(
-                                onTap: () => print("Rename mod"),
-                                value: 'Rename',
-                                child: Text(
-                                  'Rename',
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 12,
+                              if (index != 0)
+                                PopupMenuItem(
+                                  height: 37,
+                                  onTap: () => print("Rename mod"),
+                                  value: 'Rename',
+                                  child: Text(
+                                    'Rename',
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              PopupMenuItem(
-                                onTap: () => print("Change icon"),
-                                value: 'Change icon',
-                                child: Text(
-                                  'Change icon',
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 12,
+                              if (index != 0)
+                                PopupMenuItem(
+                                  height: 37,
+                                  onTap: () => print("Change icon"),
+                                  value: 'Change icon',
+                                  child: Text(
+                                    'Change icon',
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              PopupMenuItem(
-                                onTap: () => print("Remove mod"),
-                                value: 'Remove mod',
-                                child: Text(
-                                  'Remove mod',
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 12,
+                              if (index != 0)
+                                PopupMenuItem(
+                                  height: 37,
+                                  onTap: () => print("Remove mod"),
+                                  value: 'Remove mod',
+                                  child: Text(
+                                    'Remove mod',
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
-                              ),
                             ],
                             child: GestureDetector(
                               onDoubleTap:
@@ -665,23 +704,35 @@ class _ModAreaState extends ConsumerState<ModArea> with WindowListener {
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(16),
                                   clipBehavior: Clip.antiAlias,
-                                  child: RefreshableLocalImage(
-                                    fileImage:
-                                        widget
-                                            .currentGroupData
-                                            .modsInGroup[index]
-                                            .modIcon,
-                                    errorWidget: Icon(
-                                      size: 40,
-                                      Icons.image_outlined,
-                                      color: const Color.fromARGB(
-                                        127,
-                                        255,
-                                        255,
-                                        255,
-                                      ),
-                                    ),
-                                  ),
+                                  child:
+                                      index != 0
+                                          ? RefreshableLocalImage(
+                                            fileImage:
+                                                widget
+                                                    .currentGroupData
+                                                    .modsInGroup[index]
+                                                    .modIcon,
+                                            errorWidget: Icon(
+                                              size: 40,
+                                              Icons.image_outlined,
+                                              color: const Color.fromARGB(
+                                                127,
+                                                255,
+                                                255,
+                                                255,
+                                              ),
+                                            ),
+                                          )
+                                          : Icon(
+                                            size: 45,
+                                            Icons.close,
+                                            color: const Color.fromARGB(
+                                              127,
+                                              255,
+                                              255,
+                                              255,
+                                            ),
+                                          ),
                                 ),
                               ),
                             ),
@@ -712,6 +763,7 @@ class _ModAreaState extends ConsumerState<ModArea> with WindowListener {
                     menuItems: [
                       if (!ref.watch(windowIsPinnedProvider))
                         PopupMenuItem(
+                          height: 37,
                           onTap:
                               () =>
                                   ref

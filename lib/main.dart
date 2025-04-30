@@ -69,7 +69,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(debugShowCheckedModeBanner: false, home: Background());
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Background(),
+      theme: ThemeData.dark(),
+    );
   }
 }
 
@@ -115,6 +119,7 @@ class Background extends ConsumerWidget {
                     if (ref.watch(tabIndexProvider) == 1 &&
                         ref.watch(modGroupDataProvider).isEmpty)
                       PopupMenuItem(
+                        height: 37,
                         onTap: () async {
                           await addGroup(
                             ref,
@@ -136,6 +141,7 @@ class Background extends ConsumerWidget {
                       ),
                     if (ref.watch(tabIndexProvider) == 1)
                       PopupMenuItem(
+                        height: 37,
                         onTap: () async {
                           triggerRefresh(ref);
                         },
@@ -151,6 +157,7 @@ class Background extends ConsumerWidget {
                       ),
                     ref.watch(windowIsPinnedProvider)
                         ? PopupMenuItem(
+                          height: 37,
                           onTap:
                               () =>
                                   ref
@@ -167,6 +174,7 @@ class Background extends ConsumerWidget {
                           ),
                         )
                         : PopupMenuItem(
+                          height: 37,
                           onTap:
                               () =>
                                   ref
@@ -183,6 +191,7 @@ class Background extends ConsumerWidget {
                           ),
                         ),
                     PopupMenuItem(
+                      height: 37,
                       onTap: () async {
                         ref.read(targetGameProvider.notifier).state =
                             TargetGame.none;
@@ -200,6 +209,7 @@ class Background extends ConsumerWidget {
                     ),
                     if (ref.watch(tabIndexProvider) == 1)
                       PopupMenuItem(
+                        height: 37,
                         onTap: () async {
                           try {
                             if (!await launchUrl(
