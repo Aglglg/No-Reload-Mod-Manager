@@ -1,15 +1,14 @@
 import 'package:flutter/services.dart';
-import 'package:keypress_simulator/keypress_simulator.dart';
 import 'package:no_reload_mod_manager/utils/keypress_simulate.dart';
 import 'package:win32/win32.dart';
 
 void simulateKeyF10() {
-  _simulateKeypress([PhysicalKeyboardKey.f10]);
+  _simulateKeypress([VK_F10]);
 }
 
 Future<void> simulateKeySelectMod(int groupIndex, int modIndex) async {
-  List<PhysicalKeyboardKey> keysGroupToBeSimulated = [];
-  List<PhysicalKeyboardKey> keysModToBeSimulated = [];
+  List<int> keysGroupToBeSimulated = [];
+  List<int> keysModToBeSimulated = [];
   _keymapGroupIndex(
     keysGroupToBeSimulated,
     groupIndex + 1,
@@ -31,384 +30,384 @@ void somethingB(List<PhysicalKeyboardKey> keys) {
   keys.add(PhysicalKeyboardKey.keyN);
 }
 
-Future<void> _simulateKeypress(List<PhysicalKeyboardKey> keys) async {
+Future<void> _simulateKeypress(List<int> keys) async {
   for (var key in keys) {
-    await keyPressSimulator.simulateKeyDown(key);
+    simulateKeyDown(key);
   }
 
   await Future.delayed(Duration(milliseconds: 50));
 
   for (var key in keys) {
-    await keyPressSimulator.simulateKeyUp(key);
+    simulateKeyUp(key);
   }
 }
 
-void _keymapGroupIndex(List<PhysicalKeyboardKey> keys, int index) {
+void _keymapGroupIndex(List<int> virtualKeys, int index) {
   switch (index) {
     case 1:
-      keys.add(PhysicalKeyboardKey.f13); // NO_RETURN NO_BACK
+      virtualKeys.add(VK_F13); // NO_RETURN NO_BACK
       break;
     case 2:
-      keys.add(PhysicalKeyboardKey.f14);
+      virtualKeys.add(VK_F14);
       break;
     case 3:
-      keys.add(PhysicalKeyboardKey.f15);
+      virtualKeys.add(VK_F15);
       break;
     case 4:
-      keys.add(PhysicalKeyboardKey.f16);
+      virtualKeys.add(VK_F16);
       break;
     case 5:
-      keys.add(PhysicalKeyboardKey.f17);
+      virtualKeys.add(VK_F17);
       break;
     case 6:
-      keys.add(PhysicalKeyboardKey.f18);
+      virtualKeys.add(VK_F18);
       break;
     case 7:
-      keys.add(PhysicalKeyboardKey.f19);
+      virtualKeys.add(VK_F19);
       break;
     case 8:
-      keys.add(PhysicalKeyboardKey.f20);
+      virtualKeys.add(VK_F20);
       break;
     case 9:
-      keys.add(PhysicalKeyboardKey.f21);
+      virtualKeys.add(VK_F21);
       break;
     case 10:
-      keys.add(PhysicalKeyboardKey.f22);
+      virtualKeys.add(VK_F22);
       break;
     case 11:
-      keys.add(PhysicalKeyboardKey.f23);
+      virtualKeys.add(VK_F23);
       break;
     case 12:
-      keys.add(PhysicalKeyboardKey.f24);
+      virtualKeys.add(VK_F24);
       break;
     case 13:
-      keys.add(PhysicalKeyboardKey.enter); //NO_BACK
-      keys.add(PhysicalKeyboardKey.f13);
+      virtualKeys.add(VK_RETURN); //NO_BACK
+      virtualKeys.add(VK_F13);
       break;
     case 14:
-      keys.add(PhysicalKeyboardKey.enter);
-      keys.add(PhysicalKeyboardKey.f14);
+      virtualKeys.add(VK_RETURN);
+      virtualKeys.add(VK_F14);
       break;
     case 15:
-      keys.add(PhysicalKeyboardKey.enter);
-      keys.add(PhysicalKeyboardKey.f15);
+      virtualKeys.add(VK_RETURN);
+      virtualKeys.add(VK_F15);
       break;
     case 16:
-      keys.add(PhysicalKeyboardKey.enter);
-      keys.add(PhysicalKeyboardKey.f16);
+      virtualKeys.add(VK_RETURN);
+      virtualKeys.add(VK_F16);
       break;
     case 17:
-      keys.add(PhysicalKeyboardKey.enter);
-      keys.add(PhysicalKeyboardKey.f17);
+      virtualKeys.add(VK_RETURN);
+      virtualKeys.add(VK_F17);
       break;
     case 18:
-      keys.add(PhysicalKeyboardKey.enter);
-      keys.add(PhysicalKeyboardKey.f18);
+      virtualKeys.add(VK_RETURN);
+      virtualKeys.add(VK_F18);
       break;
     case 19:
-      keys.add(PhysicalKeyboardKey.enter);
-      keys.add(PhysicalKeyboardKey.f19);
+      virtualKeys.add(VK_RETURN);
+      virtualKeys.add(VK_F19);
       break;
     case 20:
-      keys.add(PhysicalKeyboardKey.enter);
-      keys.add(PhysicalKeyboardKey.f20);
+      virtualKeys.add(VK_RETURN);
+      virtualKeys.add(VK_F20);
       break;
     case 21:
-      keys.add(PhysicalKeyboardKey.enter);
-      keys.add(PhysicalKeyboardKey.f21);
+      virtualKeys.add(VK_RETURN);
+      virtualKeys.add(VK_F21);
       break;
     case 22:
-      keys.add(PhysicalKeyboardKey.enter);
-      keys.add(PhysicalKeyboardKey.f22);
+      virtualKeys.add(VK_RETURN);
+      virtualKeys.add(VK_F22);
       break;
     case 23:
-      keys.add(PhysicalKeyboardKey.enter);
-      keys.add(PhysicalKeyboardKey.f23);
+      virtualKeys.add(VK_RETURN);
+      virtualKeys.add(VK_F23);
       break;
     case 24:
-      keys.add(PhysicalKeyboardKey.enter);
-      keys.add(PhysicalKeyboardKey.f24);
+      virtualKeys.add(VK_RETURN);
+      virtualKeys.add(VK_F24);
       break;
     case 25:
-      keys.add(PhysicalKeyboardKey.backspace); //NO RETURN
-      keys.add(PhysicalKeyboardKey.f13);
+      virtualKeys.add(VK_BACK); //NO RETURN
+      virtualKeys.add(VK_F13);
       break;
     case 26:
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f14);
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F14);
       break;
     case 27:
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f15);
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F15);
       break;
     case 28:
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f16);
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F16);
       break;
     case 29:
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f17);
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F17);
       break;
     case 30:
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f18);
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F18);
       break;
     case 31:
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f19);
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F19);
       break;
     case 32:
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f20);
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F20);
       break;
     case 33:
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f21);
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F21);
       break;
     case 34:
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f22);
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F22);
       break;
     case 35:
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f23);
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F23);
       break;
     case 36:
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f24);
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F24);
       break;
     case 37:
-      keys.add(PhysicalKeyboardKey.enter); //no NO_
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f13);
+      virtualKeys.add(VK_RETURN); //no NO_
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F13);
       break;
     case 38:
-      keys.add(PhysicalKeyboardKey.enter);
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f14);
+      virtualKeys.add(VK_RETURN);
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F14);
       break;
     case 39:
-      keys.add(PhysicalKeyboardKey.enter);
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f15);
+      virtualKeys.add(VK_RETURN);
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F15);
       break;
     case 40:
-      keys.add(PhysicalKeyboardKey.enter);
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f16);
+      virtualKeys.add(VK_RETURN);
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F16);
       break;
     case 41:
-      keys.add(PhysicalKeyboardKey.enter);
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f17);
+      virtualKeys.add(VK_RETURN);
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F17);
       break;
     case 42:
-      keys.add(PhysicalKeyboardKey.enter);
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f18);
+      virtualKeys.add(VK_RETURN);
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F18);
       break;
     case 43:
-      keys.add(PhysicalKeyboardKey.enter);
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f19);
+      virtualKeys.add(VK_RETURN);
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F19);
       break;
     case 44:
-      keys.add(PhysicalKeyboardKey.enter);
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f20);
+      virtualKeys.add(VK_RETURN);
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F20);
       break;
     case 45:
-      keys.add(PhysicalKeyboardKey.enter);
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f21);
+      virtualKeys.add(VK_RETURN);
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F21);
       break;
     case 46:
-      keys.add(PhysicalKeyboardKey.enter);
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f22);
+      virtualKeys.add(VK_RETURN);
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F22);
       break;
     case 47:
-      keys.add(PhysicalKeyboardKey.enter);
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f23);
+      virtualKeys.add(VK_RETURN);
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F23);
       break;
     case 48:
-      keys.add(PhysicalKeyboardKey.enter);
-      keys.add(PhysicalKeyboardKey.backspace);
-      keys.add(PhysicalKeyboardKey.f24);
+      virtualKeys.add(VK_RETURN);
+      virtualKeys.add(VK_BACK);
+      virtualKeys.add(VK_F24);
       break;
     default:
       break;
   }
 }
 
-void _keymapModIndex(List<PhysicalKeyboardKey> keys, int index) {
+void _keymapModIndex(List<int> virtualKeys, int index) {
   switch (index) {
     case 0:
-      keys.add(PhysicalKeyboardKey.escape);
+      virtualKeys.add(VK_ESCAPE);
       break;
     case 1:
-      keys.add(PhysicalKeyboardKey.digit1); //NO_RCONTROL NO_TAB
+      virtualKeys.add(VK_1); //NO_RCONTROL NO_TAB
       break;
     case 2:
-      keys.add(PhysicalKeyboardKey.digit2);
+      virtualKeys.add(VK_2);
       break;
     case 3:
-      keys.add(PhysicalKeyboardKey.digit3);
+      virtualKeys.add(VK_3);
       break;
     case 4:
-      keys.add(PhysicalKeyboardKey.digit4);
+      virtualKeys.add(VK_4);
       break;
     case 5:
-      keys.add(PhysicalKeyboardKey.digit5);
+      virtualKeys.add(VK_5);
       break;
     case 6:
-      keys.add(PhysicalKeyboardKey.controlRight); //NO_TAB
-      keys.add(PhysicalKeyboardKey.digit1);
+      virtualKeys.add(VK_RCONTROL); //NO_TAB
+      virtualKeys.add(VK_1);
       break;
     case 7:
-      keys.add(PhysicalKeyboardKey.controlRight);
-      keys.add(PhysicalKeyboardKey.digit2);
+      virtualKeys.add(VK_RCONTROL);
+      virtualKeys.add(VK_2);
       break;
     case 8:
-      keys.add(PhysicalKeyboardKey.controlRight);
-      keys.add(PhysicalKeyboardKey.digit3);
+      virtualKeys.add(VK_RCONTROL);
+      virtualKeys.add(VK_3);
       break;
     case 9:
-      keys.add(PhysicalKeyboardKey.controlRight);
-      keys.add(PhysicalKeyboardKey.digit4);
+      virtualKeys.add(VK_RCONTROL);
+      virtualKeys.add(VK_4);
       break;
     case 10:
-      keys.add(PhysicalKeyboardKey.controlRight);
-      keys.add(PhysicalKeyboardKey.digit5);
+      virtualKeys.add(VK_RCONTROL);
+      virtualKeys.add(VK_5);
       break;
     case 11:
-      keys.add(PhysicalKeyboardKey.tab); //NO_RCONTROL
-      keys.add(PhysicalKeyboardKey.digit1);
+      virtualKeys.add(VK_TAB); //NO_RCONTROL
+      virtualKeys.add(VK_1);
       break;
     case 12:
-      keys.add(PhysicalKeyboardKey.tab);
-      keys.add(PhysicalKeyboardKey.digit2);
+      virtualKeys.add(VK_TAB);
+      virtualKeys.add(VK_2);
       break;
     case 13:
-      keys.add(PhysicalKeyboardKey.tab);
-      keys.add(PhysicalKeyboardKey.digit3);
+      virtualKeys.add(VK_TAB);
+      virtualKeys.add(VK_3);
       break;
     case 14:
-      keys.add(PhysicalKeyboardKey.tab);
-      keys.add(PhysicalKeyboardKey.digit4);
+      virtualKeys.add(VK_TAB);
+      virtualKeys.add(VK_4);
       break;
     case 15:
-      keys.add(PhysicalKeyboardKey.tab);
-      keys.add(PhysicalKeyboardKey.digit5);
+      virtualKeys.add(VK_TAB);
+      virtualKeys.add(VK_5);
       break;
     case 16:
-      keys.add(PhysicalKeyboardKey.controlRight); //no NO_
-      keys.add(PhysicalKeyboardKey.tab);
-      keys.add(PhysicalKeyboardKey.digit1);
+      virtualKeys.add(VK_RCONTROL); //no NO_
+      virtualKeys.add(VK_TAB);
+      virtualKeys.add(VK_1);
       break;
     case 17:
-      keys.add(PhysicalKeyboardKey.controlRight);
-      keys.add(PhysicalKeyboardKey.tab);
-      keys.add(PhysicalKeyboardKey.digit2);
+      virtualKeys.add(VK_RCONTROL);
+      virtualKeys.add(VK_TAB);
+      virtualKeys.add(VK_2);
       break;
     case 18:
-      keys.add(PhysicalKeyboardKey.controlRight);
-      keys.add(PhysicalKeyboardKey.tab);
-      keys.add(PhysicalKeyboardKey.digit3);
+      virtualKeys.add(VK_RCONTROL);
+      virtualKeys.add(VK_TAB);
+      virtualKeys.add(VK_3);
       break;
     case 19:
-      keys.add(PhysicalKeyboardKey.controlRight);
-      keys.add(PhysicalKeyboardKey.tab);
-      keys.add(PhysicalKeyboardKey.digit4);
+      virtualKeys.add(VK_RCONTROL);
+      virtualKeys.add(VK_TAB);
+      virtualKeys.add(VK_4);
       break;
     case 20:
-      keys.add(PhysicalKeyboardKey.controlRight);
-      keys.add(PhysicalKeyboardKey.tab);
-      keys.add(PhysicalKeyboardKey.digit5);
+      virtualKeys.add(VK_RCONTROL);
+      virtualKeys.add(VK_TAB);
+      virtualKeys.add(VK_5);
       break;
     case 21:
-      keys.add(PhysicalKeyboardKey.keyZ); //NO_RCONTROL NO_TAB
+      virtualKeys.add(VK_Z); //NO_RCONTROL NO_TAB
       break;
     case 22:
-      keys.add(PhysicalKeyboardKey.keyX);
+      virtualKeys.add(VK_X);
       break;
     case 23:
-      keys.add(PhysicalKeyboardKey.keyC);
+      virtualKeys.add(VK_C);
       break;
     case 24:
-      keys.add(PhysicalKeyboardKey.keyV);
+      virtualKeys.add(VK_V);
       break;
     case 25:
-      keys.add(PhysicalKeyboardKey.keyB);
+      virtualKeys.add(VK_B);
       break;
     case 26:
-      keys.add(PhysicalKeyboardKey.controlRight); //NO_TAB
-      keys.add(PhysicalKeyboardKey.keyZ);
+      virtualKeys.add(VK_RCONTROL); //NO_TAB
+      virtualKeys.add(VK_Z);
       break;
     case 27:
-      keys.add(PhysicalKeyboardKey.controlRight);
-      keys.add(PhysicalKeyboardKey.keyX);
+      virtualKeys.add(VK_RCONTROL);
+      virtualKeys.add(VK_X);
       break;
     case 28:
-      keys.add(PhysicalKeyboardKey.controlRight);
-      keys.add(PhysicalKeyboardKey.keyC);
+      virtualKeys.add(VK_RCONTROL);
+      virtualKeys.add(VK_C);
       break;
     case 29:
-      keys.add(PhysicalKeyboardKey.controlRight);
-      keys.add(PhysicalKeyboardKey.keyV);
+      virtualKeys.add(VK_RCONTROL);
+      virtualKeys.add(VK_V);
       break;
     case 30:
-      keys.add(PhysicalKeyboardKey.controlRight);
-      keys.add(PhysicalKeyboardKey.keyB);
+      virtualKeys.add(VK_RCONTROL);
+      virtualKeys.add(VK_B);
       break;
     case 31:
-      keys.add(PhysicalKeyboardKey.tab); //NO_RCONTROL
-      keys.add(PhysicalKeyboardKey.keyZ);
+      virtualKeys.add(VK_TAB); //NO_RCONTROL
+      virtualKeys.add(VK_Z);
       break;
     case 32:
-      keys.add(PhysicalKeyboardKey.tab);
-      keys.add(PhysicalKeyboardKey.keyX);
+      virtualKeys.add(VK_TAB);
+      virtualKeys.add(VK_X);
       break;
     case 33:
-      keys.add(PhysicalKeyboardKey.tab);
-      keys.add(PhysicalKeyboardKey.keyC);
+      virtualKeys.add(VK_TAB);
+      virtualKeys.add(VK_C);
       break;
     case 34:
-      keys.add(PhysicalKeyboardKey.tab);
-      keys.add(PhysicalKeyboardKey.keyV);
+      virtualKeys.add(VK_TAB);
+      virtualKeys.add(VK_V);
       break;
     case 35:
-      keys.add(PhysicalKeyboardKey.tab);
-      keys.add(PhysicalKeyboardKey.keyB);
+      virtualKeys.add(VK_TAB);
+      virtualKeys.add(VK_B);
       break;
     case 36:
-      keys.add(PhysicalKeyboardKey.controlRight); //no NO_
-      keys.add(PhysicalKeyboardKey.tab);
-      keys.add(PhysicalKeyboardKey.keyZ);
+      virtualKeys.add(VK_RCONTROL); //no NO_
+      virtualKeys.add(VK_TAB);
+      virtualKeys.add(VK_Z);
       break;
     case 37:
-      keys.add(PhysicalKeyboardKey.controlRight);
-      keys.add(PhysicalKeyboardKey.tab);
-      keys.add(PhysicalKeyboardKey.keyX);
+      virtualKeys.add(VK_RCONTROL);
+      virtualKeys.add(VK_TAB);
+      virtualKeys.add(VK_X);
       break;
     case 38:
-      keys.add(PhysicalKeyboardKey.controlRight);
-      keys.add(PhysicalKeyboardKey.tab);
-      keys.add(PhysicalKeyboardKey.keyC);
+      virtualKeys.add(VK_RCONTROL);
+      virtualKeys.add(VK_TAB);
+      virtualKeys.add(VK_C);
       break;
     case 39:
-      keys.add(PhysicalKeyboardKey.controlRight);
-      keys.add(PhysicalKeyboardKey.tab);
-      keys.add(PhysicalKeyboardKey.keyV);
+      virtualKeys.add(VK_RCONTROL);
+      virtualKeys.add(VK_TAB);
+      virtualKeys.add(VK_V);
       break;
     case 40:
-      keys.add(PhysicalKeyboardKey.controlRight);
-      keys.add(PhysicalKeyboardKey.tab);
-      keys.add(PhysicalKeyboardKey.keyB);
+      virtualKeys.add(VK_RCONTROL);
+      virtualKeys.add(VK_TAB);
+      virtualKeys.add(VK_B);
       break;
     default:
-      keys.add(PhysicalKeyboardKey.escape);
+      virtualKeys.add(VK_ESCAPE);
       break;
   }
 }
