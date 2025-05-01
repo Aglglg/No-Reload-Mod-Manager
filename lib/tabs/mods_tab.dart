@@ -1,13 +1,12 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:carousel_slider/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/keypress_simulator_manager.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/refreshable_image.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
@@ -49,19 +48,21 @@ class _TabModsState extends ConsumerState<TabMods> {
               child: Column(
                 children: [
                   if (ref.watch(modGroupDataProvider).isNotEmpty)
-                    Container(height: 9),
-                  Text(
-                    getTextDragAndDrop(),
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
-                    softWrap: false,
-                    style: GoogleFonts.poppins(
-                      color:
-                          ref.watch(windowIsPinnedProvider)
-                              ? Colors.blue
-                              : const Color.fromARGB(127, 255, 255, 255),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                    IgnorePointer(child: Container(height: 9)),
+                  IgnorePointer(
+                    child: Text(
+                      getTextDragAndDrop(),
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: false,
+                      style: GoogleFonts.poppins(
+                        color:
+                            ref.watch(windowIsPinnedProvider)
+                                ? Colors.blue
+                                : const Color.fromARGB(127, 255, 255, 255),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],
@@ -71,17 +72,13 @@ class _TabModsState extends ConsumerState<TabMods> {
           if (ref.watch(modGroupDataProvider).isNotEmpty)
             Column(
               children: [
-                Container(height: 10),
+                IgnorePointer(child: Container(height: 10)),
                 Center(
                   child: Row(
                     children: [
                       GroupArea(),
 
-                      Container(
-                        width: 49,
-                        height: 200,
-                        color: Colors.transparent,
-                      ),
+                      IgnorePointer(child: SizedBox(width: 49, height: 200)),
 
                       ModArea(
                         currentGroupData:
@@ -149,6 +146,8 @@ class _GroupAreaState extends ConsumerState<GroupArea> {
       groupIcon: oldList[currentPageIndex].groupIcon,
       groupName: _groupNameTextFieldController.text,
       modsInGroup: oldList[currentPageIndex].modsInGroup,
+      previousSelectedModOnGroup:
+          oldList[currentPageIndex].previousSelectedModOnGroup,
     );
 
     // 2. Create a new list with updated item
@@ -159,7 +158,7 @@ class _GroupAreaState extends ConsumerState<GroupArea> {
     ref.read(modGroupDataProvider.notifier).state = newList;
 
     // 4. Write to the groupname file in disk
-    setGroupName(
+    setGroupNameOnDisk(
       ref.read(modGroupDataProvider)[currentPageIndex].groupDir,
       ref.read(modGroupDataProvider)[currentPageIndex].groupName,
     );
@@ -194,6 +193,7 @@ class _GroupAreaState extends ConsumerState<GroupArea> {
                       _carouselSliderGroupController.animateToPage(
                         groupIndex - 1,
                         duration: Duration(milliseconds: 250),
+                        curve: Curves.easeOut,
                       );
                     });
                   }
@@ -232,6 +232,7 @@ class _GroupAreaState extends ConsumerState<GroupArea> {
                             _carouselSliderGroupController.animateToPage(
                               groupIndex - 1,
                               duration: Duration(milliseconds: 250),
+                              curve: Curves.easeOut,
                             );
                           });
                         }
@@ -276,10 +277,35 @@ class _GroupAreaState extends ConsumerState<GroupArea> {
                     if (index == currentPageIndex)
                       PopupMenuItem(
                         height: 37,
-                        onTap: () {
-                          setGroupIcon(
+                        onTap: () async {
+                          await setGroupOrModIcon(
                             ref,
                             ref.read(modGroupDataProvider)[index].groupDir,
+                            fromClipboard: true,
+                            isGroup: true,
+                            modDir: null,
+                          );
+                        },
+                        value: 'Clipboard icon',
+                        child: Text(
+                          'Clipboard icon',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    if (index == currentPageIndex)
+                      PopupMenuItem(
+                        height: 37,
+                        onTap: () {
+                          setGroupOrModIcon(
+                            ref,
+                            ref.read(modGroupDataProvider)[index].groupDir,
+                            fromClipboard: false,
+                            isGroup: true,
+                            modDir: null,
                           );
                         },
                         value: 'Change icon',
@@ -292,26 +318,7 @@ class _GroupAreaState extends ConsumerState<GroupArea> {
                           ),
                         ),
                       ),
-                    if (index == currentPageIndex)
-                      PopupMenuItem(
-                        height: 37,
-                        onTap: () async {
-                          await setGroupIcon(
-                            ref,
-                            ref.read(modGroupDataProvider)[index].groupDir,
-                            fromClipboard: true,
-                          );
-                        },
-                        value: 'Change icon (Clipboard)',
-                        child: Text(
-                          'Change icon (Clipboard)',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
+
                     if (index == currentPageIndex)
                       PopupMenuItem(
                         height: 37,
@@ -380,7 +387,7 @@ class _GroupAreaState extends ConsumerState<GroupArea> {
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),
-                enabledBorder: OutlineInputBorder(
+                disabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(
                     color: Colors.blue,
                     style: BorderStyle.none,
@@ -446,7 +453,7 @@ class _GroupContainerState extends ConsumerState<GroupContainer> {
             width: 3,
             color:
                 isHovering && widget.index == widget.currentIndex
-                    ? Colors.blue
+                    ? Colors.white
                     : const Color.fromARGB(127, 255, 255, 255),
             strokeAlign: BorderSide.strokeAlignInside,
           ),
@@ -491,22 +498,32 @@ class _ModAreaState extends ConsumerState<ModArea> with WindowListener {
     return result;
   }
 
+  void goToSelectedModIndex() {
+    setState(() {
+      _currentModRealIndex = 10000;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        _carouselSliderModController.jumpToPage(
+          _currentModRealIndex,
+          isRealIndex: true,
+        );
+        _carouselSliderModController.animateToPage(
+          widget.currentGroupData.previousSelectedModOnGroup,
+          duration: Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      } catch (e) {}
+    });
+  }
+
   @override
   void initState() {
     windowManager.addListener(this);
     super.initState();
+    goToSelectedModIndex();
     ref.listenManual(currentGroupIndexProvider, (p, n) {
-      setState(() {
-        _currentModRealIndex = 10000;
-      });
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        try {
-          _carouselSliderModController.jumpToPage(
-            _currentModRealIndex,
-            isRealIndex: true,
-          );
-        } catch (e) {}
-      });
+      goToSelectedModIndex();
     });
     onWindowResize();
   }
@@ -552,247 +569,367 @@ class _ModAreaState extends ConsumerState<ModArea> with WindowListener {
                 ),
               ),
           ],
-          child:
-              widget.currentGroupData.modsInGroup.isNotEmpty
-                  ? CarouselSlider.builder(
-                    itemCount: widget.currentGroupData.modsInGroup.length,
-                    carouselController: _carouselSliderModController,
-                    options: CarouselOptions(
-                      animateToClosest: false,
-                      initialPage: 0,
-                      enableInfiniteScroll: true,
-                      scrollDirection: Axis.horizontal,
-                      viewportFraction: getViewportFraction(),
-                      onPageChanged: (index, reason, realIndex) {
-                        setState(() {
-                          _currentModRealIndex = realIndex;
-                        });
-                      },
+          child: CarouselSlider.builder(
+            itemCount: widget.currentGroupData.modsInGroup.length,
+            carouselController: _carouselSliderModController,
+            options: CarouselOptions(
+              animateToClosest: false,
+              initialPage: 0,
+              enableInfiniteScroll: true,
+              scrollDirection: Axis.horizontal,
+              viewportFraction: getViewportFraction(),
+              onPageChanged: (index, reason, realIndex) {
+                setState(() {
+                  _currentModRealIndex = realIndex;
+                });
+              },
+            ),
+            itemBuilder: (context, index, realIndex) {
+              bool isCentered = _currentModRealIndex == realIndex;
+              double itemHeight = isCentered ? 150 * 1.1 : 108 * 1.1;
+              return ModContainer(
+                isSelected:
+                    widget.currentGroupData.previousSelectedModOnGroup == index,
+                index: index,
+                currentGroupData: widget.currentGroupData,
+                itemHeight: itemHeight,
+                isCentered: isCentered,
+                onSelected: () {
+                  simulateKeySelectMod(
+                    ref.read(currentGroupIndexProvider),
+                    index,
+                  );
+                  setSelectedIndex(
+                    ref,
+                    index,
+                    widget.currentGroupData.groupDir,
+                  );
+                },
+                onTap:
+                    () => _carouselSliderModController.animateToPage(
+                      index,
+                      duration: Duration(milliseconds: 250),
+                      curve: Curves.easeOut,
                     ),
-                    itemBuilder: (context, index, realIndex) {
-                      bool isSelected = _currentModRealIndex == realIndex;
-                      double itemHeight = isSelected ? 150 * 1.1 : 108 * 1.1;
-                      return Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          RightClickMenuWrapper(
-                            menuItems: [
-                              PopupMenuItem(
-                                height: 37,
-                                onTap: () {
-                                  _carouselSliderModController.animateToPage(
-                                    index,
-                                    duration: Duration(milliseconds: 200),
-                                    curve: Curves.easeOut,
-                                  );
-                                  print("A");
-                                },
-                                value: 'Select',
-                                child: Text(
-                                  'Select',
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.blue,
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                              if (!ref.watch(windowIsPinnedProvider))
-                                PopupMenuItem(
-                                  height: 37,
-                                  onTap:
-                                      () =>
-                                          ref
-                                              .read(
-                                                windowIsPinnedProvider.notifier,
-                                              )
-                                              .state = true,
-                                  value: 'Add mod',
-                                  child: Text(
-                                    'Add mod',
-                                    style: GoogleFonts.poppins(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              if (index != 0)
-                                PopupMenuItem(
-                                  height: 37,
-                                  onTap: () => print("Rename mod"),
-                                  value: 'Rename',
-                                  child: Text(
-                                    'Rename',
-                                    style: GoogleFonts.poppins(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              if (index != 0)
-                                PopupMenuItem(
-                                  height: 37,
-                                  onTap: () => print("Change icon"),
-                                  value: 'Change icon',
-                                  child: Text(
-                                    'Change icon',
-                                    style: GoogleFonts.poppins(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              if (index != 0)
-                                PopupMenuItem(
-                                  height: 37,
-                                  onTap: () => print("Remove mod"),
-                                  value: 'Remove mod',
-                                  child: Text(
-                                    'Remove mod',
-                                    style: GoogleFonts.poppins(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                            child: GestureDetector(
-                              onDoubleTap:
-                                  isSelected
-                                      ? () {
-                                        _carouselSliderModController
-                                            .animateToPage(
-                                              index,
-                                              duration: Duration(
-                                                milliseconds: 200,
-                                              ),
-                                              curve: Curves.easeOut,
-                                            );
-                                        print("A");
-                                      }
-                                      : null,
-                              onTap:
-                                  () => _carouselSliderModController
-                                      .animateToPage(
-                                        index,
-                                        duration: Duration(milliseconds: 200),
-                                        curve: Curves.easeOut,
-                                      ),
-                              child: AnimatedContainer(
-                                duration: Duration(milliseconds: 300),
-                                curve: Curves.easeOut,
-                                height: itemHeight,
-                                width: 108 * 1.1,
-                                decoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  border: Border.all(
-                                    strokeAlign: BorderSide.strokeAlignInside,
-                                    color: const Color.fromARGB(
-                                      127,
-                                      255,
-                                      255,
-                                      255,
-                                    ),
-                                    width: 3,
-                                  ),
-                                  borderRadius: BorderRadius.circular(17),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(16),
-                                  clipBehavior: Clip.antiAlias,
-                                  child:
-                                      index != 0
-                                          ? RefreshableLocalImage(
-                                            fileImage:
-                                                widget
-                                                    .currentGroupData
-                                                    .modsInGroup[index]
-                                                    .modIcon,
-                                            errorWidget: Icon(
-                                              size: 40,
-                                              Icons.image_outlined,
-                                              color: const Color.fromARGB(
-                                                127,
-                                                255,
-                                                255,
-                                                255,
-                                              ),
-                                            ),
-                                          )
-                                          : Icon(
-                                            size: 45,
-                                            Icons.close,
-                                            color: const Color.fromARGB(
-                                              127,
-                                              255,
-                                              255,
-                                              255,
-                                            ),
-                                          ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Container(height: 3),
-                          SizedBox(
-                            width: 120,
-                            child: Text(
-                              widget
-                                  .currentGroupData
-                                  .modsInGroup[index]
-                                  .modName,
-                              overflow: TextOverflow.fade,
-                              softWrap: false,
-                              maxLines: 1,
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.poppins(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  )
-                  : RightClickMenuWrapper(
-                    menuItems: [
-                      if (!ref.watch(windowIsPinnedProvider))
-                        PopupMenuItem(
-                          height: 37,
-                          onTap:
-                              () =>
-                                  ref
-                                      .read(windowIsPinnedProvider.notifier)
-                                      .state = true,
-                          value: 'Add mod',
-                          child: Text(
-                            'Add mod',
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                    ],
-                    child: Center(
-                      child: Text(
-                        textAlign: TextAlign.center,
-                        "Empty",
-                        style: GoogleFonts.poppins(
-                          color: const Color.fromARGB(127, 255, 255, 255),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ),
+              );
+            },
+          ),
         ),
       ),
+    );
+  }
+}
+
+class ModContainer extends ConsumerStatefulWidget {
+  final int index;
+  final bool isSelected;
+  final ModGroupData currentGroupData;
+  final double itemHeight;
+  final bool isCentered;
+  final void Function() onSelected;
+  final void Function() onTap;
+  const ModContainer({
+    super.key,
+    required this.itemHeight,
+    required this.isCentered,
+    required this.onSelected,
+    required this.onTap,
+    required this.index,
+    required this.isSelected,
+    required this.currentGroupData,
+  });
+
+  @override
+  ConsumerState<ModContainer> createState() => _ModContainerState();
+}
+
+class _ModContainerState extends ConsumerState<ModContainer> {
+  bool isHovering = false;
+  final TextEditingController _modNameTextFieldController =
+      TextEditingController();
+  bool modTextFieldEnabled = false;
+  final FocusNode modTextFieldFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    getModName();
+    ref.listenManual(currentGroupIndexProvider, (previous, next) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        getModName();
+      });
+    });
+  }
+
+  void getModName() {
+    _modNameTextFieldController.text =
+        widget.currentGroupData.modsInGroup[widget.index].modName;
+  }
+
+  Future<void> setCurrentModName() async {
+    final modGroupDatas = ref.read(modGroupDataProvider);
+
+    // Clone the mod list with updated mod name
+    final updatedMods = widget.currentGroupData.modsInGroup;
+    final oldMod = updatedMods[widget.index];
+    updatedMods[widget.index] = ModData(
+      modDir: oldMod.modDir,
+      modIcon: oldMod.modIcon,
+      modName: _modNameTextFieldController.text,
+    );
+
+    // Clone the ModGroupData with updated mod list
+    final updatedGroup = ModGroupData(
+      groupDir: widget.currentGroupData.groupDir,
+      groupIcon: widget.currentGroupData.groupIcon,
+      groupName: widget.currentGroupData.groupName,
+      modsInGroup: updatedMods,
+      previousSelectedModOnGroup:
+          widget.currentGroupData.previousSelectedModOnGroup,
+    );
+
+    // Update the full list
+    final updatedGroups = List<ModGroupData>.from(modGroupDatas);
+    updatedGroups[ref.read(currentGroupIndexProvider)] = updatedGroup;
+
+    // Save to provider
+    ref.read(modGroupDataProvider.notifier).state = updatedGroups;
+
+    await setModNameOnDisk(oldMod.modDir, _modNameTextFieldController.text);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        RightClickMenuWrapper(
+          menuItems: [
+            PopupMenuItem(
+              height: 37,
+              onTap: widget.onSelected,
+              value: 'Select',
+              child: Text(
+                'Select',
+                style: GoogleFonts.poppins(
+                  color: Colors.blue,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+            if (!ref.watch(windowIsPinnedProvider))
+              PopupMenuItem(
+                height: 37,
+                onTap:
+                    () =>
+                        ref.read(windowIsPinnedProvider.notifier).state = true,
+                value: 'Add mod',
+                child: Text(
+                  'Add mod',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            if (widget.index != 0)
+              PopupMenuItem(
+                height: 37,
+                onTap: () {
+                  setState(() {
+                    modTextFieldEnabled = true;
+                  });
+                  _modNameTextFieldController.selection = TextSelection(
+                    baseOffset: 0,
+                    extentOffset: _modNameTextFieldController.text.length,
+                  );
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    modTextFieldFocusNode.requestFocus();
+                  });
+                },
+                value: 'Rename',
+                child: Text(
+                  'Rename',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+
+            if (widget.index != 0)
+              PopupMenuItem(
+                height: 37,
+                onTap: () async {
+                  await setGroupOrModIcon(
+                    ref,
+                    widget.currentGroupData.groupDir,
+                    fromClipboard: true,
+                    isGroup: false,
+                    modDir:
+                        widget
+                            .currentGroupData
+                            .modsInGroup[widget.index]
+                            .modDir,
+                  );
+                },
+                value: 'Clipboard icon',
+                child: Text(
+                  'Clipboard icon',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            if (widget.index != 0)
+              PopupMenuItem(
+                height: 37,
+                onTap: () async {
+                  await setGroupOrModIcon(
+                    ref,
+                    widget.currentGroupData.groupDir,
+                    fromClipboard: false,
+                    isGroup: false,
+                    modDir:
+                        widget
+                            .currentGroupData
+                            .modsInGroup[widget.index]
+                            .modDir,
+                  );
+                },
+                value: 'Change icon',
+                child: Text(
+                  'Change icon',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+
+            if (widget.index != 0)
+              PopupMenuItem(
+                height: 37,
+                onTap: () => print("Remove mod"),
+                value: 'Remove mod',
+                child: Text(
+                  'Remove mod',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+          ],
+          child: GestureDetector(
+            onDoubleTap: widget.isCentered ? widget.onSelected : null,
+            onTap: widget.onTap,
+            child: MouseRegion(
+              onEnter:
+                  (_) => setState(() {
+                    isHovering = true;
+                  }),
+              onExit:
+                  (_) => setState(() {
+                    isHovering = false;
+                  }),
+              child: AnimatedContainer(
+                duration: Duration(milliseconds: 250),
+                curve: Curves.easeOut,
+                height: widget.itemHeight,
+                width: 108 * 1.1,
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  border: Border.all(
+                    strokeAlign: BorderSide.strokeAlignInside,
+                    color:
+                        widget.isSelected
+                            ? Colors.blue
+                            : isHovering
+                            ? Colors.white
+                            : const Color.fromARGB(127, 255, 255, 255),
+                    width: 3,
+                  ),
+                  borderRadius: BorderRadius.circular(17),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  clipBehavior: Clip.antiAlias,
+                  child:
+                      widget.index != 0
+                          ? RefreshableLocalImage(
+                            fileImage:
+                                widget
+                                    .currentGroupData
+                                    .modsInGroup[widget.index]
+                                    .modIcon,
+                            errorWidget: Icon(
+                              size: 40,
+                              Icons.image_outlined,
+                              color: const Color.fromARGB(127, 255, 255, 255),
+                            ),
+                          )
+                          : Icon(
+                            size: 45,
+                            Icons.close,
+                            color: const Color.fromARGB(127, 255, 255, 255),
+                          ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Container(height: 3),
+        SizedBox(
+          width: 120,
+          child: TextField(
+            focusNode: modTextFieldFocusNode,
+            enabled: modTextFieldEnabled,
+            cursorColor: Colors.blue,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(color: Colors.white, fontSize: 12),
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding: EdgeInsets.all(0),
+              hintText: "Mod Name",
+              hintStyle: GoogleFonts.poppins(
+                color: const Color.fromARGB(90, 255, 255, 255),
+                fontSize: 12,
+              ),
+              disabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                  color: Colors.blue,
+                  style: BorderStyle.none,
+                ),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.blue),
+              ),
+            ),
+            onEditingComplete: () {
+              setState(() {
+                modTextFieldEnabled = false;
+              });
+              setCurrentModName();
+            },
+            onTapOutside: (v) {
+              setState(() {
+                modTextFieldEnabled = false;
+              });
+              setCurrentModName();
+            },
+
+            controller: _modNameTextFieldController,
+          ),
+        ),
+      ],
     );
   }
 }

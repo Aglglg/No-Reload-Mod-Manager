@@ -13,6 +13,10 @@ import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:path/path.dart' as p;
 
+bool _hasIndex(int index, int listLength) {
+  return index >= 0 && index < listLength;
+}
+
 Future<void> triggerRefresh(WidgetRef ref) async {
   TargetGame currentTargetGame = ref.read(targetGameProvider);
   ref.read(targetGameProvider.notifier).state = TargetGame.none;
@@ -25,11 +29,16 @@ Future<List<ModGroupData>> refreshModData(Directory managedDir) async {
 
   List<ModGroupData> results = await Future.wait(
     validGroupFolders.map((groupDir) async {
+      List<ModData> modsInGroup = await getModsOnGroup(groupDir);
       return ModGroupData(
         groupDir: groupDir,
         groupIcon: getModOrGroupIcon(groupDir),
         groupName: await getGroupName(groupDir),
-        modsInGroup: await getModsOnGroup(groupDir),
+        modsInGroup: modsInGroup,
+        previousSelectedModOnGroup: await getSelectedModInGroup(
+          groupDir,
+          modsInGroup.length,
+        ),
       );
     }),
   );
@@ -108,6 +117,7 @@ void _addGroupToRiverpod(WidgetRef ref, Directory groupDir, int index) {
     modsInGroup: [
       ModData(modDir: Directory(""), modIcon: null, modName: "None"),
     ],
+    previousSelectedModOnGroup: 0,
   );
 
   // Add the new group at the specified index
@@ -139,11 +149,47 @@ Future<String> getGroupName(Directory groupDir) async {
   }
 }
 
-Future<void> setGroupName(Directory groupDir, String groupName) async {
+Future<int> getSelectedModInGroup(
+  Directory groupDir,
+  int modsInGroupLenght,
+) async {
+  try {
+    final fileSelectedIndex = File(p.join(groupDir.path, 'selectedindex'));
+
+    if (await fileSelectedIndex.exists()) {
+      int? result = int.tryParse(await fileSelectedIndex.readAsString());
+      if (result != null) {
+        if (_hasIndex(result, modsInGroupLenght)) {
+          return result;
+        } else {
+          return 0;
+        }
+      } else {
+        return 0;
+      }
+    } else {
+      await fileSelectedIndex.writeAsString("0");
+
+      return 0;
+    }
+  } catch (e) {
+    return 0;
+  }
+}
+
+Future<void> setGroupNameOnDisk(Directory groupDir, String groupName) async {
   try {
     final fileGroupName = File(p.join(groupDir.path, 'groupname'));
 
     await fileGroupName.writeAsString(groupName);
+  } catch (e) {}
+}
+
+Future<void> setModNameOnDisk(Directory modDir, String modName) async {
+  try {
+    final fileGroupName = File(p.join(modDir.path, 'modname'));
+
+    await fileGroupName.writeAsString(modName);
   } catch (e) {}
 }
 
@@ -162,10 +208,12 @@ ImageProvider? getModOrGroupIcon(Directory groupDir) {
   }
 }
 
-Future<void> setGroupIcon(
+Future<void> setGroupOrModIcon(
   WidgetRef ref,
   Directory groupDir, {
   bool fromClipboard = false,
+  bool isGroup = true,
+  Directory? modDir,
 }) async {
   ImageRefreshListener.notifyListeners();
   if (fromClipboard == false) {
@@ -177,23 +225,40 @@ Future<void> setGroupIcon(
       type: FileType.image,
     );
     if (pickResult != null) {
-      try {
-        File sourceFile = File(pickResult.files[0].path!);
-        String targetDest = p.join(groupDir.path, "icon.png");
-        await sourceFile.copy(targetDest);
-      } catch (e) {}
-      FileImage imgResult = FileImage(File(pickResult.files[0].path!));
-      _updateGroupIconProvider(ref, groupDir, imgResult);
+      if (isGroup) {
+        FileImage imgResult = FileImage(File(pickResult.files[0].path!));
+        _updateGroupIconProvider(ref, groupDir, imgResult);
+        try {
+          File sourceFile = File(pickResult.files[0].path!);
+          String targetDest = p.join(groupDir.path, "icon.png");
+          await sourceFile.copy(targetDest);
+        } catch (e) {}
+      } else if (modDir != null) {
+        FileImage imgResult = FileImage(File(pickResult.files[0].path!));
+        _updateModIconProvider(ref, groupDir, modDir, imgResult);
+        try {
+          File sourceFile = File(pickResult.files[0].path!);
+          String targetDest = p.join(modDir.path, "icon.png");
+          await sourceFile.copy(targetDest);
+        } catch (e) {}
+      }
     }
     ref.read(windowIsPinnedProvider.notifier).state = windowWasPinned;
   } else {
     try {
       final imgBytes = await Pasteboard.image;
       if (imgBytes != null) {
-        _updateGroupIconProvider(ref, groupDir, MemoryImage(imgBytes));
-        await File(
-          p.join(groupDir.path, "icon.png"),
-        ).writeAsBytes(imgBytes.toList());
+        if (isGroup) {
+          _updateGroupIconProvider(ref, groupDir, MemoryImage(imgBytes));
+          await File(
+            p.join(groupDir.path, "icon.png"),
+          ).writeAsBytes(imgBytes.toList());
+        } else if (modDir != null) {
+          _updateModIconProvider(ref, groupDir, modDir, MemoryImage(imgBytes));
+          await File(
+            p.join(modDir.path, "icon.png"),
+          ).writeAsBytes(imgBytes.toList());
+        }
       }
     } catch (e) {}
   }
@@ -214,6 +279,7 @@ void _updateGroupIconProvider(
             groupIcon: newIcon,
             groupName: group.groupName,
             modsInGroup: group.modsInGroup,
+            previousSelectedModOnGroup: group.previousSelectedModOnGroup,
           );
         }
         return group;
@@ -250,6 +316,7 @@ void _updateModIconProvider(
             groupIcon: group.groupIcon,
             groupName: group.groupName,
             modsInGroup: updatedMods,
+            previousSelectedModOnGroup: group.previousSelectedModOnGroup,
           );
         }
         return group;
@@ -309,6 +376,35 @@ Future<String> getModName(Directory modDir) async {
     final folderName = p.basename(modDir.path);
     return folderName;
   }
+}
+
+Future<void> setSelectedIndex(
+  WidgetRef ref,
+  int index,
+  Directory groupDir,
+) async {
+  final currentGroups = ref.read(modGroupDataProvider);
+
+  final updatedGroups =
+      currentGroups.map((group) {
+        if (group.groupDir.path == groupDir.path) {
+          return ModGroupData(
+            groupDir: group.groupDir,
+            groupIcon: group.groupIcon,
+            groupName: group.groupName,
+            modsInGroup: group.modsInGroup,
+            previousSelectedModOnGroup: index,
+          );
+        }
+        return group;
+      }).toList();
+
+  ref.read(modGroupDataProvider.notifier).state = updatedGroups;
+
+  try {
+    final fileSelectedIndex = File(p.join(groupDir.path, 'selectedindex'));
+    await fileSelectedIndex.writeAsString(index.toString());
+  } catch (e) {}
 }
 
 /////////////////////////////////////////////////////////////////////////////

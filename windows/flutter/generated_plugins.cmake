@@ -6,6 +6,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   bitsdojo_window_windows
   desktop_drop
   hotkey_manager_windows
+  keypress_simulator_windows
   pasteboard
   screen_retriever_windows
   system_tray

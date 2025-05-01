@@ -168,7 +168,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
       contents.add(
         TextSpan(
           text: "${p.basename(folder.path)}\n",
-          style: GoogleFonts.poppins(color: Colors.black, fontSize: 14),
+          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
         ),
       );
     }
@@ -176,7 +176,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
       contents.add(
         TextSpan(
           text: "None\n",
-          style: GoogleFonts.poppins(color: Colors.black, fontSize: 14),
+          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
         ),
       );
     }
@@ -198,7 +198,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
       contents.add(
         TextSpan(
           text: "${p.basename(folder.path)}\n",
-          style: GoogleFonts.poppins(color: Colors.black, fontSize: 14),
+          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
         ),
       );
     }
@@ -232,7 +232,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
       contents.add(
         TextSpan(
           text: "${p.basename(folder.path)}\n",
-          style: GoogleFonts.poppins(color: Colors.black, fontSize: 14),
+          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
         ),
       );
     }

@@ -7,12 +7,14 @@ class ModGroupData {
   final ImageProvider? groupIcon;
   final String groupName;
   final List<ModData> modsInGroup;
+  final int previousSelectedModOnGroup;
 
   ModGroupData({
     required this.groupDir,
     required this.groupIcon,
     required this.groupName,
     required this.modsInGroup,
+    required this.previousSelectedModOnGroup,
   });
 }
 
