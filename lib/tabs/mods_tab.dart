@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
+import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/keypress_simulator_manager.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
@@ -594,7 +595,8 @@ class _ModAreaState extends ConsumerState<ModArea> with WindowListener {
                 currentGroupData: widget.currentGroupData,
                 itemHeight: itemHeight,
                 isCentered: isCentered,
-                onSelected: () {
+                onSelected: () async {
+                  await gamepadTest();
                   simulateKeySelectMod(
                     ref.read(currentGroupIndexProvider),
                     index,

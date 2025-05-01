@@ -20,11 +20,12 @@ import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:system_tray/system_tray.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:win32_gamepad/win32_gamepad.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:animated_segmented_tab_control/animated_segmented_tab_control.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 
-import 'package:no_reload_mod_manager/utils/xinput_poller.dart';
+import 'package:no_reload_mod_manager/utils/gamepad_poller.dart';
 
 import 'package:flutter/material.dart';
 
@@ -33,6 +34,19 @@ void main() async {
   SharedPrefUtils().init();
   await setupWindow();
   runApp(ProviderScope(child: MyApp()));
+}
+
+Future<void> gamepadTest() async {
+  while (true) {
+    final gamepad = Gamepad(0);
+    gamepad.updateState();
+    if (gamepad.isConnected) {
+      // gamepad.vibrate(leftMotorSpeed: 32767, rightMotorSpeed: 32767);
+      await Future.delayed(Duration(milliseconds: 1000));
+      // gamepad.vibrate(leftMotorSpeed: 0, rightMotorSpeed: 0);
+      print(gamepad.state.buttonX && gamepad.state.leftThumb);
+    }
+  }
 }
 
 Future<void> setupWindow() async {
@@ -248,7 +262,7 @@ class MainView extends ConsumerStatefulWidget {
 
 class _MainViewState extends ConsumerState<MainView>
     with WindowListener, SingleTickerProviderStateMixin {
-  final _xInput = XInputComboDetector();
+  final _xInput = GamepadPoller();
 
   late TabController _tabController;
   final List<SegmentTab> _tabs = [
@@ -380,6 +394,7 @@ class _MainViewState extends ConsumerState<MainView>
   @override
   void initState() {
     super.initState();
+
     ref.listenManual(targetGameProvider, (previous, next) {
       checkIsModsPathValidAndReady();
     });
