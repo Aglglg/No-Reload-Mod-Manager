@@ -25,11 +25,11 @@ class _TabModsState extends ConsumerState<TabMods> {
   String getTextDragAndDrop() {
     String text = '';
     if (ref.watch(modGroupDataProvider).isEmpty) {
-      text = "Right-click and add group then you can add mods.";
+      text = "Right-click and add group, then you can add mods.";
     } else {
       if (ref.watch(windowIsPinnedProvider)) {
         text =
-            'Drag & Drop mod folders here to add to this group (1 folder = 1 mod).';
+            'Drag & Drop mod folders here to add mods to this group (1 folder = 1 mod).';
       }
     }
     return text;
