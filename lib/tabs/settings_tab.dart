@@ -264,7 +264,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                 isExpanded: true,
                                 value: ref.watch(hotkeyKeyboardProvider),
                                 borderRadius: BorderRadius.circular(20),
-                                dropdownColor: const Color(0xFF535356),
+                                dropdownColor: const Color(0xFF2B2930),
                                 underline: SizedBox(),
                                 items: [
                                   DropdownMenuItem(
@@ -353,7 +353,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                 isExpanded: true,
                                 value: ref.watch(hotkeyGamepadProvider),
                                 borderRadius: BorderRadius.circular(20),
-                                dropdownColor: const Color(0xFF535356),
+                                dropdownColor: const Color(0xFF2B2930),
 
                                 underline: SizedBox(),
                                 items: [
