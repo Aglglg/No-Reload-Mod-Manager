@@ -1,8 +1,10 @@
 import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/get_cloud_data.dart';
 import 'package:no_reload_mod_manager/utils/hotkey_handler.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
+import 'package:no_reload_mod_manager/utils/mod_navigator.dart';
 import 'package:no_reload_mod_manager/utils/mods_dropzone.dart';
 import 'package:no_reload_mod_manager/utils/refreshable_image.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
@@ -82,10 +84,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Background(),
-      theme: ThemeData.dark(),
+    return KeyboardListener(
+      onKeyEvent: (value) {
+        if (value is KeyUpEvent) {
+        } else {
+          ModNavigationListener.notifyListeners(value);
+        }
+      },
+      focusNode: FocusNode(),
+      autofocus: true,
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Background(),
+        theme: ThemeData.dark(),
+      ),
     );
   }
 }

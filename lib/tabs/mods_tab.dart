@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
@@ -9,6 +10,7 @@ import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/keypress_simulator_manager.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
+import 'package:no_reload_mod_manager/utils/mod_navigator.dart';
 import 'package:no_reload_mod_manager/utils/refreshable_image.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
@@ -105,7 +107,8 @@ class GroupArea extends ConsumerStatefulWidget {
   ConsumerState<GroupArea> createState() => _GroupAreaState();
 }
 
-class _GroupAreaState extends ConsumerState<GroupArea> {
+class _GroupAreaState extends ConsumerState<GroupArea>
+    with ModNavigationListener {
   final CarouselSliderController _carouselSliderGroupController =
       CarouselSliderController();
   final TextEditingController _groupNameTextFieldController =
@@ -120,6 +123,13 @@ class _GroupAreaState extends ConsumerState<GroupArea> {
   void initState() {
     super.initState();
     getCurrentGroupName(initialPage, calledFromInitState: true);
+    ModNavigationListener.addListener(this);
+  }
+
+  @override
+  void dispose() {
+    ModNavigationListener.removeListener(this);
+    super.dispose();
   }
 
   void getCurrentGroupName(int index, {bool calledFromInitState = false}) {
@@ -418,6 +428,21 @@ class _GroupAreaState extends ConsumerState<GroupArea> {
       ],
     );
   }
+
+  @override
+  void onKeyEvent(KeyEvent value) {
+    if (value.physicalKey == PhysicalKeyboardKey.keyS) {
+      _carouselSliderGroupController.nextPage(
+        duration: Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+      );
+    } else if (value.physicalKey == PhysicalKeyboardKey.keyW) {
+      _carouselSliderGroupController.previousPage(
+        duration: Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+      );
+    }
+  }
 }
 
 class GroupContainer extends ConsumerStatefulWidget {
@@ -484,7 +509,8 @@ class ModArea extends ConsumerStatefulWidget {
   ConsumerState<ModArea> createState() => _ModAreaState();
 }
 
-class _ModAreaState extends ConsumerState<ModArea> with WindowListener {
+class _ModAreaState extends ConsumerState<ModArea>
+    with WindowListener, ModNavigationListener {
   final CarouselSliderController _carouselSliderModController =
       CarouselSliderController();
   double windowWidth = 0;
@@ -527,11 +553,13 @@ class _ModAreaState extends ConsumerState<ModArea> with WindowListener {
       goToSelectedModIndex();
     });
     onWindowResize();
+    ModNavigationListener.addListener(this);
   }
 
   @override
   void dispose() {
     windowManager.removeListener(this);
+    ModNavigationListener.removeListener(this);
     super.dispose();
   }
 
@@ -596,7 +624,7 @@ class _ModAreaState extends ConsumerState<ModArea> with WindowListener {
                 itemHeight: itemHeight,
                 isCentered: isCentered,
                 onSelected: () async {
-                  await gamepadTest();
+                  // await gamepadTest();
                   simulateKeySelectMod(
                     ref.read(currentGroupIndexProvider),
                     index,
@@ -619,6 +647,21 @@ class _ModAreaState extends ConsumerState<ModArea> with WindowListener {
         ),
       ),
     );
+  }
+
+  @override
+  void onKeyEvent(KeyEvent value) {
+    if (value.physicalKey == PhysicalKeyboardKey.keyA) {
+      _carouselSliderModController.previousPage(
+        duration: Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+      );
+    } else if (value.physicalKey == PhysicalKeyboardKey.keyD) {
+      _carouselSliderModController.nextPage(
+        duration: Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+      );
+    }
   }
 }
 
@@ -645,7 +688,8 @@ class ModContainer extends ConsumerStatefulWidget {
   ConsumerState<ModContainer> createState() => _ModContainerState();
 }
 
-class _ModContainerState extends ConsumerState<ModContainer> {
+class _ModContainerState extends ConsumerState<ModContainer>
+    with ModNavigationListener {
   bool isHovering = false;
   final TextEditingController _modNameTextFieldController =
       TextEditingController();
@@ -661,6 +705,13 @@ class _ModContainerState extends ConsumerState<ModContainer> {
         getModName();
       });
     });
+    ModNavigationListener.addListener(this);
+  }
+
+  @override
+  void dispose() {
+    ModNavigationListener.removeListener(this);
+    super.dispose();
   }
 
   void getModName() {
@@ -933,6 +984,15 @@ class _ModContainerState extends ConsumerState<ModContainer> {
         ),
       ],
     );
+  }
+
+  @override
+  void onKeyEvent(KeyEvent value) {
+    if (value.physicalKey == PhysicalKeyboardKey.keyF) {
+      if (widget.isCentered) {
+        widget.onSelected();
+      }
+    }
   }
 }
 
