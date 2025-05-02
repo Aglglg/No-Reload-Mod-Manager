@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:no_reload_mod_manager/data/mod_data.dart';
 
 class RefreshableLocalImage extends ConsumerStatefulWidget {
-  final ImageProvider? fileImage;
+  final Image? imageWidget;
   final Widget errorWidget;
 
   const RefreshableLocalImage({
-    required this.fileImage,
+    required this.imageWidget,
     required this.errorWidget,
     super.key,
   });
@@ -16,58 +17,38 @@ class RefreshableLocalImage extends ConsumerStatefulWidget {
       _RefreshableLocalImageState();
 }
 
-class _RefreshableLocalImageState extends ConsumerState<RefreshableLocalImage>
-    with ImageRefreshListener {
+class _RefreshableLocalImageState extends ConsumerState<RefreshableLocalImage> {
   @override
   void initState() {
     super.initState();
-    ImageRefreshListener.addListener(this);
   }
 
   @override
   void dispose() {
-    ImageRefreshListener.removeListener(this);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.fileImage != null) {
-      return Image(
-        image: widget.fileImage!,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => widget.errorWidget,
-      );
+    if (widget.imageWidget != null) {
+      return widget.imageWidget!;
     } else {
       return widget.errorWidget;
     }
   }
-
-  @override
-  void onRefresh() {
-    widget.fileImage?.evict();
-  }
 }
 
-abstract mixin class ImageRefreshListener {
-  void onRefresh();
-  // Keep track of all listeners
-  static final List<ImageRefreshListener> _listeners = [];
-
-  // Add a listener
-  static void addListener(ImageRefreshListener listener) {
-    _listeners.add(listener);
-  }
-
-  // Remove a listener
-  static void removeListener(ImageRefreshListener listener) {
-    _listeners.remove(listener);
-  }
-
-  // Notify all listeners
-  static void notifyListeners() {
-    for (final listener in _listeners) {
-      listener.onRefresh();
+class ImageRefreshListener {
+  static void refreshImages(List<ModGroupData> modGroupDatas) {
+    for (final groupData in modGroupDatas) {
+      if (groupData.groupIcon != null) {
+        groupData.groupIcon!.image.evict();
+      }
+      for (var modData in groupData.modsInGroup) {
+        if (modData.modIcon != null) {
+          modData.modIcon!.image.evict();
+        }
+      }
     }
   }
 }

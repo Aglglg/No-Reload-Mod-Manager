@@ -200,7 +200,6 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                   if (groupIndex != null) {
                     getCurrentGroupName(groupIndex - 1);
                     WidgetsBinding.instance.addPostFrameCallback((_) {
-                      ImageRefreshListener.notifyListeners();
                       _carouselSliderGroupController.animateToPage(
                         groupIndex - 1,
                         duration: Duration(milliseconds: 250),
@@ -239,7 +238,6 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                         if (groupIndex != null) {
                           getCurrentGroupName(groupIndex - 1);
                           WidgetsBinding.instance.addPostFrameCallback((_) {
-                            ImageRefreshListener.notifyListeners();
                             _carouselSliderGroupController.animateToPage(
                               groupIndex - 1,
                               duration: Duration(milliseconds: 250),
@@ -292,6 +290,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                           await setGroupOrModIcon(
                             ref,
                             ref.read(modGroupDataProvider)[index].groupDir,
+                            ref.read(modGroupDataProvider)[index].groupIcon,
                             fromClipboard: true,
                             isGroup: true,
                             modDir: null,
@@ -314,6 +313,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                           setGroupOrModIcon(
                             ref,
                             ref.read(modGroupDataProvider)[index].groupDir,
+                            ref.read(modGroupDataProvider)[index].groupIcon,
                             fromClipboard: false,
                             isGroup: true,
                             modDir: null,
@@ -488,7 +488,8 @@ class _GroupContainerState extends ConsumerState<GroupContainer> {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(999),
           child: RefreshableLocalImage(
-            fileImage: ref.watch(modGroupDataProvider)[widget.index].groupIcon,
+            imageWidget:
+                ref.watch(modGroupDataProvider)[widget.index].groupIcon,
             errorWidget: Icon(
               size: 35,
               Icons.image_outlined,
@@ -820,6 +821,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                   await setGroupOrModIcon(
                     ref,
                     widget.currentGroupData.groupDir,
+                    widget.currentGroupData.modsInGroup[widget.index].modIcon,
                     fromClipboard: true,
                     isGroup: false,
                     modDir:
@@ -846,6 +848,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                   await setGroupOrModIcon(
                     ref,
                     widget.currentGroupData.groupDir,
+                    widget.currentGroupData.modsInGroup[widget.index].modIcon,
                     fromClipboard: false,
                     isGroup: false,
                     modDir:
@@ -918,7 +921,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                   child:
                       widget.index != 0
                           ? RefreshableLocalImage(
-                            fileImage:
+                            imageWidget:
                                 widget
                                     .currentGroupData
                                     .modsInGroup[widget.index]

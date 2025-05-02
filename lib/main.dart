@@ -585,7 +585,7 @@ class _MainViewState extends ConsumerState<MainView>
   }
 
   Future<void> checkIsModsPathValidAndReady() async {
-    ImageRefreshListener.notifyListeners();
+    ImageRefreshListener.refreshImages(ref.read(modGroupDataProvider));
 
     setState(() {
       _views[1] = TabModsLoading();

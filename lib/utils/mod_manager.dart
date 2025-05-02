@@ -193,12 +193,23 @@ Future<void> setModNameOnDisk(Directory modDir, String modName) async {
   } catch (e) {}
 }
 
-ImageProvider? getModOrGroupIcon(Directory groupDir) {
+Image? getModOrGroupIcon(Directory groupDir) {
   final file = File(p.join(groupDir.path, "icon.png"));
 
   if (file.existsSync()) {
     try {
-      return FileImage(file);
+      return Image.file(
+        file,
+        cacheWidth: 108 * 2,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Icon(
+            size: 35,
+            Icons.image_outlined,
+            color: const Color.fromARGB(127, 255, 255, 255),
+          );
+        },
+      );
     } catch (e) {
       // fallback in case FileImage fails
       return null;
@@ -210,12 +221,13 @@ ImageProvider? getModOrGroupIcon(Directory groupDir) {
 
 Future<void> setGroupOrModIcon(
   WidgetRef ref,
-  Directory groupDir, {
+  Directory groupDir,
+  Image? oldImage, {
   bool fromClipboard = false,
   bool isGroup = true,
   Directory? modDir,
 }) async {
-  ImageRefreshListener.notifyListeners();
+  oldImage?.image.evict();
   if (fromClipboard == false) {
     bool windowWasPinned = ref.read(windowIsPinnedProvider);
     ref.read(windowIsPinnedProvider.notifier).state = true;
@@ -226,7 +238,17 @@ Future<void> setGroupOrModIcon(
     );
     if (pickResult != null) {
       if (isGroup) {
-        FileImage imgResult = FileImage(File(pickResult.files[0].path!));
+        Image imgResult = Image.file(
+          File(pickResult.files[0].path!),
+          cacheWidth: 108 * 2,
+          fit: BoxFit.cover,
+          errorBuilder:
+              (context, error, stackTrace) => Icon(
+                size: 35,
+                Icons.image_outlined,
+                color: const Color.fromARGB(127, 255, 255, 255),
+              ),
+        );
         _updateGroupIconProvider(ref, groupDir, imgResult);
         try {
           File sourceFile = File(pickResult.files[0].path!);
@@ -234,7 +256,17 @@ Future<void> setGroupOrModIcon(
           await sourceFile.copy(targetDest);
         } catch (e) {}
       } else if (modDir != null) {
-        FileImage imgResult = FileImage(File(pickResult.files[0].path!));
+        Image imgResult = Image.file(
+          File(pickResult.files[0].path!),
+          cacheWidth: 108 * 2,
+          fit: BoxFit.cover,
+          errorBuilder:
+              (context, error, stackTrace) => Icon(
+                size: 35,
+                Icons.image_outlined,
+                color: const Color.fromARGB(127, 255, 255, 255),
+              ),
+        );
         _updateModIconProvider(ref, groupDir, modDir, imgResult);
         try {
           File sourceFile = File(pickResult.files[0].path!);
@@ -249,12 +281,34 @@ Future<void> setGroupOrModIcon(
       final imgBytes = await Pasteboard.image;
       if (imgBytes != null) {
         if (isGroup) {
-          _updateGroupIconProvider(ref, groupDir, MemoryImage(imgBytes));
+          Image img = Image.memory(
+            imgBytes,
+            cacheWidth: 108 * 2,
+            fit: BoxFit.cover,
+            errorBuilder:
+                (context, error, stackTrace) => Icon(
+                  size: 35,
+                  Icons.image_outlined,
+                  color: const Color.fromARGB(127, 255, 255, 255),
+                ),
+          );
+          _updateGroupIconProvider(ref, groupDir, img);
           await File(
             p.join(groupDir.path, "icon.png"),
           ).writeAsBytes(imgBytes.toList());
         } else if (modDir != null) {
-          _updateModIconProvider(ref, groupDir, modDir, MemoryImage(imgBytes));
+          Image img = Image.memory(
+            imgBytes,
+            cacheWidth: 108 * 2,
+            fit: BoxFit.cover,
+            errorBuilder:
+                (context, error, stackTrace) => Icon(
+                  size: 35,
+                  Icons.image_outlined,
+                  color: const Color.fromARGB(127, 255, 255, 255),
+                ),
+          );
+          _updateModIconProvider(ref, groupDir, modDir, img);
           await File(
             p.join(modDir.path, "icon.png"),
           ).writeAsBytes(imgBytes.toList());
@@ -267,7 +321,7 @@ Future<void> setGroupOrModIcon(
 void _updateGroupIconProvider(
   WidgetRef ref,
   Directory groupDir,
-  ImageProvider newIcon,
+  Image newIcon,
 ) {
   final currentGroups = ref.read(modGroupDataProvider);
 
@@ -292,7 +346,7 @@ void _updateModIconProvider(
   WidgetRef ref,
   Directory groupDir,
   Directory modDir,
-  ImageProvider newIcon,
+  Image newIcon,
 ) {
   final currentGroups = ref.read(modGroupDataProvider);
 

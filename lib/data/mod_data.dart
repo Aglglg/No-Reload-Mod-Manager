@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 
 class ModGroupData {
   final Directory groupDir;
-  final ImageProvider? groupIcon;
+  final Image? groupIcon;
   final String groupName;
   final List<ModData> modsInGroup;
   final int previousSelectedModOnGroup;
@@ -20,7 +20,7 @@ class ModGroupData {
 
 class ModData {
   final Directory modDir;
-  final ImageProvider? modIcon;
+  final Image? modIcon;
   final String modName;
 
   ModData({required this.modDir, required this.modIcon, required this.modName});
