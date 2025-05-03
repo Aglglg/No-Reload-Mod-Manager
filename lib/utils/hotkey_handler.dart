@@ -1,7 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
-import 'package:no_reload_mod_manager/utils/gamepad_poller.dart';
 
 void hotkeyKeyboardChanged(
   HotkeyKeyboard? prevHotkey,
@@ -12,15 +11,6 @@ void hotkeyKeyboardChanged(
   if (prevHotkey != null) {
     unregisterHotkeyKeyboard(prevHotkey);
   }
-}
-
-void hotkeyGamepadChanged(
-  GamepadPoller gamepadPoller,
-  HotkeyGamepad currentHotkey,
-  Future<void> Function() onHotkeyTrigerred,
-) {
-  gamepadPoller.unregister();
-  gamepadPoller.register(currentHotkey, onHotkeyTrigerred);
 }
 
 Future<void> registerHotkeyKeyboard(

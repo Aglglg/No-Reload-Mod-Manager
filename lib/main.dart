@@ -22,33 +22,18 @@ import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:system_tray/system_tray.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:win32_gamepad/win32_gamepad.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:animated_segmented_tab_control/animated_segmented_tab_control.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 
-import 'package:no_reload_mod_manager/utils/gamepad_poller.dart';
-
 import 'package:flutter/material.dart';
+import 'package:xinput_gamepad/xinput_gamepad.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SharedPrefUtils().init();
   await setupWindow();
   runApp(ProviderScope(child: MyApp()));
-}
-
-Future<void> gamepadTest() async {
-  while (true) {
-    final gamepad = Gamepad(0);
-    gamepad.updateState();
-    if (gamepad.isConnected) {
-      // gamepad.vibrate(leftMotorSpeed: 32767, rightMotorSpeed: 32767);
-      await Future.delayed(Duration(milliseconds: 1000));
-      // gamepad.vibrate(leftMotorSpeed: 0, rightMotorSpeed: 0);
-      print(gamepad.state.buttonX && gamepad.state.leftThumb);
-    }
-  }
 }
 
 Future<void> setupWindow() async {
@@ -79,16 +64,16 @@ Future<void> setupWindow() async {
   });
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return KeyboardListener(
       onKeyEvent: (value) {
         if (value is KeyUpEvent) {
         } else {
-          ModNavigationListener.notifyListeners(value);
+          ModNavigationListener.notifyListeners(value, null);
         }
       },
       focusNode: FocusNode(),
@@ -134,7 +119,9 @@ class Background extends ConsumerWidget {
               children: [
                 if (ref.watch(windowIsPinnedProvider) &&
                     ref.watch(tabIndexProvider) == 1 &&
-                    !ref.watch(alertDialogShownProvider))
+                    !ref.watch(alertDialogShownProvider) &&
+                    ref.watch(modsPathIsValid) &&
+                    ref.read(modGroupDataProvider).isNotEmpty)
                   ModsDropZone(
                     dialogTitleText: "Add mods",
                     onConfirmFunction: (validFolders) => print("CONFIRM ADD"),
@@ -273,9 +260,7 @@ class MainView extends ConsumerStatefulWidget {
 }
 
 class _MainViewState extends ConsumerState<MainView>
-    with WindowListener, SingleTickerProviderStateMixin {
-  final _xInput = GamepadPoller();
-
+    with WindowListener, SingleTickerProviderStateMixin, ModNavigationListener {
   late TabController _tabController;
   final List<SegmentTab> _tabs = [
     SegmentTab(label: "Keybinds"),
@@ -283,12 +268,104 @@ class _MainViewState extends ConsumerState<MainView>
     SegmentTab(label: "Settings"),
   ];
 
-  final List<Widget> _views = [TabKeybinds(), TabModsLoading(), TabSettings()];
+  List<Widget> _views = [TabKeybinds(), TabModsLoading(), TabSettings()];
 
   @override
   void onWindowBlur() {
     checkToHideWindow();
     super.onWindowBlur();
+  }
+
+  void setupGamepadNavigation() {
+    XInputManager.enableXInput();
+    final Controller controller = Controller(
+      index: 0,
+      buttonsCombination: {
+        {ControllerButton.LEFT_THUMB, ControllerButton.B_BUTTON}: () {
+          if (ref.read(hotkeyGamepadProvider) == HotkeyGamepad.lsB) {
+            toggleWindow();
+          }
+        },
+        {ControllerButton.LEFT_THUMB, ControllerButton.A_BUTTON}: () {
+          if (ref.read(hotkeyGamepadProvider) == HotkeyGamepad.lsA) {
+            toggleWindow();
+          }
+        },
+        {ControllerButton.LEFT_THUMB, ControllerButton.RIGHT_SHOULDER}: () {
+          if (ref.read(hotkeyGamepadProvider) == HotkeyGamepad.lsRb) {
+            toggleWindow();
+          }
+        },
+      },
+    );
+    controller.leftVibrationSpeed = 56535;
+    controller.rightVibrationSpeed = 56535;
+    controller.buttonsMapping = {
+      ControllerButton.A_BUTTON:
+          () => ModNavigationListener.notifyListeners(
+            CustomKeyEvent(
+              physicalKey: PhysicalKeyboardKey.keyF,
+              logicalKey: LogicalKeyboardKey.keyF,
+              timeStamp: Duration(),
+            ),
+            controller,
+          ),
+      ControllerButton.DPAD_UP:
+          () => ModNavigationListener.notifyListeners(
+            CustomKeyEvent(
+              physicalKey: PhysicalKeyboardKey.keyW,
+              logicalKey: LogicalKeyboardKey.keyW,
+              timeStamp: Duration(),
+            ),
+            controller,
+          ),
+      ControllerButton.DPAD_DOWN:
+          () => ModNavigationListener.notifyListeners(
+            CustomKeyEvent(
+              physicalKey: PhysicalKeyboardKey.keyS,
+              logicalKey: LogicalKeyboardKey.keyS,
+              timeStamp: Duration(),
+            ),
+            controller,
+          ),
+      ControllerButton.DPAD_LEFT:
+          () => ModNavigationListener.notifyListeners(
+            CustomKeyEvent(
+              physicalKey: PhysicalKeyboardKey.keyA,
+              logicalKey: LogicalKeyboardKey.keyA,
+              timeStamp: Duration(),
+            ),
+            controller,
+          ),
+      ControllerButton.DPAD_RIGHT:
+          () => ModNavigationListener.notifyListeners(
+            CustomKeyEvent(
+              physicalKey: PhysicalKeyboardKey.keyD,
+              logicalKey: LogicalKeyboardKey.keyD,
+              timeStamp: Duration(),
+            ),
+            controller,
+          ),
+      ControllerButton.LEFT_SHOULDER:
+          () => ModNavigationListener.notifyListeners(
+            CustomKeyEvent(
+              physicalKey: PhysicalKeyboardKey.keyQ,
+              logicalKey: LogicalKeyboardKey.keyQ,
+              timeStamp: Duration(),
+            ),
+            controller,
+          ),
+      ControllerButton.RIGHT_SHOULDER:
+          () => ModNavigationListener.notifyListeners(
+            CustomKeyEvent(
+              physicalKey: PhysicalKeyboardKey.keyE,
+              logicalKey: LogicalKeyboardKey.keyE,
+              timeStamp: Duration(),
+            ),
+            controller,
+          ),
+    };
+    controller.listen();
   }
 
   Future<void> loadNetworkDatas() async {
@@ -406,6 +483,8 @@ class _MainViewState extends ConsumerState<MainView>
   @override
   void initState() {
     super.initState();
+    setupGamepadNavigation();
+    ModNavigationListener.addListener(this);
 
     ref.listenManual(targetGameProvider, (previous, next) {
       checkIsModsPathValidAndReady();
@@ -417,16 +496,6 @@ class _MainViewState extends ConsumerState<MainView>
           hotkeyKeyboardChanged(prevHotkey, newHotkey, toggleWindow),
     );
     hotkeyKeyboardChanged(null, ref.read(hotkeyKeyboardProvider), toggleWindow);
-    ref.listenManual(
-      hotkeyGamepadProvider,
-      (prevHotkey, newHotkey) =>
-          hotkeyGamepadChanged(_xInput, newHotkey, toggleWindow),
-    );
-    hotkeyGamepadChanged(
-      _xInput,
-      ref.read(hotkeyGamepadProvider),
-      toggleWindow,
-    );
 
     initSystemTray();
     windowManager.addListener(this);
@@ -438,9 +507,9 @@ class _MainViewState extends ConsumerState<MainView>
     );
     _tabController.addListener(() {
       ref.read(tabIndexProvider.notifier).state = _tabController.index;
+      FocusScope.of(context).unfocus();
       if (_tabController.index == 1 && _tabController.indexIsChanging == true) {
         checkIsModsPathValidAndReady();
-        FocusScope.of(context).unfocus();
       }
     });
 
@@ -586,9 +655,9 @@ class _MainViewState extends ConsumerState<MainView>
 
   Future<void> checkIsModsPathValidAndReady() async {
     ImageRefreshListener.refreshImages(ref.read(modGroupDataProvider));
-
+    ref.read(modsPathIsValid.notifier).state = false;
     setState(() {
-      _views[1] = TabModsLoading();
+      _views = [TabKeybinds(), TabModsLoading(), TabSettings()];
     });
     ref.read(currentGroupIndexProvider.notifier).state = 0;
     TargetGame targetGame = ref.read(targetGameProvider);
@@ -643,21 +712,28 @@ class _MainViewState extends ConsumerState<MainView>
         ref.read(modGroupDataProvider.notifier).state = await refreshModData(
           Directory(managedPath),
         );
+        ref.read(modsPathIsValid.notifier).state = true;
       }
     }
 
+    //Sometimes widget don't rebuild/don't show loading screen because loading time was too fast
+    await Future.delayed(Duration(milliseconds: 10));
+
     setState(() {
       existAndValid
-          ? _views[1] = TabMods()
-          : _views[1] = TabModsNotReady(notReadyReason: notReadyReason);
+          ? _views = [TabKeybinds(), TabMods(), TabSettings()]
+          : _views = [
+            TabKeybinds(),
+            TabModsNotReady(notReadyReason: notReadyReason),
+            TabSettings(),
+          ];
     });
   }
 
   @override
   Future<void> dispose() async {
     windowManager.removeListener(this);
-
-    _xInput.unregister();
+    ModNavigationListener.removeListener(this);
     hotKeyManager.unregisterAll();
     _tabController.dispose();
     super.dispose();
@@ -750,4 +826,23 @@ class _MainViewState extends ConsumerState<MainView>
       ],
     );
   }
+
+  @override
+  void onKeyEvent(KeyEvent value, Controller? controller) {
+    if (value.physicalKey == PhysicalKeyboardKey.keyE &&
+        _tabController.index != 2) {
+      _tabController.animateTo(_tabController.index + 1);
+    } else if (value.physicalKey == PhysicalKeyboardKey.keyQ &&
+        _tabController.index != 0) {
+      _tabController.animateTo(_tabController.index - 1);
+    }
+  }
+}
+
+class CustomKeyEvent extends KeyEvent {
+  const CustomKeyEvent({
+    required super.physicalKey,
+    required super.logicalKey,
+    required super.timeStamp,
+  });
 }

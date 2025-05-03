@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:ui';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/keypress_simulator_manager.dart';
@@ -425,6 +426,198 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                         ],
                       ),
                       Container(height: 20),
+                      Text(
+                        'Navigation Shortcuts',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Container(height: 5),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Column(
+                            children: [
+                              Text(
+                                'Group Navigation',
+                                style: GoogleFonts.poppins(
+                                  color: const Color.fromARGB(
+                                    200,
+                                    255,
+                                    255,
+                                    255,
+                                  ),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      Image.asset(
+                                        'assets/keys_icon/keyW_icon.png',
+                                        height: 40,
+                                      ),
+                                      Image.asset(
+                                        'assets/keys_icon/keyS_icon.png',
+                                        height: 40,
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      Transform.rotate(
+                                        angle: pi / 2,
+                                        child: Image.asset(
+                                          'assets/keys_icon/dpad_icon.png',
+                                          height: 40,
+                                        ),
+                                      ),
+                                      Transform.rotate(
+                                        angle: pi / -2,
+                                        child: Image.asset(
+                                          'assets/keys_icon/dpad_icon.png',
+                                          height: 40,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          Container(width: 20),
+                          Column(
+                            children: [
+                              Text(
+                                'Mod Navigation',
+                                style: GoogleFonts.poppins(
+                                  color: const Color.fromARGB(
+                                    200,
+                                    255,
+                                    255,
+                                    255,
+                                  ),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      Image.asset(
+                                        'assets/keys_icon/keyA_icon.png',
+                                        height: 40,
+                                      ),
+                                      Image.asset(
+                                        'assets/keys_icon/keyD_icon.png',
+                                        height: 40,
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      Image.asset(
+                                        'assets/keys_icon/dpad_icon.png',
+                                        height: 40,
+                                      ),
+                                      Transform.rotate(
+                                        angle: pi,
+                                        child: Image.asset(
+                                          'assets/keys_icon/dpad_icon.png',
+                                          height: 40,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          Container(width: 20),
+                          Column(
+                            children: [
+                              Text(
+                                'Select Mod',
+                                style: GoogleFonts.poppins(
+                                  color: const Color.fromARGB(
+                                    200,
+                                    255,
+                                    255,
+                                    255,
+                                  ),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Column(
+                                children: [
+                                  Image.asset(
+                                    'assets/keys_icon/keyF_icon.png',
+                                    height: 40,
+                                  ),
+                                  Image.asset(
+                                    'assets/keys_icon/a_icon.png',
+                                    height: 40,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          Container(width: 20),
+                          Column(
+                            children: [
+                              Text(
+                                'Tab Navigation',
+                                style: GoogleFonts.poppins(
+                                  color: const Color.fromARGB(
+                                    200,
+                                    255,
+                                    255,
+                                    255,
+                                  ),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      Image.asset(
+                                        'assets/keys_icon/keyQ_icon.png',
+                                        height: 40,
+                                      ),
+                                      Image.asset(
+                                        'assets/keys_icon/keyE_icon.png',
+                                        height: 40,
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      Image.asset(
+                                        'assets/keys_icon/lb_icon.png',
+                                        height: 40,
+                                      ),
+                                      Image.asset(
+                                        'assets/keys_icon/rb_icon.png',
+                                        height: 40,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      Container(height: 20),
+
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -682,7 +875,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
       case TargetGame.Zenless_Zone_Zero:
         return 'Zenless Zone Zero';
       default:
-        return 'Please re-open from System Tray';
+        return 'Please re-open with Hotkey or System Tray';
     }
   }
 

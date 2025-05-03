@@ -59,5 +59,6 @@ final StateProvider<List<ModGroupData>> modGroupDataProvider =
 
 final currentGroupIndexProvider = StateProvider<int>((ref) => 0);
 
-final wasUsingGamepad = StateProvider<bool>((ref) => false);
 final focusedOnTextField = StateProvider<bool>((ref) => false);
+
+final modsPathIsValid = StateProvider<bool>((ref) => false);

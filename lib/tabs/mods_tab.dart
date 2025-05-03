@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
-import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/keypress_simulator_manager.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
@@ -16,6 +15,7 @@ import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:path/path.dart' as p;
+import 'package:xinput_gamepad/xinput_gamepad.dart';
 
 class TabMods extends ConsumerStatefulWidget {
   const TabMods({super.key});
@@ -129,6 +129,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
   @override
   void dispose() {
     ModNavigationListener.removeListener(this);
+    groupTextFieldFocusNode.dispose();
     super.dispose();
   }
 
@@ -180,10 +181,9 @@ class _GroupAreaState extends ConsumerState<GroupArea>
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Container(
+        SizedBox(
           width: 93.6,
           height: 130,
-          color: Colors.transparent,
           child: RightClickMenuWrapper(
             menuItems: [
               PopupMenuItem(
@@ -430,17 +430,19 @@ class _GroupAreaState extends ConsumerState<GroupArea>
   }
 
   @override
-  void onKeyEvent(KeyEvent value) {
-    if (value.physicalKey == PhysicalKeyboardKey.keyS) {
-      _carouselSliderGroupController.nextPage(
-        duration: Duration(milliseconds: 150),
-        curve: Curves.easeOut,
-      );
-    } else if (value.physicalKey == PhysicalKeyboardKey.keyW) {
-      _carouselSliderGroupController.previousPage(
-        duration: Duration(milliseconds: 150),
-        curve: Curves.easeOut,
-      );
+  void onKeyEvent(KeyEvent value, Controller? controller) {
+    if (ref.read(tabIndexProvider) == 1) {
+      if (value.physicalKey == PhysicalKeyboardKey.keyS) {
+        _carouselSliderGroupController.nextPage(
+          duration: Duration(milliseconds: 150),
+          curve: Curves.easeOut,
+        );
+      } else if (value.physicalKey == PhysicalKeyboardKey.keyW) {
+        _carouselSliderGroupController.previousPage(
+          duration: Duration(milliseconds: 150),
+          curve: Curves.easeOut,
+        );
+      }
     }
   }
 }
@@ -577,9 +579,8 @@ class _ModAreaState extends ConsumerState<ModArea>
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
+      child: SizedBox(
         height: 200,
-        color: Colors.transparent,
         child: RightClickMenuWrapper(
           menuItems: [
             if (!ref.watch(windowIsPinnedProvider))
@@ -651,17 +652,19 @@ class _ModAreaState extends ConsumerState<ModArea>
   }
 
   @override
-  void onKeyEvent(KeyEvent value) {
-    if (value.physicalKey == PhysicalKeyboardKey.keyA) {
-      _carouselSliderModController.previousPage(
-        duration: Duration(milliseconds: 150),
-        curve: Curves.easeOut,
-      );
-    } else if (value.physicalKey == PhysicalKeyboardKey.keyD) {
-      _carouselSliderModController.nextPage(
-        duration: Duration(milliseconds: 150),
-        curve: Curves.easeOut,
-      );
+  void onKeyEvent(KeyEvent value, Controller? controller) {
+    if (ref.read(tabIndexProvider) == 1) {
+      if (value.physicalKey == PhysicalKeyboardKey.keyA) {
+        _carouselSliderModController.previousPage(
+          duration: Duration(milliseconds: 150),
+          curve: Curves.easeOut,
+        );
+      } else if (value.physicalKey == PhysicalKeyboardKey.keyD) {
+        _carouselSliderModController.nextPage(
+          duration: Duration(milliseconds: 150),
+          curve: Curves.easeOut,
+        );
+      }
     }
   }
 }
@@ -712,6 +715,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
   @override
   void dispose() {
     ModNavigationListener.removeListener(this);
+    modTextFieldFocusNode.dispose();
     super.dispose();
   }
 
@@ -990,10 +994,13 @@ class _ModContainerState extends ConsumerState<ModContainer>
   }
 
   @override
-  void onKeyEvent(KeyEvent value) {
-    if (value.physicalKey == PhysicalKeyboardKey.keyF) {
-      if (widget.isCentered) {
-        widget.onSelected();
+  void onKeyEvent(KeyEvent value, Controller? controller) {
+    if (ref.read(tabIndexProvider) == 1) {
+      if (value.physicalKey == PhysicalKeyboardKey.keyF) {
+        if (widget.isCentered) {
+          widget.onSelected();
+          controller?.vibrate(Duration(milliseconds: 80));
+        }
       }
     }
   }
@@ -1081,7 +1088,7 @@ class TabModsLoading extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              "Loading mods...",
+              "Loading mods...\nRe-open with hotkey or System Tray if stuck.",
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 color: Colors.white,

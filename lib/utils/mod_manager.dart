@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
-import 'package:no_reload_mod_manager/utils/refreshable_image.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:pasteboard/pasteboard.dart';
@@ -17,10 +16,9 @@ bool _hasIndex(int index, int listLength) {
   return index >= 0 && index < listLength;
 }
 
-Future<void> triggerRefresh(WidgetRef ref) async {
+void triggerRefresh(WidgetRef ref) async {
   TargetGame currentTargetGame = ref.read(targetGameProvider);
   ref.read(targetGameProvider.notifier).state = TargetGame.none;
-  await Future.delayed(Duration(milliseconds: 100));
   ref.read(targetGameProvider.notifier).state = currentTargetGame;
 }
 
