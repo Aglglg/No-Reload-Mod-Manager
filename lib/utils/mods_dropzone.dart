@@ -5,11 +5,11 @@ import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:path/path.dart' as p;
 
 class ModsDropZone extends ConsumerStatefulWidget {
+  final String? copyDestination;
   final TextSpan? additionalContent;
   final String dialogTitleText;
   final void Function(List<Directory> validFolders) onConfirmFunction;
@@ -20,6 +20,7 @@ class ModsDropZone extends ConsumerStatefulWidget {
     required this.onConfirmFunction,
     this.acceptArchived = false,
     this.additionalContent,
+    this.copyDestination,
   });
 
   @override
@@ -36,49 +37,18 @@ class _ModsDropZoneState extends ConsumerState<ModsDropZone> {
     return false;
   }
 
-  bool isValidFolder(Directory f) {
-    if (!isFolderOnManagedPath(f) && !isFolderOnThisToolPath(f)) {
-      return true;
-    }
-    return false;
-  }
-
-  bool isFolderOnManagedPath(Directory f) {
-    if (f.path.contains(ConstantVar.managedFolderName)) {
-      return true;
-    }
-    return false;
-  }
-
-  bool isFolderOnThisToolPath(Directory f) {
-    String thisToolExePath = Platform.resolvedExecutable;
-    String thisToolPath = p.dirname(thisToolExePath);
-    if (p.isWithin(thisToolPath, p.normalize(f.path)) ||
-        f.path == thisToolPath) {
-      return true;
-    }
-    return false;
-  }
-
   @override
   Widget build(BuildContext context) {
     return DropTarget(
-      onDragDone: (details) {
-        List<File> droppedFiles =
+      onDragDone: (details) async {
+        final List<File> droppedFiles =
             details.files.map((f) => File(f.path)).toList();
 
-        List<Directory> droppedFolders =
+        final List<Directory> droppedFolders =
             droppedFiles
                 .where((f) => isFolderAndExist(f))
                 .map((f) => Directory(f.path))
                 .toList();
-
-        List<Directory> validFolders =
-            droppedFolders.where((f) => isValidFolder(f)).toList();
-        List<Directory> foldersOnManagedPath =
-            droppedFolders.where((f) => isFolderOnManagedPath(f)).toList();
-        List<Directory> foldersOnThisToolPath =
-            droppedFolders.where((f) => isFolderOnThisToolPath(f)).toList();
 
         if (droppedFolders.isNotEmpty) {
           ref.read(alertDialogShownProvider.notifier).state = true;
@@ -87,9 +57,8 @@ class _ModsDropZoneState extends ConsumerState<ModsDropZone> {
             context: context,
             builder:
                 (context) => OnDropModFolderDialog(
-                  validFolders: validFolders,
-                  foldersOnManagedPath: foldersOnManagedPath,
-                  foldersOnThisToolPath: foldersOnThisToolPath,
+                  droppedFolders: droppedFolders,
+                  copyDestination: widget.copyDestination,
                   dialogTitleText: widget.dialogTitleText,
                   onConfirmFunction: widget.onConfirmFunction,
                   additionalContent: widget.additionalContent,
@@ -121,18 +90,16 @@ class _ModsDropZoneState extends ConsumerState<ModsDropZone> {
 
 class OnDropModFolderDialog extends ConsumerStatefulWidget {
   final String dialogTitleText;
-  final List<Directory> validFolders;
-  final List<Directory> foldersOnThisToolPath;
-  final List<Directory> foldersOnManagedPath;
+  final List<Directory> droppedFolders;
+  final String? copyDestination;
   final Function onConfirmFunction;
   final TextSpan? additionalContent;
 
   const OnDropModFolderDialog({
     super.key,
     required this.dialogTitleText,
-    required this.validFolders,
-    required this.foldersOnThisToolPath,
-    required this.foldersOnManagedPath,
+    required this.droppedFolders,
+    required this.copyDestination,
     required this.onConfirmFunction,
     required this.additionalContent,
   });
@@ -144,17 +111,180 @@ class OnDropModFolderDialog extends ConsumerStatefulWidget {
 
 class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
   final ScrollController _scrollController = ScrollController();
+  List<Directory> validFolders = [];
+  List<Directory> foldersOnManagedPath = [];
+  List<Directory> foldersOnThisToolPath = [];
+  List<Directory> parentFolderOfManagedPath = [];
+  List<Directory> parentFolderOfThisToolPath = [];
+  List<Directory> parentFolderOfDestPath = [];
   List<TextSpan> contents = [];
+
+  Future<bool> isValidFolder(Directory f) async {
+    if (!isUnderManagedFolder(f.path) &&
+        !isFolderOnThisToolPath(f) &&
+        !await isParentOfManagedFolder(f.path) &&
+        !isParentOfThisToolPath(f) &&
+        !isParentOfDestFolder(f)) {
+      return true;
+    }
+    return false;
+  }
+
+  bool isUnderManagedFolder(String inputPath) {
+    var dir = Directory(p.normalize(inputPath));
+
+    // Walk up to root
+    while (true) {
+      final folderName = p.basename(dir.path);
+      if (folderName.toLowerCase() == '_managed_') {
+        return true;
+      }
+
+      final parent = dir.parent;
+      if (parent.path == dir.path) break; // Reached root
+      dir = parent;
+    }
+
+    return false;
+  }
+
+  bool isFolderOnThisToolPath(Directory f) {
+    String thisToolExePath = Platform.resolvedExecutable;
+    String thisToolPath = p.dirname(thisToolExePath);
+    if (p.isWithin(thisToolPath, p.normalize(f.path))) {
+      return true;
+    }
+    return false;
+  }
+
+  ///////////////
+  /// Recursively checks if the given [dirPath] or any of its subdirectories
+  /// contains a folder named '_MANAGED_' (case-insensitive).
+  Future<bool> isParentOfManagedFolder(String dirPath) async {
+    final dir = Directory(dirPath);
+
+    if (!await dir.exists()) return false;
+
+    // Check if the base name of the given path is '_MANAGED_'
+    final currentName = p.basename(dirPath);
+    if (currentName.toLowerCase() == '_managed_') return true;
+
+    // Recursively list all subdirectories
+    await for (final entity in dir.list(recursive: true, followLinks: false)) {
+      if (entity is Directory) {
+        final folderName = p.basename(entity.path);
+        if (folderName.toLowerCase() == '_managed_') {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  bool isParentOfThisToolPath(Directory f) {
+    String thisToolExePath = Platform.resolvedExecutable;
+    String thisToolPath = p.dirname(thisToolExePath);
+    if (p.isWithin(f.path, p.normalize(thisToolPath)) ||
+        f.path == thisToolPath) {
+      return true;
+    }
+    return false;
+  }
+
+  bool isParentOfDestFolder(Directory f) {
+    if (widget.copyDestination != null) {
+      if (p.isWithin(f.path, p.normalize(widget.copyDestination!))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  Future<List<Directory>> getParentFoldersWithManaged(
+    List<Directory> droppedFolders,
+  ) async {
+    final results = await Future.wait(
+      droppedFolders.map((f) async => await isParentOfManagedFolder(f.path)),
+    );
+
+    // Now filter using the results
+    final filteredFolders = <Directory>[];
+    for (int i = 0; i < results.length; i++) {
+      if (results[i]) {
+        filteredFolders.add(droppedFolders[i]);
+      }
+    }
+
+    return filteredFolders;
+  }
+
+  Future<List<Directory>> getValidFolders(
+    List<Directory> droppedFolders,
+  ) async {
+    final results = await Future.wait(
+      droppedFolders.map((f) async => await isValidFolder(f)),
+    );
+
+    // Now filter using the results
+    final filteredFolders = <Directory>[];
+    for (int i = 0; i < results.length; i++) {
+      if (results[i]) {
+        filteredFolders.add(droppedFolders[i]);
+      }
+    }
+
+    return filteredFolders;
+  }
 
   @override
   void initState() {
     super.initState();
-    addContent();
-    _scrollToBottom();
+    checkFolders();
   }
 
-  void addContent() {
-    contents.add(
+  Future<void> checkFolders() async {
+    List<TextSpan> resultLogs = [];
+    resultLogs.add(
+      TextSpan(
+        text: "Checking folders...\n",
+        style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+      ),
+    );
+
+    final mValidFolders = await getValidFolders(widget.droppedFolders);
+    ////////////////////
+    final mFoldersOnManagedPath =
+        widget.droppedFolders
+            .where((f) => isUnderManagedFolder(f.path))
+            .toList();
+    final mFoldersOnThisToolPath =
+        widget.droppedFolders.where((f) => isFolderOnThisToolPath(f)).toList();
+    //////////////////////
+    final mParentFolderOfManagedPath = await getParentFoldersWithManaged(
+      widget.droppedFolders,
+    );
+    final mParentFolderOfThisToolPath =
+        widget.droppedFolders.where((f) => isParentOfThisToolPath(f)).toList();
+    final mParentFolderOfDestPath =
+        widget.droppedFolders.where((f) => isParentOfDestFolder(f)).toList();
+
+    setState(() {
+      contents = resultLogs;
+      validFolders = mValidFolders;
+      foldersOnManagedPath = mFoldersOnManagedPath;
+      foldersOnThisToolPath = mFoldersOnThisToolPath;
+      parentFolderOfManagedPath = mParentFolderOfManagedPath;
+      parentFolderOfThisToolPath = mParentFolderOfThisToolPath;
+      parentFolderOfDestPath = mParentFolderOfDestPath;
+    });
+
+    addContent();
+  }
+
+  Future<void> addContent() async {
+    List<TextSpan> resultLogs = [];
+    resultLogs.add(
       TextSpan(
         text: "Valid folders detected:\n",
         style: GoogleFonts.poppins(
@@ -164,16 +294,16 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
         ),
       ),
     );
-    for (Directory folder in widget.validFolders) {
-      contents.add(
+    for (Directory folder in validFolders) {
+      resultLogs.add(
         TextSpan(
           text: "${p.basename(folder.path)}\n",
           style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
         ),
       );
     }
-    if (widget.validFolders.isEmpty) {
-      contents.add(
+    if (validFolders.isEmpty) {
+      resultLogs.add(
         TextSpan(
           text: "None\n",
           style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
@@ -182,8 +312,8 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
     }
 
     //ON _MANAGED_ PATH
-    if (widget.foldersOnManagedPath.isNotEmpty) {
-      contents.add(
+    if (foldersOnManagedPath.isNotEmpty) {
+      resultLogs.add(
         TextSpan(
           text: "\nFolders excluded (on _MANAGED_ path):\n",
           style: GoogleFonts.poppins(
@@ -194,16 +324,16 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
         ),
       );
     }
-    for (Directory folder in widget.foldersOnManagedPath) {
-      contents.add(
+    for (Directory folder in foldersOnManagedPath) {
+      resultLogs.add(
         TextSpan(
           text: "${p.basename(folder.path)}\n",
           style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
         ),
       );
     }
-    if (widget.foldersOnManagedPath.isNotEmpty) {
-      contents.add(
+    if (foldersOnManagedPath.isNotEmpty) {
+      resultLogs.add(
         TextSpan(
           text: "Please move these folders outside first\n",
           style: GoogleFonts.poppins(
@@ -216,8 +346,8 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
     }
 
     //ON TOOL PATH
-    if (widget.foldersOnThisToolPath.isNotEmpty) {
-      contents.add(
+    if (foldersOnThisToolPath.isNotEmpty) {
+      resultLogs.add(
         TextSpan(
           text: "\nFolders excluded for safety (on this tool exe path):\n",
           style: GoogleFonts.poppins(
@@ -228,16 +358,16 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
         ),
       );
     }
-    for (Directory folder in widget.foldersOnThisToolPath) {
-      contents.add(
+    for (Directory folder in foldersOnThisToolPath) {
+      resultLogs.add(
         TextSpan(
           text: "${p.basename(folder.path)}\n",
           style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
         ),
       );
     }
-    if (widget.foldersOnThisToolPath.isNotEmpty) {
-      contents.add(
+    if (foldersOnThisToolPath.isNotEmpty) {
+      resultLogs.add(
         TextSpan(
           text:
               "Adding folders from this tool path might break this tool functionality\n",
@@ -250,9 +380,121 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
       );
     }
 
-    if (widget.additionalContent != null) {
-      contents.add(widget.additionalContent!);
+    //IS PARENT OF TOOL PATH
+    if (parentFolderOfThisToolPath.isNotEmpty) {
+      resultLogs.add(
+        TextSpan(
+          text:
+              "\nFolders excluded for safety (parent folder of this tool exe path):\n",
+          style: GoogleFonts.poppins(
+            color: Colors.red,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      );
     }
+    for (Directory folder in parentFolderOfThisToolPath) {
+      resultLogs.add(
+        TextSpan(
+          text: "${p.basename(folder.path)}\n",
+          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+        ),
+      );
+    }
+    if (parentFolderOfThisToolPath.isNotEmpty) {
+      resultLogs.add(
+        TextSpan(
+          text: "This folder contains this tool exe file\n",
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 189, 170, 0),
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      );
+    }
+
+    //IS PARENT OF DEST FOLDER
+    if (parentFolderOfDestPath.isNotEmpty) {
+      resultLogs.add(
+        TextSpan(
+          text:
+              "\nFolders excluded because folder is parent folder of target group folder:\n",
+          style: GoogleFonts.poppins(
+            color: Colors.red,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      );
+    }
+    for (Directory folder in parentFolderOfDestPath) {
+      resultLogs.add(
+        TextSpan(
+          text: "${p.basename(folder.path)}\n",
+          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+        ),
+      );
+    }
+    if (parentFolderOfDestPath.isNotEmpty) {
+      resultLogs.add(
+        TextSpan(
+          text:
+              "This folder contains the target group folder/parent folder of target group\n",
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 189, 170, 0),
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      );
+    }
+
+    //IS PARENT OF MANAGED FOLDER
+    if (parentFolderOfManagedPath.isNotEmpty) {
+      resultLogs.add(
+        TextSpan(
+          text: "\nFolders excluded to prevent unexpected error:\n",
+          style: GoogleFonts.poppins(
+            color: Colors.red,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      );
+    }
+    for (Directory folder in parentFolderOfManagedPath) {
+      resultLogs.add(
+        TextSpan(
+          text: "${p.basename(folder.path)}\n",
+          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+        ),
+      );
+    }
+    if (parentFolderOfManagedPath.isNotEmpty) {
+      resultLogs.add(
+        TextSpan(
+          text:
+              "This folder contains subfolders with name _MANAGED_ or is parent folder of _MANAGED_ folder\n",
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 189, 170, 0),
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      );
+    }
+
+    if (widget.additionalContent != null) {
+      resultLogs.add(widget.additionalContent!);
+    }
+
+    setState(() {
+      contents = resultLogs;
+    });
+
+    await _scrollToBottom();
   }
 
   Future<void> _scrollToBottom() async {
@@ -300,12 +542,12 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
           },
           child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.blue)),
         ),
-        if (widget.validFolders.isNotEmpty)
+        if (validFolders.isNotEmpty)
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
               ref.read(alertDialogShownProvider.notifier).state = false;
-              widget.onConfirmFunction(widget.validFolders);
+              widget.onConfirmFunction(validFolders);
             },
             child: Text(
               'Confirm',

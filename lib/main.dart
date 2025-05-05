@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/get_cloud_data.dart';
@@ -87,9 +88,14 @@ class MyApp extends ConsumerWidget {
   }
 }
 
-class Background extends ConsumerWidget {
+class Background extends ConsumerStatefulWidget {
   const Background({super.key});
 
+  @override
+  ConsumerState<Background> createState() => _BackgroundState();
+}
+
+class _BackgroundState extends ConsumerState<Background> {
   Color getBorderColor(WidgetRef ref) {
     if (ref.watch(windowIsPinnedProvider)) {
       return const Color.fromARGB(255, 33, 149, 243);
@@ -98,8 +104,31 @@ class Background extends ConsumerWidget {
     }
   }
 
+  void _onModAddConfirm(List<Directory> modDirs) {
+    String? modsPath = ref.read(validModsPath);
+    if (modsPath != null) {
+      ref.read(alertDialogShownProvider.notifier).state = true;
+      showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder:
+            (context) => CopyModDialog(
+              modDirs: modDirs,
+              modsPath: modsPath,
+              targetGroupPath:
+                  ref
+                      .read(modGroupDataProvider)[ref.read(
+                        currentGroupIndexProvider,
+                      )]
+                      .groupDir
+                      .path,
+            ),
+      );
+    }
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return ExcludeFocusTraversal(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -120,11 +149,18 @@ class Background extends ConsumerWidget {
                 if (ref.watch(windowIsPinnedProvider) &&
                     ref.watch(tabIndexProvider) == 1 &&
                     !ref.watch(alertDialogShownProvider) &&
-                    ref.watch(modsPathIsValid) &&
+                    ref.watch(validModsPath) != null &&
                     ref.read(modGroupDataProvider).isNotEmpty)
                   ModsDropZone(
                     dialogTitleText: "Add mods",
-                    onConfirmFunction: (validFolders) => print("CONFIRM ADD"),
+                    onConfirmFunction: _onModAddConfirm,
+                    copyDestination:
+                        ref
+                            .read(modGroupDataProvider)[ref.read(
+                              currentGroupIndexProvider,
+                            )]
+                            .groupDir
+                            .path,
                   ),
                 RightClickMenuWrapper(
                   menuItems: [
@@ -205,8 +241,10 @@ class Background extends ConsumerWidget {
                     PopupMenuItem(
                       height: 37,
                       onTap: () async {
-                        ref.read(targetGameProvider.notifier).state =
-                            TargetGame.none;
+                        if (!ref.read(alertDialogShownProvider)) {
+                          ref.read(targetGameProvider.notifier).state =
+                              TargetGame.none;
+                        }
                         await windowManager.hide();
                       },
                       value: 'Hide window',
@@ -424,8 +462,10 @@ class _MainViewState extends ConsumerState<MainView>
       MenuItemLabel(
         label: 'Show (WuWa)',
         onClicked: (menuItem) async {
-          ref.read(targetGameProvider.notifier).state =
-              TargetGame.Wuthering_Waves;
+          if (!ref.read(alertDialogShownProvider)) {
+            ref.read(targetGameProvider.notifier).state =
+                TargetGame.Wuthering_Waves;
+          }
           ref.read(windowIsPinnedProvider.notifier).state = true;
           await windowManager.show();
           await windowManager.focus();
@@ -434,8 +474,10 @@ class _MainViewState extends ConsumerState<MainView>
       MenuItemLabel(
         label: 'Show (Genshin)',
         onClicked: (menuItem) async {
-          ref.read(targetGameProvider.notifier).state =
-              TargetGame.Genshin_Impact;
+          if (!ref.read(alertDialogShownProvider)) {
+            ref.read(targetGameProvider.notifier).state =
+                TargetGame.Genshin_Impact;
+          }
           ref.read(windowIsPinnedProvider.notifier).state = true;
           await windowManager.show();
           await windowManager.focus();
@@ -444,8 +486,10 @@ class _MainViewState extends ConsumerState<MainView>
       MenuItemLabel(
         label: 'Show (HSR)',
         onClicked: (menuItem) async {
-          ref.read(targetGameProvider.notifier).state =
-              TargetGame.Honkai_Star_Rail;
+          if (!ref.read(alertDialogShownProvider)) {
+            ref.read(targetGameProvider.notifier).state =
+                TargetGame.Honkai_Star_Rail;
+          }
           ref.read(windowIsPinnedProvider.notifier).state = true;
           await windowManager.show();
           await windowManager.focus();
@@ -454,8 +498,10 @@ class _MainViewState extends ConsumerState<MainView>
       MenuItemLabel(
         label: 'Show (ZZZ)',
         onClicked: (menuItem) async {
-          ref.read(targetGameProvider.notifier).state =
-              TargetGame.Zenless_Zone_Zero;
+          if (!ref.read(alertDialogShownProvider)) {
+            ref.read(targetGameProvider.notifier).state =
+                TargetGame.Zenless_Zone_Zero;
+          }
           ref.read(windowIsPinnedProvider.notifier).state = true;
           await windowManager.show();
           await windowManager.focus();
@@ -655,7 +701,7 @@ class _MainViewState extends ConsumerState<MainView>
 
   Future<void> checkIsModsPathValidAndReady() async {
     ImageRefreshListener.refreshImages(ref.read(modGroupDataProvider));
-    ref.read(modsPathIsValid.notifier).state = false;
+    ref.read(validModsPath.notifier).state = null;
     setState(() {
       _views = [TabKeybinds(), TabModsLoading(), TabSettings()];
     });
@@ -712,7 +758,7 @@ class _MainViewState extends ConsumerState<MainView>
         ref.read(modGroupDataProvider.notifier).state = await refreshModData(
           Directory(managedPath),
         );
-        ref.read(modsPathIsValid.notifier).state = true;
+        ref.read(validModsPath.notifier).state = modsPath;
       }
     }
 
@@ -741,33 +787,44 @@ class _MainViewState extends ConsumerState<MainView>
 
   Future<void> toggleWindow() async {
     if (await windowManager.isVisible()) {
-      ref.read(targetGameProvider.notifier).state = TargetGame.none;
+      if (!ref.read(alertDialogShownProvider)) {
+        ref.read(targetGameProvider.notifier).state = TargetGame.none;
+      }
       await windowManager.hide();
     } else {
       String foregroundProcessName = getForegroundWindowProcessName();
       if (foregroundProcessName == SharedPrefUtils().getWuwaTargetProcess()) {
-        ref.read(targetGameProvider.notifier).state =
-            TargetGame.Wuthering_Waves;
+        if (!ref.read(alertDialogShownProvider)) {
+          ref.read(targetGameProvider.notifier).state =
+              TargetGame.Wuthering_Waves;
+        }
         ref.read(windowIsPinnedProvider.notifier).state = false;
         await windowManager.show();
         await windowManager.focus();
       } else if (foregroundProcessName ==
           SharedPrefUtils().getGenshinTargetProcess()) {
-        ref.read(targetGameProvider.notifier).state = TargetGame.Genshin_Impact;
+        if (!ref.read(alertDialogShownProvider)) {
+          ref.read(targetGameProvider.notifier).state =
+              TargetGame.Genshin_Impact;
+        }
         ref.read(windowIsPinnedProvider.notifier).state = false;
         await windowManager.show();
         await windowManager.focus();
       } else if (foregroundProcessName ==
           SharedPrefUtils().getHsrTargetProcess()) {
-        ref.read(targetGameProvider.notifier).state =
-            TargetGame.Honkai_Star_Rail;
+        if (!ref.read(alertDialogShownProvider)) {
+          ref.read(targetGameProvider.notifier).state =
+              TargetGame.Honkai_Star_Rail;
+        }
         ref.read(windowIsPinnedProvider.notifier).state = false;
         await windowManager.show();
         await windowManager.focus();
       } else if (foregroundProcessName ==
           SharedPrefUtils().getZzzTargetProcess()) {
-        ref.read(targetGameProvider.notifier).state =
-            TargetGame.Zenless_Zone_Zero;
+        if (!ref.read(alertDialogShownProvider)) {
+          ref.read(targetGameProvider.notifier).state =
+              TargetGame.Zenless_Zone_Zero;
+        }
         ref.read(windowIsPinnedProvider.notifier).state = false;
         await windowManager.show();
         await windowManager.focus();
@@ -777,7 +834,9 @@ class _MainViewState extends ConsumerState<MainView>
 
   Future<void> checkToHideWindow() async {
     if (!ref.read(windowIsPinnedProvider)) {
-      ref.read(targetGameProvider.notifier).state = TargetGame.none;
+      if (!ref.read(alertDialogShownProvider)) {
+        ref.read(targetGameProvider.notifier).state = TargetGame.none;
+      }
       await windowManager.hide();
     }
   }

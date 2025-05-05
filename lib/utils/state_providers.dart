@@ -61,4 +61,4 @@ final currentGroupIndexProvider = StateProvider<int>((ref) => 0);
 
 final focusedOnTextField = StateProvider<bool>((ref) => false);
 
-final modsPathIsValid = StateProvider<bool>((ref) => false);
+final validModsPath = StateProvider<String?>((ref) => null);

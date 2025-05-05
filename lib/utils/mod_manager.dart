@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/keypress_simulator_manager.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:pasteboard/pasteboard.dart';
@@ -875,6 +877,7 @@ Future<void> _modifyIniFile(
 
     // Write the modified content back to the INI file
     await file.writeAsString(_getLiteralIni(parsedIni));
+    print("TESTTTT ${p.basename(file.path)}");
   } catch (e) {
     operationLogs.add(
       TextSpan(
@@ -1141,5 +1144,448 @@ String getCurrentModsPath(TargetGame targetGame) {
       return SharedPrefUtils().getZzzModsPath();
     default:
       return '';
+  }
+}
+
+class CopyModDialog extends ConsumerStatefulWidget {
+  final List<Directory> modDirs;
+  final String modsPath;
+  final String targetGroupPath;
+  const CopyModDialog({
+    super.key,
+    required this.modDirs,
+    required this.modsPath,
+    required this.targetGroupPath,
+  });
+
+  @override
+  ConsumerState<CopyModDialog> createState() => _CopyModDialogState();
+}
+
+class _CopyModDialogState extends ConsumerState<CopyModDialog> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showClose = false;
+  List<TextSpan> contents = [];
+
+  @override
+  void initState() {
+    super.initState();
+    copyMods();
+  }
+
+  Future<void> copyMods() async {
+    setState(() {
+      contents = [];
+      contents.add(
+        TextSpan(
+          text: 'Copying mods...\n',
+          style: GoogleFonts.poppins(color: Colors.white),
+        ),
+      );
+    });
+
+    List<TextSpan> operationLogs = [];
+    for (var folder in widget.modDirs) {
+      Directory? disabledFolder = await renameSourceFolderToBeDisabledPrefix(
+        folder,
+      );
+      if (disabledFolder != null) {
+        String destFolderName = removeAllDisabledPrefixes(
+          p.basename(disabledFolder.path),
+        );
+        String destDirPath = p.join(widget.targetGroupPath, destFolderName);
+        destDirPath = await checkForDuplicateFolderName(destDirPath);
+        try {
+          await copyDirectory(disabledFolder, Directory(destDirPath));
+          operationLogs.add(
+            TextSpan(
+              text: '${p.basename(folder.path)} copied.\n\n',
+              style: GoogleFonts.poppins(color: Colors.green, fontSize: 14),
+            ),
+          );
+        } catch (e) {
+          operationLogs.add(
+            TextSpan(
+              text:
+                  'Error! Cannot copy folder: ${p.basename(folder.path)}.\n${ConstantVar.defaultErrorInfoAdmin}\n\n',
+              style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
+            ),
+          );
+        }
+      } else {
+        operationLogs.add(
+          TextSpan(
+            text:
+                'Error! Cannot copy folder: ${p.basename(folder.path)}.\n${ConstantVar.defaultErrorInfo}\n\n',
+            style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
+          ),
+        );
+      }
+    }
+
+    setState(() {
+      _showClose = true;
+      contents = operationLogs;
+    });
+    _scrollToBottom();
+  }
+
+  Future<Directory?> renameSourceFolderToBeDisabledPrefix(
+    Directory folder,
+  ) async {
+    final parent = folder.parent.path;
+    final originalName = p.basename(folder.path);
+    final newName = 'DISABLED$originalName';
+    final newPath = p.join(parent, newName);
+
+    if (originalName.toLowerCase().startsWith('disabled')) {
+      return folder;
+    } else {
+      try {
+        return await folder.rename(newPath);
+      } catch (e) {
+        return null;
+      }
+    }
+  }
+
+  String removeAllDisabledPrefixes(String input) {
+    return input.replaceFirst(
+      RegExp(r'^(disabled\s*)+', caseSensitive: false),
+      '',
+    );
+  }
+
+  Future<String> checkForDuplicateFolderName(String destPath) async {
+    String fixedDestPath = destPath;
+    while (await Directory(fixedDestPath).exists()) {
+      fixedDestPath = '${fixedDestPath}_';
+    }
+    return fixedDestPath;
+  }
+
+  Future<void> copyDirectory(Directory source, Directory destination) async {
+    try {
+      if (!await destination.exists()) {
+        await destination.create(recursive: true);
+      }
+
+      await for (FileSystemEntity entity in source.list(recursive: false)) {
+        final newPath = p.join(destination.path, p.basename(entity.path));
+        if (entity is File) {
+          await entity.copy(newPath);
+        } else if (entity is Directory) {
+          await copyDirectory(entity, Directory(newPath));
+        }
+      }
+    } catch (e) {
+      throw Exception("Error");
+    }
+  }
+
+  Future<void> _scrollToBottom() async {
+    // Wait until scrollController has a valid position
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (!_scrollController.hasClients) return;
+
+    await _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  void _onConfirmToUpdateModClicked() {
+    ref.read(alertDialogShownProvider.notifier).state = true;
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (context) => UpdateModDialog(modsPath: widget.modsPath),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        'Copy mods',
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
+      ),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.trackpad,
+            },
+          ),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: RichText(text: TextSpan(children: contents)),
+          ),
+        ),
+      ),
+      actions:
+          _showClose
+              ? [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    ref.read(alertDialogShownProvider.notifier).state = false;
+                    _onConfirmToUpdateModClicked();
+                    triggerRefresh(ref);
+                  },
+                  child: Text(
+                    'Confirm',
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
+              ]
+              : [],
+    );
+  }
+}
+
+class UpdateModDialog extends ConsumerStatefulWidget {
+  final String modsPath;
+  const UpdateModDialog({super.key, required this.modsPath});
+
+  @override
+  ConsumerState<UpdateModDialog> createState() => _UpdateModDialogState();
+}
+
+class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showClose = false;
+  bool _needReload = false;
+  List<TextSpan> contents = [];
+
+  @override
+  void initState() {
+    super.initState();
+    validatingModsPath();
+  }
+
+  Future<void> validatingModsPath() async {
+    setState(() {
+      contents = [];
+      contents.add(
+        TextSpan(
+          text: 'Validating Mods Path...\n',
+          style: GoogleFonts.poppins(color: Colors.white),
+        ),
+      );
+    });
+
+    if (!await Directory(widget.modsPath).exists()) {
+      setState(() {
+        _showClose = true;
+        contents = [
+          TextSpan(
+            text: "Mods path doesn't exist",
+            style: GoogleFonts.poppins(color: Colors.red),
+          ),
+        ];
+      });
+    } else if (widget.modsPath.toLowerCase().endsWith('mods') ||
+        widget.modsPath.toLowerCase().endsWith('mods\\')) {
+      setState(() {
+        contents = [
+          TextSpan(
+            text: "Modifying mods...",
+            style: GoogleFonts.poppins(color: Colors.white),
+          ),
+        ];
+      });
+      final operationResults = await updateModData(widget.modsPath, (
+        needReload,
+      ) {
+        setState(() {
+          _needReload = needReload;
+        });
+      });
+      setState(() {
+        _showClose = true;
+        contents = operationResults;
+      });
+      _scrollToBottom();
+    } else {
+      setState(() {
+        _showClose = true;
+        contents = [
+          TextSpan(
+            text:
+                "Mods path is invalid. Make sure you're targetting \"Mods\" folder.",
+            style: GoogleFonts.poppins(color: Colors.red),
+          ),
+        ];
+      });
+    }
+  }
+
+  Future<void> _scrollToBottom() async {
+    // Wait until scrollController has a valid position
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (!_scrollController.hasClients) return;
+
+    await _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        'Manage mods',
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
+      ),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.trackpad,
+            },
+          ),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: RichText(text: TextSpan(children: contents)),
+          ),
+        ),
+      ),
+      actions:
+          _showClose
+              ? [
+                _needReload
+                    ? TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        ref.read(alertDialogShownProvider.notifier).state =
+                            false;
+                        simulateKeyF10();
+                      },
+                      child: Text(
+                        'Close & Reload',
+                        style: GoogleFonts.poppins(color: Colors.blue),
+                      ),
+                    )
+                    : TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        ref.read(alertDialogShownProvider.notifier).state =
+                            false;
+                      },
+                      child: Text(
+                        'Close',
+                        style: GoogleFonts.poppins(color: Colors.blue),
+                      ),
+                    ),
+              ]
+              : [],
+    );
+  }
+}
+
+class RevertModDialog extends ConsumerStatefulWidget {
+  final List<Directory> modDirs;
+  const RevertModDialog({super.key, required this.modDirs});
+
+  @override
+  ConsumerState<RevertModDialog> createState() => _RevertModDialogState();
+}
+
+class _RevertModDialogState extends ConsumerState<RevertModDialog> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showClose = false;
+  List<TextSpan> contents = [];
+
+  @override
+  void initState() {
+    super.initState();
+    revertMods();
+  }
+
+  Future<void> revertMods() async {
+    setState(() {
+      contents = [];
+      contents.add(
+        TextSpan(
+          text: 'Reverting mods...\n',
+          style: GoogleFonts.poppins(color: Colors.white),
+        ),
+      );
+    });
+    final operationResults = await revertManagedMod(widget.modDirs);
+    setState(() {
+      _showClose = true;
+      contents = operationResults;
+    });
+    _scrollToBottom();
+  }
+
+  Future<void> _scrollToBottom() async {
+    // Wait until scrollController has a valid position
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (!_scrollController.hasClients) return;
+
+    await _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        'Revert mods',
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
+      ),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.trackpad,
+            },
+          ),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: RichText(text: TextSpan(children: contents)),
+          ),
+        ),
+      ),
+      actions:
+          _showClose
+              ? [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    ref.read(alertDialogShownProvider.notifier).state = false;
+                  },
+                  child: Text(
+                    'Close',
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
+              ]
+              : [],
+    );
   }
 }
