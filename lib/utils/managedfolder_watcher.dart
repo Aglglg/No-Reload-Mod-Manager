@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
+import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:watcher/watcher.dart';
 
 class DynamicDirectoryWatcher {
@@ -25,9 +26,10 @@ class DynamicDirectoryWatcher {
       _debounceTimer?.cancel();
       _debounceTimer = Timer(Duration(milliseconds: 1000), () {
         print('Debounced refresh triggered');
-        if (ref != null) {
+        if (ref != null && !ref.read(alertDialogShownProvider)) {
           triggerRefresh(ref);
-        } else if (prevRef != null) {
+        } else if (prevRef != null &&
+            !prevRef!.read(alertDialogShownProvider)) {
           triggerRefresh(prevRef!);
         }
       });
