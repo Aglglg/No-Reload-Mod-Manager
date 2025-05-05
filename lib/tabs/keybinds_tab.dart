@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:window_manager/window_manager.dart';
@@ -115,6 +116,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                         ref.read(targetGameProvider.notifier).state =
                             TargetGame.none;
                         await windowManager.hide();
+                        DynamicDirectoryWatcher.stop();
                       },
                       value: 'Hide window',
                       child: Text(

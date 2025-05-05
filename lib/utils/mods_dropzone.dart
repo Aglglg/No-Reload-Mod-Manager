@@ -117,7 +117,12 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
   List<Directory> parentFolderOfManagedPath = [];
   List<Directory> parentFolderOfThisToolPath = [];
   List<Directory> parentFolderOfDestPath = [];
-  List<TextSpan> contents = [];
+  List<TextSpan> contents = [
+    TextSpan(
+      text: "Checking folders...\n",
+      style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+    ),
+  ];
 
   Future<bool> isValidFolder(Directory f) async {
     if (!isUnderManagedFolder(f.path) &&
@@ -244,14 +249,6 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
   }
 
   Future<void> checkFolders() async {
-    List<TextSpan> resultLogs = [];
-    resultLogs.add(
-      TextSpan(
-        text: "Checking folders...\n",
-        style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
-      ),
-    );
-
     final mValidFolders = await getValidFolders(widget.droppedFolders);
     ////////////////////
     final mFoldersOnManagedPath =
@@ -270,7 +267,6 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
         widget.droppedFolders.where((f) => isParentOfDestFolder(f)).toList();
 
     setState(() {
-      contents = resultLogs;
       validFolders = mValidFolders;
       foldersOnManagedPath = mFoldersOnManagedPath;
       foldersOnThisToolPath = mFoldersOnThisToolPath;

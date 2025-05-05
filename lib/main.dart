@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/get_cloud_data.dart';
 import 'package:no_reload_mod_manager/utils/hotkey_handler.dart';
+import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/mod_navigator.dart';
 import 'package:no_reload_mod_manager/utils/mods_dropzone.dart';
@@ -241,11 +242,10 @@ class _BackgroundState extends ConsumerState<Background> {
                     PopupMenuItem(
                       height: 37,
                       onTap: () async {
-                        if (!ref.read(alertDialogShownProvider)) {
-                          ref.read(targetGameProvider.notifier).state =
-                              TargetGame.none;
-                        }
+                        ref.read(targetGameProvider.notifier).state =
+                            TargetGame.none;
                         await windowManager.hide();
+                        DynamicDirectoryWatcher.stop();
                       },
                       value: 'Hide window',
                       child: Text(
@@ -759,6 +759,9 @@ class _MainViewState extends ConsumerState<MainView>
           Directory(managedPath),
         );
         ref.read(validModsPath.notifier).state = modsPath;
+        DynamicDirectoryWatcher.watch(managedPath, ref: ref);
+      } else {
+        DynamicDirectoryWatcher.stop();
       }
     }
 
@@ -791,6 +794,7 @@ class _MainViewState extends ConsumerState<MainView>
         ref.read(targetGameProvider.notifier).state = TargetGame.none;
       }
       await windowManager.hide();
+      DynamicDirectoryWatcher.stop();
     } else {
       String foregroundProcessName = getForegroundWindowProcessName();
       if (foregroundProcessName == SharedPrefUtils().getWuwaTargetProcess()) {
@@ -838,6 +842,7 @@ class _MainViewState extends ConsumerState<MainView>
         ref.read(targetGameProvider.notifier).state = TargetGame.none;
       }
       await windowManager.hide();
+      DynamicDirectoryWatcher.stop();
     }
   }
 

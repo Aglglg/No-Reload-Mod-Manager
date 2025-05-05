@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/keypress_simulator_manager.dart';
+import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:pasteboard/pasteboard.dart';
@@ -18,7 +19,7 @@ bool _hasIndex(int index, int listLength) {
   return index >= 0 && index < listLength;
 }
 
-void triggerRefresh(WidgetRef ref) async {
+void triggerRefresh(WidgetRef ref) {
   TargetGame currentTargetGame = ref.read(targetGameProvider);
   ref.read(targetGameProvider.notifier).state = TargetGame.none;
   ref.read(targetGameProvider.notifier).state = currentTargetGame;
@@ -94,17 +95,25 @@ Future<List<Directory>> getGroupFolders(Directory directory) async {
 }
 
 Future<int?> addGroup(WidgetRef ref, String managedPath) async {
+  String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
+  DynamicDirectoryWatcher.stop();
   for (int i = 1; i <= 48; i++) {
     String folderName = 'group_$i';
     Directory folder = Directory('$managedPath/$folderName');
 
     if (!await folder.exists()) {
       await folder.create();
+      await getGroupName(folder);
       _addGroupToRiverpod(ref, folder, i - 1);
+      if (watchedPath != null) {
+        DynamicDirectoryWatcher.watch(watchedPath);
+      }
       return i;
     }
   }
-
+  if (watchedPath != null) {
+    DynamicDirectoryWatcher.watch(watchedPath);
+  }
   return null;
 }
 
@@ -178,19 +187,29 @@ Future<int> getSelectedModInGroup(
 }
 
 Future<void> setGroupNameOnDisk(Directory groupDir, String groupName) async {
+  String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
+  DynamicDirectoryWatcher.stop();
   try {
     final fileGroupName = File(p.join(groupDir.path, 'groupname'));
 
     await fileGroupName.writeAsString(groupName);
   } catch (e) {}
+  if (watchedPath != null) {
+    DynamicDirectoryWatcher.watch(watchedPath);
+  }
 }
 
 Future<void> setModNameOnDisk(Directory modDir, String modName) async {
+  String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
+  DynamicDirectoryWatcher.stop();
   try {
     final fileGroupName = File(p.join(modDir.path, 'modname'));
 
     await fileGroupName.writeAsString(modName);
   } catch (e) {}
+  if (watchedPath != null) {
+    DynamicDirectoryWatcher.watch(watchedPath);
+  }
 }
 
 Image? getModOrGroupIcon(Directory groupDir) {
@@ -227,6 +246,8 @@ Future<void> setGroupOrModIcon(
   bool isGroup = true,
   Directory? modDir,
 }) async {
+  String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
+  DynamicDirectoryWatcher.stop();
   oldImage?.image.evict();
   if (fromClipboard == false) {
     bool windowWasPinned = ref.read(windowIsPinnedProvider);
@@ -315,6 +336,10 @@ Future<void> setGroupOrModIcon(
         }
       }
     } catch (e) {}
+  }
+
+  if (watchedPath != null) {
+    DynamicDirectoryWatcher.watch(watchedPath);
   }
 }
 
@@ -437,6 +462,8 @@ Future<void> setSelectedIndex(
   int index,
   Directory groupDir,
 ) async {
+  String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
+  DynamicDirectoryWatcher.stop();
   final currentGroups = ref.read(modGroupDataProvider);
 
   final updatedGroups =
@@ -459,6 +486,9 @@ Future<void> setSelectedIndex(
     final fileSelectedIndex = File(p.join(groupDir.path, 'selectedindex'));
     await fileSelectedIndex.writeAsString(index.toString());
   } catch (e) {}
+  if (watchedPath != null) {
+    DynamicDirectoryWatcher.watch(watchedPath);
+  }
 }
 
 /////////////////////////////////////////////////////////////////////////////

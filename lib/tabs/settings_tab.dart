@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mods_dropzone.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
@@ -118,6 +119,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                       ref.read(targetGameProvider.notifier).state =
                           TargetGame.none;
                       await windowManager.hide();
+                      DynamicDirectoryWatcher.stop();
                     },
                     value: 'Hide window',
                     child: Text(

@@ -845,6 +845,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "14.3.1"
+  watcher:
+    dependency: "direct main"
+    description:
+      name: watcher
+      sha256: "69da27e49efa56a15f8afe8f4438c4ec02eff0a117df1b22ea4aad194fe1c104"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.1"
   web:
     dependency: transitive
     description:
