@@ -79,7 +79,9 @@ class _TabModsState extends ConsumerState<TabMods> {
                 Center(
                   child: Row(
                     children: [
-                      GroupArea(),
+                      GroupArea(
+                        initialGroupIndex: ref.watch(currentGroupIndexProvider),
+                      ),
 
                       IgnorePointer(child: SizedBox(width: 49, height: 200)),
 
@@ -101,7 +103,8 @@ class _TabModsState extends ConsumerState<TabMods> {
 }
 
 class GroupArea extends ConsumerStatefulWidget {
-  const GroupArea({super.key});
+  final int initialGroupIndex;
+  const GroupArea({super.key, required this.initialGroupIndex});
 
   @override
   ConsumerState<GroupArea> createState() => _GroupAreaState();
@@ -115,14 +118,13 @@ class _GroupAreaState extends ConsumerState<GroupArea>
       TextEditingController();
   bool groupTextFieldEnabled = false;
   final FocusNode groupTextFieldFocusNode = FocusNode();
-  final initialPage = 0;
   String currentGroupName = '';
   int currentPageIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    getCurrentGroupName(initialPage, calledFromInitState: true);
+    getCurrentGroupName(widget.initialGroupIndex, calledFromInitState: true);
     ModNavigationListener.addListener(this);
   }
 
@@ -353,7 +355,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
               },
               carouselController: _carouselSliderGroupController,
               options: CarouselOptions(
-                initialPage: initialPage,
+                initialPage: widget.initialGroupIndex,
                 enableInfiniteScroll: true,
                 scrollDirection: Axis.vertical,
                 enlargeCenterPage: true,
@@ -626,12 +628,11 @@ class _ModAreaState extends ConsumerState<ModArea>
                 itemHeight: itemHeight,
                 isCentered: isCentered,
                 onSelected: () async {
-                  // await gamepadTest();
                   simulateKeySelectMod(
                     ref.read(currentGroupIndexProvider),
                     index,
                   );
-                  setSelectedIndex(
+                  setSelectedModIndex(
                     ref,
                     index,
                     widget.currentGroupData.groupDir,

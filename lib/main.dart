@@ -700,8 +700,19 @@ class _MainViewState extends ConsumerState<MainView>
   }
 
   Future<void> checkIsModsPathValidAndReady() async {
+    String? previousModsPath = ref.read(validModsPath);
+    if (previousModsPath != null) {
+      int prevGroupIndex = ref.read(currentGroupIndexProvider);
+      setSelectedGroupIndex(
+        prevGroupIndex,
+        p.join(previousModsPath, ConstantVar.managedFolderName),
+      );
+    }
+
     ImageRefreshListener.refreshImages(ref.read(modGroupDataProvider));
+
     ref.read(validModsPath.notifier).state = null;
+
     setState(() {
       _views = [TabKeybinds(), TabModsLoading(), TabSettings()];
     });
@@ -759,6 +770,12 @@ class _MainViewState extends ConsumerState<MainView>
           Directory(managedPath),
         );
         ref.read(validModsPath.notifier).state = modsPath;
+        int groupIndex = await getSelectedGroupIndex(
+          managedPath,
+          ref.read(modGroupDataProvider).length,
+        );
+        ref.read(currentGroupIndexProvider.notifier).state = groupIndex;
+
         DynamicDirectoryWatcher.watch(managedPath, ref: ref);
       } else {
         DynamicDirectoryWatcher.stop();

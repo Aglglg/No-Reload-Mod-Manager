@@ -111,6 +111,7 @@ class OnDropModFolderDialog extends ConsumerStatefulWidget {
 
 class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
   final ScrollController _scrollController = ScrollController();
+  bool _showClose = false;
   List<Directory> validFolders = [];
   List<Directory> foldersOnManagedPath = [];
   List<Directory> foldersOnThisToolPath = [];
@@ -487,6 +488,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
     }
 
     setState(() {
+      _showClose = true;
       contents = resultLogs;
     });
 
@@ -530,27 +532,33 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
           ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-            ref.read(alertDialogShownProvider.notifier).state = false;
-          },
-          child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.blue)),
-        ),
-        if (validFolders.isNotEmpty)
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              ref.read(alertDialogShownProvider.notifier).state = false;
-              widget.onConfirmFunction(validFolders);
-            },
-            child: Text(
-              'Confirm',
-              style: GoogleFonts.poppins(color: Colors.green),
-            ),
-          ),
-      ],
+      actions:
+          _showClose
+              ? [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    ref.read(alertDialogShownProvider.notifier).state = false;
+                  },
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
+                if (validFolders.isNotEmpty)
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      ref.read(alertDialogShownProvider.notifier).state = false;
+                      widget.onConfirmFunction(validFolders);
+                    },
+                    child: Text(
+                      'Confirm',
+                      style: GoogleFonts.poppins(color: Colors.green),
+                    ),
+                  ),
+              ]
+              : [],
     );
   }
 }

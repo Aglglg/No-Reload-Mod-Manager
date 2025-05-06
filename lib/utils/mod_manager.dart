@@ -160,7 +160,7 @@ Future<String> getGroupName(Directory groupDir) async {
 
 Future<int> getSelectedModInGroup(
   Directory groupDir,
-  int modsInGroupLenght,
+  int modsInGroupLength,
 ) async {
   try {
     final fileSelectedIndex = File(p.join(groupDir.path, 'selectedindex'));
@@ -168,7 +168,7 @@ Future<int> getSelectedModInGroup(
     if (await fileSelectedIndex.exists()) {
       int? result = int.tryParse(await fileSelectedIndex.readAsString());
       if (result != null) {
-        if (_hasIndex(result, modsInGroupLenght)) {
+        if (_hasIndex(result, modsInGroupLength)) {
           return result;
         } else {
           return 0;
@@ -183,6 +183,45 @@ Future<int> getSelectedModInGroup(
     }
   } catch (e) {
     return 0;
+  }
+}
+
+Future<int> getSelectedGroupIndex(String managedPath, int groupLength) async {
+  try {
+    final fileSelectedIndex = File(p.join(managedPath, 'selectedindex'));
+
+    if (await fileSelectedIndex.exists()) {
+      int? result = int.tryParse(await fileSelectedIndex.readAsString());
+      if (result != null) {
+        if (_hasIndex(result, groupLength)) {
+          return result;
+        } else {
+          return 0;
+        }
+      } else {
+        return 0;
+      }
+    } else {
+      await fileSelectedIndex.writeAsString("0");
+
+      return 0;
+    }
+  } catch (e) {
+    return 0;
+  }
+}
+
+Future<void> setSelectedGroupIndex(int index, String managedPath) async {
+  String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
+  DynamicDirectoryWatcher.stop();
+
+  try {
+    final fileSelectedIndex = File(p.join(managedPath, 'selectedindex'));
+    await fileSelectedIndex.writeAsString(index.toString());
+  } catch (e) {}
+
+  if (watchedPath != null) {
+    DynamicDirectoryWatcher.watch(watchedPath);
   }
 }
 
@@ -457,7 +496,7 @@ Future<String> getModName(Directory modDir) async {
   }
 }
 
-Future<void> setSelectedIndex(
+Future<void> setSelectedModIndex(
   WidgetRef ref,
   int index,
   Directory groupDir,
