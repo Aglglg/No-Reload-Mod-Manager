@@ -934,7 +934,6 @@ Future<void> _modifyIniFile(
 
     // Write the modified content back to the INI file
     await file.writeAsString(_getLiteralIni(parsedIni));
-    print("TESTTTT ${p.basename(file.path)}");
   } catch (e) {
     operationLogs.add(
       TextSpan(
@@ -962,9 +961,12 @@ Future<List<IniSection>> _parseIniSections(List<String> allLines) async {
     String line = rawLine.trim();
     if (line.isEmpty) continue; // skip empty lines ONLY
 
-    if (line.startsWith('[') && line.endsWith(']')) {
+    if (line.startsWith('[')) {
       // New section
-      String sectionName = line.substring(1, line.length - 1).trim();
+      String sectionName =
+          line.endsWith(']')
+              ? line.substring(1, line.length - 1).trim()
+              : line.substring(1, line.length).trim();
       currentSection = IniSection(sectionName, []);
       sections.add(currentSection);
     } else {
