@@ -160,6 +160,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
       groupIcon: oldList[currentPageIndex].groupIcon,
       groupName: _groupNameTextFieldController.text,
       modsInGroup: oldList[currentPageIndex].modsInGroup,
+      realIndex: oldList[currentPageIndex].realIndex,
       previousSelectedModOnGroup:
           oldList[currentPageIndex].previousSelectedModOnGroup,
     );
@@ -198,7 +199,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                       ConstantVar.managedFolderName,
                     ),
                   );
-
+                  if (!context.mounted) return;
                   if (groupIndex != null) {
                     getCurrentGroupName(groupIndex - 1);
                     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -208,6 +209,33 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                         curve: Curves.easeOut,
                       );
                     });
+                  } else {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: const Color(0xFF2B2930),
+                        margin: EdgeInsets.only(
+                          left: 20,
+                          right: 20,
+                          bottom: 20,
+                        ),
+                        duration: Duration(days: 1),
+                        behavior: SnackBarBehavior.floating,
+                        closeIconColor: Colors.blue,
+                        showCloseIcon: true,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        content: Text(
+                          'Max group reached (48 Groups). Unable to add more group.',
+                          style: GoogleFonts.poppins(
+                            color: Colors.yellow,
+                            fontSize: 13,
+                          ),
+                        ),
+                        dismissDirection: DismissDirection.down,
+                      ),
+                    );
                   }
                 },
                 value: 'Add group',
@@ -236,7 +264,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                             ConstantVar.managedFolderName,
                           ),
                         );
-
+                        if (!context.mounted) return;
                         if (groupIndex != null) {
                           getCurrentGroupName(groupIndex - 1);
                           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -246,6 +274,33 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                               curve: Curves.easeOut,
                             );
                           });
+                        } else {
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              backgroundColor: const Color(0xFF2B2930),
+                              margin: EdgeInsets.only(
+                                left: 20,
+                                right: 20,
+                                bottom: 20,
+                              ),
+                              duration: Duration(days: 1),
+                              behavior: SnackBarBehavior.floating,
+                              closeIconColor: Colors.blue,
+                              showCloseIcon: true,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              content: Text(
+                                'Max group reached (48 Groups). Unable to add more group.',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.yellow,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              dismissDirection: DismissDirection.down,
+                            ),
+                          );
                         }
                       },
                       value: 'Add group',
@@ -629,7 +684,11 @@ class _ModAreaState extends ConsumerState<ModArea>
                 isCentered: isCentered,
                 onSelected: () async {
                   simulateKeySelectMod(
-                    ref.read(currentGroupIndexProvider),
+                    ref
+                        .read(modGroupDataProvider)[ref.read(
+                          currentGroupIndexProvider,
+                        )]
+                        .realIndex,
                     index,
                   );
                   setSelectedModIndex(
@@ -743,6 +802,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
       groupIcon: widget.currentGroupData.groupIcon,
       groupName: widget.currentGroupData.groupName,
       modsInGroup: updatedMods,
+      realIndex: widget.currentGroupData.realIndex,
       previousSelectedModOnGroup:
           widget.currentGroupData.previousSelectedModOnGroup,
     );

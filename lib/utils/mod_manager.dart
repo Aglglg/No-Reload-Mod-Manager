@@ -26,18 +26,19 @@ void triggerRefresh(WidgetRef ref) {
 }
 
 Future<List<ModGroupData>> refreshModData(Directory managedDir) async {
-  List<Directory> validGroupFolders = await getGroupFolders(managedDir);
+  final validGroupFolders = await getGroupFolders(managedDir.path);
 
   List<ModGroupData> results = await Future.wait(
-    validGroupFolders.map((groupDir) async {
-      List<ModData> modsInGroup = await getModsOnGroup(groupDir);
+    validGroupFolders.map((group) async {
+      List<ModData> modsInGroup = await getModsOnGroup(group.$1);
       return ModGroupData(
-        groupDir: groupDir,
-        groupIcon: getModOrGroupIcon(groupDir),
-        groupName: await getGroupName(groupDir),
+        groupDir: group.$1,
+        groupIcon: getModOrGroupIcon(group.$1),
+        groupName: await getGroupName(group.$1),
         modsInGroup: modsInGroup,
+        realIndex: group.$2,
         previousSelectedModOnGroup: await getSelectedModInGroup(
-          groupDir,
+          group.$1,
           modsInGroup.length,
         ),
       );
@@ -49,49 +50,41 @@ Future<List<ModGroupData>> refreshModData(Directory managedDir) async {
 
 //////////////////////////
 
-Future<List<Directory>> getGroupFolders(Directory directory) async {
-  final List<Directory> matchingFolders = [];
+Future<List<(Directory, int)>> getGroupFolders(
+  String modsPath, {
+  bool shouldThrowOnError = false,
+}) async {
+  final directory = Directory(modsPath);
+  final List<(Directory, int)> matchingFolders = [];
 
   try {
-    // List all contents of the directory (non-recursive)
-    final contents = await directory.list().toList();
+    if (await directory.exists()) {
+      await for (final entity in directory.list()) {
+        if (entity is Directory) {
+          final folderName = p.basename(entity.path);
+          final match = RegExp(
+            r'^group_([1-9]|[1-3][0-9]|4[0-8])$',
+            caseSensitive: true,
+          ).firstMatch(folderName);
 
-    for (var entity in contents) {
-      if (entity is Directory) {
-        final folderName = p.basename(entity.path);
-        final match = RegExp(
-          r'^group_([1-9]|[1-3][0-9]|4[0-8])$',
-          caseSensitive: true,
-        ).firstMatch(folderName);
-
-        if (match != null) {
-          matchingFolders.add(entity);
+          if (match != null) {
+            final index = int.parse(match.group(1)!);
+            matchingFolders.add((entity, index));
+          }
         }
       }
+
+      matchingFolders.sort((a, b) => a.$2.compareTo(b.$2));
     }
-
-    // Sort the folders by the number after "group_"
-    matchingFolders.sort((a, b) {
-      final aName = p.basename(a.path);
-      final bName = p.basename(b.path);
-
-      final aMatch = RegExp(r'group_(\d+)').firstMatch(aName);
-      final bMatch = RegExp(r'group_(\d+)').firstMatch(bName);
-
-      if (aMatch != null && bMatch != null) {
-        final aNumber = int.parse(aMatch.group(1)!);
-        final bNumber = int.parse(bMatch.group(1)!);
-        return aNumber.compareTo(bNumber);
-      }
-
-      return 0;
-    });
-
-    return matchingFolders;
   } catch (e) {
-    print('Error reading directory: $e');
-    return [];
+    if (shouldThrowOnError) {
+      throw Exception("Error");
+    } else {
+      print('Error reading directory: $e');
+    }
   }
+
+  return matchingFolders;
 }
 
 Future<int?> addGroup(WidgetRef ref, String managedPath) async {
@@ -126,6 +119,7 @@ void _addGroupToRiverpod(WidgetRef ref, Directory groupDir, int index) {
     modsInGroup: [
       ModData(modDir: Directory(""), modIcon: null, modName: "None"),
     ],
+    realIndex: index + 1,
     previousSelectedModOnGroup: 0,
   );
 
@@ -148,8 +142,12 @@ Future<String> getGroupName(Directory groupDir) async {
       return await fileGroupName.readAsString();
     } else {
       final folderName = p.basename(groupDir.path);
+      String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
+      DynamicDirectoryWatcher.stop();
       await fileGroupName.writeAsString(folderName);
-
+      if (watchedPath != null) {
+        DynamicDirectoryWatcher.watch(watchedPath);
+      }
       return folderName;
     }
   } catch (e) {
@@ -177,8 +175,12 @@ Future<int> getSelectedModInGroup(
         return 0;
       }
     } else {
+      String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
+      DynamicDirectoryWatcher.stop();
       await fileSelectedIndex.writeAsString("0");
-
+      if (watchedPath != null) {
+        DynamicDirectoryWatcher.watch(watchedPath);
+      }
       return 0;
     }
   } catch (e) {
@@ -202,8 +204,12 @@ Future<int> getSelectedGroupIndex(String managedPath, int groupLength) async {
         return 0;
       }
     } else {
+      String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
+      DynamicDirectoryWatcher.stop();
       await fileSelectedIndex.writeAsString("0");
-
+      if (watchedPath != null) {
+        DynamicDirectoryWatcher.watch(watchedPath);
+      }
       return 0;
     }
   } catch (e) {
@@ -397,6 +403,7 @@ void _updateGroupIconProvider(
             groupIcon: newIcon,
             groupName: group.groupName,
             modsInGroup: group.modsInGroup,
+            realIndex: group.realIndex,
             previousSelectedModOnGroup: group.previousSelectedModOnGroup,
           );
         }
@@ -434,6 +441,7 @@ void _updateModIconProvider(
             groupIcon: group.groupIcon,
             groupName: group.groupName,
             modsInGroup: updatedMods,
+            realIndex: group.realIndex,
             previousSelectedModOnGroup: group.previousSelectedModOnGroup,
           );
         }
@@ -449,7 +457,6 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir) async {
   try {
     final List<Directory> modDirs = [];
 
-    // List all contents of the directory (non-recursive)
     final contents = await groupDir.list().toList();
 
     for (var entity in contents) {
@@ -458,8 +465,11 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir) async {
       }
     }
 
+    // Limit to only 40 mod directories
+    final limitedModDirs = modDirs.take(40).toList();
+
     final List<ModData> modDatas = await Future.wait(
-      modDirs.map((modDir) async {
+      limitedModDirs.map((modDir) async {
         return ModData(
           modDir: modDir,
           modIcon: getModOrGroupIcon(modDir),
@@ -467,10 +477,12 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir) async {
         );
       }).toList(),
     );
+
     modDatas.insert(
       0,
       ModData(modDir: Directory(""), modIcon: null, modName: "None"),
     );
+
     return modDatas;
   } catch (e) {
     print('Error reading directory: $e');
@@ -513,6 +525,7 @@ Future<void> setSelectedModIndex(
             groupIcon: group.groupIcon,
             groupName: group.groupName,
             modsInGroup: group.modsInGroup,
+            realIndex: group.realIndex,
             previousSelectedModOnGroup: index,
           );
         }
@@ -630,16 +643,19 @@ Future<List<TextSpan>> updateModData(
     _createBackgroundKeypressIni(managedPath, operationLogs);
     _createManagerGroupIni(managedPath, operationLogs);
 
-    final groupFullPathsAndIndexes = await _getGroupFolders(managedPath);
+    final groupFullPathsAndIndexes = await getGroupFolders(
+      managedPath,
+      shouldThrowOnError: true,
+    );
 
     await Future.wait([
-      for (final (groupFullPath, groupIndex) in groupFullPathsAndIndexes)
+      for (final (groupDir, groupIndex) in groupFullPathsAndIndexes)
         () async {
-          await _deleteGroupIniFiles(groupFullPath, operationLogs);
-          await _createGroupIni(groupFullPath, groupIndex, operationLogs);
+          await _deleteGroupIniFiles(groupDir.path, operationLogs);
+          await _createGroupIni(groupDir.path, groupIndex, operationLogs);
 
           final modFullPaths = await _getModFoldersOnSpecifiedGroup(
-            groupFullPath,
+            groupDir.path,
           );
 
           await Future.wait([
@@ -766,34 +782,6 @@ Future<void> _createManagerGroupIni(
       ),
     );
   }
-}
-
-Future<List<(String, int)>> _getGroupFolders(String modsPath) async {
-  final List<(String, int)> groupFullPathsAndIndexes = [];
-  final directory = Directory(modsPath);
-
-  if (await directory.exists()) {
-    await for (final entity in directory.list()) {
-      if (entity is Directory) {
-        final folderName = p.basename(entity.path);
-        final match = RegExp(
-          r'^group_([1-9]|[1-3][0-9]|4[0-8])$',
-          caseSensitive: true,
-        ).firstMatch(folderName);
-
-        if (match != null) {
-          final groupIndex = int.parse(match.group(1)!);
-          final groupFullPath = entity.path;
-          groupFullPathsAndIndexes.add((groupFullPath, groupIndex));
-        }
-      }
-    }
-
-    // Sort by the group index
-    groupFullPathsAndIndexes.sort((a, b) => a.$2.compareTo(b.$2));
-  }
-
-  return groupFullPathsAndIndexes;
 }
 
 Future<List<String>> _getModFoldersOnSpecifiedGroup(

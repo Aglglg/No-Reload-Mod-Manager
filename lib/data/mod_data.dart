@@ -7,6 +7,7 @@ class ModGroupData {
   final Image? groupIcon;
   final String groupName;
   final List<ModData> modsInGroup;
+  final int realIndex;
   final int previousSelectedModOnGroup;
 
   ModGroupData({
@@ -14,6 +15,7 @@ class ModGroupData {
     required this.groupIcon,
     required this.groupName,
     required this.modsInGroup,
+    required this.realIndex,
     required this.previousSelectedModOnGroup,
   });
 }

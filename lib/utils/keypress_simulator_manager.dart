@@ -6,13 +6,10 @@ void simulateKeyF10() {
   _simulateKeypress([VK_F10]);
 }
 
-Future<void> simulateKeySelectMod(int groupIndex, int modIndex) async {
+Future<void> simulateKeySelectMod(int realGroupIndex, int modIndex) async {
   List<int> keysGroupToBeSimulated = [];
   List<int> keysModToBeSimulated = [];
-  _keymapGroupIndex(
-    keysGroupToBeSimulated,
-    groupIndex + 1,
-  ); //+1 because group starts with group_1 whereas usual list index always starts with 0
+  _keymapGroupIndex(keysGroupToBeSimulated, realGroupIndex);
   _keymapModIndex(keysModToBeSimulated, modIndex);
 
   //Execute

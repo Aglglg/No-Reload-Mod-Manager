@@ -11,14 +11,18 @@ import 'package:path/path.dart' as p;
 class ModsDropZone extends ConsumerStatefulWidget {
   final String? copyDestination;
   final TextSpan? additionalContent;
+  final bool? checkForMaxMods;
+  final int? currentModsCountInGroup;
+  final bool? acceptArchived;
   final String dialogTitleText;
   final void Function(List<Directory> validFolders) onConfirmFunction;
-  final bool acceptArchived;
   const ModsDropZone({
     super.key,
     required this.dialogTitleText,
     required this.onConfirmFunction,
     this.acceptArchived = false,
+    this.checkForMaxMods = false,
+    this.currentModsCountInGroup,
     this.additionalContent,
     this.copyDestination,
   });
@@ -37,10 +41,30 @@ class _ModsDropZoneState extends ConsumerState<ModsDropZone> {
     return false;
   }
 
+  void showMaxMessage(String text) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: const Color(0xFF2B2930),
+        margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
+        duration: Duration(days: 1),
+        behavior: SnackBarBehavior.floating,
+        closeIconColor: Colors.blue,
+        showCloseIcon: true,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: Text(
+          text,
+          style: GoogleFonts.poppins(color: Colors.yellow, fontSize: 13),
+        ),
+        dismissDirection: DismissDirection.down,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return DropTarget(
-      onDragDone: (details) async {
+      onDragDone: (details) {
         final List<File> droppedFiles =
             details.files.map((f) => File(f.path)).toList();
 
@@ -49,6 +73,19 @@ class _ModsDropZoneState extends ConsumerState<ModsDropZone> {
                 .where((f) => isFolderAndExist(f))
                 .map((f) => Directory(f.path))
                 .toList();
+
+        if (widget.checkForMaxMods != null &&
+            widget.currentModsCountInGroup != null) {
+          if (widget.checkForMaxMods == true) {
+            //Max actually 40, but 41, because index 0 is None mod
+            if (widget.currentModsCountInGroup! + droppedFolders.length > 41) {
+              showMaxMessage(
+                'Max mods per group is 40 mods.\nCurrently you have ${widget.currentModsCountInGroup! - 1} mods. And you want to add ${droppedFolders.length} more mods.',
+              );
+              return;
+            }
+          }
+        }
 
         if (droppedFolders.isNotEmpty) {
           ref.read(alertDialogShownProvider.notifier).state = true;

@@ -153,6 +153,14 @@ class _BackgroundState extends ConsumerState<Background> {
                     ref.watch(validModsPath) != null &&
                     ref.read(modGroupDataProvider).isNotEmpty)
                   ModsDropZone(
+                    checkForMaxMods: true,
+                    currentModsCountInGroup:
+                        ref
+                            .read(modGroupDataProvider)[ref.read(
+                              currentGroupIndexProvider,
+                            )]
+                            .modsInGroup
+                            .length,
                     dialogTitleText: "Add mods",
                     onConfirmFunction: _onModAddConfirm,
                     copyDestination:
@@ -646,6 +654,7 @@ class _MainViewState extends ConsumerState<MainView>
       ScaffoldMessenger.of(context)
           .showSnackBar(
             SnackBar(
+              backgroundColor: const Color(0xFF2B2930),
               margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
               duration: Duration(days: 1),
               behavior: SnackBarBehavior.floating,
