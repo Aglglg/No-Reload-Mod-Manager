@@ -1739,7 +1739,7 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
 
     try {
       if (!await Directory(managedPath).exists()) {
-        Directory(managedPath).create(recursive: true);
+        await Directory(managedPath).create(recursive: true);
       }
 
       Directory movedDir = await widget.modOrGroupDir.rename(destPath);
