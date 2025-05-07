@@ -191,6 +191,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
               PopupMenuItem(
                 height: 37,
                 onTap: () async {
+                  if (!context.mounted) return;
                   int? groupIndex = await addGroup(
                     ref,
                     p.join(
@@ -256,6 +257,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                     PopupMenuItem(
                       height: 37,
                       onTap: () async {
+                        if (!context.mounted) return;
                         int? groupIndex = await addGroup(
                           ref,
                           p.join(
@@ -316,6 +318,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                       PopupMenuItem(
                         height: 37,
                         onTap: () {
+                          if (!context.mounted) return;
                           setState(() {
                             groupTextFieldEnabled = true;
                           });
@@ -343,6 +346,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                       PopupMenuItem(
                         height: 37,
                         onTap: () async {
+                          if (!context.mounted) return;
                           await setGroupOrModIcon(
                             ref,
                             ref.read(modGroupDataProvider)[index].groupDir,
@@ -366,6 +370,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                       PopupMenuItem(
                         height: 37,
                         onTap: () {
+                          if (!context.mounted) return;
                           setGroupOrModIcon(
                             ref,
                             ref.read(modGroupDataProvider)[index].groupDir,
@@ -390,6 +395,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                       PopupMenuItem(
                         height: 37,
                         onTap: () {
+                          if (!context.mounted) return;
                           ref.read(alertDialogShownProvider.notifier).state =
                               true;
                           showDialog(
@@ -659,9 +665,10 @@ class _ModAreaState extends ConsumerState<ModArea>
             if (!ref.watch(windowIsPinnedProvider))
               PopupMenuItem(
                 height: 37,
-                onTap:
-                    () =>
-                        ref.read(windowIsPinnedProvider.notifier).state = true,
+                onTap: () {
+                  if (!context.mounted) return;
+                  ref.read(windowIsPinnedProvider.notifier).state = true;
+                },
                 value: 'Add mod',
                 child: Text(
                   'Add mod',
@@ -842,7 +849,10 @@ class _ModContainerState extends ConsumerState<ModContainer>
           menuItems: [
             PopupMenuItem(
               height: 37,
-              onTap: widget.onSelected,
+              onTap: () {
+                if (!context.mounted) return;
+                widget.onSelected();
+              },
               value: 'Select',
               child: Text(
                 'Select',
@@ -856,9 +866,10 @@ class _ModContainerState extends ConsumerState<ModContainer>
             if (!ref.watch(windowIsPinnedProvider))
               PopupMenuItem(
                 height: 37,
-                onTap:
-                    () =>
-                        ref.read(windowIsPinnedProvider.notifier).state = true,
+                onTap: () {
+                  if (!context.mounted) return;
+                  ref.read(windowIsPinnedProvider.notifier).state = true;
+                },
                 value: 'Add mod',
                 child: Text(
                   'Add mod',
@@ -873,6 +884,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
               PopupMenuItem(
                 height: 37,
                 onTap: () {
+                  if (!context.mounted) return;
                   setState(() {
                     modTextFieldEnabled = true;
                   });
@@ -899,6 +911,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
               PopupMenuItem(
                 height: 37,
                 onTap: () async {
+                  if (!context.mounted) return;
                   await setGroupOrModIcon(
                     ref,
                     widget.currentGroupData.groupDir,
@@ -926,6 +939,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
               PopupMenuItem(
                 height: 37,
                 onTap: () async {
+                  if (!context.mounted) return;
                   await setGroupOrModIcon(
                     ref,
                     widget.currentGroupData.groupDir,
@@ -954,6 +968,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
               PopupMenuItem(
                 height: 37,
                 onTap: () {
+                  if (!context.mounted) return;
                   ref.read(alertDialogShownProvider.notifier).state = true;
                   showDialog(
                     barrierDismissible: false,
