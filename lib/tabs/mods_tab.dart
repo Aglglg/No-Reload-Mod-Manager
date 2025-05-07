@@ -118,7 +118,6 @@ class _GroupAreaState extends ConsumerState<GroupArea>
       TextEditingController();
   bool groupTextFieldEnabled = false;
   final FocusNode groupTextFieldFocusNode = FocusNode();
-  String currentGroupName = '';
   int currentPageIndex = 0;
 
   @override
@@ -390,7 +389,24 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                     if (index == currentPageIndex)
                       PopupMenuItem(
                         height: 37,
-                        onTap: () => print("Remove group"),
+                        onTap: () {
+                          ref.read(alertDialogShownProvider.notifier).state =
+                              true;
+                          showDialog(
+                            barrierDismissible: false,
+                            context: context,
+                            builder:
+                                (context) => RemoveModGroupDialog(
+                                  name: _groupNameTextFieldController.text,
+                                  validModsPath: ref.read(validModsPath)!,
+                                  modOrGroupDir:
+                                      ref
+                                          .read(modGroupDataProvider)[index]
+                                          .groupDir,
+                                  isGroup: true,
+                                ),
+                          );
+                        },
                         value: 'Remove group',
                         child: Text(
                           'Remove group',
@@ -937,7 +953,24 @@ class _ModContainerState extends ConsumerState<ModContainer>
             if (widget.index != 0)
               PopupMenuItem(
                 height: 37,
-                onTap: () => print("Remove mod"),
+                onTap: () {
+                  ref.read(alertDialogShownProvider.notifier).state = true;
+                  showDialog(
+                    barrierDismissible: false,
+                    context: context,
+                    builder:
+                        (context) => RemoveModGroupDialog(
+                          name: _modNameTextFieldController.text,
+                          validModsPath: ref.read(validModsPath)!,
+                          modOrGroupDir:
+                              widget
+                                  .currentGroupData
+                                  .modsInGroup[widget.index]
+                                  .modDir,
+                          isGroup: false,
+                        ),
+                  );
+                },
                 value: 'Remove mod',
                 child: Text(
                   'Remove mod',

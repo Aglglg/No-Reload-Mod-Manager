@@ -1648,3 +1648,218 @@ class _RevertModDialogState extends ConsumerState<RevertModDialog> {
     );
   }
 }
+
+////////////////////////
+///
+///
+
+class RemoveModGroupDialog extends ConsumerStatefulWidget {
+  final String name;
+  final String validModsPath;
+  final Directory modOrGroupDir;
+  final bool isGroup;
+  const RemoveModGroupDialog({
+    super.key,
+    required this.name,
+    required this.validModsPath,
+    required this.modOrGroupDir,
+    required this.isGroup,
+  });
+
+  @override
+  ConsumerState<RemoveModGroupDialog> createState() =>
+      _RemoveModGroupDialogState();
+}
+
+class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showConfirm = true;
+  bool _isLoading = false;
+  List<TextSpan> contents = [];
+
+  @override
+  void initState() {
+    super.initState();
+    showWarning();
+  }
+
+  //TODO: CONTINUE
+  void showWarning() {
+    setState(() {
+      contents = [
+        TextSpan(
+          text: "${widget.name}\n",
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+        TextSpan(
+          text:
+              widget.isGroup
+                  ? "Removing group will revert and remove all changes you made while these mods on this group where managed."
+                  : "Removing mod will revert and remove all changes you made while this mod where managed.",
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 189, 170, 0),
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+        TextSpan(
+          text:
+              "\n\nFolder will be moved to Mods/${ConstantVar.managedRemovedFolderName}",
+          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+        ),
+      ];
+    });
+  }
+
+  Future<void> renameOrMoveFolder() async {
+    setState(() {
+      _showConfirm = false;
+      _isLoading = true;
+      contents = [
+        TextSpan(
+          text: "Loading...",
+          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+        ),
+      ];
+    });
+    String baseFolderName = p.basename(widget.modOrGroupDir.path);
+    String managedPath = p.join(
+      widget.validModsPath,
+      ConstantVar.managedRemovedFolderName,
+    );
+    String availableFolderName = await _getAvailableFolderName(
+      baseFolderName,
+      managedPath,
+    );
+    String destPath = p.join(managedPath, availableFolderName);
+
+    try {
+      if (!await Directory(managedPath).exists()) {
+        Directory(managedPath).create(recursive: true);
+      }
+
+      Directory movedDir = await widget.modOrGroupDir.rename(destPath);
+      List<TextSpan> operationLogs = await revertManagedMod([movedDir]);
+      operationLogs.insert(
+        0,
+        TextSpan(
+          text:
+              "Folder moved to Mods/${ConstantVar.managedRemovedFolderName}\n\n",
+          style: GoogleFonts.poppins(color: Colors.green, fontSize: 14),
+        ),
+      );
+
+      setState(() {
+        contents = operationLogs;
+      });
+    } catch (e) {
+      setState(() {
+        contents = [
+          TextSpan(
+            text: "Failed to move folder.\n${ConstantVar.defaultErrorInfo}",
+            style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
+          ),
+        ];
+      });
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    triggerRefresh(ref);
+    _scrollToBottom();
+  }
+
+  Future<String> _getAvailableFolderName(
+    String baseFolderName,
+    String destParentPath,
+  ) async {
+    String folderName = baseFolderName;
+    while (await Directory(p.join(destParentPath, folderName)).exists()) {
+      folderName = "${folderName}_";
+    }
+    return folderName;
+  }
+
+  Future<void> _scrollToBottom() async {
+    // Wait until scrollController has a valid position
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (!_scrollController.hasClients) return;
+
+    await _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        widget.isGroup ? 'Remove group' : 'Remove mod',
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
+      ),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.trackpad,
+            },
+          ),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: RichText(text: TextSpan(children: contents)),
+          ),
+        ),
+      ),
+      actions:
+          _showConfirm
+              ? [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    ref.read(alertDialogShownProvider.notifier).state = false;
+                  },
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    await renameOrMoveFolder();
+                  },
+                  child: Text(
+                    'Confirm',
+                    style: GoogleFonts.poppins(color: Colors.red),
+                  ),
+                ),
+              ]
+              : _isLoading
+              ? []
+              : [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    ref.read(alertDialogShownProvider.notifier).state = false;
+                  },
+                  child: Text(
+                    'Done',
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
+              ],
+    );
+  }
+}
