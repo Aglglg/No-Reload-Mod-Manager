@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/get_cloud_data.dart';
@@ -73,7 +72,9 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return KeyboardListener(
       onKeyEvent: (value) {
-        if (value is KeyUpEvent) {
+        if (value is KeyUpEvent ||
+            ref.read(alertDialogShownProvider) ||
+            ref.read(popupMenuShownProvider)) {
         } else {
           ModNavigationListener.notifyListeners(value, null);
         }
@@ -347,69 +348,97 @@ class _MainViewState extends ConsumerState<MainView>
     controller.leftVibrationSpeed = 56535;
     controller.rightVibrationSpeed = 56535;
     controller.buttonsMapping = {
-      ControllerButton.A_BUTTON:
-          () => ModNavigationListener.notifyListeners(
+      ControllerButton.A_BUTTON: () {
+        if (!ref.read(alertDialogShownProvider) &&
+            !ref.read(popupMenuShownProvider)) {
+          ModNavigationListener.notifyListeners(
             CustomKeyEvent(
               physicalKey: PhysicalKeyboardKey.keyF,
               logicalKey: LogicalKeyboardKey.keyF,
               timeStamp: Duration(),
             ),
             controller,
-          ),
-      ControllerButton.DPAD_UP:
-          () => ModNavigationListener.notifyListeners(
+          );
+        }
+      },
+      ControllerButton.DPAD_UP: () {
+        if (!ref.read(alertDialogShownProvider) &&
+            !ref.read(popupMenuShownProvider)) {
+          ModNavigationListener.notifyListeners(
             CustomKeyEvent(
               physicalKey: PhysicalKeyboardKey.keyW,
               logicalKey: LogicalKeyboardKey.keyW,
               timeStamp: Duration(),
             ),
             controller,
-          ),
-      ControllerButton.DPAD_DOWN:
-          () => ModNavigationListener.notifyListeners(
+          );
+        }
+      },
+      ControllerButton.DPAD_DOWN: () {
+        if (!ref.read(alertDialogShownProvider) &&
+            !ref.read(popupMenuShownProvider)) {
+          ModNavigationListener.notifyListeners(
             CustomKeyEvent(
               physicalKey: PhysicalKeyboardKey.keyS,
               logicalKey: LogicalKeyboardKey.keyS,
               timeStamp: Duration(),
             ),
             controller,
-          ),
-      ControllerButton.DPAD_LEFT:
-          () => ModNavigationListener.notifyListeners(
+          );
+        }
+      },
+      ControllerButton.DPAD_LEFT: () {
+        if (!ref.read(alertDialogShownProvider) &&
+            !ref.read(popupMenuShownProvider)) {
+          ModNavigationListener.notifyListeners(
             CustomKeyEvent(
               physicalKey: PhysicalKeyboardKey.keyA,
               logicalKey: LogicalKeyboardKey.keyA,
               timeStamp: Duration(),
             ),
             controller,
-          ),
-      ControllerButton.DPAD_RIGHT:
-          () => ModNavigationListener.notifyListeners(
+          );
+        }
+      },
+      ControllerButton.DPAD_RIGHT: () {
+        if (!ref.read(alertDialogShownProvider) &&
+            !ref.read(popupMenuShownProvider)) {
+          ModNavigationListener.notifyListeners(
             CustomKeyEvent(
               physicalKey: PhysicalKeyboardKey.keyD,
               logicalKey: LogicalKeyboardKey.keyD,
               timeStamp: Duration(),
             ),
             controller,
-          ),
-      ControllerButton.LEFT_SHOULDER:
-          () => ModNavigationListener.notifyListeners(
+          );
+        }
+      },
+      ControllerButton.LEFT_SHOULDER: () {
+        if (!ref.read(alertDialogShownProvider) &&
+            !ref.read(popupMenuShownProvider)) {
+          ModNavigationListener.notifyListeners(
             CustomKeyEvent(
               physicalKey: PhysicalKeyboardKey.keyQ,
               logicalKey: LogicalKeyboardKey.keyQ,
               timeStamp: Duration(),
             ),
             controller,
-          ),
-      ControllerButton.RIGHT_SHOULDER:
-          () => ModNavigationListener.notifyListeners(
+          );
+        }
+      },
+      ControllerButton.RIGHT_SHOULDER: () {
+        if (!ref.read(alertDialogShownProvider) &&
+            !ref.read(popupMenuShownProvider)) {
+          ModNavigationListener.notifyListeners(
             CustomKeyEvent(
               physicalKey: PhysicalKeyboardKey.keyE,
               logicalKey: LogicalKeyboardKey.keyE,
               timeStamp: Duration(),
             ),
             controller,
-          ),
+          );
+        }
+      },
     };
     controller.listen();
   }

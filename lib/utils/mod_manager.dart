@@ -480,7 +480,7 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir) async {
 
     modDatas.insert(
       0,
-      ModData(modDir: Directory(""), modIcon: null, modName: "None"),
+      ModData(modDir: Directory("none"), modIcon: null, modName: "None"),
     );
 
     return modDatas;
@@ -872,7 +872,7 @@ Future<void> _manageMod(
 ) async {
   try {
     // Find all INI files recursively
-    final iniFiles = await _findIniFilesRecursiveExcludeDisabled(modFolder);
+    final iniFiles = await findIniFilesRecursiveExcludeDisabled(modFolder);
 
     // Create a list of Future objects for each INI file's backup and modification
     final futures = <Future>[];
@@ -1156,7 +1156,7 @@ Future<List<String>> _findIniFilesRecursive(String mainFolder) async {
       .toList();
 }
 
-Future<List<String>> _findIniFilesRecursiveExcludeDisabled(
+Future<List<String>> findIniFilesRecursiveExcludeDisabled(
   String mainFolder,
 ) async {
   final directory = Directory(mainFolder);

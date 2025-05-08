@@ -698,6 +698,14 @@ class _ModAreaState extends ConsumerState<ModArea>
             itemBuilder: (context, index, realIndex) {
               bool isCentered = _currentModRealIndex == realIndex;
               double itemHeight = isCentered ? 150 * 1.1 : 108 * 1.1;
+              if (isCentered) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  ref.read(modKeybind.notifier).state = (
+                    widget.currentGroupData.modsInGroup[index],
+                    widget.currentGroupData.groupName,
+                  );
+                });
+              }
               return ModContainer(
                 isSelected:
                     widget.currentGroupData.previousSelectedModOnGroup == index,
