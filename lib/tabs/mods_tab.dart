@@ -698,14 +698,6 @@ class _ModAreaState extends ConsumerState<ModArea>
             itemBuilder: (context, index, realIndex) {
               bool isCentered = _currentModRealIndex == realIndex;
               double itemHeight = isCentered ? 150 * 1.1 : 108 * 1.1;
-              if (isCentered) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  ref.read(modKeybind.notifier).state = (
-                    widget.currentGroupData.modsInGroup[index],
-                    widget.currentGroupData.groupName,
-                  );
-                });
-              }
               return ModContainer(
                 isSelected:
                     widget.currentGroupData.previousSelectedModOnGroup == index,
@@ -914,7 +906,28 @@ class _ModContainerState extends ConsumerState<ModContainer>
                   ),
                 ),
               ),
-
+            if (widget.index != 0)
+              PopupMenuItem(
+                height: 37,
+                onTap: () {
+                  if (!context.mounted) return;
+                  ref.read(modKeybindProvider.notifier).state = null;
+                  ref.read(modKeybindProvider.notifier).state = (
+                    widget.currentGroupData.modsInGroup[widget.index],
+                    widget.currentGroupData.groupName,
+                    ref.read(targetGameProvider),
+                  );
+                },
+                value: 'Keybind',
+                child: Text(
+                  'Keybind',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
             if (widget.index != 0)
               PopupMenuItem(
                 height: 37,

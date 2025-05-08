@@ -63,4 +63,7 @@ final focusedOnTextField = StateProvider<bool>((ref) => false);
 
 final validModsPath = StateProvider<String?>((ref) => null);
 
-final modKeybind = StateProvider<(ModData, String groupName)?>((ref) => null);
+final modKeybindProvider =
+    StateProvider<(ModData, String groupName, TargetGame targetGame)?>(
+      (ref) => null,
+    );

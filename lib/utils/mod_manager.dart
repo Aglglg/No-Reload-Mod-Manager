@@ -117,7 +117,7 @@ void _addGroupToRiverpod(WidgetRef ref, Directory groupDir, int index) {
     groupIcon: getModOrGroupIcon(groupDir),
     groupName: p.basename(groupDir.path),
     modsInGroup: [
-      ModData(modDir: Directory(""), modIcon: null, modName: "None"),
+      ModData(modDir: Directory("None"), modIcon: null, modName: "None"),
     ],
     realIndex: index + 1,
     previousSelectedModOnGroup: 0,
@@ -480,7 +480,7 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir) async {
 
     modDatas.insert(
       0,
-      ModData(modDir: Directory("none"), modIcon: null, modName: "None"),
+      ModData(modDir: Directory("None"), modIcon: null, modName: "None"),
     );
 
     return modDatas;

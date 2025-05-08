@@ -12,14 +12,36 @@ import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:window_manager/window_manager.dart';
 
-class KeybindKeyData {
-  String sectionName;
-  String key;
+class IniFileAsLines {
+  List<String> lines;
   File iniFile;
+
+  IniFileAsLines({required this.lines, required this.iniFile});
+
+  Future<void> saveKeybind() async {
+    try {
+      if (await iniFile.exists()) {
+        String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
+        DynamicDirectoryWatcher.stop();
+        await iniFile.writeAsString(lines.join('\n'));
+        if (watchedPath != null) {
+          DynamicDirectoryWatcher.watch(watchedPath);
+        }
+      }
+    } catch (e) {}
+  }
+}
+
+class KeybindKeyData {
+  String section;
+  String key;
+  IniFileAsLines iniFileAsLines;
+  int keyLineIndex;
   KeybindKeyData({
-    required this.sectionName,
+    required this.section,
     required this.key,
-    required this.iniFile,
+    required this.iniFileAsLines,
+    required this.keyLineIndex,
   });
 }
 
@@ -33,51 +55,51 @@ class TabKeybinds extends ConsumerStatefulWidget {
 class _TabKeybindsState extends ConsumerState<TabKeybinds> {
   ModData? modData;
   String groupName = "";
-  List<KeybindKeyData> keys = [];
+  bool isEditing = false;
 
-  //   List<Map<String, String>> keys = const [
-  //   {'title': 'Key Weapon', 'subtitle': 'no_shift no_return A'},
-  //   {'title': 'Key Something', 'subtitle': 'no_shift no_alt no_control A'},
-  //   {'title': 'Key Something Long Very Text', 'subtitle': 'no_control A'},
-  //   {'title': 'Key Weapon', 'subtitle': 'no_shift A'},
-  //   {'title': 'Key Weapon', 'subtitle': 'no_shift A'},
-  //   {'title': 'Key Weapon', 'subtitle': 'no_shift A'},
-  //   {
-  //     'title': 'Key Weapon',
-  //     'subtitle': 'no_shift Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-  //   },
-  //   {
-  //     'title': 'Key Weapon',
-  //     'subtitle': 'no_shift Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-  //   },
-  //   {
-  //     'title': 'Key Weapon',
-  //     'subtitle': 'no_shift Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-  //   },
-  //   {
-  //     'title': 'Key Weapon',
-  //     'subtitle':
-  //         'no_shift Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-  //   },
-  // ];
+  List<IniFileAsLines> iniFilesAsLines = [];
+  List<KeybindKeyData> keys = [];
 
   @override
   void initState() {
     super.initState();
-    ref.listenManual(tabIndexProvider, (previous, next) {
-      setModDir(next);
+
+    //When going to Keybind
+    ref.listenManual(tabIndexProvider, (previous, next) async {
+      await setModDir();
+    });
+
+    //In case auto refresh was triggered
+    ref.listenManual(targetGameProvider, (previous, next) async {
+      if (next != TargetGame.none) {
+        await setModDir();
+      }
     });
   }
 
-  Future<void> setModDir(int tabIndex) async {
+  Future<void> setModDir() async {
+    int tabIndex = ref.read(tabIndexProvider);
     if (tabIndex == 0) {
-      if (ref.read(modKeybind) != null) {
-        if (await ref.read(modKeybind)!.$1.modDir.exists()) {
+      //RESET
+      setState(() {
+        modData = null;
+        groupName = "";
+        isEditing = false;
+        iniFilesAsLines = [];
+        keys = [];
+      });
+
+      //Sometimes widget don't rebuild/don't show loading screen because loading time was too fast
+      await Future.delayed(Duration(milliseconds: 10));
+
+      if (ref.read(modKeybindProvider) != null) {
+        if (await ref.read(modKeybindProvider)!.$1.modDir.exists() &&
+            ref.read(modKeybindProvider)!.$3 == ref.read(targetGameProvider)) {
           setState(() {
-            modData = ref.read(modKeybind)!.$1;
-            groupName = ref.read(modKeybind)!.$2;
+            modData = ref.read(modKeybindProvider)!.$1;
+            groupName = ref.read(modKeybindProvider)!.$2;
           });
-          loadKeys();
+          await loadKeys();
         } else {
           setState(() {
             modData = null;
@@ -87,25 +109,84 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
     }
   }
 
-  void loadKeys() {
-    final iniFiles = findIniFilesRecursiveExcludeDisabled(modData!.modDir.path);
+  Future<void> loadKeys() async {
+    final iniFiles = await findIniFilesRecursiveExcludeDisabled(
+      modData!.modDir.path,
+    );
+
+    final data = await Future.wait(
+      iniFiles.map((filePath) async {
+        List<String> lines = [];
+        try {
+          lines = await File(filePath).readAsLines();
+        } catch (e) {}
+        return IniFileAsLines(lines: lines, iniFile: File(filePath));
+      }).toList(),
+    );
+
+    setState(() {
+      iniFilesAsLines = data;
+    });
+
+    List<KeybindKeyData> resultKeys = [];
+
+    final keySectionRegExp = RegExp(
+      r'^\s*\[(Key[^\]\r\n]*)',
+      caseSensitive: false,
+    );
+
+    final keyValueRegExp = RegExp(r'^\s*key\s*=\s*(.+)', caseSensitive: false);
+
+    for (var ini in iniFilesAsLines) {
+      String? currentSection;
+
+      for (int i = 0; i < ini.lines.length; i++) {
+        final line = ini.lines[i];
+
+        final sectionMatch = keySectionRegExp.firstMatch(line);
+        if (sectionMatch != null) {
+          currentSection = sectionMatch.group(1);
+          continue;
+        }
+
+        final keyMatch = keyValueRegExp.firstMatch(line);
+        if (keyMatch != null && currentSection != null) {
+          final keyValue = keyMatch.group(1)!.trim();
+          resultKeys.add(
+            KeybindKeyData(
+              section: currentSection,
+              key: keyValue,
+              iniFileAsLines: ini,
+              keyLineIndex: i,
+            ),
+          );
+        }
+      }
+    }
+
+    setState(() {
+      keys = resultKeys;
+    });
+  }
+
+  Future<void> saveKeys() async {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      for (var iniFileAsline in iniFilesAsLines) {
+        await iniFileAsline.saveKeybind();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     if (modData != null) {
-      return Padding(
-        padding: const EdgeInsets.only(
-          top: 85,
-          right: 49,
-          left: 49,
-          bottom: 30,
-        ),
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: Stack(
-            children: [
-              Align(
+      return Align(
+        alignment: Alignment.topCenter,
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 85),
+              child: Align(
                 alignment: Alignment.topCenter,
                 child: Text(
                   "$groupName - ${modData!.modName}",
@@ -116,91 +197,127 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.only(top: 30),
-                child: ScrollConfiguration(
-                  behavior: ScrollConfiguration.of(context).copyWith(
-                    dragDevices: {
-                      PointerDeviceKind.touch,
-                      PointerDeviceKind.mouse,
-                      PointerDeviceKind.trackpad,
-                    },
-                    scrollbars: false,
-                  ),
-                  child: RightClickMenuWrapper(
-                    menuItems: [
-                      ref.watch(windowIsPinnedProvider)
-                          ? PopupMenuItem(
-                            height: 37,
-                            onTap:
-                                () =>
-                                    ref
-                                        .watch(windowIsPinnedProvider.notifier)
-                                        .state = false,
-                            value: 'Unpin window',
-                            child: Text(
-                              'Unpin window',
-                              style: GoogleFonts.poppins(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500,
-                                fontSize: 12,
-                              ),
-                            ),
-                          )
-                          : PopupMenuItem(
-                            height: 37,
-                            onTap:
-                                () =>
-                                    ref
-                                        .watch(windowIsPinnedProvider.notifier)
-                                        .state = true,
-                            value: 'Pin window',
-                            child: Text(
-                              'Pin window',
-                              style: GoogleFonts.poppins(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500,
-                                fontSize: 12,
-                              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.only(
+                top: 115,
+                right: 49,
+                left: 49,
+                bottom: 40,
+              ),
+              child: ScrollConfiguration(
+                behavior: ScrollConfiguration.of(context).copyWith(
+                  dragDevices: {
+                    PointerDeviceKind.touch,
+                    PointerDeviceKind.mouse,
+                    PointerDeviceKind.trackpad,
+                  },
+                  scrollbars: false,
+                ),
+                child: RightClickMenuWrapper(
+                  menuItems: [
+                    ref.watch(windowIsPinnedProvider)
+                        ? PopupMenuItem(
+                          height: 37,
+                          onTap:
+                              () =>
+                                  ref
+                                      .watch(windowIsPinnedProvider.notifier)
+                                      .state = false,
+                          value: 'Unpin window',
+                          child: Text(
+                            'Unpin window',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 12,
                             ),
                           ),
-                      PopupMenuItem(
-                        height: 37,
-                        onTap: () async {
-                          ref.read(targetGameProvider.notifier).state =
-                              TargetGame.none;
-                          await windowManager.hide();
-                          DynamicDirectoryWatcher.stop();
-                        },
-                        value: 'Hide window',
-                        child: Text(
-                          'Hide window',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12,
+                        )
+                        : PopupMenuItem(
+                          height: 37,
+                          onTap:
+                              () =>
+                                  ref
+                                      .watch(windowIsPinnedProvider.notifier)
+                                      .state = true,
+                          value: 'Pin window',
+                          child: Text(
+                            'Pin window',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
+                    PopupMenuItem(
+                      height: 37,
+                      onTap: () async {
+                        ref.read(targetGameProvider.notifier).state =
+                            TargetGame.none;
+                        await windowManager.hide();
+                        DynamicDirectoryWatcher.stop();
+                      },
+                      value: 'Hide window',
+                      child: Text(
+                        'Hide window',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
                       ),
-                    ],
-                    child: SingleChildScrollView(
-                      child: Wrap(
-                        spacing: 9,
-                        runSpacing: 9,
-                        children:
-                            keys.map((keyData) {
-                              return _KeyCard(
-                                sectionName: keyData.sectionName,
-                                keybindKey: keyData.key,
-                              );
-                            }).toList(),
-                      ),
+                    ),
+                  ],
+                  child: SingleChildScrollView(
+                    child: Wrap(
+                      spacing: 9,
+                      runSpacing: 9,
+                      children:
+                          keys.map((keyData) {
+                            return _KeyCard(
+                              sectionName: keyData.section,
+                              keybindKey: keyData.key,
+                              iniFileAsLines: keyData.iniFileAsLines,
+                              keyLineIndex: keyData.keyLineIndex,
+                              isEditing: isEditing,
+                            );
+                          }).toList(),
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 5),
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: TextButton(
+                  onPressed: () {
+                    if (isEditing) {
+                      saveKeys();
+                      setState(() {
+                        isEditing = false;
+                      });
+                    } else {
+                      setState(() {
+                        isEditing = true;
+                      });
+                    }
+                  },
+                  child: Text(
+                    isEditing ? "Save Keybinds" : "Edit Keybinds",
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       );
     } else {
@@ -214,7 +331,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
         child: Align(
           alignment: Alignment.topCenter,
           child: Text(
-            'Select a mod and go to Keybind tab',
+            'Right-click a mod and select Keybind',
             textAlign: TextAlign.center,
             overflow: TextOverflow.ellipsis,
             softWrap: false,
@@ -233,8 +350,17 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
 class _KeyCard extends StatefulWidget {
   final String sectionName;
   final String keybindKey;
+  final IniFileAsLines iniFileAsLines;
+  final int keyLineIndex;
+  final bool isEditing;
 
-  const _KeyCard({required this.sectionName, required this.keybindKey});
+  const _KeyCard({
+    required this.sectionName,
+    required this.keybindKey,
+    required this.iniFileAsLines,
+    required this.keyLineIndex,
+    required this.isEditing,
+  });
 
   @override
   State<_KeyCard> createState() => _KeyCardState();
@@ -276,12 +402,41 @@ class _KeyCardState extends State<_KeyCard> {
           const SizedBox(height: 4),
 
           const SizedBox(height: 4),
-          TextField(
-            controller: textController,
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w400,
-              color: Colors.white,
-              fontSize: 13,
+          IntrinsicWidth(
+            child: IntrinsicHeight(
+              child: TextField(
+                onEditingComplete: () {
+                  textController.text = textController.text.replaceAll(
+                    '\n',
+                    '',
+                  );
+                  widget.iniFileAsLines.lines[widget.keyLineIndex] =
+                      "key = ${textController.text}";
+                  FocusScope.of(context).unfocus();
+                },
+                onTapOutside: (v) {
+                  textController.text = textController.text.replaceAll(
+                    '\n',
+                    '',
+                  );
+                  widget.iniFileAsLines.lines[widget.keyLineIndex] =
+                      "key = ${textController.text}";
+                  FocusScope.of(context).unfocus();
+                },
+                controller: textController,
+                enabled: widget.isEditing,
+                decoration: InputDecoration(
+                  isDense: true,
+                  disabledBorder: InputBorder.none,
+                ),
+                maxLines: null,
+                keyboardType: TextInputType.none,
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w400,
+                  color: Colors.white,
+                  fontSize: 13,
+                ),
+              ),
             ),
           ),
         ],

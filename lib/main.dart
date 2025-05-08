@@ -600,6 +600,12 @@ class _MainViewState extends ConsumerState<MainView>
       loadNetworkDatas();
     });
     ref.listenManual(targetGameProvider, checkToShowInfoMessage);
+
+    ref.listenManual(modKeybindProvider, (previous, next) {
+      if (next != null) {
+        _tabController.animateTo(0);
+      }
+    });
   }
 
   Future<void> checkToShowInfoMessage(
