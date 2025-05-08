@@ -1683,7 +1683,6 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
     showWarning();
   }
 
-  //TODO: CONTINUE
   void showWarning() {
     setState(() {
       contents = [
@@ -1853,9 +1852,10 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
                   onPressed: () {
                     Navigator.of(context).pop();
                     ref.read(alertDialogShownProvider.notifier).state = false;
+                    simulateKeyF10();
                   },
                   child: Text(
-                    'Done',
+                    'Done & Reload',
                     style: GoogleFonts.poppins(color: Colors.blue),
                   ),
                 ),
