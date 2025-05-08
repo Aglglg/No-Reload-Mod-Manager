@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/keypress_simulator_manager.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
@@ -174,6 +175,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
       for (var iniFileAsline in iniFilesAsLines) {
         await iniFileAsline.saveKeybind();
       }
+      simulateKeyF10();
     });
   }
 
