@@ -1,0 +1,13 @@
+app_id: DF5B0F87-8365-499D-B8B3-58211FBF6F2A
+publisher: Agulag
+publisher_url: https://github.com/Aglglg/No-Reload-Mod-Manager
+display_name: No Reload Mod Manager
+create_desktop_icon: true
+
+# See: https://jrsoftware.org/ishelp/index.php?topic=setup_defaultdirname
+install_dir_name: "{userappdata}\\No Reload Mod Manager"
+
+# This path is relative to the root directory of your project; The format of icon file must be ico, can not be png or others
+setup_icon_file: windows\runner\resources\app_icon.ico
+locales:
+  - en

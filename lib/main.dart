@@ -49,7 +49,6 @@ Future<void> setupWindow() async {
   String feedURL =
       'https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/appcast.xml';
   await autoUpdater.setFeedURL(feedURL);
-  await autoUpdater.checkForUpdates();
   await autoUpdater.setScheduledCheckInterval(0);
 
   doWhenWindowReady(() async {
