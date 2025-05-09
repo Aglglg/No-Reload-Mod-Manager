@@ -84,7 +84,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                         onTap:
                             () =>
                                 ref
-                                    .watch(windowIsPinnedProvider.notifier)
+                                    .read(windowIsPinnedProvider.notifier)
                                     .state = false,
                         value: 'Unpin window',
                         child: Text(
@@ -101,7 +101,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                         onTap:
                             () =>
                                 ref
-                                    .watch(windowIsPinnedProvider.notifier)
+                                    .read(windowIsPinnedProvider.notifier)
                                     .state = true,
                         value: 'Pin window',
                         child: Text(
@@ -131,15 +131,46 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                       ),
                     ),
                   ),
+                  PopupMenuItem(
+                    height: 37,
+                    onTap: () async {
+                      try {
+                        if (!await launchUrl(
+                          Uri.parse(ref.read(tutorialLinkProvider)),
+                        )) {}
+                      } catch (e) {}
+                    },
+                    value: 'Tutorial',
+                    child: Text(
+                      'Tutorial',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
                 ],
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       GameSettings(),
-                      Container(height: 20),
+
+                      Container(height: 15),
+                      Divider(color: const Color.fromARGB(127, 33, 149, 243)),
+                      Container(height: 10),
+                      Text(
+                        'Reverter',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Container(height: 5),
                       Container(
-                        height: 105,
+                        height: 160,
                         decoration: BoxDecoration(
                           border: Border.all(
                             width: 3,
@@ -216,7 +247,19 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
+
                       Container(height: 15),
+                      Divider(color: const Color.fromARGB(127, 33, 149, 243)),
+                      Container(height: 10),
+                      Text(
+                        'Toggle Window Shortcuts',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Container(height: 5),
                       Row(
                         children: [
                           Expanded(
@@ -426,7 +469,11 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           ),
                         ],
                       ),
-                      Container(height: 20),
+
+                      Container(height: 15),
+                      Divider(color: const Color.fromARGB(127, 33, 149, 243)),
+                      Container(height: 10),
+
                       Text(
                         'Navigation Shortcuts',
                         style: GoogleFonts.poppins(
@@ -617,6 +664,35 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           ),
                         ],
                       ),
+                      Container(height: 15),
+                      Divider(color: const Color.fromARGB(127, 33, 149, 243)),
+                      Container(height: 15),
+
+                      ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          overlayColor: Colors.white,
+                          backgroundColor: const Color.fromARGB(
+                            127,
+                            255,
+                            255,
+                            255,
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Text(
+                            'Check for Software Update',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+
                       Container(height: 20),
 
                       Row(

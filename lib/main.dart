@@ -152,12 +152,12 @@ class _BackgroundState extends ConsumerState<Background> {
                     ref.watch(tabIndexProvider) == 1 &&
                     !ref.watch(alertDialogShownProvider) &&
                     ref.watch(validModsPath) != null &&
-                    ref.read(modGroupDataProvider).isNotEmpty)
+                    ref.watch(modGroupDataProvider).isNotEmpty)
                   ModsDropZone(
                     checkForMaxMods: true,
                     currentModsCountInGroup:
                         ref
-                            .read(modGroupDataProvider)[ref.read(
+                            .watch(modGroupDataProvider)[ref.watch(
                               currentGroupIndexProvider,
                             )]
                             .modsInGroup
@@ -166,7 +166,7 @@ class _BackgroundState extends ConsumerState<Background> {
                     onConfirmFunction: _onModAddConfirm,
                     copyDestination:
                         ref
-                            .read(modGroupDataProvider)[ref.read(
+                            .watch(modGroupDataProvider)[ref.watch(
                               currentGroupIndexProvider,
                             )]
                             .groupDir
@@ -197,7 +197,7 @@ class _BackgroundState extends ConsumerState<Background> {
                           ),
                         ),
                       ),
-                    if (ref.watch(tabIndexProvider) == 1)
+                    if (ref.watch(tabIndexProvider) != 2)
                       PopupMenuItem(
                         height: 37,
                         onTap: () async {
@@ -219,7 +219,7 @@ class _BackgroundState extends ConsumerState<Background> {
                           onTap:
                               () =>
                                   ref
-                                      .watch(windowIsPinnedProvider.notifier)
+                                      .read(windowIsPinnedProvider.notifier)
                                       .state = false,
                           value: 'Unpin window',
                           child: Text(
@@ -236,7 +236,7 @@ class _BackgroundState extends ConsumerState<Background> {
                           onTap:
                               () =>
                                   ref
-                                      .watch(windowIsPinnedProvider.notifier)
+                                      .read(windowIsPinnedProvider.notifier)
                                       .state = true,
                           value: 'Pin window',
                           child: Text(
@@ -266,19 +266,19 @@ class _BackgroundState extends ConsumerState<Background> {
                         ),
                       ),
                     ),
-                    if (ref.watch(tabIndexProvider) == 1)
+                    if (ref.watch(tabIndexProvider) == 0)
                       PopupMenuItem(
                         height: 37,
                         onTap: () async {
                           try {
                             if (!await launchUrl(
-                              Uri.parse(ref.watch(tutorialLinkProvider)),
+                              Uri.parse(ConstantVar.urlValidKeysExample),
                             )) {}
                           } catch (e) {}
                         },
-                        value: 'Tutorial',
+                        value: 'Valid Keys',
                         child: Text(
-                          'Tutorial',
+                          'Valid Keys',
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
@@ -286,6 +286,25 @@ class _BackgroundState extends ConsumerState<Background> {
                           ),
                         ),
                       ),
+                    PopupMenuItem(
+                      height: 37,
+                      onTap: () async {
+                        try {
+                          if (!await launchUrl(
+                            Uri.parse(ref.read(tutorialLinkProvider)),
+                          )) {}
+                        } catch (e) {}
+                      },
+                      value: 'Tutorial',
+                      child: Text(
+                        'Tutorial',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
                   ],
                   child: MoveWindow(onDoubleTap: () {}),
                 ),

@@ -11,6 +11,7 @@ import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 
 class IniFileAsLines {
@@ -219,13 +220,28 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                 ),
                 child: RightClickMenuWrapper(
                   menuItems: [
+                    PopupMenuItem(
+                      height: 37,
+                      onTap: () async {
+                        triggerRefresh(ref);
+                      },
+                      value: 'Refresh',
+                      child: Text(
+                        'Refresh',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
                     ref.watch(windowIsPinnedProvider)
                         ? PopupMenuItem(
                           height: 37,
                           onTap:
                               () =>
                                   ref
-                                      .watch(windowIsPinnedProvider.notifier)
+                                      .read(windowIsPinnedProvider.notifier)
                                       .state = false,
                           value: 'Unpin window',
                           child: Text(
@@ -242,7 +258,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                           onTap:
                               () =>
                                   ref
-                                      .watch(windowIsPinnedProvider.notifier)
+                                      .read(windowIsPinnedProvider.notifier)
                                       .state = true,
                           value: 'Pin window',
                           child: Text(
@@ -265,6 +281,44 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                       value: 'Hide window',
                       child: Text(
                         'Hide window',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    PopupMenuItem(
+                      height: 37,
+                      onTap: () async {
+                        try {
+                          if (!await launchUrl(
+                            Uri.parse(ConstantVar.urlValidKeysExample),
+                          )) {}
+                        } catch (e) {}
+                      },
+                      value: 'Valid Keys',
+                      child: Text(
+                        'Valid Keys',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    PopupMenuItem(
+                      height: 37,
+                      onTap: () async {
+                        try {
+                          if (!await launchUrl(
+                            Uri.parse(ref.read(tutorialLinkProvider)),
+                          )) {}
+                        } catch (e) {}
+                      },
+                      value: 'Tutorial',
+                      child: Text(
+                        'Tutorial',
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
@@ -312,7 +366,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                   child: Text(
                     isEditing ? "Save Keybinds" : "Edit Keybinds",
                     style: GoogleFonts.poppins(
-                      color: Colors.white,
+                      color: Colors.blue,
                       fontSize: 13,
                     ),
                   ),

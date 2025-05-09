@@ -34,8 +34,6 @@ class DynamicDirectoryWatcher {
         }
       });
     });
-
-    print('Started watching: $path');
   }
 
   static void stop() {
@@ -43,6 +41,5 @@ class DynamicDirectoryWatcher {
     _debounceTimer?.cancel();
     _subscription = null;
     watcher = null;
-    print('Stopped watching');
   }
 }
