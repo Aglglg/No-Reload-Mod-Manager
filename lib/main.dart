@@ -276,9 +276,9 @@ class _BackgroundState extends ConsumerState<Background> {
                             )) {}
                           } catch (e) {}
                         },
-                        value: 'Valid Keys',
+                        value: 'Valid keys',
                         child: Text(
-                          'Valid Keys',
+                          'Valid keys',
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
