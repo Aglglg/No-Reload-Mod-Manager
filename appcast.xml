@@ -10,7 +10,7 @@
                 https://github.com/Aglglg/No-Reload-Mod-Manager/releases
             </sparkle:releaseNotesLink>
             <pubDate>Sun, 16 Feb 2022 12:00:00 +0800</pubDate>
-            <enclosure url="https://github.com/Aglglg/No-Reload-Mod-Manager/releases/download/v2.0.0/no_reload_mod_manager-2.0.0+1-windows.zip"
+            <enclosure url="https://github.com/Aglglg/No-Reload-Mod-Manager/releases/download/v2.0.0/no_reload_mod_manager-2.0.0+1-windows-setup.exe"
                        sparkle:dsaSignature="MD4CHQCoFLH7/AiWHVJiKEeOOtiVtexM7q9rhoxm2a/JAh0Ai8tR+uGcLJKwUqMN3Az5oHR0imJAYbGgLyNRpw=="
                        sparkle:version="2.1.0+2"
                        sparkle:os="windows"
