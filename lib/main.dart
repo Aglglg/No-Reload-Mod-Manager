@@ -33,12 +33,6 @@ import 'package:xinput_gamepad/xinput_gamepad.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  String feedURL = 'http://localhost:5002/appcast.xml';
-  await autoUpdater.setFeedURL(feedURL);
-  await autoUpdater.checkForUpdates();
-  await autoUpdater.setScheduledCheckInterval(0);
-
   SharedPrefUtils().init();
   await setupWindow();
   runApp(ProviderScope(child: MyApp()));
@@ -51,6 +45,13 @@ Future<void> setupWindow() async {
   if (await FlutterSingleInstance().isFirstInstance() == false) {
     exit(0);
   }
+
+  String feedURL =
+      'https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/appcast.xml';
+  await autoUpdater.setFeedURL(feedURL);
+  await autoUpdater.checkForUpdates();
+  await autoUpdater.setScheduledCheckInterval(0);
+
   doWhenWindowReady(() async {
     const initialSize = Size(750, 330);
     appWindow.minSize = initialSize;
