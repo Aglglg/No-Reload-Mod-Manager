@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+    <channel>
+        <title>No Reload Mod Manager</title>
+        <description>Mod Manager for games that support XXMI</description>
+        <language>en</language>
+        <item>
+            <title>Version 2.0.0</title>
+            <sparkle:releaseNotesLink>
+                https://github.com/Aglglg/No-Reload-Mod-Manager/releases
+            </sparkle:releaseNotesLink>
+            <pubDate>Sun, 16 Feb 2022 12:00:00 +0800</pubDate>
+            <enclosure url="https://fastforge.dev/logo-mini.png"
+                       sparkle:dsaSignature="MDwCHB/aDLAjqW31bInb+vBTwB22ZcYrz3lgjV6bIWsCHDzhCiNjpfJ/S7ZuLGon2sAa3u/xwGGdiU4qLjE="
+                       sparkle:version="2.0.0+1"
+                       sparkle:os="windows"
+                       length="0"
+                       type="application/octet-stream" />
+        </item>
+    </channel>
+</rss>

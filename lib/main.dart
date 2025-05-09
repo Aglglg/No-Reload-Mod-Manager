@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:auto_updater/auto_updater.dart';
 import 'package:flutter/services.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/get_cloud_data.dart';
@@ -32,6 +33,12 @@ import 'package:xinput_gamepad/xinput_gamepad.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  String feedURL = 'http://localhost:5002/appcast.xml';
+  await autoUpdater.setFeedURL(feedURL);
+  await autoUpdater.checkForUpdates();
+  await autoUpdater.setScheduledCheckInterval(0);
+
   SharedPrefUtils().init();
   await setupWindow();
   runApp(ProviderScope(child: MyApp()));

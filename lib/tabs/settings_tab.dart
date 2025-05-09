@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
+import 'package:auto_updater/auto_updater.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mods_dropzone.dart';
@@ -669,7 +670,9 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                       Container(height: 15),
 
                       ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () async {
+                          await autoUpdater.checkForUpdates();
+                        },
                         style: ElevatedButton.styleFrom(
                           overlayColor: Colors.white,
                           backgroundColor: const Color.fromARGB(
@@ -682,7 +685,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Text(
-                            'Check for Software Update',
+                            'Check for Updates',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
                               fontSize: 12,
