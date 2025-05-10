@@ -41,6 +41,16 @@ This tool supports **mouse**, **keyboard**, and **gamepad (XInput only)** inputs
 
 ...
 
+### ✨ How To Automatically Run When Opening Game With XXMI (Optional)
+1. Make sure it's already installed.
+2. Search **No Reload Mod Manager** with Windows Search.
+3. You should see option to **Open File Location**. Click it.
+4. Right-click on it, select **Copy as path**.
+5. Open your XXMI, on your target game, go to XXMI Setting, Go to Advanced, Tick Run-Post Launch/Run Pre-Launch (up to you, choose one).
+6. Paste the copied path there.
+
+...
+
 ### 🆕 How To Add Group/Mod
 1. Make sure your **Mods Path** is valid.
 2. While on **Mods** tab right click anywhere and look for **Add group**.
