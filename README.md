@@ -30,14 +30,14 @@ This tool supports **mouse**, **keyboard**, and **gamepad (XInput only)** inputs
 6. **Click** the icon on system tray, select your target game. It will open the Mod Manager window.
 7. Go to **Settings** tab, make sure **Mods Path** is correct for your specified game.
 8. **Click Update Mod Data**
-🎉 Done! You can now organize mods, edit keybindings, and so on.
+9. 🎉 Done! You can now organize mods, edit keybindings, and so on.
 
 ...
 
 ### 📜 How To Open Mod Manager Window Without Going To System Tray
 1. Make sure your current window is your target game's window.
 2. Press **Alt+W**(default), this will show/hide mod manager window.
-3. If it does nothing, make sure it's running & on system tray an please check on **Settings** tab, make sure **Target Process* is correct. Make sure **Toggle Window Shortcuts** is correct.
+3. If it does nothing, make sure it's running & on system tray an please check on **Settings** tab, make sure **Target Process** is correct. Make sure **Toggle Window Shortcuts** is correct.
 
 ...
 
