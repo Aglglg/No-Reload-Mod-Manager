@@ -11,8 +11,6 @@ class ConstantVar {
   static const String managerGroupFileName = 'manager_group.ini';
   static const String defaultErrorInfo =
       "Make sure the directory/file is accessible.\nTry to close any other programs/File Explorer that's accessing it.";
-  static const String defaultErrorInfoAdmin =
-      "Make sure the directory/file is accessible.\nTry to exit this tool via System Tray and run again as Administrator.";
   static const String urlSupportIcon =
       "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/icon_support.png";
   static const String urlSupportIconOnHover =

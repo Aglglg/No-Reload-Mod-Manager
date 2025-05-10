@@ -750,7 +750,7 @@ Future<void> _createBackgroundKeypressIni(
     operationLogs.add(
       TextSpan(
         text:
-            "Error! Cannot create ${ConstantVar.backgroundKeypressFileName}.\n${ConstantVar.defaultErrorInfoAdmin}\n\n",
+            "Error! Cannot create ${ConstantVar.backgroundKeypressFileName}.\n${ConstantVar.defaultErrorInfo}\n\n",
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );
@@ -777,7 +777,7 @@ Future<void> _createManagerGroupIni(
     operationLogs.add(
       TextSpan(
         text:
-            "Error! Cannot create ${ConstantVar.managerGroupFileName}.\n${ConstantVar.defaultErrorInfoAdmin}\n\n",
+            "Error! Cannot create ${ConstantVar.managerGroupFileName}.\n${ConstantVar.defaultErrorInfo}\n\n",
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );
@@ -1266,7 +1266,7 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
           operationLogs.add(
             TextSpan(
               text:
-                  'Error! Cannot copy folder: ${p.basename(folder.path)}.\n${ConstantVar.defaultErrorInfoAdmin}\n\n',
+                  'Error! Cannot copy folder: ${p.basename(folder.path)}.\n${ConstantVar.defaultErrorInfo}\n\n',
               style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
             ),
           );
