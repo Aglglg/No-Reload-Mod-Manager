@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:no_reload_mod_manager/utils/check_admin_privillege.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 
 class RightClickMenuWrapper extends ConsumerStatefulWidget {
@@ -55,6 +56,14 @@ class _RightClickMenuWrapperState extends ConsumerState<RightClickMenuWrapper> {
       behavior: HitTestBehavior.translucent,
       onSecondaryTapDown: (TapDownDetails details) {
         _showContextMenu(context, details.globalPosition);
+
+        final isAdmin = isRunningAsAdmin();
+
+        final snackBar = SnackBar(content: Text("Running as admin: $isAdmin"));
+
+        // Find the ScaffoldMessenger in the widget tree
+        // and use it to show a SnackBar.
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
       },
       child: widget.child,
     );

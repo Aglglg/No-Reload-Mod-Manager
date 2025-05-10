@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:auto_updater/auto_updater.dart';
 import 'package:flutter/services.dart';
+import 'package:no_reload_mod_manager/utils/check_admin_privillege.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/get_cloud_data.dart';
 import 'package:no_reload_mod_manager/utils/hotkey_handler.dart';
@@ -38,11 +39,25 @@ void main() async {
   runApp(ProviderScope(child: MyApp()));
 }
 
+Future<void> relaunchAsNormalUser() async {
+  final exePath = Platform.resolvedExecutable; // This works for compiled .exe
+
+  await Process.start('explorer.exe', [
+    exePath,
+  ], mode: ProcessStartMode.detached);
+  exit(0);
+}
+
 Future<void> setupWindow() async {
   await windowManager.ensureInitialized();
   await hotKeyManager.unregisterAll();
 
   if (await FlutterSingleInstance().isFirstInstance() == false) {
+    exit(0);
+  }
+
+  if (isRunningAsAdmin()) {
+    await relaunchAsNormalUser();
     exit(0);
   }
 
