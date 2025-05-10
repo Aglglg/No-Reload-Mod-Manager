@@ -73,7 +73,7 @@ This tool supports **mouse**, **keyboard**, and **gamepad (XInput only)** inputs
 2. This will move your mod/group folder to **DISABLED_MANAGED_REMOVED** on your **Mods** folder.
 3. It will automatically revert any changes to mod's .ini files. Which means **any changes you made while these mods were managed will all be removed/reverted**.
 4. Press F10 to reload **if not automatically reloaded**.
-### 🗑️ How To Add Group/Mod directly via File Explorer
+### 🗑️ How To Remove Group/Mod directly via File Explorer
 1. Go to your **\_MANAGED\_** folder on your **Mods** folder.
 2. In there, you can delete/move group or mod folder.
 3. In case you moved it and not delete it, open Mod Manager Window and go to **Settings** tab. Drag and drop the folders to the **Reverter**. This step is **very important**.
