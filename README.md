@@ -16,7 +16,7 @@ This tool supports **mouse**, **keyboard**, and **gamepad (XInput only)** inputs
 ## 🚀 Features
 - **Mod Selection**: Choose and apply mods on the fly.
 - **Keybinding Editor**: Modify mod keybindings conveniently.
-- **Automatic Game Detection**: Ensures the mod manager runs only when the target game is in focus.
+- **Automatic Game Detection**: Pressing toggle window shortcut key will open window to corresponding target game.
 
 ---
 
