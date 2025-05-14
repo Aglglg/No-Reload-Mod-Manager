@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:auto_updater/auto_updater.dart';
 import 'package:flutter/services.dart';
+import 'package:no_reload_mod_manager/utils/auto_group_icon.dart';
 import 'package:no_reload_mod_manager/utils/check_admin_privillege.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/get_cloud_data.dart';
@@ -58,9 +59,9 @@ Future<void> checkToRelaunch() async {
   if (isRunningAsAdmin() && !wasRelaunched) {
     try {
       await File(relaunchFlagPath).writeAsString('1');
+      await relaunchAsNormalUser();
+      exit(0);
     } catch (e) {}
-    await relaunchAsNormalUser();
-    exit(0);
   } else if (wasRelaunched) {
     try {
       await File(relaunchFlagPath).delete();
@@ -610,6 +611,7 @@ class _MainViewState extends ConsumerState<MainView>
             "https://youtu.be/mBO9KEc6LA8",
           );
     }
+    ref.read(autoIconProvider.notifier).state = await fetchGroupIconData();
   }
 
   Future<void> initSystemTray() async {

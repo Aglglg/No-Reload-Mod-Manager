@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:path/path.dart' as p;
 
-Future<Map<String, String>> fetchCloudData() async {
+Future<Map<String, String>> fetchGroupIconData() async {
   try {
     final response = await http.get(Uri.parse(ConstantVar.urlJsonAutoIcon));
 
