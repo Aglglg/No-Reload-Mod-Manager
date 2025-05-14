@@ -1797,6 +1797,18 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
     );
   }
 
+  void _onConfirmToUpdateModClicked() {
+    String? modsPath = ref.read(validModsPath);
+    if (modsPath != null) {
+      ref.read(alertDialogShownProvider.notifier).state = true;
+      showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (context) => UpdateModDialog(modsPath: modsPath),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -1852,10 +1864,10 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
                   onPressed: () {
                     Navigator.of(context).pop();
                     ref.read(alertDialogShownProvider.notifier).state = false;
-                    simulateKeyF10();
+                    _onConfirmToUpdateModClicked();
                   },
                   child: Text(
-                    'Done & Reload',
+                    'Update Mod Data',
                     style: GoogleFonts.poppins(color: Colors.blue),
                   ),
                 ),

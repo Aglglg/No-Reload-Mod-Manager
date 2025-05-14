@@ -48,6 +48,26 @@ Future<void> relaunchAsNormalUser() async {
   exit(0);
 }
 
+Future<void> checkToRelaunch() async {
+  final String relaunchFlagPath = p.join(
+    Directory.systemTemp.path,
+    "nrmm_relaunched",
+  );
+
+  bool wasRelaunched = await File(relaunchFlagPath).exists();
+  if (isRunningAsAdmin() && !wasRelaunched) {
+    try {
+      await File(relaunchFlagPath).writeAsString('1');
+    } catch (e) {}
+    await relaunchAsNormalUser();
+    exit(0);
+  } else if (wasRelaunched) {
+    try {
+      await File(relaunchFlagPath).delete();
+    } catch (e) {}
+  }
+}
+
 Future<void> setupWindow() async {
   await windowManager.ensureInitialized();
   await hotKeyManager.unregisterAll();
@@ -56,10 +76,7 @@ Future<void> setupWindow() async {
     exit(0);
   }
 
-  if (isRunningAsAdmin()) {
-    await relaunchAsNormalUser();
-    exit(0);
-  }
+  await checkToRelaunch();
 
   String feedURL =
       'https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/appcast.xml';
@@ -364,6 +381,11 @@ class _MainViewState extends ConsumerState<MainView>
     super.onWindowBlur();
   }
 
+  Future<void> resetLeftThumbGamepad() async {
+    await Future.delayed(Duration(milliseconds: 180));
+    ref.read(leftThumbWasTriggered.notifier).state = false;
+  }
+
   void setupGamepadNavigation() {
     XInputManager.enableXInput();
     final Controller controller = Controller(
@@ -388,6 +410,62 @@ class _MainViewState extends ConsumerState<MainView>
     );
     controller.leftVibrationSpeed = 56535;
     controller.rightVibrationSpeed = 56535;
+    controller.variableKeysMapping = {
+      VariableControllerKey.THUMB_LX: (v) {
+        if (!ref.read(alertDialogShownProvider) &&
+            !ref.read(popupMenuShownProvider) &&
+            !ref.read(leftThumbWasTriggered)) {
+          if (v >= 30000) {
+            ModNavigationListener.notifyListeners(
+              CustomKeyEvent(
+                physicalKey: PhysicalKeyboardKey.keyD,
+                logicalKey: LogicalKeyboardKey.keyD,
+                timeStamp: Duration(),
+              ),
+              controller,
+            );
+            ref.read(leftThumbWasTriggered.notifier).state = true;
+          } else if (v <= -30000) {
+            ModNavigationListener.notifyListeners(
+              CustomKeyEvent(
+                physicalKey: PhysicalKeyboardKey.keyA,
+                logicalKey: LogicalKeyboardKey.keyA,
+                timeStamp: Duration(),
+              ),
+              controller,
+            );
+            ref.read(leftThumbWasTriggered.notifier).state = true;
+          }
+        }
+      },
+      VariableControllerKey.THUMB_LY: (v) {
+        if (!ref.read(alertDialogShownProvider) &&
+            !ref.read(popupMenuShownProvider) &&
+            !ref.read(leftThumbWasTriggered)) {
+          if (v >= 30000) {
+            ModNavigationListener.notifyListeners(
+              CustomKeyEvent(
+                physicalKey: PhysicalKeyboardKey.keyW,
+                logicalKey: LogicalKeyboardKey.keyW,
+                timeStamp: Duration(),
+              ),
+              controller,
+            );
+            ref.read(leftThumbWasTriggered.notifier).state = true;
+          } else if (v <= -30000) {
+            ModNavigationListener.notifyListeners(
+              CustomKeyEvent(
+                physicalKey: PhysicalKeyboardKey.keyS,
+                logicalKey: LogicalKeyboardKey.keyS,
+                timeStamp: Duration(),
+              ),
+              controller,
+            );
+            ref.read(leftThumbWasTriggered.notifier).state = true;
+          }
+        }
+      },
+    };
     controller.buttonsMapping = {
       ControllerButton.A_BUTTON: () {
         if (!ref.read(alertDialogShownProvider) &&
@@ -396,6 +474,19 @@ class _MainViewState extends ConsumerState<MainView>
             CustomKeyEvent(
               physicalKey: PhysicalKeyboardKey.keyF,
               logicalKey: LogicalKeyboardKey.keyF,
+              timeStamp: Duration(),
+            ),
+            controller,
+          );
+        }
+      },
+      ControllerButton.X_BUTTON: () {
+        if (!ref.read(alertDialogShownProvider) &&
+            !ref.read(popupMenuShownProvider)) {
+          ModNavigationListener.notifyListeners(
+            CustomKeyEvent(
+              physicalKey: PhysicalKeyboardKey.keyR,
+              logicalKey: LogicalKeyboardKey.keyR,
               timeStamp: Duration(),
             ),
             controller,
@@ -516,7 +607,7 @@ class _MainViewState extends ConsumerState<MainView>
       ref.read(tutorialLinkProvider.notifier).state = await CloudData()
           .loadTextFromCloud(
             ConstantVar.urlToGetTutorialLink,
-            "https://gamebanana.com/mods/582623",
+            "https://youtu.be/mBO9KEc6LA8",
           );
     }
   }
@@ -609,6 +700,12 @@ class _MainViewState extends ConsumerState<MainView>
     super.initState();
     setupGamepadNavigation();
     ModNavigationListener.addListener(this);
+
+    ref.listenManual(leftThumbWasTriggered, (previous, next) {
+      if (next == true) {
+        resetLeftThumbGamepad();
+      }
+    });
 
     ref.listenManual(targetGameProvider, (previous, next) {
       checkIsModsPathValidAndReady();

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
+import 'package:no_reload_mod_manager/utils/auto_group_icon.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/keypress_simulator_manager.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
@@ -219,7 +220,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                           right: 20,
                           bottom: 20,
                         ),
-                        duration: Duration(days: 1),
+                        duration: Duration(seconds: 3),
                         behavior: SnackBarBehavior.floating,
                         closeIconColor: Colors.blue,
                         showCloseIcon: true,
@@ -285,7 +286,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                                 right: 20,
                                 bottom: 20,
                               ),
-                              duration: Duration(days: 1),
+                              duration: Duration(seconds: 3),
                               behavior: SnackBarBehavior.floating,
                               closeIconColor: Colors.blue,
                               showCloseIcon: true,
@@ -335,6 +336,55 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                         value: 'Rename',
                         child: Text(
                           'Rename',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    if (index == currentPageIndex)
+                      PopupMenuItem(
+                        height: 37,
+                        onTap: () async {
+                          if (!context.mounted) return;
+                          bool success = await tryGetIcon(
+                            ref.read(modGroupDataProvider)[index].groupDir.path,
+                            ref.read(autoIconProvider),
+                          );
+                          if (!context.mounted) return;
+                          if (!success) {
+                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                backgroundColor: const Color(0xFF2B2930),
+                                margin: EdgeInsets.only(
+                                  left: 20,
+                                  right: 20,
+                                  bottom: 20,
+                                ),
+                                duration: Duration(seconds: 3),
+                                behavior: SnackBarBehavior.floating,
+                                closeIconColor: Colors.blue,
+                                showCloseIcon: true,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                content: Text(
+                                  'Auto group icon failed. No matching character hash.',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.yellow,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                dismissDirection: DismissDirection.down,
+                              ),
+                            );
+                          }
+                        },
+                        value: 'Try auto icon',
+                        child: Text(
+                          'Try auto icon',
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
@@ -1130,6 +1180,16 @@ class _ModContainerState extends ConsumerState<ModContainer>
         if (widget.isCentered) {
           widget.onSelected();
           controller?.vibrate(Duration(milliseconds: 80));
+        }
+      }
+      if (value.physicalKey == PhysicalKeyboardKey.keyR) {
+        if (widget.isCentered) {
+          ref.read(modKeybindProvider.notifier).state = null;
+          ref.read(modKeybindProvider.notifier).state = (
+            widget.currentGroupData.modsInGroup[widget.index],
+            widget.currentGroupData.groupName,
+            ref.read(targetGameProvider),
+          );
         }
       }
     }

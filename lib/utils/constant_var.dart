@@ -31,6 +31,8 @@ class ConstantVar {
       "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/message_hsr.txt";
   static const String urlMessageZzz =
       "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/message_zzz.txt";
+  static const String urlJsonAutoIcon =
+      "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/auto_icon/auto_icon.json";
 
   static const String urlValidKeysExample =
       "https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes";

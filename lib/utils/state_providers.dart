@@ -28,6 +28,9 @@ final StateProvider<String> tutorialLinkProvider = StateProvider<String>(
   (ref) => "",
 );
 
+final StateProvider<Map<String, String>> autoIconProvider =
+    StateProvider<Map<String, String>>((ref) => {});
+
 final StateProvider<bool> messageWuwaDismissedProvider = StateProvider<bool>(
   (ref) => false,
 );
@@ -67,3 +70,5 @@ final modKeybindProvider =
     StateProvider<(ModData, String groupName, TargetGame targetGame)?>(
       (ref) => null,
     );
+
+final leftThumbWasTriggered = StateProvider<bool>((ref) => false);

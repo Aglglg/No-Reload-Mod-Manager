@@ -621,6 +621,36 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           Column(
                             children: [
                               Text(
+                                'Mod Keybind',
+                                style: GoogleFonts.poppins(
+                                  color: const Color.fromARGB(
+                                    200,
+                                    255,
+                                    255,
+                                    255,
+                                  ),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Column(
+                                children: [
+                                  Image.asset(
+                                    'assets/keys_icon/keyR_icon.png',
+                                    height: 40,
+                                  ),
+                                  Image.asset(
+                                    'assets/keys_icon/x_icon.png',
+                                    height: 40,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          Container(width: 20),
+                          Column(
+                            children: [
+                              Text(
                                 'Tab Navigation',
                                 style: GoogleFonts.poppins(
                                   color: const Color.fromARGB(

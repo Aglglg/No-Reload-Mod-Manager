@@ -47,7 +47,7 @@ class _ModsDropZoneState extends ConsumerState<ModsDropZone> {
       SnackBar(
         backgroundColor: const Color(0xFF2B2930),
         margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
-        duration: Duration(days: 1),
+        duration: Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
         closeIconColor: Colors.blue,
         showCloseIcon: true,

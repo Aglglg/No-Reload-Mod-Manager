@@ -387,7 +387,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
         child: Align(
           alignment: Alignment.topCenter,
           child: Text(
-            'Right-click a mod and select Keybind',
+            'Right-click a mod and select Keybind.\nOr just press R(keyboard) X(gamepad) on a mod.',
             textAlign: TextAlign.center,
             overflow: TextOverflow.ellipsis,
             softWrap: false,
