@@ -90,9 +90,9 @@ This tool supports **mouse**, **keyboard**, and **gamepad (XInput only)** inputs
 
 ## 🔧 Technical Details
 - Built with **Flutter (Dart)**.
-- Toggle window shortcuts (Alt+W) works by reading **target game process names** (e.g., `Wuthering Waves`).
+- Toggle window shortcuts (Alt+W) works by reading **target game process names** (e.g., `Client-Win64-Shipping.exe`).
 - In order to change selected mods, this tool will do VK_KEYS keypress simulation.
-- Ensures **WWMI/GIMI/SRMI/ZZMI receives keypresses in the background** by adding background_keypress.ini to your Mods folder.
+- **WWMI/GIMI/SRMI/ZZMI will receives keypresses in the background** automatically add background_keypress.ini to your Mods folder.
 
 ## 🔑 Keybindings Simulated
 - **Clear Key (VK_CLEAR)** – Base for keypress simulation.
@@ -108,7 +108,7 @@ This tool supports **mouse**, **keyboard**, and **gamepad (XInput only)** inputs
 ## 🛡️ Security Concerns
 - Runs in the **background**, app icon can be seen on Tray.
 - **VirusTotal Reports**: Some antivirus programs may flag this tool's **installer** file. If you scan the installed app it's actually fine, but if you scan the installer, it might be flagged. Because I use **Inno Setup Compiler** to create the **Installer**.
-- **If unsure, check the GitHub source code before use.** Or build it yourself if you understand flutter(for personal use only). Or just don't use it
+- **If unsure, check the GitHub source code before use.** Or build it yourself if you understand flutter(for personal use only). Or just don't use it.
 
 ---
 
