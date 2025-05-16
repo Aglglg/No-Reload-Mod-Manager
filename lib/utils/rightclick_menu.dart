@@ -19,6 +19,7 @@ class RightClickMenuWrapper extends ConsumerStatefulWidget {
 
 class _RightClickMenuWrapperState extends ConsumerState<RightClickMenuWrapper> {
   Future<void> _showContextMenu(BuildContext context, Offset position) async {
+    final sss = ref.read(zoomScaleProvider);
     // ✅ Use container instead of ref, for safety
     final container = ProviderScope.containerOf(context, listen: false);
 
@@ -31,7 +32,7 @@ class _RightClickMenuWrapperState extends ConsumerState<RightClickMenuWrapper> {
       popUpAnimationStyle: AnimationStyle(
         duration: Duration(milliseconds: 150),
       ),
-      constraints: const BoxConstraints(maxWidth: 120),
+      constraints: BoxConstraints(maxWidth: 120 * sss, minWidth: 120 * sss),
       menuPadding: EdgeInsets.zero,
       color: const Color(0xFF2B2930),
       context: context,
@@ -42,7 +43,9 @@ class _RightClickMenuWrapperState extends ConsumerState<RightClickMenuWrapper> {
         position.dy,
       ),
       items: widget.menuItems,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20 * sss),
+      ),
     );
 
     // ✅ Will still work even if widget is gone

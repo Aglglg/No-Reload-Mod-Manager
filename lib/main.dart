@@ -35,7 +35,7 @@ import 'package:xinput_gamepad/xinput_gamepad.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SharedPrefUtils().init();
+  await SharedPrefUtils().init();
   await setupWindow();
   runApp(ProviderScope(child: MyApp()));
 }
@@ -85,7 +85,10 @@ Future<void> setupWindow() async {
   await autoUpdater.setScheduledCheckInterval(0);
 
   doWhenWindowReady(() async {
-    const initialSize = Size(750, 330);
+    final initialSize = Size(
+      750 * SharedPrefUtils().getOverallScale(),
+      370 * SharedPrefUtils().getOverallScale(),
+    );
     appWindow.minSize = initialSize;
     appWindow.size = initialSize;
     appWindow.alignment = Alignment.center;
@@ -171,6 +174,7 @@ class _BackgroundState extends ConsumerState<Background> {
 
   @override
   Widget build(BuildContext context) {
+    final sss = ref.watch(zoomScaleProvider);
     return ExcludeFocusTraversal(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -178,18 +182,17 @@ class _BackgroundState extends ConsumerState<Background> {
           padding: const EdgeInsets.only(top: 1),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color.fromARGB(127, 0, 0, 0),
-              borderRadius: BorderRadius.circular(30),
+              color: Color.fromARGB(ref.watch(bgTransparencyProvider), 0, 0, 0),
+              borderRadius: BorderRadius.circular(30 * sss),
               border: Border.all(
                 strokeAlign: BorderSide.strokeAlignInside,
-                width: 3,
+                width: 3 * sss,
                 color: getBorderColor(ref),
               ),
             ),
             child: Stack(
               children: [
-                if (ref.watch(windowIsPinnedProvider) &&
-                    ref.watch(tabIndexProvider) == 1 &&
+                if (ref.watch(tabIndexProvider) == 1 &&
                     !ref.watch(alertDialogShownProvider) &&
                     ref.watch(validModsPath) != null &&
                     ref.watch(modGroupDataProvider).isNotEmpty)
@@ -217,7 +220,7 @@ class _BackgroundState extends ConsumerState<Background> {
                     if (ref.watch(tabIndexProvider) == 1 &&
                         ref.watch(modGroupDataProvider).isEmpty)
                       PopupMenuItem(
-                        height: 37,
+                        height: 37 * sss,
                         onTap: () async {
                           await addGroup(
                             ref,
@@ -233,13 +236,13 @@ class _BackgroundState extends ConsumerState<Background> {
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
-                            fontSize: 12,
+                            fontSize: 12 * sss,
                           ),
                         ),
                       ),
                     if (ref.watch(tabIndexProvider) != 2)
                       PopupMenuItem(
-                        height: 37,
+                        height: 37 * sss,
                         onTap: () async {
                           triggerRefresh(ref);
                         },
@@ -249,13 +252,13 @@ class _BackgroundState extends ConsumerState<Background> {
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
-                            fontSize: 12,
+                            fontSize: 12 * sss,
                           ),
                         ),
                       ),
                     ref.watch(windowIsPinnedProvider)
                         ? PopupMenuItem(
-                          height: 37,
+                          height: 37 * sss,
                           onTap:
                               () =>
                                   ref
@@ -267,12 +270,12 @@ class _BackgroundState extends ConsumerState<Background> {
                             style: GoogleFonts.poppins(
                               color: Colors.white,
                               fontWeight: FontWeight.w500,
-                              fontSize: 12,
+                              fontSize: 12 * sss,
                             ),
                           ),
                         )
                         : PopupMenuItem(
-                          height: 37,
+                          height: 37 * sss,
                           onTap:
                               () =>
                                   ref
@@ -284,12 +287,12 @@ class _BackgroundState extends ConsumerState<Background> {
                             style: GoogleFonts.poppins(
                               color: Colors.white,
                               fontWeight: FontWeight.w500,
-                              fontSize: 12,
+                              fontSize: 12 * sss,
                             ),
                           ),
                         ),
                     PopupMenuItem(
-                      height: 37,
+                      height: 37 * sss,
                       onTap: () async {
                         ref.read(targetGameProvider.notifier).state =
                             TargetGame.none;
@@ -302,13 +305,13 @@ class _BackgroundState extends ConsumerState<Background> {
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
-                          fontSize: 12,
+                          fontSize: 12 * sss,
                         ),
                       ),
                     ),
                     if (ref.watch(tabIndexProvider) == 0)
                       PopupMenuItem(
-                        height: 37,
+                        height: 37 * sss,
                         onTap: () async {
                           try {
                             if (!await launchUrl(
@@ -322,12 +325,12 @@ class _BackgroundState extends ConsumerState<Background> {
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
-                            fontSize: 12,
+                            fontSize: 12 * sss,
                           ),
                         ),
                       ),
                     PopupMenuItem(
-                      height: 37,
+                      height: 37 * sss,
                       onTap: () async {
                         try {
                           if (!await launchUrl(
@@ -341,7 +344,7 @@ class _BackgroundState extends ConsumerState<Background> {
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
-                          fontSize: 12,
+                          fontSize: 12 * sss,
                         ),
                       ),
                     ),
@@ -840,7 +843,10 @@ class _MainViewState extends ConsumerState<MainView>
               ),
               content: Text(
                 message,
-                style: GoogleFonts.poppins(color: Colors.yellow, fontSize: 13),
+                style: GoogleFonts.poppins(
+                  color: Colors.yellow,
+                  fontSize: 13 * ref.read(zoomScaleProvider),
+                ),
               ),
               action:
                   urlDetails.isNotEmpty
@@ -1049,6 +1055,7 @@ class _MainViewState extends ConsumerState<MainView>
 
   @override
   Widget build(BuildContext context) {
+    final sss = ref.watch(zoomScaleProvider);
     return Stack(
       children: [
         ///Tab views
@@ -1056,34 +1063,37 @@ class _MainViewState extends ConsumerState<MainView>
 
         ///Tab bars
         Padding(
-          padding: const EdgeInsets.only(top: 25),
+          padding: EdgeInsets.only(top: 25 * sss),
           child: Align(
             alignment: Alignment.topCenter,
-            child: SizedBox(
-              width: 350,
+            child: Transform.scale(
+              scale: sss,
+              child: SizedBox(
+                width: 350,
 
-              child: SegmentedTabControl(
-                controller: _tabController,
-                height: 42,
-                selectedTabTextColor: Colors.black,
-                tabTextColor: Colors.white,
-                textStyle: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 13,
-                ),
-                indicatorDecoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(100),
-                ),
-                barDecoration: BoxDecoration(
-                  color: Colors.transparent,
-                  border: Border.all(
-                    color: const Color.fromARGB(127, 255, 255, 255),
-                    width: 3,
+                child: SegmentedTabControl(
+                  controller: _tabController,
+                  height: 42,
+                  selectedTabTextColor: Colors.black,
+                  tabTextColor: Colors.white,
+                  textStyle: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 13,
                   ),
-                  borderRadius: BorderRadius.circular(100),
+                  indicatorDecoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(100),
+                  ),
+                  barDecoration: BoxDecoration(
+                    color: Colors.transparent,
+                    border: Border.all(
+                      color: const Color.fromARGB(127, 255, 255, 255),
+                      width: 3,
+                    ),
+                    borderRadius: BorderRadius.circular(100),
+                  ),
+                  tabs: _tabs,
                 ),
-                tabs: _tabs,
               ),
             ),
           ),

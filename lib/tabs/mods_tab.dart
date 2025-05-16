@@ -41,8 +41,9 @@ class _TabModsState extends ConsumerState<TabMods> {
 
   @override
   Widget build(BuildContext context) {
+    final sss = ref.watch(zoomScaleProvider);
     return Padding(
-      padding: const EdgeInsets.only(top: 67, right: 49, left: 49),
+      padding: EdgeInsets.only(top: 67 * sss, right: 45 * sss, left: 45 * sss),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -51,8 +52,6 @@ class _TabModsState extends ConsumerState<TabMods> {
             Center(
               child: Column(
                 children: [
-                  if (ref.watch(modGroupDataProvider).isNotEmpty)
-                    IgnorePointer(child: Container(height: 9)),
                   IgnorePointer(
                     child: Text(
                       getTextDragAndDrop(),
@@ -64,7 +63,7 @@ class _TabModsState extends ConsumerState<TabMods> {
                             ref.watch(windowIsPinnedProvider)
                                 ? Colors.blue
                                 : const Color.fromARGB(127, 255, 255, 255),
-                        fontSize: 12,
+                        fontSize: 12 * sss,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -76,7 +75,7 @@ class _TabModsState extends ConsumerState<TabMods> {
           if (ref.watch(modGroupDataProvider).isNotEmpty)
             Column(
               children: [
-                IgnorePointer(child: Container(height: 10)),
+                IgnorePointer(child: Container(height: 12 * sss)),
                 Center(
                   child: Row(
                     children: [
@@ -84,7 +83,9 @@ class _TabModsState extends ConsumerState<TabMods> {
                         initialGroupIndex: ref.watch(currentGroupIndexProvider),
                       ),
 
-                      IgnorePointer(child: SizedBox(width: 49, height: 200)),
+                      IgnorePointer(
+                        child: SizedBox(width: 45 * sss, height: 200 * sss),
+                      ),
 
                       ModArea(
                         currentGroupData:
@@ -181,16 +182,17 @@ class _GroupAreaState extends ConsumerState<GroupArea>
 
   @override
   Widget build(BuildContext context) {
+    final sss = ref.watch(zoomScaleProvider);
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         SizedBox(
-          width: 93.6,
-          height: 130,
+          width: 93.6 * sss,
+          height: 130 * sss,
           child: RightClickMenuWrapper(
             menuItems: [
               PopupMenuItem(
-                height: 37,
+                height: 37 * sss,
                 onTap: () async {
                   if (!context.mounted) return;
                   int? groupIndex = await addGroup(
@@ -231,7 +233,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                           'Max group reached (48 Groups). Unable to add more group.',
                           style: GoogleFonts.poppins(
                             color: Colors.yellow,
-                            fontSize: 13,
+                            fontSize: 13 * sss,
                           ),
                         ),
                         dismissDirection: DismissDirection.down,
@@ -245,7 +247,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
-                    fontSize: 12,
+                    fontSize: 12 * sss,
                   ),
                 ),
               ),
@@ -256,7 +258,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                 return RightClickMenuWrapper(
                   menuItems: [
                     PopupMenuItem(
-                      height: 37,
+                      height: 37 * sss,
                       onTap: () async {
                         if (!context.mounted) return;
                         int? groupIndex = await addGroup(
@@ -297,7 +299,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                                 'Max group reached (48 Groups). Unable to add more group.',
                                 style: GoogleFonts.poppins(
                                   color: Colors.yellow,
-                                  fontSize: 13,
+                                  fontSize: 13 * sss,
                                 ),
                               ),
                               dismissDirection: DismissDirection.down,
@@ -311,13 +313,13 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
-                          fontSize: 12,
+                          fontSize: 12 * sss,
                         ),
                       ),
                     ),
                     if (index == currentPageIndex)
                       PopupMenuItem(
-                        height: 37,
+                        height: 37 * sss,
                         onTap: () {
                           if (!context.mounted) return;
                           setState(() {
@@ -339,13 +341,13 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
-                            fontSize: 12,
+                            fontSize: 12 * sss,
                           ),
                         ),
                       ),
                     if (index == currentPageIndex)
                       PopupMenuItem(
-                        height: 37,
+                        height: 37 * sss,
                         onTap: () async {
                           if (!context.mounted) return;
                           bool success = await tryGetIcon(
@@ -374,7 +376,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                                   'Auto group icon failed. No matching character hash.',
                                   style: GoogleFonts.poppins(
                                     color: Colors.yellow,
-                                    fontSize: 13,
+                                    fontSize: 13 * sss,
                                   ),
                                 ),
                                 dismissDirection: DismissDirection.down,
@@ -388,13 +390,13 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
-                            fontSize: 12,
+                            fontSize: 12 * sss,
                           ),
                         ),
                       ),
                     if (index == currentPageIndex)
                       PopupMenuItem(
-                        height: 37,
+                        height: 37 * sss,
                         onTap: () async {
                           if (!context.mounted) return;
                           await setGroupOrModIcon(
@@ -412,13 +414,13 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
-                            fontSize: 12,
+                            fontSize: 12 * sss,
                           ),
                         ),
                       ),
                     if (index == currentPageIndex)
                       PopupMenuItem(
-                        height: 37,
+                        height: 37 * sss,
                         onTap: () {
                           if (!context.mounted) return;
                           setGroupOrModIcon(
@@ -436,14 +438,14 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
-                            fontSize: 12,
+                            fontSize: 12 * sss,
                           ),
                         ),
                       ),
 
                     if (index == currentPageIndex)
                       PopupMenuItem(
-                        height: 37,
+                        height: 37 * sss,
                         onTap: () {
                           if (!context.mounted) return;
                           ref.read(alertDialogShownProvider.notifier).state =
@@ -469,7 +471,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
-                            fontSize: 12,
+                            fontSize: 12 * sss,
                           ),
                         ),
                       ),
@@ -498,10 +500,10 @@ class _GroupAreaState extends ConsumerState<GroupArea>
             ),
           ),
         ),
-        Container(height: 2),
+        Container(height: 2 * sss),
 
         SizedBox(
-          width: 93.6,
+          width: 93.6 * sss,
           child: Theme(
             data: Theme.of(context).copyWith(
               textSelectionTheme: TextSelectionThemeData(
@@ -515,7 +517,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 color: Colors.white,
-                fontSize: 13,
+                fontSize: 13 * sss,
                 fontWeight: FontWeight.w500,
               ),
               decoration: InputDecoration(
@@ -524,7 +526,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                 hintText: "Group Name",
                 hintStyle: GoogleFonts.poppins(
                   color: const Color.fromARGB(90, 255, 255, 255),
-                  fontSize: 13,
+                  fontSize: 13 * sss,
                   fontWeight: FontWeight.w500,
                 ),
                 disabledBorder: OutlineInputBorder(
@@ -593,6 +595,7 @@ class _GroupContainerState extends ConsumerState<GroupContainer> {
   bool isHovering = false;
   @override
   Widget build(BuildContext context) {
+    final sss = ref.watch(zoomScaleProvider);
     return MouseRegion(
       onEnter:
           (_) => setState(() {
@@ -603,11 +606,11 @@ class _GroupContainerState extends ConsumerState<GroupContainer> {
             isHovering = false;
           }),
       child: Container(
-        height: 93.6,
+        height: 93.6 * sss,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            width: 3,
+            width: 3 * sss,
             color:
                 isHovering && widget.index == widget.currentIndex
                     ? Colors.white
@@ -622,7 +625,7 @@ class _GroupContainerState extends ConsumerState<GroupContainer> {
             imageWidget:
                 ref.watch(modGroupDataProvider)[widget.index].groupIcon,
             errorWidget: Icon(
-              size: 35,
+              size: 35 * sss,
               Icons.image_outlined,
               color: const Color.fromARGB(127, 255, 255, 255),
             ),
@@ -648,10 +651,23 @@ class _ModAreaState extends ConsumerState<ModArea>
   double windowWidth = 0;
   int _currentModRealIndex = 10000;
 
-  double getViewportFraction() {
-    if (windowWidth <= 0) return 0.25 * 1.1;
+  double remap(
+    double value,
+    double oldMin,
+    double oldMax,
+    double newMin,
+    double newMax,
+  ) {
+    return ((value - oldMin) / (oldMax - oldMin)) * (newMax - newMin) + newMin;
+  }
 
-    const k = 1579.37 * 1.1;
+  double getViewportFraction() {
+    double zoomScale = ref.watch(zoomScaleProvider);
+    if (windowWidth <= 0) {
+      return 0.25 * remap(zoomScale, 0.85, 1.5, 1.3, 1.58) * zoomScale;
+    }
+
+    final k = 1579.37 * remap(zoomScale, 0.85, 1.5, 1.3, 1.58) * zoomScale;
     const exponent = 1.3219;
     double result = k / pow(windowWidth, exponent);
     return result;
@@ -707,14 +723,15 @@ class _ModAreaState extends ConsumerState<ModArea>
 
   @override
   Widget build(BuildContext context) {
+    final sss = ref.watch(zoomScaleProvider);
     return Expanded(
       child: SizedBox(
-        height: 200,
+        height: 200 * sss * 1.2,
         child: RightClickMenuWrapper(
           menuItems: [
             if (!ref.watch(windowIsPinnedProvider))
               PopupMenuItem(
-                height: 37,
+                height: 37 * sss,
                 onTap: () {
                   if (!context.mounted) return;
                   ref.read(windowIsPinnedProvider.notifier).state = true;
@@ -725,7 +742,7 @@ class _ModAreaState extends ConsumerState<ModArea>
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
-                    fontSize: 12,
+                    fontSize: 12 * sss,
                   ),
                 ),
               ),
@@ -747,7 +764,7 @@ class _ModAreaState extends ConsumerState<ModArea>
             ),
             itemBuilder: (context, index, realIndex) {
               bool isCentered = _currentModRealIndex == realIndex;
-              double itemHeight = isCentered ? 150 * 1.1 : 108 * 1.1;
+              double itemHeight = isCentered ? 217.8 * sss : 156.816 * sss;
               return ModContainer(
                 isSelected:
                     widget.currentGroupData.previousSelectedModOnGroup == index,
@@ -892,13 +909,14 @@ class _ModContainerState extends ConsumerState<ModContainer>
 
   @override
   Widget build(BuildContext context) {
+    final sss = ref.watch(zoomScaleProvider);
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         RightClickMenuWrapper(
           menuItems: [
             PopupMenuItem(
-              height: 37,
+              height: 37 * sss,
               onTap: () {
                 if (!context.mounted) return;
                 widget.onSelected();
@@ -909,13 +927,13 @@ class _ModContainerState extends ConsumerState<ModContainer>
                 style: GoogleFonts.poppins(
                   color: Colors.blue,
                   fontWeight: FontWeight.w500,
-                  fontSize: 12,
+                  fontSize: 12 * sss,
                 ),
               ),
             ),
             if (!ref.watch(windowIsPinnedProvider))
               PopupMenuItem(
-                height: 37,
+                height: 37 * sss,
                 onTap: () {
                   if (!context.mounted) return;
                   ref.read(windowIsPinnedProvider.notifier).state = true;
@@ -926,13 +944,13 @@ class _ModContainerState extends ConsumerState<ModContainer>
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
-                    fontSize: 12,
+                    fontSize: 12 * sss,
                   ),
                 ),
               ),
             if (widget.index != 0)
               PopupMenuItem(
-                height: 37,
+                height: 37 * sss,
                 onTap: () {
                   if (!context.mounted) return;
                   setState(() {
@@ -952,13 +970,13 @@ class _ModContainerState extends ConsumerState<ModContainer>
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
-                    fontSize: 12,
+                    fontSize: 12 * sss,
                   ),
                 ),
               ),
             if (widget.index != 0)
               PopupMenuItem(
-                height: 37,
+                height: 37 * sss,
                 onTap: () {
                   if (!context.mounted) return;
                   ref.read(modKeybindProvider.notifier).state = null;
@@ -974,13 +992,13 @@ class _ModContainerState extends ConsumerState<ModContainer>
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
-                    fontSize: 12,
+                    fontSize: 12 * sss,
                   ),
                 ),
               ),
             if (widget.index != 0)
               PopupMenuItem(
-                height: 37,
+                height: 37 * sss,
                 onTap: () async {
                   if (!context.mounted) return;
                   await setGroupOrModIcon(
@@ -1002,13 +1020,13 @@ class _ModContainerState extends ConsumerState<ModContainer>
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
-                    fontSize: 12,
+                    fontSize: 12 * sss,
                   ),
                 ),
               ),
             if (widget.index != 0)
               PopupMenuItem(
-                height: 37,
+                height: 37 * sss,
                 onTap: () async {
                   if (!context.mounted) return;
                   await setGroupOrModIcon(
@@ -1030,14 +1048,14 @@ class _ModContainerState extends ConsumerState<ModContainer>
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
-                    fontSize: 12,
+                    fontSize: 12 * sss,
                   ),
                 ),
               ),
 
             if (widget.index != 0)
               PopupMenuItem(
-                height: 37,
+                height: 37 * sss,
                 onTap: () {
                   if (!context.mounted) return;
                   ref.read(alertDialogShownProvider.notifier).state = true;
@@ -1063,7 +1081,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
-                    fontSize: 12,
+                    fontSize: 12 * sss,
                   ),
                 ),
               ),
@@ -1084,7 +1102,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                 duration: Duration(milliseconds: 250),
                 curve: Curves.easeOut,
                 height: widget.itemHeight,
-                width: 108 * 1.1,
+                width: 156.816 * sss,
                 decoration: BoxDecoration(
                   color: Colors.transparent,
                   border: Border.all(
@@ -1095,12 +1113,12 @@ class _ModContainerState extends ConsumerState<ModContainer>
                             : isHovering
                             ? Colors.white
                             : const Color.fromARGB(127, 255, 255, 255),
-                    width: 3,
+                    width: 3 * sss,
                   ),
-                  borderRadius: BorderRadius.circular(17),
+                  borderRadius: BorderRadius.circular(17 * sss),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(16 * sss),
                   clipBehavior: Clip.antiAlias,
                   child:
                       widget.index != 0
@@ -1111,13 +1129,13 @@ class _ModContainerState extends ConsumerState<ModContainer>
                                     .modsInGroup[widget.index]
                                     .modIcon,
                             errorWidget: Icon(
-                              size: 40,
+                              size: 40 * sss,
                               Icons.image_outlined,
                               color: const Color.fromARGB(127, 255, 255, 255),
                             ),
                           )
                           : Icon(
-                            size: 45,
+                            size: 45 * sss,
                             Icons.close,
                             color: const Color.fromARGB(127, 255, 255, 255),
                           ),
@@ -1126,22 +1144,22 @@ class _ModContainerState extends ConsumerState<ModContainer>
             ),
           ),
         ),
-        Container(height: 3),
+        Container(height: 3 * sss),
         SizedBox(
-          width: 120,
+          width: 156.816 * sss,
           child: TextField(
             focusNode: modTextFieldFocusNode,
             enabled: modTextFieldEnabled,
             cursorColor: Colors.blue,
             textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(color: Colors.white, fontSize: 12),
+            style: GoogleFonts.poppins(color: Colors.white, fontSize: 12 * sss),
             decoration: InputDecoration(
               isDense: true,
               contentPadding: EdgeInsets.all(0),
               hintText: "Mod Name",
               hintStyle: GoogleFonts.poppins(
                 color: const Color.fromARGB(90, 255, 255, 255),
-                fontSize: 12,
+                fontSize: 12 * sss,
               ),
               disabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(
@@ -1196,15 +1214,16 @@ class _ModContainerState extends ConsumerState<ModContainer>
   }
 }
 
-class TabModsNotReady extends StatelessWidget {
+class TabModsNotReady extends ConsumerWidget {
   final String notReadyReason;
 
   const TabModsNotReady({super.key, required this.notReadyReason});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sss = ref.watch(zoomScaleProvider);
     return Padding(
-      padding: const EdgeInsets.only(top: 85),
+      padding: EdgeInsets.only(top: 85 * sss),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -1215,7 +1234,7 @@ class TabModsNotReady extends StatelessWidget {
             style: GoogleFonts.poppins(
               color: Colors.white,
               fontWeight: FontWeight.w600,
-              fontSize: 14,
+              fontSize: 14 * sss,
             ),
           ),
           Text(
@@ -1224,10 +1243,10 @@ class TabModsNotReady extends StatelessWidget {
             style: GoogleFonts.poppins(
               color: Colors.white,
               fontWeight: FontWeight.w400,
-              fontSize: 12,
+              fontSize: 12 * sss,
             ),
           ),
-          Container(height: 12),
+          Container(height: 12 * sss),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1237,7 +1256,7 @@ class TabModsNotReady extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   color: Colors.white,
                   fontWeight: FontWeight.w400,
-                  fontSize: 12,
+                  fontSize: 12 * sss,
                 ),
               ),
               Text(
@@ -1246,7 +1265,7 @@ class TabModsNotReady extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   color: Colors.white,
                   fontWeight: FontWeight.w400,
-                  fontSize: 12,
+                  fontSize: 12 * sss,
                 ),
               ),
               Text(
@@ -1255,7 +1274,7 @@ class TabModsNotReady extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   color: Colors.white,
                   fontWeight: FontWeight.w400,
-                  fontSize: 12,
+                  fontSize: 12 * sss,
                 ),
               ),
             ],
@@ -1266,13 +1285,14 @@ class TabModsNotReady extends StatelessWidget {
   }
 }
 
-class TabModsLoading extends StatelessWidget {
+class TabModsLoading extends ConsumerWidget {
   const TabModsLoading({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sss = ref.watch(zoomScaleProvider);
     return Padding(
-      padding: const EdgeInsets.only(top: 57),
+      padding: EdgeInsets.only(top: 57 * sss),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1283,7 +1303,7 @@ class TabModsLoading extends StatelessWidget {
               style: GoogleFonts.poppins(
                 color: Colors.white,
                 fontWeight: FontWeight.w400,
-                fontSize: 12,
+                fontSize: 12 * sss,
               ),
             ),
           ],

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 import 'package:auto_updater/auto_updater.dart';
+import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mods_dropzone.dart';
@@ -58,15 +59,16 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
 
   @override
   Widget build(BuildContext context) {
+    final sss = ref.watch(zoomScaleProvider);
     return Stack(
       children: [
         Center(
           child: Padding(
-            padding: const EdgeInsets.only(
-              top: 85,
-              bottom: 15,
-              left: 50,
-              right: 50,
+            padding: EdgeInsets.only(
+              top: 85 * sss,
+              bottom: 15 * sss,
+              left: 45 * sss,
+              right: 45 * sss,
             ),
             child: ScrollConfiguration(
               behavior: ScrollConfiguration.of(context).copyWith(
@@ -81,7 +83,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                 menuItems: [
                   ref.watch(windowIsPinnedProvider)
                       ? PopupMenuItem(
-                        height: 37,
+                        height: 37 * sss,
                         onTap:
                             () =>
                                 ref
@@ -93,12 +95,12 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
-                            fontSize: 12,
+                            fontSize: 12 * sss,
                           ),
                         ),
                       )
                       : PopupMenuItem(
-                        height: 37,
+                        height: 37 * sss,
                         onTap:
                             () =>
                                 ref
@@ -110,12 +112,12 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
-                            fontSize: 12,
+                            fontSize: 12 * sss,
                           ),
                         ),
                       ),
                   PopupMenuItem(
-                    height: 37,
+                    height: 37 * sss,
                     onTap: () async {
                       ref.read(targetGameProvider.notifier).state =
                           TargetGame.none;
@@ -128,12 +130,12 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontWeight: FontWeight.w500,
-                        fontSize: 12,
+                        fontSize: 12 * sss,
                       ),
                     ),
                   ),
                   PopupMenuItem(
-                    height: 37,
+                    height: 37 * sss,
                     onTap: () async {
                       try {
                         if (!await launchUrl(
@@ -147,7 +149,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontWeight: FontWeight.w500,
-                        fontSize: 12,
+                        fontSize: 12 * sss,
                       ),
                     ),
                   ),
@@ -158,33 +160,36 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                     children: [
                       GameSettings(),
 
-                      Container(height: 15),
-                      Divider(color: const Color.fromARGB(127, 33, 149, 243)),
-                      Container(height: 10),
+                      Container(height: 15 * sss),
+                      Divider(
+                        color: const Color.fromARGB(127, 33, 149, 243),
+                        thickness: 1 * sss,
+                      ),
+                      Container(height: 10 * sss),
                       Text(
                         'Reverter',
                         style: GoogleFonts.poppins(
                           color: Colors.white,
-                          fontSize: 14,
+                          fontSize: 14 * sss,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      Container(height: 5),
+                      Container(height: 5 * sss),
                       Container(
-                        height: 160,
+                        height: 160 * sss,
                         decoration: BoxDecoration(
                           border: Border.all(
-                            width: 3,
+                            width: 3 * sss,
                             color: const Color.fromARGB(127, 255, 255, 255),
                           ),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(20 * sss),
                         ),
                         child: Stack(
                           children: [
                             if (ref.watch(tabIndexProvider) == 2 &&
                                 !ref.watch(alertDialogShownProvider))
                               ClipRRect(
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(20 * sss),
                                 child: ModsDropZone(
                                   dialogTitleText: "Revert mods",
                                   onConfirmFunction: _onModRevertConfirm,
@@ -216,7 +221,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                       255,
                                       255,
                                     ),
-                                    size: 30,
+                                    size: 30 * sss,
                                   ),
                                   Text(
                                     _getRevertInfoText(),
@@ -229,7 +234,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                         255,
                                       ),
                                       fontWeight: FontWeight.w500,
-                                      fontSize: 12,
+                                      fontSize: 12 * sss,
                                     ),
                                   ),
                                 ],
@@ -238,29 +243,108 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           ],
                         ),
                       ),
-                      Container(height: 2),
+                      Container(height: 2 * sss),
                       Text(
                         "Only for mods that are directly removed via File Explorer (without right-click on “Mods” tab)",
                         textAlign: TextAlign.end,
                         style: GoogleFonts.poppins(
                           color: const Color.fromARGB(200, 255, 255, 255),
-                          fontSize: 11,
+                          fontSize: 11 * sss,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
 
-                      Container(height: 15),
-                      Divider(color: const Color.fromARGB(127, 33, 149, 243)),
+                      Container(height: 15 * sss),
+                      Divider(
+                        color: const Color.fromARGB(127, 33, 149, 243),
+                        thickness: 1 * sss,
+                      ),
+                      Container(height: 10 * sss),
+                      Text(
+                        'Overall Scale',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 14 * sss,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 4.0 * sss,
+                          thumbShape: RoundSliderThumbShape(
+                            enabledThumbRadius: 9.0 * sss,
+                          ),
+                        ),
+                        child: Slider(
+                          label:
+                              "${ref.read(zoomScaleProvider).toStringAsFixed(2)}x",
+                          activeColor: Colors.blue,
+                          divisions: 13,
+                          value: sss,
+                          onChangeEnd: (value) {
+                            SharedPrefUtils().setOverallScale(value);
+                          },
+                          onChanged: (value) {
+                            ref.read(zoomScaleProvider.notifier).state = value;
+                            appWindow.minSize = Size(
+                              750 * ref.read(zoomScaleProvider),
+                              370 * ref.read(zoomScaleProvider),
+                            );
+                            appWindow.size = Size(
+                              750 * ref.read(zoomScaleProvider),
+                              370 * ref.read(zoomScaleProvider),
+                            );
+                          },
+                          min: 0.85,
+                          max: 1.5,
+                        ),
+                      ),
                       Container(height: 10),
+                      Text(
+                        'Background Transparency',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 14 * sss,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 4.0 * sss,
+                          thumbShape: RoundSliderThumbShape(
+                            enabledThumbRadius: 9.0 * sss,
+                          ),
+                        ),
+                        child: Slider(
+                          activeColor: Colors.blue,
+                          value: ref.watch(bgTransparencyProvider).toDouble(),
+                          onChangeEnd: (value) {
+                            SharedPrefUtils().setBgTransparency(value.round());
+                          },
+                          onChanged: (value) {
+                            ref.read(bgTransparencyProvider.notifier).state =
+                                value.round();
+                          },
+                          min: 0,
+                          max: 255,
+                        ),
+                      ),
+
+                      Container(height: 15 * sss),
+                      Divider(
+                        color: const Color.fromARGB(127, 33, 149, 243),
+                        thickness: 1 * sss,
+                      ),
+                      Container(height: 10 * sss),
                       Text(
                         'Toggle Window Shortcuts',
                         style: GoogleFonts.poppins(
                           color: Colors.white,
-                          fontSize: 14,
+                          fontSize: 14 * sss,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      Container(height: 5),
+                      Container(height: 5 * sss),
                       Row(
                         children: [
                           Expanded(
@@ -269,19 +353,19 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                               textAlign: TextAlign.center,
                               style: GoogleFonts.poppins(
                                 color: const Color.fromARGB(200, 255, 255, 255),
-                                fontSize: 11,
+                                fontSize: 11 * sss,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
-                          Container(width: 20),
+                          Container(width: 20 * sss),
                           Expanded(
                             child: Text(
                               'Gamepad(XInput) Toggle Window',
                               textAlign: TextAlign.center,
                               style: GoogleFonts.poppins(
                                 color: const Color.fromARGB(200, 255, 255, 255),
-                                fontSize: 11,
+                                fontSize: 11 * sss,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -292,7 +376,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                         children: [
                           Expanded(
                             child: Container(
-                              height: 42,
+                              height: 42 * sss,
                               decoration: BoxDecoration(
                                 border: Border.all(
                                   color: const Color.fromARGB(
@@ -301,87 +385,92 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                     255,
                                     255,
                                   ),
-                                  width: 3,
+                                  width: 3 * sss,
                                 ),
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(20 * sss),
                               ),
-                              child: DropdownButton(
-                                itemHeight: 48,
-                                isExpanded: true,
-                                value: ref.watch(hotkeyKeyboardProvider),
-                                borderRadius: BorderRadius.circular(20),
-                                dropdownColor: const Color(0xFF2B2930),
-                                underline: SizedBox(),
-                                items: [
-                                  DropdownMenuItem(
-                                    value: HotkeyKeyboard.altW,
-                                    child: Center(
-                                      child: Text(
-                                        "Alt+W",
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12,
+                              child: Center(
+                                child: DropdownButton(
+                                  isExpanded: true,
+                                  value: ref.watch(hotkeyKeyboardProvider),
+                                  borderRadius: BorderRadius.circular(20 * sss),
+                                  dropdownColor: const Color(0xFF2B2930),
+                                  underline: SizedBox(),
+                                  items: [
+                                    DropdownMenuItem(
+                                      value: HotkeyKeyboard.altW,
+                                      child: Center(
+                                        child: Text(
+                                          "Alt+W",
+                                          style: GoogleFonts.poppins(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 12 * sss,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: HotkeyKeyboard.altS,
-                                    child: Center(
-                                      child: Text(
-                                        "Alt+S",
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12,
+                                    DropdownMenuItem(
+                                      value: HotkeyKeyboard.altS,
+                                      child: Center(
+                                        child: Text(
+                                          "Alt+S",
+                                          style: GoogleFonts.poppins(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 12 * sss,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: HotkeyKeyboard.altA,
-                                    child: Center(
-                                      child: Text(
-                                        "Alt+A",
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12,
+                                    DropdownMenuItem(
+                                      value: HotkeyKeyboard.altA,
+                                      child: Center(
+                                        child: Text(
+                                          "Alt+A",
+                                          style: GoogleFonts.poppins(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 12 * sss,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: HotkeyKeyboard.altD,
-                                    child: Center(
-                                      child: Text(
-                                        "Alt+D",
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12,
+                                    DropdownMenuItem(
+                                      value: HotkeyKeyboard.altD,
+                                      child: Center(
+                                        child: Text(
+                                          "Alt+D",
+                                          style: GoogleFonts.poppins(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 12 * sss,
+                                          ),
                                         ),
                                       ),
                                     ),
+                                  ],
+                                  onChanged: (value) {
+                                    if (value != null) {
+                                      ref
+                                          .read(hotkeyKeyboardProvider.notifier)
+                                          .state = value;
+                                      SharedPrefUtils().setHotkeyKeyboard(
+                                        value,
+                                      );
+                                    }
+                                  },
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
                                   ),
-                                ],
-                                onChanged: (value) {
-                                  if (value != null) {
-                                    ref
-                                        .read(hotkeyKeyboardProvider.notifier)
-                                        .state = value;
-                                    SharedPrefUtils().setHotkeyKeyboard(value);
-                                  }
-                                },
-                                style: GoogleFonts.poppins(color: Colors.white),
+                                ),
                               ),
                             ),
                           ),
-                          Container(width: 20),
+                          Container(width: 20 * sss),
                           Expanded(
                             child: Container(
-                              height: 42,
+                              height: 42 * sss,
                               decoration: BoxDecoration(
                                 border: Border.all(
                                   color: const Color.fromARGB(
@@ -390,100 +479,106 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                     255,
                                     255,
                                   ),
-                                  width: 3,
+                                  width: 3 * sss,
                                 ),
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(20 * sss),
                               ),
-                              child: DropdownButton(
-                                itemHeight: 48,
-                                isExpanded: true,
-                                value: ref.watch(hotkeyGamepadProvider),
-                                borderRadius: BorderRadius.circular(20),
-                                dropdownColor: const Color(0xFF2B2930),
+                              child: Center(
+                                child: DropdownButton(
+                                  isExpanded: true,
+                                  value: ref.watch(hotkeyGamepadProvider),
+                                  borderRadius: BorderRadius.circular(20 * sss),
+                                  dropdownColor: const Color(0xFF2B2930),
 
-                                underline: SizedBox(),
-                                items: [
-                                  DropdownMenuItem(
-                                    value: HotkeyGamepad.none,
-                                    child: Center(
-                                      child: Text(
-                                        "None",
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12,
+                                  underline: SizedBox(),
+                                  items: [
+                                    DropdownMenuItem(
+                                      value: HotkeyGamepad.none,
+                                      child: Center(
+                                        child: Text(
+                                          "None",
+                                          style: GoogleFonts.poppins(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 12 * sss,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: HotkeyGamepad.lsB,
-                                    child: Center(
-                                      child: Text(
-                                        "LeftStick+B",
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12,
+                                    DropdownMenuItem(
+                                      value: HotkeyGamepad.lsB,
+                                      child: Center(
+                                        child: Text(
+                                          "LeftStick+B",
+                                          style: GoogleFonts.poppins(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 12 * sss,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: HotkeyGamepad.lsA,
-                                    child: Center(
-                                      child: Text(
-                                        "LeftStick+A",
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12,
+                                    DropdownMenuItem(
+                                      value: HotkeyGamepad.lsA,
+                                      child: Center(
+                                        child: Text(
+                                          "LeftStick+A",
+                                          style: GoogleFonts.poppins(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 12 * sss,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: HotkeyGamepad.lsRb,
-                                    child: Center(
-                                      child: Text(
-                                        "LeftStick+RB",
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12,
+                                    DropdownMenuItem(
+                                      value: HotkeyGamepad.lsRb,
+                                      child: Center(
+                                        child: Text(
+                                          "LeftStick+RB",
+                                          style: GoogleFonts.poppins(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 12 * sss,
+                                          ),
                                         ),
                                       ),
                                     ),
+                                  ],
+                                  onChanged: (value) {
+                                    if (value != null) {
+                                      ref
+                                          .read(hotkeyGamepadProvider.notifier)
+                                          .state = value;
+                                      SharedPrefUtils().setHotkeyGamepad(value);
+                                    }
+                                  },
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
                                   ),
-                                ],
-                                onChanged: (value) {
-                                  if (value != null) {
-                                    ref
-                                        .read(hotkeyGamepadProvider.notifier)
-                                        .state = value;
-                                    SharedPrefUtils().setHotkeyGamepad(value);
-                                  }
-                                },
-                                style: GoogleFonts.poppins(color: Colors.white),
+                                ),
                               ),
                             ),
                           ),
                         ],
                       ),
 
-                      Container(height: 15),
-                      Divider(color: const Color.fromARGB(127, 33, 149, 243)),
-                      Container(height: 10),
+                      Container(height: 15 * sss),
+                      Divider(
+                        color: const Color.fromARGB(127, 33, 149, 243),
+                        thickness: 1 * sss,
+                      ),
+                      Container(height: 10 * sss),
 
                       Text(
                         'Navigation Shortcuts',
                         style: GoogleFonts.poppins(
                           color: Colors.white,
-                          fontSize: 14,
+                          fontSize: 14 * sss,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      Container(height: 5),
+                      Container(height: 5 * sss),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -498,7 +593,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                     255,
                                     255,
                                   ),
-                                  fontSize: 11,
+                                  fontSize: 11 * sss,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -508,11 +603,11 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                     children: [
                                       Image.asset(
                                         'assets/keys_icon/keyW_icon.png',
-                                        height: 40,
+                                        height: 40 * sss,
                                       ),
                                       Image.asset(
                                         'assets/keys_icon/keyS_icon.png',
-                                        height: 40,
+                                        height: 40 * sss,
                                       ),
                                     ],
                                   ),
@@ -522,14 +617,14 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                         angle: pi / 2,
                                         child: Image.asset(
                                           'assets/keys_icon/dpad_icon.png',
-                                          height: 40,
+                                          height: 40 * sss,
                                         ),
                                       ),
                                       Transform.rotate(
                                         angle: pi / -2,
                                         child: Image.asset(
                                           'assets/keys_icon/dpad_icon.png',
-                                          height: 40,
+                                          height: 40 * sss,
                                         ),
                                       ),
                                     ],
@@ -538,7 +633,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                               ),
                             ],
                           ),
-                          Container(width: 20),
+                          Container(width: 20 * sss),
                           Column(
                             children: [
                               Text(
@@ -550,7 +645,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                     255,
                                     255,
                                   ),
-                                  fontSize: 11,
+                                  fontSize: 11 * sss,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -560,11 +655,11 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                     children: [
                                       Image.asset(
                                         'assets/keys_icon/keyA_icon.png',
-                                        height: 40,
+                                        height: 40 * sss,
                                       ),
                                       Image.asset(
                                         'assets/keys_icon/keyD_icon.png',
-                                        height: 40,
+                                        height: 40 * sss,
                                       ),
                                     ],
                                   ),
@@ -572,13 +667,13 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                     children: [
                                       Image.asset(
                                         'assets/keys_icon/dpad_icon.png',
-                                        height: 40,
+                                        height: 40 * sss,
                                       ),
                                       Transform.rotate(
                                         angle: pi,
                                         child: Image.asset(
                                           'assets/keys_icon/dpad_icon.png',
-                                          height: 40,
+                                          height: 40 * sss,
                                         ),
                                       ),
                                     ],
@@ -587,7 +682,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                               ),
                             ],
                           ),
-                          Container(width: 20),
+                          Container(width: 20 * sss),
                           Column(
                             children: [
                               Text(
@@ -599,7 +694,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                     255,
                                     255,
                                   ),
-                                  fontSize: 11,
+                                  fontSize: 11 * sss,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -607,17 +702,17 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                 children: [
                                   Image.asset(
                                     'assets/keys_icon/keyF_icon.png',
-                                    height: 40,
+                                    height: 40 * sss,
                                   ),
                                   Image.asset(
                                     'assets/keys_icon/a_icon.png',
-                                    height: 40,
+                                    height: 40 * sss,
                                   ),
                                 ],
                               ),
                             ],
                           ),
-                          Container(width: 20),
+                          Container(width: 20 * sss),
                           Column(
                             children: [
                               Text(
@@ -629,7 +724,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                     255,
                                     255,
                                   ),
-                                  fontSize: 11,
+                                  fontSize: 11 * sss,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -637,17 +732,17 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                 children: [
                                   Image.asset(
                                     'assets/keys_icon/keyR_icon.png',
-                                    height: 40,
+                                    height: 40 * sss,
                                   ),
                                   Image.asset(
                                     'assets/keys_icon/x_icon.png',
-                                    height: 40,
+                                    height: 40 * sss,
                                   ),
                                 ],
                               ),
                             ],
                           ),
-                          Container(width: 20),
+                          Container(width: 20 * sss),
                           Column(
                             children: [
                               Text(
@@ -659,7 +754,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                     255,
                                     255,
                                   ),
-                                  fontSize: 11,
+                                  fontSize: 11 * sss,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -669,11 +764,11 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                     children: [
                                       Image.asset(
                                         'assets/keys_icon/keyQ_icon.png',
-                                        height: 40,
+                                        height: 40 * sss,
                                       ),
                                       Image.asset(
                                         'assets/keys_icon/keyE_icon.png',
-                                        height: 40,
+                                        height: 40 * sss,
                                       ),
                                     ],
                                   ),
@@ -681,11 +776,11 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                     children: [
                                       Image.asset(
                                         'assets/keys_icon/lb_icon.png',
-                                        height: 40,
+                                        height: 40 * sss,
                                       ),
                                       Image.asset(
                                         'assets/keys_icon/rb_icon.png',
-                                        height: 40,
+                                        height: 40 * sss,
                                       ),
                                     ],
                                   ),
@@ -695,12 +790,17 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           ),
                         ],
                       ),
-                      Container(height: 15),
-                      Divider(color: const Color.fromARGB(127, 33, 149, 243)),
-                      Container(height: 15),
+                      Container(height: 15 * sss),
+                      Divider(
+                        color: const Color.fromARGB(127, 33, 149, 243),
+                        thickness: 1 * sss,
+                      ),
+                      Container(height: 15 * sss),
 
                       ElevatedButton(
                         onPressed: () async {
+                          ref.read(windowIsPinnedProvider.notifier).state =
+                              false;
                           await autoUpdater.checkForUpdates();
                         },
                         style: ElevatedButton.styleFrom(
@@ -713,12 +813,12 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           ),
                         ),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          padding: EdgeInsets.symmetric(vertical: 8 * sss),
                           child: Text(
                             'Check for Updates',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
-                              fontSize: 12,
+                              fontSize: 12 * sss,
                               fontWeight: FontWeight.w500,
                               color: Colors.white,
                             ),
@@ -726,7 +826,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                         ),
                       ),
 
-                      Container(height: 20),
+                      Container(height: 20 * sss),
 
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -737,61 +837,61 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                 "Support me",
                                 style: GoogleFonts.poppins(
                                   color: Colors.white,
-                                  fontSize: 12,
+                                  fontSize: 12 * sss,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              Container(height: 8),
+                              Container(height: 8 * sss),
                               CustomImageButtonLink(
                                 link: ref.watch(supportLinkProvider),
                                 imageNormal: Image.network(
                                   ConstantVar.urlSupportIcon,
-                                  height: 25,
+                                  height: 25 * sss,
                                   errorBuilder: (context, error, stackTrace) {
                                     return const Icon(Icons.error);
                                   },
                                 ),
                                 imageOnHover: Image.network(
                                   ConstantVar.urlSupportIconOnHover,
-                                  height: 25,
+                                  height: 25 * sss,
                                   errorBuilder: (context, error, stackTrace) {
                                     return const Icon(Icons.error);
                                   },
                                 ),
                               ),
-                              Container(height: 15),
+                              Container(height: 15 * sss),
                             ],
                           ),
-                          Container(width: 30),
+                          Container(width: 30 * sss),
                           Column(
                             children: [
                               Text(
                                 "Tutorial",
                                 style: GoogleFonts.poppins(
                                   color: Colors.white,
-                                  fontSize: 12,
+                                  fontSize: 12 * sss,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              Container(height: 8),
+                              Container(height: 8 * sss),
                               CustomImageButtonLink(
                                 link: ref.watch(tutorialLinkProvider),
                                 imageNormal: Image.network(
                                   ConstantVar.urlTutorialIcon,
-                                  height: 25,
+                                  height: 25 * sss,
                                   errorBuilder: (context, error, stackTrace) {
                                     return const Icon(Icons.error);
                                   },
                                 ),
                                 imageOnHover: Image.network(
                                   ConstantVar.urlTutorialIconOnHover,
-                                  height: 25,
+                                  height: 25 * sss,
                                   errorBuilder: (context, error, stackTrace) {
                                     return const Icon(Icons.error);
                                   },
                                 ),
                               ),
-                              Container(height: 15),
+                              Container(height: 15 * sss),
                             ],
                           ),
                         ],
@@ -808,7 +908,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
           alignment: Alignment.bottomCenter,
           child: Text(
             appVersion,
-            style: GoogleFonts.poppins(color: Colors.white, fontSize: 10),
+            style: GoogleFonts.poppins(color: Colors.white, fontSize: 10 * sss),
           ),
         ),
       ],
@@ -1156,6 +1256,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
 
   @override
   Widget build(BuildContext context) {
+    final sss = ref.watch(zoomScaleProvider);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -1165,11 +1266,11 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
             style: GoogleFonts.poppins(
               color: Colors.white,
               fontWeight: FontWeight.w600,
-              fontSize: 14,
+              fontSize: 14 * sss,
             ),
           ),
 
-          Container(height: 5),
+          Container(height: 5 * sss),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -1181,20 +1282,20 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                     'Target Process',
                     style: GoogleFonts.poppins(
                       color: const Color.fromARGB(200, 255, 255, 255),
-                      fontSize: 11,
+                      fontSize: 11 * sss,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
               ),
-              Container(width: 20),
+              Container(width: 20 * sss),
               Expanded(
                 child: Center(
                   child: Text(
                     modsPathText,
                     style: GoogleFonts.poppins(
                       color: const Color.fromARGB(200, 255, 255, 255),
-                      fontSize: 11,
+                      fontSize: 11 * sss,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -1209,7 +1310,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
             children: [
               Expanded(
                 child: SizedBox(
-                  height: 42,
+                  height: 42 * sss,
                   child: Theme(
                     data: Theme.of(context).copyWith(
                       textSelectionTheme: TextSelectionThemeData(
@@ -1225,27 +1326,30 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                         textAlign: TextAlign.center,
                         style: GoogleFonts.poppins(
                           color: Colors.white,
-                          fontSize: 12,
+                          fontSize: 12 * sss,
                           fontWeight: FontWeight.w400,
                         ),
                         decoration: InputDecoration(
+                          contentPadding: EdgeInsets.symmetric(
+                            vertical: 15 * sss,
+                          ),
                           hintText: _getTargetProcessHintText(),
                           hintStyle: GoogleFonts.poppins(
                             color: const Color.fromARGB(90, 255, 255, 255),
-                            fontSize: 12,
+                            fontSize: 12 * sss,
                             fontWeight: FontWeight.w400,
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(100),
+                            borderRadius: BorderRadius.circular(100 * sss),
                             borderSide: BorderSide(
-                              width: 3,
+                              width: 3 * sss,
                               color: const Color.fromARGB(127, 255, 255, 255),
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(100),
+                            borderRadius: BorderRadius.circular(100 * sss),
                             borderSide: BorderSide(
-                              width: 3,
+                              width: 3 * sss,
                               color: Colors.blue,
                             ),
                           ),
@@ -1259,16 +1363,16 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                   ),
                 ),
               ),
-              Container(width: 20),
+              Container(width: 20 * sss),
               Expanded(
                 child: SizedBox(
-                  height: 42,
+                  height: 42 * sss,
                   child: Container(
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(100),
+                      borderRadius: BorderRadius.circular(100 * sss),
                       border: Border.all(
                         color: Colors.transparent,
-                        width: 3,
+                        width: 3 * sss,
                         strokeAlign: BorderSide.strokeAlignOutside,
                       ),
                     ),
@@ -1293,7 +1397,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                               textAlign: TextAlign.center,
                               style: GoogleFonts.poppins(
                                 color: Colors.white,
-                                fontSize: 12,
+                                fontSize: 12 * sss,
                                 fontWeight: FontWeight.w400,
                               ),
                               cursorColor: Colors.blue,
@@ -1307,13 +1411,15 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                                     255,
                                     255,
                                   ),
-                                  fontSize: 12,
+                                  fontSize: 12 * sss,
                                   fontWeight: FontWeight.w400,
                                 ),
                                 enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(100),
+                                  borderRadius: BorderRadius.circular(
+                                    100 * sss,
+                                  ),
                                   borderSide: BorderSide(
-                                    width: 3,
+                                    width: 3 * sss,
                                     color: const Color.fromARGB(
                                       127,
                                       255,
@@ -1323,13 +1429,17 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                                   ),
                                 ),
                                 contentPadding: EdgeInsets.only(
-                                  left: 10,
-                                  right: 70,
+                                  left: 10 * sss,
+                                  right: 70 * sss,
+                                  top: 15 * sss,
+                                  bottom: 15 * sss,
                                 ),
                                 focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(100),
+                                  borderRadius: BorderRadius.circular(
+                                    100 * sss,
+                                  ),
                                   borderSide: BorderSide(
-                                    width: 3,
+                                    width: 3 * sss,
                                     color: Colors.blue,
                                     strokeAlign: BorderSide.strokeAlignOutside,
                                   ),
@@ -1347,7 +1457,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: SizedBox(
-                            height: 42,
+                            height: 42 * sss,
                             child: ElevatedButton(
                               onLongPress: () => _openFileExplorer(),
                               onPressed: _isPickingFolder ? null : _pickFolder,
@@ -1357,9 +1467,10 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                               ),
                               child: Transform.scale(
                                 scale: 1.3,
-                                child: const Icon(
+                                child: Icon(
                                   Icons.folder_outlined,
                                   color: Colors.white,
+                                  size: 20 * sss,
                                 ),
                               ),
                             ),
@@ -1373,7 +1484,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
             ],
           ),
 
-          Container(height: 15),
+          Container(height: 15 * sss),
           Row(
             children: [
               Expanded(
@@ -1386,12 +1497,12 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                     backgroundColor: const Color.fromARGB(127, 255, 255, 255),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: EdgeInsets.symmetric(vertical: 12 * sss),
                     child: Text(
                       'Update Mod Data',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
-                        fontSize: 12,
+                        fontSize: 12 * sss,
                         fontWeight: FontWeight.w500,
                         color: Colors.white,
                       ),
@@ -1401,13 +1512,13 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
               ),
             ],
           ),
-          Container(height: 2),
+          Container(height: 2 * sss),
           Text(
             "Press this after you add/remove/edit/fix mods (usually when add/edit/remove mods directly via File Explorer)",
             textAlign: TextAlign.end,
             style: GoogleFonts.poppins(
               color: const Color.fromARGB(200, 255, 255, 255),
-              fontSize: 11,
+              fontSize: 11 * sss,
               fontWeight: FontWeight.w500,
             ),
           ),

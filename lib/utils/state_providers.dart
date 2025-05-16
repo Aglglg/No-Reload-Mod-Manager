@@ -72,3 +72,13 @@ final modKeybindProvider =
     );
 
 final leftThumbWasTriggered = StateProvider<bool>((ref) => false);
+
+final zoomScaleProvider = StateProvider<double>((ref) {
+  SharedPrefUtils().init();
+  return SharedPrefUtils().getOverallScale();
+});
+
+final bgTransparencyProvider = StateProvider<int>((ref) {
+  SharedPrefUtils().init();
+  return SharedPrefUtils().getBgTransparency();
+});

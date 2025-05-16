@@ -54,7 +54,10 @@ class _ModsDropZoneState extends ConsumerState<ModsDropZone> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         content: Text(
           text,
-          style: GoogleFonts.poppins(color: Colors.yellow, fontSize: 13),
+          style: GoogleFonts.poppins(
+            color: Colors.yellow,
+            fontSize: 13 * ref.read(zoomScaleProvider),
+          ),
         ),
         dismissDirection: DismissDirection.down,
       ),

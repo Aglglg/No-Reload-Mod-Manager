@@ -182,13 +182,14 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
 
   @override
   Widget build(BuildContext context) {
+    final sss = ref.watch(zoomScaleProvider);
     if (modData != null) {
       return Align(
         alignment: Alignment.topCenter,
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.only(top: 85),
+              padding: EdgeInsets.only(top: 85 * sss),
               child: Align(
                 alignment: Alignment.topCenter,
                 child: Text(
@@ -196,18 +197,18 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
-                    fontSize: 14,
+                    fontSize: 14 * sss,
                   ),
                 ),
               ),
             ),
 
             Padding(
-              padding: const EdgeInsets.only(
-                top: 115,
-                right: 49,
-                left: 49,
-                bottom: 40,
+              padding: EdgeInsets.only(
+                top: 115 * sss,
+                right: 45 * sss,
+                left: 45 * sss,
+                bottom: 40 * sss,
               ),
               child: ScrollConfiguration(
                 behavior: ScrollConfiguration.of(context).copyWith(
@@ -221,7 +222,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                 child: RightClickMenuWrapper(
                   menuItems: [
                     PopupMenuItem(
-                      height: 37,
+                      height: 37 * sss,
                       onTap: () async {
                         triggerRefresh(ref);
                       },
@@ -231,13 +232,13 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
-                          fontSize: 12,
+                          fontSize: 12 * sss,
                         ),
                       ),
                     ),
                     ref.watch(windowIsPinnedProvider)
                         ? PopupMenuItem(
-                          height: 37,
+                          height: 37 * sss,
                           onTap:
                               () =>
                                   ref
@@ -249,12 +250,12 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                             style: GoogleFonts.poppins(
                               color: Colors.white,
                               fontWeight: FontWeight.w500,
-                              fontSize: 12,
+                              fontSize: 12 * sss,
                             ),
                           ),
                         )
                         : PopupMenuItem(
-                          height: 37,
+                          height: 37 * sss,
                           onTap:
                               () =>
                                   ref
@@ -266,12 +267,12 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                             style: GoogleFonts.poppins(
                               color: Colors.white,
                               fontWeight: FontWeight.w500,
-                              fontSize: 12,
+                              fontSize: 12 * sss,
                             ),
                           ),
                         ),
                     PopupMenuItem(
-                      height: 37,
+                      height: 37 * sss,
                       onTap: () async {
                         ref.read(targetGameProvider.notifier).state =
                             TargetGame.none;
@@ -284,12 +285,12 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
-                          fontSize: 12,
+                          fontSize: 12 * sss,
                         ),
                       ),
                     ),
                     PopupMenuItem(
-                      height: 37,
+                      height: 37 * sss,
                       onTap: () async {
                         try {
                           if (!await launchUrl(
@@ -303,12 +304,12 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
-                          fontSize: 12,
+                          fontSize: 12 * sss,
                         ),
                       ),
                     ),
                     PopupMenuItem(
-                      height: 37,
+                      height: 37 * sss,
                       onTap: () async {
                         try {
                           if (!await launchUrl(
@@ -322,15 +323,15 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
-                          fontSize: 12,
+                          fontSize: 12 * sss,
                         ),
                       ),
                     ),
                   ],
                   child: SingleChildScrollView(
                     child: Wrap(
-                      spacing: 9,
-                      runSpacing: 9,
+                      spacing: 9 * sss,
+                      runSpacing: 9 * sss,
                       children:
                           keys.map((keyData) {
                             return _KeyCard(
@@ -347,27 +348,30 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(bottom: 5),
+              padding: EdgeInsets.only(bottom: 5 * sss),
               child: Align(
                 alignment: Alignment.bottomCenter,
-                child: TextButton(
-                  onPressed: () {
-                    if (isEditing) {
-                      saveKeys();
-                      setState(() {
-                        isEditing = false;
-                      });
-                    } else {
-                      setState(() {
-                        isEditing = true;
-                      });
-                    }
-                  },
-                  child: Text(
-                    isEditing ? "Save Keybinds" : "Edit Keybinds",
-                    style: GoogleFonts.poppins(
-                      color: Colors.blue,
-                      fontSize: 13,
+                child: Transform.scale(
+                  scale: sss,
+                  child: TextButton(
+                    onPressed: () {
+                      if (isEditing) {
+                        saveKeys();
+                        setState(() {
+                          isEditing = false;
+                        });
+                      } else {
+                        setState(() {
+                          isEditing = true;
+                        });
+                      }
+                    },
+                    child: Text(
+                      isEditing ? "Save Keybinds" : "Edit Keybinds",
+                      style: GoogleFonts.poppins(
+                        color: Colors.blue,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ),
@@ -378,11 +382,11 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
       );
     } else {
       return Padding(
-        padding: const EdgeInsets.only(
-          top: 85,
-          right: 49,
-          left: 49,
-          bottom: 30,
+        padding: EdgeInsets.only(
+          top: 85 * sss,
+          right: 49 * sss,
+          left: 49 * sss,
+          bottom: 30 * sss,
         ),
         child: Align(
           alignment: Alignment.topCenter,
@@ -393,7 +397,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
             softWrap: false,
             style: GoogleFonts.poppins(
               color: Colors.white,
-              fontSize: 12,
+              fontSize: 12 * sss,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -403,7 +407,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
   }
 }
 
-class _KeyCard extends StatefulWidget {
+class _KeyCard extends ConsumerStatefulWidget {
   final String sectionName;
   final String keybindKey;
   final IniFileAsLines iniFileAsLines;
@@ -419,10 +423,10 @@ class _KeyCard extends StatefulWidget {
   });
 
   @override
-  State<_KeyCard> createState() => _KeyCardState();
+  ConsumerState<_KeyCard> createState() => _KeyCardState();
 }
 
-class _KeyCardState extends State<_KeyCard> {
+class _KeyCardState extends ConsumerState<_KeyCard> {
   final textController = TextEditingController();
   @override
   void initState() {
@@ -432,15 +436,16 @@ class _KeyCardState extends State<_KeyCard> {
 
   @override
   Widget build(BuildContext context) {
+    final sss = ref.watch(zoomScaleProvider);
     return Container(
-      constraints: const BoxConstraints(minHeight: 66),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+      constraints: BoxConstraints(minHeight: 66 * sss),
+      padding: EdgeInsets.symmetric(horizontal: 16 * sss, vertical: 7 * sss),
       decoration: BoxDecoration(
         color: const Color.fromARGB(100, 0, 0, 0),
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(15 * sss),
         border: Border.all(
           color: const Color.fromARGB(127, 255, 255, 255),
-          width: 3,
+          width: 3 * sss,
           strokeAlign: BorderSide.strokeAlignInside,
         ),
       ),
@@ -452,12 +457,12 @@ class _KeyCardState extends State<_KeyCard> {
             style: GoogleFonts.poppins(
               color: Colors.white,
               fontWeight: FontWeight.w600,
-              fontSize: 13,
+              fontSize: 13 * sss,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4 * sss),
 
-          const SizedBox(height: 4),
+          SizedBox(height: 4 * sss),
           IntrinsicWidth(
             child: IntrinsicHeight(
               child: TextField(
@@ -490,7 +495,7 @@ class _KeyCardState extends State<_KeyCard> {
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.w400,
                   color: Colors.white,
-                  fontSize: 13,
+                  fontSize: 13 * sss,
                 ),
               ),
             ),

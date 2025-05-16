@@ -199,6 +199,32 @@ class SharedPrefUtils {
     return result;
   }
 
+  double getOverallScale() {
+    double? result = _prefs?.getDouble(keyOverallScale);
+    if (result == null) {
+      return 1;
+    } else {
+      return result.clamp(0.85, 1.5);
+    }
+  }
+
+  int getBgTransparency() {
+    int? result = _prefs?.getInt(keyBgTransparency);
+    if (result == null) {
+      return 127;
+    } else {
+      return result.clamp(0, 255).toInt();
+    }
+  }
+
+  Future<void> setOverallScale(double scale) async {
+    await _prefs?.setDouble(keyOverallScale, scale);
+  }
+
+  Future<void> setBgTransparency(int alpha) async {
+    await _prefs?.setInt(keyBgTransparency, alpha);
+  }
+
   static const String keyTargetProcessWuwa = 'targetProcessWuwa';
   static const String keyTargetProcessGenshin = 'targetProcessGenshin';
   static const String keyTargetProcessHsr = 'targetProcessHsr';
@@ -221,6 +247,9 @@ class SharedPrefUtils {
 
   static const String keyHotkeyKeyboard = "hotkeyKeyboard";
   static const String keyHotkeyGamepad = "hotkeyGamepad";
+
+  static const String keyOverallScale = "overallScale";
+  static const String keyBgTransparency = "backgroundTransparency";
 
   String getUserProfilePath() {
     if (Platform.isWindows) {
