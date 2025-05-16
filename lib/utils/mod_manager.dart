@@ -264,7 +264,7 @@ Image? getModOrGroupIcon(Directory groupDir) {
     try {
       return Image.file(
         file,
-        cacheWidth: 108 * 2,
+        cacheWidth: 156 * 2,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
           return Icon(
