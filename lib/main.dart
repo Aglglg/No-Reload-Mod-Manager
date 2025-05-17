@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:auto_updater/auto_updater.dart';
 import 'package:flutter/services.dart';
 import 'package:no_reload_mod_manager/utils/auto_group_icon.dart';
@@ -33,11 +34,28 @@ import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:xinput_gamepad/xinput_gamepad.dart';
 
+import 'package:easy_localization/easy_localization.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SharedPrefUtils().init();
+  await EasyLocalization.ensureInitialized();
   await setupWindow();
-  runApp(ProviderScope(child: MyApp()));
+  runApp(
+    ProviderScope(
+      child: EasyLocalization(
+        supportedLocales: [
+          Locale('en'),
+          Locale('zh', 'CN'),
+          Locale('zh', 'TW'),
+        ],
+        path: 'assets/translations',
+        startLocale: Locale('en'),
+        fallbackLocale: Locale('en'),
+        child: MyApp(),
+      ),
+    ),
+  );
 }
 
 Future<void> relaunchAsNormalUser() async {
@@ -125,6 +143,9 @@ class MyApp extends ConsumerWidget {
       focusNode: FocusNode(),
       autofocus: true,
       child: MaterialApp(
+        localizationsDelegates: context.localizationDelegates,
+        supportedLocales: context.supportedLocales,
+        locale: context.locale,
         debugShowCheckedModeBanner: false,
         home: Background(),
         theme: ThemeData.dark(),
@@ -205,7 +226,7 @@ class _BackgroundState extends ConsumerState<Background> {
                             )]
                             .modsInGroup
                             .length,
-                    dialogTitleText: "Add mods",
+                    dialogTitleText: "Add mods".tr(),
                     onConfirmFunction: _onModAddConfirm,
                     copyDestination:
                         ref
@@ -232,7 +253,7 @@ class _BackgroundState extends ConsumerState<Background> {
                         },
                         value: 'Add group',
                         child: Text(
-                          'Add group',
+                          'Add group'.tr(),
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
@@ -245,10 +266,20 @@ class _BackgroundState extends ConsumerState<Background> {
                         height: 37 * sss,
                         onTap: () async {
                           triggerRefresh(ref);
+                          int a = Random().nextInt(3);
+                          if (a == 0) {
+                            context.setLocale(Locale('en'));
+                          }
+                          if (a == 1) {
+                            context.setLocale(Locale('zh', 'CN'));
+                          }
+                          if (a == 2) {
+                            context.setLocale(Locale('zh', 'TW'));
+                          }
                         },
                         value: 'Refresh',
                         child: Text(
-                          'Refresh',
+                          'Refresh'.tr(),
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
@@ -266,7 +297,7 @@ class _BackgroundState extends ConsumerState<Background> {
                                       .state = false,
                           value: 'Unpin window',
                           child: Text(
-                            'Unpin window',
+                            'Unpin window'.tr(),
                             style: GoogleFonts.poppins(
                               color: Colors.white,
                               fontWeight: FontWeight.w500,
@@ -283,7 +314,7 @@ class _BackgroundState extends ConsumerState<Background> {
                                       .state = true,
                           value: 'Pin window',
                           child: Text(
-                            'Pin window',
+                            'Pin window'.tr(),
                             style: GoogleFonts.poppins(
                               color: Colors.white,
                               fontWeight: FontWeight.w500,
@@ -301,7 +332,7 @@ class _BackgroundState extends ConsumerState<Background> {
                       },
                       value: 'Hide window',
                       child: Text(
-                        'Hide window',
+                        'Hide window'.tr(),
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
@@ -321,7 +352,7 @@ class _BackgroundState extends ConsumerState<Background> {
                         },
                         value: 'Valid keys',
                         child: Text(
-                          'Valid keys',
+                          'Valid keys'.tr(),
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
@@ -340,7 +371,7 @@ class _BackgroundState extends ConsumerState<Background> {
                       },
                       value: 'Tutorial',
                       child: Text(
-                        'Tutorial',
+                        'Tutorial'.tr(),
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
@@ -371,11 +402,6 @@ class MainView extends ConsumerStatefulWidget {
 class _MainViewState extends ConsumerState<MainView>
     with WindowListener, SingleTickerProviderStateMixin, ModNavigationListener {
   late TabController _tabController;
-  final List<SegmentTab> _tabs = [
-    SegmentTab(label: "Keybinds"),
-    SegmentTab(label: "Mods"),
-    SegmentTab(label: "Settings"),
-  ];
 
   List<Widget> _views = [TabKeybinds(), TabModsLoading(), TabSettings()];
 
@@ -623,7 +649,7 @@ class _MainViewState extends ConsumerState<MainView>
     // We first init the systray menu
     await systemTray.initSystemTray(
       title: "system tray",
-      toolTip: 'Mod Manager for Gacha Games',
+      toolTip: 'Mod Manager for Gacha Games'.tr(),
       iconPath:
           Platform.isWindows
               ? 'assets/images/app_icon.ico'
@@ -634,7 +660,7 @@ class _MainViewState extends ConsumerState<MainView>
     final Menu menu = Menu();
     await menu.buildFrom([
       MenuItemLabel(
-        label: 'Show (WuWa)',
+        label: 'Show (WuWa)'.tr(),
         onClicked: (menuItem) async {
           if (!ref.read(alertDialogShownProvider)) {
             ref.read(targetGameProvider.notifier).state =
@@ -646,7 +672,7 @@ class _MainViewState extends ConsumerState<MainView>
         },
       ),
       MenuItemLabel(
-        label: 'Show (Genshin)',
+        label: 'Show (Genshin)'.tr(),
         onClicked: (menuItem) async {
           if (!ref.read(alertDialogShownProvider)) {
             ref.read(targetGameProvider.notifier).state =
@@ -658,7 +684,7 @@ class _MainViewState extends ConsumerState<MainView>
         },
       ),
       MenuItemLabel(
-        label: 'Show (HSR)',
+        label: 'Show (HSR)'.tr(),
         onClicked: (menuItem) async {
           if (!ref.read(alertDialogShownProvider)) {
             ref.read(targetGameProvider.notifier).state =
@@ -670,7 +696,7 @@ class _MainViewState extends ConsumerState<MainView>
         },
       ),
       MenuItemLabel(
-        label: 'Show (ZZZ)',
+        label: 'Show (ZZZ)'.tr(),
         onClicked: (menuItem) async {
           if (!ref.read(alertDialogShownProvider)) {
             ref.read(targetGameProvider.notifier).state =
@@ -682,9 +708,12 @@ class _MainViewState extends ConsumerState<MainView>
         },
       ),
       MenuSeparator(),
-      MenuItemLabel(label: 'Hide', onClicked: (menuItem) => appWindow.hide()),
+      MenuItemLabel(
+        label: 'Hide'.tr(),
+        onClicked: (menuItem) => appWindow.hide(),
+      ),
       MenuSeparator(),
-      MenuItemLabel(label: 'Exit', onClicked: (menuItem) => exit(0)),
+      MenuItemLabel(label: 'Exit'.tr(), onClicked: (menuItem) => exit(0)),
     ]);
 
     // set context menu
@@ -852,7 +881,7 @@ class _MainViewState extends ConsumerState<MainView>
                   urlDetails.isNotEmpty
                       ? SnackBarAction(
                         textColor: Colors.blue,
-                        label: "Details",
+                        label: "Details".tr(),
                         onPressed: () async {
                           try {
                             if (!await launchUrl(Uri.parse(urlDetails))) {}
@@ -916,13 +945,13 @@ class _MainViewState extends ConsumerState<MainView>
 
     if (!await Directory(modsPath).exists()) {
       existAndValid = false;
-      notReadyReason = "Mods path does not exist.";
+      notReadyReason = "Mods path does not exist.".tr();
     } else if (modsPath.toLowerCase().endsWith('mods') ||
         modsPath.toLowerCase().endsWith('mods\\')) {
       existAndValid = true;
     } else {
       existAndValid = false;
-      notReadyReason = "Mods path invalid.";
+      notReadyReason = "Mods path invalid.".tr();
     }
 
     if (existAndValid) {
@@ -940,19 +969,20 @@ class _MainViewState extends ConsumerState<MainView>
       if (!await Directory(managedPath).exists()) {
         existAndValid = false;
         notReadyReason =
-            "Mods path is correct, but managed folder cannot be found or still old version.";
+            "Mods path is correct, but the 'managed' folder is missing or outdated."
+                .tr();
       }
       //Check background_keypress.ini
       else if (!await File(backgroundKeypressPath).exists()) {
         existAndValid = false;
         notReadyReason =
-            "Mods path is correct, but some requirement is missing.";
+            "Mods path is correct, but some requirements are missing.".tr();
       }
       //Check manager_group.ini
       else if (!await File(managerGroupPath).exists()) {
         existAndValid = false;
         notReadyReason =
-            "Mods path is correct, but some requirement is missing.";
+            "Mods path is correct, but some requirements are missing.".tr();
       }
 
       if (existAndValid) {
@@ -1092,7 +1122,11 @@ class _MainViewState extends ConsumerState<MainView>
                     ),
                     borderRadius: BorderRadius.circular(100),
                   ),
-                  tabs: _tabs,
+                  tabs: [
+                    SegmentTab(label: "Keybinds".tr()),
+                    SegmentTab(label: "Mods".tr()),
+                    SegmentTab(label: "Settings".tr()),
+                  ],
                 ),
               ),
             ),
