@@ -21,5 +21,8 @@
   "Mods path does not exist.": "Mods path does not exist.",
   "Mods path invalid.": "Mods path invalid.",
   "Mods path is correct, but the 'managed' folder is missing or outdated.": "Mods path is correct, but the 'managed' folder is missing or outdated.",
-  "Mods path is correct, but some requirements are missing.": "Mods path is correct, but some requirements are missing."
+  "Mods path is correct, but some requirements are missing.": "Mods path is correct, but some requirements are missing.",
+  "Edit Keybinds": "Edit Keybinds",
+  "Save Keybinds": "Save Keybinds",
+  "Right-click a mod and select Keybind.": "Right-click a mod and select Keybind.\nOr just press [R (keyboard)] / [X (gamepad)] on a mod. "
 }

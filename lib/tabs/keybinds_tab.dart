@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -228,7 +229,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                       },
                       value: 'Refresh',
                       child: Text(
-                        'Refresh',
+                        'Refresh'.tr(),
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
@@ -246,7 +247,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                                       .state = false,
                           value: 'Unpin window',
                           child: Text(
-                            'Unpin window',
+                            'Unpin window'.tr(),
                             style: GoogleFonts.poppins(
                               color: Colors.white,
                               fontWeight: FontWeight.w500,
@@ -263,7 +264,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                                       .state = true,
                           value: 'Pin window',
                           child: Text(
-                            'Pin window',
+                            'Pin window'.tr(),
                             style: GoogleFonts.poppins(
                               color: Colors.white,
                               fontWeight: FontWeight.w500,
@@ -281,7 +282,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                       },
                       value: 'Hide window',
                       child: Text(
-                        'Hide window',
+                        'Hide window'.tr(),
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
@@ -300,7 +301,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                       },
                       value: 'Valid keys',
                       child: Text(
-                        'Valid keys',
+                        'Valid keys'.tr(),
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
@@ -319,7 +320,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                       },
                       value: 'Tutorial',
                       child: Text(
-                        'Tutorial',
+                        'Tutorial'.tr(),
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
@@ -367,7 +368,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                       }
                     },
                     child: Text(
-                      isEditing ? "Save Keybinds" : "Edit Keybinds",
+                      isEditing ? "Save Keybinds".tr() : "Edit Keybinds".tr(),
                       style: GoogleFonts.poppins(
                         color: Colors.blue,
                         fontSize: 13,
@@ -391,7 +392,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
         child: Align(
           alignment: Alignment.topCenter,
           child: Text(
-            'Right-click a mod and select Keybind.\nOr just press R(keyboard) X(gamepad) on a mod.',
+            'Right-click a mod and select Keybind.'.tr(),
             textAlign: TextAlign.center,
             overflow: TextOverflow.ellipsis,
             softWrap: false,
