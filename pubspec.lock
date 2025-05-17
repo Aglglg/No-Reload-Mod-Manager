@@ -68,10 +68,11 @@ packages:
   bitsdojo_window:
     dependency: "direct main"
     description:
-      name: bitsdojo_window
-      sha256: "88ef7765dafe52d97d7a3684960fb5d003e3151e662c18645c1641c22b873195"
-      url: "https://pub.dev"
-    source: hosted
+      path: bitsdojo_window
+      ref: HEAD
+      resolved-ref: ad0ed51f5ee33d4831f9f8724b0c8e4eb97fa021
+      url: "https://github.com/Aglglg/bitsdojo_window_patched.git"
+    source: git
     version: "0.1.6"
   bitsdojo_window_linux:
     dependency: transitive
