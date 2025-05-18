@@ -969,7 +969,7 @@ class _MainViewState extends ConsumerState<MainView>
       if (!await Directory(managedPath).exists()) {
         existAndValid = false;
         notReadyReason =
-            "Mods path is correct, but the 'managed' folder is missing or outdated."
+            "Mods path is correct, but the '_MANAGED_' folder is missing or outdated."
                 .tr();
       }
       //Check background_keypress.ini

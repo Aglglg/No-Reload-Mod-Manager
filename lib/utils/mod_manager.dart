@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -117,7 +118,7 @@ void _addGroupToRiverpod(WidgetRef ref, Directory groupDir, int index) {
     groupIcon: getModOrGroupIcon(groupDir),
     groupName: p.basename(groupDir.path),
     modsInGroup: [
-      ModData(modDir: Directory("None"), modIcon: null, modName: "None"),
+      ModData(modDir: Directory("None"), modIcon: null, modName: "None".tr()),
     ],
     realIndex: index + 1,
     previousSelectedModOnGroup: 0,
@@ -480,7 +481,7 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir) async {
 
     modDatas.insert(
       0,
-      ModData(modDir: Directory("None"), modIcon: null, modName: "None"),
+      ModData(modDir: Directory("None"), modIcon: null, modName: "None".tr()),
     );
 
     return modDatas;

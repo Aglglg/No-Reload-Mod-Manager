@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:auto_updater/auto_updater.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mods_dropzone.dart';
@@ -45,7 +46,8 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
   String _getRevertInfoText() {
     return ref.watch(windowIsPinnedProvider)
         ? 'Drag & Drop mod folders here, to revert any modifications caused by this tool.'
-        : 'Drag & Drop mod folders here, to revert any modifications caused by this tool.\nRight-click and pin this window to use this.';
+            .tr()
+        : '${'Drag & Drop mod folders here, to revert any modifications caused by this tool.'.tr()}\n${'Right-click and pin this window to use this.'.tr()}';
   }
 
   void _onModRevertConfirm(List<Directory> modDirs) {
@@ -91,7 +93,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                     .state = false,
                         value: 'Unpin window',
                         child: Text(
-                          'Unpin window',
+                          'Unpin window'.tr(),
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
@@ -108,7 +110,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                     .state = true,
                         value: 'Pin window',
                         child: Text(
-                          'Pin window',
+                          'Pin window'.tr(),
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
@@ -126,7 +128,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                     },
                     value: 'Hide window',
                     child: Text(
-                      'Hide window',
+                      'Hide window'.tr(),
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontWeight: FontWeight.w500,
@@ -145,7 +147,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                     },
                     value: 'Tutorial',
                     child: Text(
-                      'Tutorial',
+                      'Tutorial'.tr(),
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontWeight: FontWeight.w500,
@@ -167,7 +169,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                       ),
                       Container(height: 10 * sss),
                       Text(
-                        'Reverter',
+                        'Reverter'.tr(),
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontSize: 14 * sss,
@@ -191,11 +193,11 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(20 * sss),
                                 child: ModsDropZone(
-                                  dialogTitleText: "Revert mods",
+                                  dialogTitleText: "Revert mods".tr(),
                                   onConfirmFunction: _onModRevertConfirm,
                                   additionalContent: TextSpan(
                                     text:
-                                        "\nReverting mods will remove all changes you made while these mods where managed.",
+                                        "\n${'Reverting mods will remove all changes you made while these mods were managed.'.tr()}",
                                     style: GoogleFonts.poppins(
                                       color: const Color.fromARGB(
                                         255,
@@ -245,7 +247,8 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                       ),
                       Container(height: 2 * sss),
                       Text(
-                        "Only for mods that are directly removed via File Explorer (without right-click on “Mods” tab)",
+                        "Only for mods that are directly removed via File Explorer (without right-click on “Mods” tab)"
+                            .tr(),
                         textAlign: TextAlign.end,
                         style: GoogleFonts.poppins(
                           color: const Color.fromARGB(200, 255, 255, 255),
@@ -261,7 +264,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                       ),
                       Container(height: 10 * sss),
                       Text(
-                        'Overall Scale',
+                        'Overall Scale'.tr(),
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontSize: 14 * sss,
@@ -301,7 +304,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                       ),
                       Container(height: 10),
                       Text(
-                        'Background Transparency',
+                        'Background Transparency'.tr(),
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontSize: 14 * sss,
@@ -337,7 +340,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                       ),
                       Container(height: 10 * sss),
                       Text(
-                        'Toggle Window Shortcuts',
+                        'Window Toggle Hotkeys'.tr(),
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontSize: 14 * sss,
@@ -349,7 +352,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                         children: [
                           Expanded(
                             child: Text(
-                              'Keyboard Toggle Window',
+                              'Keyboard Toggle'.tr(),
                               textAlign: TextAlign.center,
                               style: GoogleFonts.poppins(
                                 color: const Color.fromARGB(200, 255, 255, 255),
@@ -361,7 +364,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           Container(width: 20 * sss),
                           Expanded(
                             child: Text(
-                              'Gamepad(XInput) Toggle Window',
+                              'Gamepad(XInput) Toggle'.tr(),
                               textAlign: TextAlign.center,
                               style: GoogleFonts.poppins(
                                 color: const Color.fromARGB(200, 255, 255, 255),
@@ -496,7 +499,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                       value: HotkeyGamepad.none,
                                       child: Center(
                                         child: Text(
-                                          "None",
+                                          "None".tr(),
                                           style: GoogleFonts.poppins(
                                             color: Colors.white,
                                             fontWeight: FontWeight.w500,
@@ -571,7 +574,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                       Container(height: 10 * sss),
 
                       Text(
-                        'Navigation Shortcuts',
+                        'Navigation Hotkeys'.tr(),
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontSize: 14 * sss,
@@ -585,7 +588,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           Column(
                             children: [
                               Text(
-                                'Group Navigation',
+                                'Group Navigation'.tr(),
                                 style: GoogleFonts.poppins(
                                   color: const Color.fromARGB(
                                     200,
@@ -637,7 +640,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           Column(
                             children: [
                               Text(
-                                'Mod Navigation',
+                                'Mod Navigation'.tr(),
                                 style: GoogleFonts.poppins(
                                   color: const Color.fromARGB(
                                     200,
@@ -686,7 +689,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           Column(
                             children: [
                               Text(
-                                'Select Mod',
+                                'Select Mod'.tr(),
                                 style: GoogleFonts.poppins(
                                   color: const Color.fromARGB(
                                     200,
@@ -716,7 +719,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           Column(
                             children: [
                               Text(
-                                'Mod Keybind',
+                                'Mod Keybind'.tr(),
                                 style: GoogleFonts.poppins(
                                   color: const Color.fromARGB(
                                     200,
@@ -746,7 +749,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           Column(
                             children: [
                               Text(
-                                'Tab Navigation',
+                                'Tab Navigation'.tr(),
                                 style: GoogleFonts.poppins(
                                   color: const Color.fromARGB(
                                     200,
@@ -815,7 +818,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                         child: Padding(
                           padding: EdgeInsets.symmetric(vertical: 8 * sss),
                           child: Text(
-                            'Check for Updates',
+                            'Check for Updates'.tr(),
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
                               fontSize: 12 * sss,
@@ -834,7 +837,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           Column(
                             children: [
                               Text(
-                                "Support me",
+                                "Support me".tr(),
                                 style: GoogleFonts.poppins(
                                   color: Colors.white,
                                   fontSize: 12 * sss,
@@ -866,7 +869,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           Column(
                             children: [
                               Text(
-                                "Tutorial",
+                                "Tutorial".tr(),
                                 style: GoogleFonts.poppins(
                                   color: Colors.white,
                                   fontSize: 12 * sss,
@@ -960,65 +963,6 @@ class _CustomImageButtonLinkState extends State<CustomImageButtonLink> {
   }
 }
 
-class ClickableText extends StatefulWidget {
-  const ClickableText({super.key});
-
-  @override
-  State<ClickableText> createState() => _ClickableTextState();
-}
-
-class _ClickableTextState extends State<ClickableText> {
-  bool _isHovering = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Wrap(
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          Text(
-            'Created alone by ',
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontWeight: FontWeight.w400,
-              fontSize: 12,
-            ),
-          ),
-          MouseRegion(
-            onEnter: (_) => setState(() => _isHovering = true),
-            onExit: (_) => setState(() => _isHovering = false),
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: () {
-                print('Clicked @someone');
-                // You can launch a URL or open profile etc.
-              },
-              child: AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 200),
-                style: GoogleFonts.poppins(
-                  color: _isHovering ? Colors.blue : Colors.white,
-                  fontWeight: FontWeight.w400,
-                  decoration: TextDecoration.underline,
-                  fontSize: 12,
-                ),
-                child: const Text('@agulag'),
-              ),
-            ),
-          ),
-          Text(
-            ' on GameBanana (Free & Open Source Software)',
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontWeight: FontWeight.w400,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class GameSettings extends ConsumerStatefulWidget {
   const GameSettings({super.key});
 
@@ -1032,7 +976,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
   final TextEditingController _modsPathTextFieldController =
       TextEditingController();
   bool _isPickingFolder = false;
-  String modsPathText = "Mods Path";
+  String modsPathText = "Mods Path".tr();
 
   @override
   void initState() {
@@ -1047,13 +991,13 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
   String _getTargetProcessHintText() {
     switch (ref.watch(targetGameProvider)) {
       case TargetGame.Wuthering_Waves:
-        return 'example: Client-Win64-Shipping.exe';
+        return '${'example:'.tr()} Client-Win64-Shipping.exe';
       case TargetGame.Genshin_Impact:
-        return 'example: GenshinImpact.exe';
+        return '${'example:'.tr()} GenshinImpact.exe';
       case TargetGame.Honkai_Star_Rail:
-        return 'example: StarRail.exe';
+        return '${'example:'.tr()} StarRail.exe';
       case TargetGame.Zenless_Zone_Zero:
-        return 'example: ZenlessZoneZero.exe';
+        return '${'example:'.tr()} ZenlessZoneZero.exe';
       default:
         return '';
     }
@@ -1062,13 +1006,13 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
   String _getModsPathHintText() {
     switch (ref.watch(targetGameProvider)) {
       case TargetGame.Wuthering_Waves:
-        return r'example: D:\WWMI\Mods';
+        return '${'example:'.tr()} D:\\WWMI\\Mods';
       case TargetGame.Genshin_Impact:
-        return r'example: D:\GIMI\Mods';
+        return '${'example:'.tr()} D:\\GIMI\\Mods';
       case TargetGame.Honkai_Star_Rail:
-        return r'example: D:\SRMI\Mods';
+        return '${'example:'.tr()} D:\\SRMI\\Mods';
       case TargetGame.Zenless_Zone_Zero:
-        return r'example: D:\ZZMI\Mods';
+        return '${'example:'.tr()} D:\\ZZMI\\Mods';
       default:
         return '';
     }
@@ -1077,15 +1021,15 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
   String _getTitleSettingText() {
     switch (ref.watch(targetGameProvider)) {
       case TargetGame.Wuthering_Waves:
-        return 'Wuthering Waves';
+        return 'Wuthering Waves'.tr();
       case TargetGame.Genshin_Impact:
-        return 'Genshin Impact';
+        return 'Genshin Impact'.tr();
       case TargetGame.Honkai_Star_Rail:
-        return 'Honkai Star Rail';
+        return 'Honkai Star Rail'.tr();
       case TargetGame.Zenless_Zone_Zero:
-        return 'Zenless Zone Zero';
+        return 'Zenless Zone Zero'.tr();
       default:
-        return 'Please re-open with Hotkey or System Tray';
+        return 'Please re-open with Hotkey or System Tray'.tr();
     }
   }
 
@@ -1176,18 +1120,18 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
     if (!await Directory(path).exists()) {
       valid = false;
       setState(() {
-        modsPathText = "Mods Path (path doesn't exist)";
+        modsPathText = "Mods Path (path doesn't exist)".tr();
       });
     } else if (path.toLowerCase().endsWith('mods') ||
         path.toLowerCase().endsWith('mods\\')) {
       valid = true;
       setState(() {
-        modsPathText = "Mods Path";
+        modsPathText = "Mods Path".tr();
       });
     } else {
       valid = false;
       setState(() {
-        modsPathText = "Mods Path (Invalid)";
+        modsPathText = "Mods Path (Invalid)".tr();
       });
     }
 
@@ -1213,7 +1157,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
     try {
       String? selectedDirectory = await FilePicker.platform.getDirectoryPath(
         lockParentWindow: true,
-        dialogTitle: 'Please select "Mods" folder',
+        dialogTitle: 'Please select "Mods" folder'.tr(),
         initialDirectory: initialDir,
       );
 
@@ -1279,7 +1223,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
               Expanded(
                 child: Center(
                   child: Text(
-                    'Target Process',
+                    'Target Process'.tr(),
                     style: GoogleFonts.poppins(
                       color: const Color.fromARGB(200, 255, 255, 255),
                       fontSize: 11 * sss,
@@ -1499,7 +1443,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                   child: Padding(
                     padding: EdgeInsets.symmetric(vertical: 12 * sss),
                     child: Text(
-                      'Update Mod Data',
+                      'Update Mod Data'.tr(),
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
                         fontSize: 12 * sss,
@@ -1514,7 +1458,8 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
           ),
           Container(height: 2 * sss),
           Text(
-            "Press this after you add/remove/edit/fix mods (usually when add/edit/remove mods directly via File Explorer)",
+            "Press this after you add/remove/edit/fix mods (usually when add/edit/remove mods directly via File Explorer)"
+                .tr(),
             textAlign: TextAlign.end,
             style: GoogleFonts.poppins(
               color: const Color.fromARGB(200, 255, 255, 255),

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:desktop_drop/desktop_drop.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -342,7 +343,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
     if (validFolders.isEmpty) {
       resultLogs.add(
         TextSpan(
-          text: "None\n",
+          text: "${'None'.tr()}\n",
           style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
         ),
       );
