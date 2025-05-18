@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,11 +30,12 @@ class _TabModsState extends ConsumerState<TabMods> {
   String getTextDragAndDrop() {
     String text = '';
     if (ref.watch(modGroupDataProvider).isEmpty) {
-      text = "Right-click and add group, then you can add mods.";
+      text = "Right-click and add group, then you can add mods.".tr();
     } else {
       if (ref.watch(windowIsPinnedProvider)) {
         text =
-            'Drag & Drop mod folders here to add mods to this group (1 folder = 1 mod).';
+            'Drag & Drop mod folders here to add mods to this group (1 folder = 1 mod).'
+                .tr();
       }
     }
     return text;
@@ -230,7 +232,8 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                           borderRadius: BorderRadius.circular(20),
                         ),
                         content: Text(
-                          'Max group reached (48 Groups). Unable to add more group.',
+                          'Max group reached (48 Groups). Unable to add more group.'
+                              .tr(),
                           style: GoogleFonts.poppins(
                             color: Colors.yellow,
                             fontSize: 13 * sss,
@@ -243,7 +246,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                 },
                 value: 'Add group',
                 child: Text(
-                  'Add group',
+                  'Add group'.tr(),
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
@@ -296,7 +299,8 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               content: Text(
-                                'Max group reached (48 Groups). Unable to add more group.',
+                                'Max group reached (48 Groups). Unable to add more group.'
+                                    .tr(),
                                 style: GoogleFonts.poppins(
                                   color: Colors.yellow,
                                   fontSize: 13 * sss,
@@ -309,7 +313,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                       },
                       value: 'Add group',
                       child: Text(
-                        'Add group',
+                        'Add group'.tr(),
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
@@ -337,7 +341,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                         },
                         value: 'Rename',
                         child: Text(
-                          'Rename',
+                          'Rename'.tr(),
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
@@ -373,7 +377,8 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 content: Text(
-                                  'Auto group icon failed. No matching character hash.',
+                                  'Auto group icon failed. No matching character hash.'
+                                      .tr(),
                                   style: GoogleFonts.poppins(
                                     color: Colors.yellow,
                                     fontSize: 13 * sss,
@@ -386,7 +391,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                         },
                         value: 'Try auto icon',
                         child: Text(
-                          'Try auto icon',
+                          'Try auto icon'.tr(),
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
@@ -410,7 +415,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                         },
                         value: 'Clipboard icon',
                         child: Text(
-                          'Clipboard icon',
+                          'Clipboard icon'.tr(),
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
@@ -434,7 +439,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                         },
                         value: 'Change icon',
                         child: Text(
-                          'Change icon',
+                          'Change icon'.tr(),
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
@@ -467,7 +472,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                         },
                         value: 'Remove group',
                         child: Text(
-                          'Remove group',
+                          'Remove group'.tr(),
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
@@ -523,7 +528,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
               decoration: InputDecoration(
                 isDense: true,
                 contentPadding: EdgeInsets.all(0),
-                hintText: "Group Name",
+                hintText: "Group Name".tr(),
                 hintStyle: GoogleFonts.poppins(
                   color: const Color.fromARGB(90, 255, 255, 255),
                   fontSize: 13 * sss,
@@ -736,9 +741,9 @@ class _ModAreaState extends ConsumerState<ModArea>
                   if (!context.mounted) return;
                   ref.read(windowIsPinnedProvider.notifier).state = true;
                 },
-                value: 'Add mod',
+                value: 'Add mods',
                 child: Text(
-                  'Add mod',
+                  'Add mods'.tr(),
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
@@ -923,7 +928,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
               },
               value: 'Select',
               child: Text(
-                'Select',
+                'Select'.tr(),
                 style: GoogleFonts.poppins(
                   color: Colors.blue,
                   fontWeight: FontWeight.w500,
@@ -938,9 +943,9 @@ class _ModContainerState extends ConsumerState<ModContainer>
                   if (!context.mounted) return;
                   ref.read(windowIsPinnedProvider.notifier).state = true;
                 },
-                value: 'Add mod',
+                value: 'Add mods',
                 child: Text(
-                  'Add mod',
+                  'Add mods'.tr(),
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
@@ -966,7 +971,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                 },
                 value: 'Rename',
                 child: Text(
-                  'Rename',
+                  'Rename'.tr(),
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
@@ -986,9 +991,9 @@ class _ModContainerState extends ConsumerState<ModContainer>
                     ref.read(targetGameProvider),
                   );
                 },
-                value: 'Keybind',
+                value: 'Keybinds',
                 child: Text(
-                  'Keybind',
+                  'Keybinds'.tr(),
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
@@ -1016,7 +1021,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                 },
                 value: 'Clipboard icon',
                 child: Text(
-                  'Clipboard icon',
+                  'Clipboard icon'.tr(),
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
@@ -1044,7 +1049,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                 },
                 value: 'Change icon',
                 child: Text(
-                  'Change icon',
+                  'Change icon'.tr(),
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
@@ -1077,7 +1082,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                 },
                 value: 'Remove mod',
                 child: Text(
-                  'Remove mod',
+                  'Remove mod'.tr(),
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
@@ -1156,7 +1161,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
             decoration: InputDecoration(
               isDense: true,
               contentPadding: EdgeInsets.all(0),
-              hintText: "Mod Name",
+              hintText: "Mod Name".tr(),
               hintStyle: GoogleFonts.poppins(
                 color: const Color.fromARGB(90, 255, 255, 255),
                 fontSize: 12 * sss,
@@ -1229,7 +1234,7 @@ class TabModsNotReady extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
-            "Warning",
+            "Warning".tr(),
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
               color: Colors.white,
@@ -1251,7 +1256,7 @@ class TabModsNotReady extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "1. Go to Settings.",
+                "1. Go to Settings.".tr(),
                 // textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
                   color: Colors.white,
@@ -1260,7 +1265,7 @@ class TabModsNotReady extends ConsumerWidget {
                 ),
               ),
               Text(
-                "2. Make sure Mods Path is correct.",
+                "2. Make sure Mods Path is correct.".tr(),
                 // textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
                   color: Colors.white,
@@ -1269,7 +1274,7 @@ class TabModsNotReady extends ConsumerWidget {
                 ),
               ),
               Text(
-                "3. Press Update Mod Data button.",
+                "3. Press Update Mod Data button.".tr(),
                 // textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
                   color: Colors.white,
@@ -1298,7 +1303,7 @@ class TabModsLoading extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              "Loading mods...\nRe-open with hotkey or System Tray if stuck.",
+              "Loading mods".tr(),
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 color: Colors.white,
