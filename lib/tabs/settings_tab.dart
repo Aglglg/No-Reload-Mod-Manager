@@ -4,7 +4,9 @@ import 'dart:ui';
 import 'package:auto_updater/auto_updater.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/languages_name.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mods_dropzone.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
@@ -564,6 +566,83 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                             ),
                           ),
                         ],
+                      ),
+
+                      Container(height: 15 * sss),
+                      Divider(
+                        color: const Color.fromARGB(127, 33, 149, 243),
+                        thickness: 1 * sss,
+                      ),
+                      Container(height: 10 * sss),
+
+                      //SEGMENT: LANGUAGES
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Languages'.tr(),
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 14 * sss,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Container(width: 5 * sss),
+                          Icon(Icons.translate, size: 18 * sss),
+                        ],
+                      ),
+                      Container(height: 5 * sss),
+                      Container(
+                        height: 42 * sss,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: const Color.fromARGB(127, 255, 255, 255),
+                            width: 3 * sss,
+                          ),
+                          borderRadius: BorderRadius.circular(20 * sss),
+                        ),
+                        child: Center(
+                          child: DropdownButton(
+                            isExpanded: true,
+                            value: context.locale,
+                            borderRadius: BorderRadius.circular(20 * sss),
+                            dropdownColor: const Color(0xFF2B2930),
+
+                            underline: SizedBox(),
+                            items:
+                                context.supportedLocales.map((locale) {
+                                  return DropdownMenuItem(
+                                    value: locale,
+                                    child: Center(
+                                      child: Text(
+                                        locale.toLanguageName(),
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 12 * sss,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                            onChanged: (locale) {
+                              if (locale != null) {
+                                context.setLocale(locale);
+                                ref
+                                    .read(alertDialogShownProvider.notifier)
+                                    .state = true;
+                                showDialog(
+                                  barrierDismissible: false,
+                                  context: context,
+                                  builder:
+                                      (context) =>
+                                          ChangeLanguageDialog(locale: locale),
+                                );
+                              }
+                            },
+                            style: GoogleFonts.poppins(color: Colors.white),
+                          ),
+                        ),
                       ),
 
                       Container(height: 15 * sss),
@@ -1469,6 +1548,51 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class ChangeLanguageDialog extends ConsumerWidget {
+  final Locale locale;
+  const ChangeLanguageDialog({super.key, required this.locale});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return AlertDialog(
+      title: Text(
+        'Change language'.tr(),
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
+      ),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        child: SingleChildScrollView(
+          child: RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: 'Language changed, please Restart.'.tr(),
+                  style: GoogleFonts.poppins(color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+            ref.read(alertDialogShownProvider.notifier).state = false;
+            checkToRelaunch(forcedRelaunch: true);
+          },
+          child: Text(
+            'Restart'.tr(),
+            style: GoogleFonts.poppins(color: Colors.blue),
+          ),
+        ),
+      ],
     );
   }
 }

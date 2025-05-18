@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 import 'package:auto_updater/auto_updater.dart';
 import 'package:flutter/services.dart';
 import 'package:no_reload_mod_manager/utils/auto_group_icon.dart';
@@ -50,7 +49,6 @@ void main() async {
           Locale('zh', 'TW'),
         ],
         path: 'assets/translations',
-        startLocale: Locale('en'),
         fallbackLocale: Locale('en'),
         child: MyApp(),
       ),
@@ -67,14 +65,14 @@ Future<void> relaunchAsNormalUser() async {
   exit(0);
 }
 
-Future<void> checkToRelaunch() async {
+Future<void> checkToRelaunch({bool forcedRelaunch = false}) async {
   final String relaunchFlagPath = p.join(
     Directory.systemTemp.path,
     "nrmm_relaunched",
   );
 
   bool wasRelaunched = await File(relaunchFlagPath).exists();
-  if (isRunningAsAdmin() && !wasRelaunched) {
+  if ((isRunningAsAdmin() && !wasRelaunched) || forcedRelaunch) {
     try {
       await File(relaunchFlagPath).writeAsString('1');
       await relaunchAsNormalUser();
@@ -266,16 +264,6 @@ class _BackgroundState extends ConsumerState<Background> {
                         height: 37 * sss,
                         onTap: () async {
                           triggerRefresh(ref);
-                          int a = Random().nextInt(3);
-                          if (a == 0) {
-                            context.setLocale(Locale('en'));
-                          }
-                          if (a == 1) {
-                            context.setLocale(Locale('zh', 'CN'));
-                          }
-                          if (a == 2) {
-                            context.setLocale(Locale('zh', 'TW'));
-                          }
                         },
                         value: 'Refresh',
                         child: Text(

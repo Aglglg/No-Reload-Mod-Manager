@@ -75,5 +75,9 @@
   "Mods Path (path doesn't exist)": "模組路徑（路徑不存在）",
   "Mods Path (Invalid)": "模組路徑（無效）",
   "example:": "例如：",
-  "Please select \"Mods\" folder": "請選擇 \"Mods\" 資料夾"
+  "Please select \"Mods\" folder": "請選擇 \"Mods\" 資料夾",
+  "Languages": "語言",
+  "Change language": "變更語言",
+  "Restart": "重新啟動",
+  "Language changed, please Restart.": "語言已變更，請重新啟動."
 }

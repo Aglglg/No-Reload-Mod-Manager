@@ -75,5 +75,9 @@
   "Mods Path (path doesn't exist)": "Mods Path (path doesn't exist)",
   "Mods Path (Invalid)": "Mods Path (Invalid)",
   "example:": "example:",
-  "Please select \"Mods\" folder": "Please select \"Mods\" folder"
+  "Please select \"Mods\" folder": "Please select \"Mods\" folder",
+  "Languages": "Languages",
+  "Change language": "Change language",
+  "Restart": "Restart",
+  "Language changed, please Restart.": "Language changed, please Restart."
 }
