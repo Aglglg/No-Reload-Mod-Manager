@@ -114,5 +114,18 @@
   "Reverting mods...": "Reverting mods...\n",
   "Removing group will revert and remove all changes you made while these mods on this group where managed.": "Removing group will revert and remove all changes you made while these mods on this group where managed.",
   "Removing mod will revert and remove all changes you made while this mod where managed.": "Removing mod will revert and remove all changes you made while this mod where managed.",
-  "Folder will be moved": "\n\nFolder will be moved to {}"
+  "Folder will be moved": "\n\nFolder will be moved to {}",
+  "Max mod info": "Max mods per group is 40 mods.\nCurrently you have {} mods. And you want to add {} more mods.",
+  "Checking folders...": "Checking folders...\n",
+  "Valid folders detected:": "Valid folders detected:\n",
+  "Folders excluded (on _MANAGED_ path):": "\nFolders excluded (on _MANAGED_ path):\n",
+  "Please move these folders outside first": "Please move these folders outside _MANAGED_ path first\n",
+  "Folders excluded for safety (on this tool exe path):": "\nFolders excluded for safety (on this tool exe path):\n",
+  "Adding folders from this tool path might break this tool functionality": "Adding folders from this tool path might break this tool functionality\n",
+  "Folders excluded for safety (parent folder of this tool exe path):": "\nFolders excluded for safety (parent folder of this tool exe path):\n",
+  "This folder contains this tool exe file": "This folder contains this tool exe file\n",
+  "Folders excluded because folder is parent folder of target group folder:": "\nFolders excluded because folder is parent folder of target group folder:\n",
+  "This folder contains the target group folder/parent folder of target group": "This folder contains the target group folder/parent folder of target group\n",
+  "Folders excluded to prevent unexpected error:": "\nFolders excluded to prevent unexpected error:\n",
+  "This folder contains subfolders with name _MANAGED_ or is parent folder of _MANAGED_ folder": "This folder contains subfolders with name _MANAGED_ or is parent folder of _MANAGED_ folder\n"
 }

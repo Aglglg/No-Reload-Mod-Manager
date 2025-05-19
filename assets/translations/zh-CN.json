@@ -114,5 +114,18 @@
   "Reverting mods...": "正在还原模组...\n",
   "Removing group will revert and remove all changes you made while these mods on this group where managed.": "移除分组将还原并清除该分组内所有模组在管理期间的所有更改.",
   "Removing mod will revert and remove all changes you made while this mod where managed.": "移除模组将还原并清除该模组在管理期间的所有更改.",
-  "Folder will be moved": "\n\n文件夹将被移至 {}"
+  "Folder will be moved": "\n\n文件夹将被移至 {}",
+  "Max mod info": "每组最多容纳40个模组.\n当前已有 {} 个模组，您正尝试添加 {} 个模组.",
+  "Checking folders...": "正在检查文件夹...\n",
+  "Valid folders detected:": "检测到有效文件夹：\n",
+  "Folders excluded (on _MANAGED_ path):": "\n已排除文件夹（位于 _MANAGED_ 路径内）：\n",
+  "Please move these folders outside first": "请先将这些文件夹移至 _MANAGED_ 路径外\n",
+  "Folders excluded for safety (on this tool exe path):": "\n已排除文件夹（位于工具路径内 - 安全限制）：\n",
+  "Adding folders from this tool path might break this tool functionality": "\n添加工具路径内的文件夹可能导致程序功能异常\n",
+  "Folders excluded for safety (parent folder of this tool exe path):": "\n已排除文件夹（工具程序上级目录 - 安全限制）：\n",
+  "This folder contains this tool exe file": "此文件夹包含本工具的程序文件\n",
+  "Folders excluded because folder is parent folder of target group folder:": "\n已排除文件夹（是目标分组文件夹的上级目录）：\n",
+  "This folder contains the target group folder/parent folder of target group": "此文件夹包含目标分组文件夹或是目标分组的上级目录\n",
+  "Folders excluded to prevent unexpected error:": "\n已排除文件夹（防止意外错误）：\n",
+  "This folder contains subfolders with name _MANAGED_ or is parent folder of _MANAGED_ folder": "此文件夹包含名为 _MANAGED_ 的子文件夹，或是 _MANAGED_ 文件夹的上级目录\n"
 }

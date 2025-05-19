@@ -84,7 +84,12 @@ class _ModsDropZoneState extends ConsumerState<ModsDropZone> {
             //Max actually 40, but 41, because index 0 is None mod
             if (widget.currentModsCountInGroup! + droppedFolders.length > 41) {
               showMaxMessage(
-                'Max mods per group is 40 mods.\nCurrently you have ${widget.currentModsCountInGroup! - 1} mods. And you want to add ${droppedFolders.length} more mods.',
+                'Max mod info'.tr(
+                  args: [
+                    (widget.currentModsCountInGroup! - 1).toString(),
+                    droppedFolders.length.toString(),
+                  ],
+                ),
               );
               return;
             }
@@ -161,7 +166,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
   List<Directory> parentFolderOfDestPath = [];
   List<TextSpan> contents = [
     TextSpan(
-      text: "Checking folders...\n",
+      text: "Checking folders...".tr(),
       style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
     ),
   ];
@@ -324,7 +329,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
     List<TextSpan> resultLogs = [];
     resultLogs.add(
       TextSpan(
-        text: "Valid folders detected:\n",
+        text: "Valid folders detected:".tr(),
         style: GoogleFonts.poppins(
           color: Colors.green,
           fontWeight: FontWeight.w600,
@@ -353,7 +358,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
     if (foldersOnManagedPath.isNotEmpty) {
       resultLogs.add(
         TextSpan(
-          text: "\nFolders excluded (on _MANAGED_ path):\n",
+          text: "Folders excluded (on _MANAGED_ path):".tr(),
           style: GoogleFonts.poppins(
             color: Colors.red,
             fontWeight: FontWeight.w600,
@@ -373,7 +378,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
     if (foldersOnManagedPath.isNotEmpty) {
       resultLogs.add(
         TextSpan(
-          text: "Please move these folders outside first\n",
+          text: "Please move these folders outside first".tr(),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
             fontWeight: FontWeight.w600,
@@ -387,7 +392,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
     if (foldersOnThisToolPath.isNotEmpty) {
       resultLogs.add(
         TextSpan(
-          text: "\nFolders excluded for safety (on this tool exe path):\n",
+          text: "Folders excluded for safety (on this tool exe path):".tr(),
           style: GoogleFonts.poppins(
             color: Colors.red,
             fontWeight: FontWeight.w600,
@@ -408,7 +413,8 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
       resultLogs.add(
         TextSpan(
           text:
-              "Adding folders from this tool path might break this tool functionality\n",
+              "Adding folders from this tool path might break this tool functionality"
+                  .tr(),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
             fontWeight: FontWeight.w600,
@@ -423,7 +429,8 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
       resultLogs.add(
         TextSpan(
           text:
-              "\nFolders excluded for safety (parent folder of this tool exe path):\n",
+              "Folders excluded for safety (parent folder of this tool exe path):"
+                  .tr(),
           style: GoogleFonts.poppins(
             color: Colors.red,
             fontWeight: FontWeight.w600,
@@ -443,7 +450,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
     if (parentFolderOfThisToolPath.isNotEmpty) {
       resultLogs.add(
         TextSpan(
-          text: "This folder contains this tool exe file\n",
+          text: "This folder contains this tool exe file".tr(),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
             fontWeight: FontWeight.w600,
@@ -458,7 +465,8 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
       resultLogs.add(
         TextSpan(
           text:
-              "\nFolders excluded because folder is parent folder of target group folder:\n",
+              "Folders excluded because folder is parent folder of target group folder:"
+                  .tr(),
           style: GoogleFonts.poppins(
             color: Colors.red,
             fontWeight: FontWeight.w600,
@@ -479,7 +487,8 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
       resultLogs.add(
         TextSpan(
           text:
-              "This folder contains the target group folder/parent folder of target group\n",
+              "This folder contains the target group folder/parent folder of target group"
+                  .tr(),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
             fontWeight: FontWeight.w600,
@@ -493,7 +502,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
     if (parentFolderOfManagedPath.isNotEmpty) {
       resultLogs.add(
         TextSpan(
-          text: "\nFolders excluded to prevent unexpected error:\n",
+          text: "Folders excluded to prevent unexpected error:".tr(),
           style: GoogleFonts.poppins(
             color: Colors.red,
             fontWeight: FontWeight.w600,
@@ -514,7 +523,8 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
       resultLogs.add(
         TextSpan(
           text:
-              "This folder contains subfolders with name _MANAGED_ or is parent folder of _MANAGED_ folder\n",
+              "This folder contains subfolders with name _MANAGED_ or is parent folder of _MANAGED_ folder"
+                  .tr(),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
             fontWeight: FontWeight.w600,

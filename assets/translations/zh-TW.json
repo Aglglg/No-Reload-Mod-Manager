@@ -114,5 +114,18 @@
   "Reverting mods...": "正在還原模組...\n",
   "Removing group will revert and remove all changes you made while these mods on this group where managed.": "移除群組將還原並清除該群組內所有模組在管理期間的所有變更.",
   "Removing mod will revert and remove all changes you made while this mod where managed.": "移除模組將還原並清除該模組在管理期間的所有變更.",
-  "Folder will be moved": "\n\n資料夾將被移至 {}"
+  "Folder will be moved": "\n\n資料夾將被移至 {}",
+  "Max mod info": "每組最多容納40個模組.\n當前已有 {} 個模組，您正嘗試添加 {} 個模組.",
+  "Checking folders...": "正在檢查資料夾...\n",
+  "Valid folders detected:": "檢測到有效資料夾：\n",
+  "Folders excluded (on _MANAGED_ path):": "\n已排除資料夾（位於 _MANAGED_ 路徑內）：\n",
+  "Please move these folders outside first": "請先將這些資料夾移至 _MANAGED_ 路徑外\n",
+  "Folders excluded for safety (on this tool exe path):": "\n已排除資料夾（位於工具路徑內 - 安全限制）：\n",
+  "Adding folders from this tool path might break this tool functionality": "\n新增工具路徑內的資料夾可能導致程式功能異常\n",
+  "Folders excluded for safety (parent folder of this tool exe path):": "\n已排除資料夾（工具程式上層目錄 - 安全限制）：\n",
+  "This folder contains this tool exe file": "此資料夾包含本工具程式檔案\n",
+  "Folders excluded because folder is parent folder of target group folder:": "\n已排除資料夾（是目標群組資料夾的上層目錄）：\n",
+  "This folder contains the target group folder/parent folder of target group": "此資料夾包含目標群組資料夾或是目標群組的上層目錄\n",
+  "Folders excluded to prevent unexpected error:": "\n已排除資料夾（防止意外錯誤）：\n",
+  "This folder contains subfolders with name _MANAGED_ or is parent folder of _MANAGED_ folder": "此資料夾包含名為 _MANAGED_ 的子資料夾，或是 _MANAGED_ 資料夾的上層目錄\n"
 }
