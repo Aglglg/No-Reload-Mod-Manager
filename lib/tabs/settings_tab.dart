@@ -227,18 +227,23 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                     ),
                                     size: 30 * sss,
                                   ),
-                                  Text(
-                                    _getRevertInfoText(),
-                                    textAlign: TextAlign.center,
-                                    style: GoogleFonts.poppins(
-                                      color: const Color.fromARGB(
-                                        127,
-                                        255,
-                                        255,
-                                        255,
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 19,
+                                    ),
+                                    child: Text(
+                                      _getRevertInfoText(),
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.poppins(
+                                        color: const Color.fromARGB(
+                                          127,
+                                          255,
+                                          255,
+                                          255,
+                                        ),
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 12 * sss,
                                       ),
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 12 * sss,
                                     ),
                                   ),
                                 ],
