@@ -5,6 +5,8 @@ extension LocaleNameExtension on Locale {
     switch (languageCode) {
       case 'en':
         return 'English';
+      case 'id':
+        return 'Bahasa Indonesia';
       case 'zh':
         switch (countryCode) {
           case 'CN':
