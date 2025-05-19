@@ -1,6 +1,6 @@
 {
   "Settings": "設定",
-  "Keybinds": "快速切換",
+  "Keybinds": "按鍵切換",
   "Mods": "模組",
   "Add mods": "新增模組",
   "Add group": "新增群組",
@@ -59,7 +59,7 @@
   "Group Navigation": "群組導覽",
   "Mod Navigation": "模組導覽",
   "Select Mod": "選取模組",
-  "Mod Keybind": "模組快速切換",
+  "Mod Keybind": "模組按鍵切換",
   "Tab Navigation": "標籤導覽",
   "Check for Updates": "檢查更新",
   "Support me": "支持開發者",
