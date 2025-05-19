@@ -47,6 +47,7 @@ void main() async {
           Locale('en'),
           Locale('zh', 'CN'),
           Locale('zh', 'TW'),
+          Locale('id'),
         ],
         path: 'assets/translations',
         fallbackLocale: Locale('en'),

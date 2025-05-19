@@ -29,7 +29,7 @@
   "Drag & Drop mod folders here to add mods to this group (1 folder = 1 mod).": "将模组文件夹拖拽至此，即可加入此分组（1 个文件夹 = 1 个模组）.",
   "Max group reached (48 Groups). Unable to add more group.": "已达最大分组数量（48 组），无法添加更多分组.",
   "Rename": "重命名",
-  "Try auto icon": "试试自动图标",
+  "Try auto icon": "自动图标",
   "Clipboard icon": "剪贴板图标",
   "Change icon": "更改图标",
   "Remove group": "移除分组",

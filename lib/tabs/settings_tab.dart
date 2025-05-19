@@ -251,7 +251,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                       Text(
                         "Only for mods that are directly removed via File Explorer (without right-click on “Mods” tab)"
                             .tr(),
-                        textAlign: TextAlign.end,
+                        textAlign: TextAlign.center,
                         style: GoogleFonts.poppins(
                           color: const Color.fromARGB(200, 255, 255, 255),
                           fontSize: 11 * sss,
@@ -1539,7 +1539,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
           Text(
             "Press this after you add/remove/edit/fix mods (usually when add/edit/remove mods directly via File Explorer)"
                 .tr(),
-            textAlign: TextAlign.end,
+            textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
               color: const Color.fromARGB(200, 255, 255, 255),
               fontSize: 11 * sss,
