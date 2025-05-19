@@ -300,7 +300,7 @@ Future<void> setGroupOrModIcon(
     ref.read(windowIsPinnedProvider.notifier).state = true;
     final pickResult = await FilePicker.platform.pickFiles(
       lockParentWindow: true,
-      dialogTitle: "Select an image file",
+      dialogTitle: "Select an image file".tr(),
       type: FileType.image,
     );
     if (pickResult != null) {
@@ -569,7 +569,7 @@ Future<List<TextSpan>> revertManagedMod(List<Directory> modDirs) async {
         operationLogs.add(
           TextSpan(
             text:
-                'Error reverting ${p.basename(folder.path)}.\n${ConstantVar.defaultErrorInfo}\n\n',
+                '${'Error reverting'.tr(args: [p.basename(folder.path)])}.\n${ConstantVar.defaultErrorInfo}\n\n',
             style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
           ),
         );
@@ -579,7 +579,7 @@ Future<List<TextSpan>> revertManagedMod(List<Directory> modDirs) async {
     if (iniFilesBackup.isEmpty) {
       operationLogs.add(
         TextSpan(
-          text: 'No backup found on ${p.basename(folder.path)}.\nSkipped.\n\n',
+          text: 'No backup found'.tr(args: [p.basename(folder.path)]),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
             fontWeight: FontWeight.w600,
@@ -590,7 +590,7 @@ Future<List<TextSpan>> revertManagedMod(List<Directory> modDirs) async {
     } else {
       operationLogs.add(
         TextSpan(
-          text: 'Backup found on ${p.basename(folder.path)}.\n\n',
+          text: 'Backup found'.tr(args: [p.basename(folder.path)]),
           style: GoogleFonts.poppins(color: Colors.green, fontSize: 14),
         ),
       );
@@ -600,7 +600,7 @@ Future<List<TextSpan>> revertManagedMod(List<Directory> modDirs) async {
   operationLogs.add(
     containsError
         ? TextSpan(
-          text: 'Mods reverted. But there are some errors.',
+          text: 'Mods reverted. But there are some errors.'.tr(),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
             fontWeight: FontWeight.w600,
@@ -608,7 +608,7 @@ Future<List<TextSpan>> revertManagedMod(List<Directory> modDirs) async {
           ),
         )
         : TextSpan(
-          text: 'Mods reverted!',
+          text: 'Mods reverted!'.tr(),
           style: GoogleFonts.poppins(color: Colors.green, fontSize: 14),
         ),
   );
@@ -674,12 +674,13 @@ Future<List<TextSpan>> updateModData(
     operationLogs.add(
       operationLogs.isEmpty
           ? TextSpan(
-            text: 'Mods successfully managed!',
+            text: 'Mods successfully managed!'.tr(),
             style: GoogleFonts.poppins(color: Colors.green, fontSize: 14),
           )
           : TextSpan(
             text:
-                'Mods managed but with some errors.\nRead error information above and try again.',
+                'Mods managed but with some errors. Read error information above and try again.'
+                    .tr(),
             style: GoogleFonts.poppins(
               color: const Color.fromARGB(255, 189, 170, 0),
               fontSize: 14,
@@ -692,7 +693,7 @@ Future<List<TextSpan>> updateModData(
       setBoolIfNeedAutoReload(false);
       operationLogs.add(
         TextSpan(
-          text: "\nPlease do manual reload with F10",
+          text: "Please do manual reload with F10".tr(),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
             fontWeight: FontWeight.w600,
@@ -704,7 +705,7 @@ Future<List<TextSpan>> updateModData(
   } catch (e) {
     operationLogs.add(
       TextSpan(
-        text: "Unexpected error! ${ConstantVar.defaultErrorInfo}",
+        text: "${'Unexpected error!'.tr()} ${ConstantVar.defaultErrorInfo}",
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );
@@ -751,7 +752,7 @@ Future<void> _createBackgroundKeypressIni(
     operationLogs.add(
       TextSpan(
         text:
-            "Error! Cannot create ${ConstantVar.backgroundKeypressFileName}.\n${ConstantVar.defaultErrorInfo}\n\n",
+            "${'Error cannot create'.tr(args: [ConstantVar.backgroundKeypressFileName])}.\n${ConstantVar.defaultErrorInfo}\n\n",
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );
@@ -778,7 +779,7 @@ Future<void> _createManagerGroupIni(
     operationLogs.add(
       TextSpan(
         text:
-            "Error! Cannot create ${ConstantVar.managerGroupFileName}.\n${ConstantVar.defaultErrorInfo}\n\n",
+            "${'Error cannot create'.tr(args: [ConstantVar.managerGroupFileName])}.\n${ConstantVar.defaultErrorInfo}\n\n",
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );
@@ -812,7 +813,7 @@ Future<void> _deleteGroupIniFiles(
   if (await dir.exists()) {
     await for (final entity in dir.list()) {
       if (entity is File) {
-        final fileName = entity.uri.pathSegments.last;
+        final fileName = p.basename(entity.path);
         if (regex.hasMatch(fileName)) {
           try {
             await entity.delete();
@@ -820,7 +821,7 @@ Future<void> _deleteGroupIniFiles(
             operationLogs.add(
               TextSpan(
                 text:
-                    'Error! Cannot delete previous unused group config $fileName.\n${ConstantVar.defaultErrorInfo}\n\n',
+                    '${'Error cannot delete previous unused group config'.tr(args: [fileName])}.\n${ConstantVar.defaultErrorInfo}\n\n',
                 style: GoogleFonts.poppins(color: Colors.red),
               ),
             );
@@ -857,7 +858,7 @@ Future<void> _createGroupIni(
     operationLogs.add(
       TextSpan(
         text:
-            "Error! Cannot create group_$groupIndex.ini.\n${ConstantVar.defaultErrorInfo}\n\n",
+            "${'Error cannot create'.tr(args: ['group_$groupIndex.ini'])}.\n${ConstantVar.defaultErrorInfo}\n\n",
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );
@@ -908,7 +909,8 @@ Future<void> _manageMod(
   } catch (e) {
     operationLogs.add(
       TextSpan(
-        text: 'Error in managing mod! ${ConstantVar.defaultErrorInfo}\n\n',
+        text:
+            '${'Error in managing mod!'.tr()} ${ConstantVar.defaultErrorInfo}\n\n',
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );
@@ -939,7 +941,7 @@ Future<void> _modifyIniFile(
     operationLogs.add(
       TextSpan(
         text:
-            'Error! Cannot modify .ini file $iniFilePath.\n${ConstantVar.defaultErrorInfo}\n\n',
+            '${'Error! Cannot modify .ini file'.tr(args: [iniFilePath])}.\n${ConstantVar.defaultErrorInfo}\n\n',
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );
@@ -1238,7 +1240,7 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
       contents = [];
       contents.add(
         TextSpan(
-          text: 'Copying mods...\n',
+          text: 'Copying mods...'.tr(),
           style: GoogleFonts.poppins(color: Colors.white),
         ),
       );
@@ -1259,7 +1261,7 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
           await copyDirectory(disabledFolder, Directory(destDirPath));
           operationLogs.add(
             TextSpan(
-              text: '${p.basename(folder.path)} copied.\n\n',
+              text: 'Folder copied'.tr(args: [p.basename(folder.path)]),
               style: GoogleFonts.poppins(color: Colors.green, fontSize: 14),
             ),
           );
@@ -1267,7 +1269,7 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
           operationLogs.add(
             TextSpan(
               text:
-                  'Error! Cannot copy folder: ${p.basename(folder.path)}.\n${ConstantVar.defaultErrorInfo}\n\n',
+                  '${'Error! Cannot copy folder'.tr(args: [p.basename(folder.path)])}.\n${ConstantVar.defaultErrorInfo}\n\n',
               style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
             ),
           );
@@ -1276,7 +1278,7 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
         operationLogs.add(
           TextSpan(
             text:
-                'Error! Cannot copy folder: ${p.basename(folder.path)}.\n${ConstantVar.defaultErrorInfo}\n\n',
+                '${'Error! Cannot copy folder'.tr(args: [p.basename(folder.path)])}.\n${ConstantVar.defaultErrorInfo}\n\n',
             style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
           ),
         );
@@ -1368,7 +1370,7 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-        'Copy mods',
+        'Copy mods'.tr(),
         style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
       ),
       content: ConstrainedBox(
@@ -1400,7 +1402,7 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
                     triggerRefresh(ref);
                   },
                   child: Text(
-                    'Confirm',
+                    'Confirm'.tr(),
                     style: GoogleFonts.poppins(color: Colors.blue),
                   ),
                 ),
@@ -1435,7 +1437,7 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
       contents = [];
       contents.add(
         TextSpan(
-          text: 'Validating Mods Path...\n',
+          text: 'Validating Mods Path...'.tr(),
           style: GoogleFonts.poppins(color: Colors.white),
         ),
       );
@@ -1446,7 +1448,7 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
         _showClose = true;
         contents = [
           TextSpan(
-            text: "Mods path doesn't exist",
+            text: "Mods path doesn't exist".tr(),
             style: GoogleFonts.poppins(color: Colors.red),
           ),
         ];
@@ -1456,7 +1458,7 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
       setState(() {
         contents = [
           TextSpan(
-            text: "Modifying mods...",
+            text: "Modifying mods...".tr(),
             style: GoogleFonts.poppins(color: Colors.white),
           ),
         ];
@@ -1479,7 +1481,8 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
         contents = [
           TextSpan(
             text:
-                "Mods path is invalid. Make sure you're targetting \"Mods\" folder.",
+                "Mods path is invalid. Make sure you're targetting \"Mods\" folder."
+                    .tr(),
             style: GoogleFonts.poppins(color: Colors.red),
           ),
         ];
@@ -1503,7 +1506,7 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-        'Manage mods',
+        'Manage mods'.tr(),
         style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
       ),
       content: ConstrainedBox(
@@ -1536,7 +1539,7 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
                         simulateKeyF10();
                       },
                       child: Text(
-                        'Close & Reload',
+                        'Close & Reload'.tr(),
                         style: GoogleFonts.poppins(color: Colors.blue),
                       ),
                     )
@@ -1547,7 +1550,7 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
                             false;
                       },
                       child: Text(
-                        'Close',
+                        'Close'.tr(),
                         style: GoogleFonts.poppins(color: Colors.blue),
                       ),
                     ),
@@ -1581,7 +1584,7 @@ class _RevertModDialogState extends ConsumerState<RevertModDialog> {
       contents = [];
       contents.add(
         TextSpan(
-          text: 'Reverting mods...\n',
+          text: 'Reverting mods...'.tr(),
           style: GoogleFonts.poppins(color: Colors.white),
         ),
       );
@@ -1610,7 +1613,7 @@ class _RevertModDialogState extends ConsumerState<RevertModDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-        'Revert mods',
+        'Revert mods'.tr(),
         style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
       ),
       content: ConstrainedBox(
@@ -1640,7 +1643,7 @@ class _RevertModDialogState extends ConsumerState<RevertModDialog> {
                     ref.read(alertDialogShownProvider.notifier).state = false;
                   },
                   child: Text(
-                    'Close',
+                    'Close'.tr(),
                     style: GoogleFonts.poppins(color: Colors.blue),
                   ),
                 ),
@@ -1699,7 +1702,9 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
           text:
               widget.isGroup
                   ? "Removing group will revert and remove all changes you made while these mods on this group where managed."
-                  : "Removing mod will revert and remove all changes you made while this mod where managed.",
+                      .tr()
+                  : "Removing mod will revert and remove all changes you made while this mod where managed."
+                      .tr(),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
             fontWeight: FontWeight.w600,
@@ -1707,8 +1712,9 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
           ),
         ),
         TextSpan(
-          text:
-              "\n\nFolder will be moved to Mods/${ConstantVar.managedRemovedFolderName}",
+          text: "Folder will be moved".tr(
+            args: ["Mods/${ConstantVar.managedRemovedFolderName}"],
+          ),
           style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
         ),
       ];
@@ -1721,7 +1727,7 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
       _isLoading = true;
       contents = [
         TextSpan(
-          text: "Loading...",
+          text: "Loading...".tr(),
           style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
         ),
       ];
@@ -1747,8 +1753,9 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
       operationLogs.insert(
         0,
         TextSpan(
-          text:
-              "Folder moved to Mods/${ConstantVar.managedRemovedFolderName}\n\n",
+          text: "Folder moved to unmanaged".tr(
+            args: ['Mods/${ConstantVar.managedRemovedFolderName}'],
+          ),
           style: GoogleFonts.poppins(color: Colors.green, fontSize: 14),
         ),
       );
@@ -1760,7 +1767,8 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
       setState(() {
         contents = [
           TextSpan(
-            text: "Failed to move folder.\n${ConstantVar.defaultErrorInfo}",
+            text:
+                "${'Failed to move folder'.tr()}.\n${ConstantVar.defaultErrorInfo}",
             style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
           ),
         ];
@@ -1814,7 +1822,7 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-        widget.isGroup ? 'Remove group' : 'Remove mod',
+        widget.isGroup ? 'Remove group'.tr() : 'Remove mod'.tr(),
         style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
       ),
       content: ConstrainedBox(
@@ -1844,7 +1852,7 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
                     ref.read(alertDialogShownProvider.notifier).state = false;
                   },
                   child: Text(
-                    'Cancel',
+                    'Cancel'.tr(),
                     style: GoogleFonts.poppins(color: Colors.blue),
                   ),
                 ),
@@ -1853,7 +1861,7 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
                     await renameOrMoveFolder();
                   },
                   child: Text(
-                    'Confirm',
+                    'Confirm'.tr(),
                     style: GoogleFonts.poppins(color: Colors.red),
                   ),
                 ),
@@ -1868,7 +1876,7 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
                     _onConfirmToUpdateModClicked();
                   },
                   child: Text(
-                    'Update Mod Data',
+                    'Update Mod Data'.tr(),
                     style: GoogleFonts.poppins(color: Colors.blue),
                   ),
                 ),

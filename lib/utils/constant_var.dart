@@ -1,3 +1,5 @@
+import 'package:easy_localization/easy_localization.dart';
+
 class ConstantVar {
   static const String thisProcessName = "No_Reload_Mod_Manager.exe";
   static const String managedBackupExtension = "ini_managed_backup";
@@ -9,8 +11,7 @@ class ConstantVar {
       "MANAGED-DO_NOT_EDIT_COPY_MOVE_CUT";
   static const String backgroundKeypressFileName = 'background_keypress.ini';
   static const String managerGroupFileName = 'manager_group.ini';
-  static const String defaultErrorInfo =
-      "Make sure the directory/file is accessible.\nTry to close any other programs/File Explorer that's accessing it.";
+  static String defaultErrorInfo = "defaultErrorInfo".tr();
   static const String urlSupportIcon =
       "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/icon_support.png";
   static const String urlSupportIconOnHover =

@@ -582,7 +582,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
                     ref.read(alertDialogShownProvider.notifier).state = false;
                   },
                   child: Text(
-                    'Cancel',
+                    'Cancel'.tr(),
                     style: GoogleFonts.poppins(color: Colors.blue),
                   ),
                 ),
@@ -594,7 +594,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
                       widget.onConfirmFunction(validFolders);
                     },
                     child: Text(
-                      'Confirm',
+                      'Confirm'.tr(),
                       style: GoogleFonts.poppins(color: Colors.green),
                     ),
                   ),
