@@ -17,7 +17,6 @@ import 'package:path/path.dart' as p;
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:no_reload_mod_manager/tabs/keybinds_tab.dart';
 import 'package:no_reload_mod_manager/tabs/mods_tab.dart';
 import 'package:no_reload_mod_manager/tabs/settings_tab.dart';
@@ -31,15 +30,16 @@ import 'package:animated_segmented_tab_control/animated_segmented_tab_control.da
 import 'package:hotkey_manager/hotkey_manager.dart';
 
 import 'package:flutter/material.dart';
+import 'package:windows_single_instance/windows_single_instance.dart';
 import 'package:xinput_gamepad/xinput_gamepad.dart';
 
 import 'package:easy_localization/easy_localization.dart';
 
-void main() async {
+void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await SharedPrefUtils().init();
   await EasyLocalization.ensureInitialized();
-  await setupWindow();
+  await setupWindow(args);
   runApp(
     ProviderScope(
       child: EasyLocalization(
@@ -86,13 +86,21 @@ Future<void> checkToRelaunch({bool forcedRelaunch = false}) async {
   }
 }
 
-Future<void> setupWindow() async {
+Future<void> setupWindow(List<String> args) async {
   await windowManager.ensureInitialized();
   await hotKeyManager.unregisterAll();
 
-  if (await FlutterSingleInstance().isFirstInstance() == false) {
-    exit(0);
-  }
+  await WindowsSingleInstance.ensureSingleInstance(
+    args,
+    "no_reload_mod_manager",
+    onSecondWindow: (args) {
+      for (var element in args) {
+        print(element);
+      }
+    },
+    bringWindowToFront:
+        false, //IMPORTANT, or else it will mess up with always on top or it will be hidden even when it's pinned or blue outline/border
+  );
 
   await checkToRelaunch();
 

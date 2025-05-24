@@ -45,7 +45,6 @@ dependencies:
   win32: ^5.12.0
   ffi: ^2.1.4
   hotkey_manager: ^0.2.3
-  flutter_single_instance: ^1.5.0
   package_info_plus: ^8.3.0
   url_launcher: ^6.3.1
   shared_preferences: ^2.5.3
@@ -60,6 +59,7 @@ dependencies:
   watcher: ^1.1.1
   auto_updater: ^1.0.0
   easy_localization: ^3.0.7+1
+  windows_single_instance: ^1.0.1
   
 dev_dependencies:
   flutter_test:
