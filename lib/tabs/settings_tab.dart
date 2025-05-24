@@ -400,80 +400,91 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                 borderRadius: BorderRadius.circular(20 * sss),
                               ),
                               child: Center(
-                                child: DropdownButton(
-                                  isExpanded: true,
-                                  value: ref.watch(hotkeyKeyboardProvider),
-                                  borderRadius: BorderRadius.circular(20 * sss),
-                                  dropdownColor: const Color(0xFF2B2930),
-                                  underline: SizedBox(),
-                                  items: [
-                                    DropdownMenuItem(
-                                      value: HotkeyKeyboard.altW,
-                                      child: Center(
-                                        child: Text(
-                                          "Alt+W",
+                                child:
+                                    ref.watch(tabIndexProvider) == 2
+                                        ? DropdownButton(
+                                          isExpanded: true,
+                                          value: ref.watch(
+                                            hotkeyKeyboardProvider,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            20 * sss,
+                                          ),
+                                          dropdownColor: const Color(
+                                            0xFF2B2930,
+                                          ),
+                                          underline: SizedBox(),
+                                          items: [
+                                            DropdownMenuItem(
+                                              value: HotkeyKeyboard.altW,
+                                              child: Center(
+                                                child: Text(
+                                                  "Alt+W",
+                                                  style: GoogleFonts.poppins(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 12 * sss,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: HotkeyKeyboard.altS,
+                                              child: Center(
+                                                child: Text(
+                                                  "Alt+S",
+                                                  style: GoogleFonts.poppins(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 12 * sss,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: HotkeyKeyboard.altA,
+                                              child: Center(
+                                                child: Text(
+                                                  "Alt+A",
+                                                  style: GoogleFonts.poppins(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 12 * sss,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: HotkeyKeyboard.altD,
+                                              child: Center(
+                                                child: Text(
+                                                  "Alt+D",
+                                                  style: GoogleFonts.poppins(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 12 * sss,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                          onChanged: (value) {
+                                            if (value != null) {
+                                              ref
+                                                  .read(
+                                                    hotkeyKeyboardProvider
+                                                        .notifier,
+                                                  )
+                                                  .state = value;
+                                              SharedPrefUtils()
+                                                  .setHotkeyKeyboard(value);
+                                            }
+                                          },
                                           style: GoogleFonts.poppins(
                                             color: Colors.white,
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 12 * sss,
                                           ),
-                                        ),
-                                      ),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: HotkeyKeyboard.altS,
-                                      child: Center(
-                                        child: Text(
-                                          "Alt+S",
-                                          style: GoogleFonts.poppins(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 12 * sss,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: HotkeyKeyboard.altA,
-                                      child: Center(
-                                        child: Text(
-                                          "Alt+A",
-                                          style: GoogleFonts.poppins(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 12 * sss,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: HotkeyKeyboard.altD,
-                                      child: Center(
-                                        child: Text(
-                                          "Alt+D",
-                                          style: GoogleFonts.poppins(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 12 * sss,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                  onChanged: (value) {
-                                    if (value != null) {
-                                      ref
-                                          .read(hotkeyKeyboardProvider.notifier)
-                                          .state = value;
-                                      SharedPrefUtils().setHotkeyKeyboard(
-                                        value,
-                                      );
-                                    }
-                                  },
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                  ),
-                                ),
+                                        )
+                                        : null,
                               ),
                             ),
                           ),
@@ -494,79 +505,92 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                 borderRadius: BorderRadius.circular(20 * sss),
                               ),
                               child: Center(
-                                child: DropdownButton(
-                                  isExpanded: true,
-                                  value: ref.watch(hotkeyGamepadProvider),
-                                  borderRadius: BorderRadius.circular(20 * sss),
-                                  dropdownColor: const Color(0xFF2B2930),
+                                child:
+                                    ref.watch(tabIndexProvider) == 2
+                                        ? DropdownButton(
+                                          isExpanded: true,
+                                          value: ref.watch(
+                                            hotkeyGamepadProvider,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            20 * sss,
+                                          ),
+                                          dropdownColor: const Color(
+                                            0xFF2B2930,
+                                          ),
 
-                                  underline: SizedBox(),
-                                  items: [
-                                    DropdownMenuItem(
-                                      value: HotkeyGamepad.none,
-                                      child: Center(
-                                        child: Text(
-                                          "None".tr(),
+                                          underline: SizedBox(),
+                                          items: [
+                                            DropdownMenuItem(
+                                              value: HotkeyGamepad.none,
+                                              child: Center(
+                                                child: Text(
+                                                  "None".tr(),
+                                                  style: GoogleFonts.poppins(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 12 * sss,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: HotkeyGamepad.lsB,
+                                              child: Center(
+                                                child: Text(
+                                                  "LeftStick+B",
+                                                  style: GoogleFonts.poppins(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 12 * sss,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: HotkeyGamepad.lsA,
+                                              child: Center(
+                                                child: Text(
+                                                  "LeftStick+A",
+                                                  style: GoogleFonts.poppins(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 12 * sss,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: HotkeyGamepad.lsRb,
+                                              child: Center(
+                                                child: Text(
+                                                  "LeftStick+RB",
+                                                  style: GoogleFonts.poppins(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 12 * sss,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                          onChanged: (value) {
+                                            if (value != null) {
+                                              ref
+                                                  .read(
+                                                    hotkeyGamepadProvider
+                                                        .notifier,
+                                                  )
+                                                  .state = value;
+                                              SharedPrefUtils()
+                                                  .setHotkeyGamepad(value);
+                                            }
+                                          },
                                           style: GoogleFonts.poppins(
                                             color: Colors.white,
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 12 * sss,
                                           ),
-                                        ),
-                                      ),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: HotkeyGamepad.lsB,
-                                      child: Center(
-                                        child: Text(
-                                          "LeftStick+B",
-                                          style: GoogleFonts.poppins(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 12 * sss,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: HotkeyGamepad.lsA,
-                                      child: Center(
-                                        child: Text(
-                                          "LeftStick+A",
-                                          style: GoogleFonts.poppins(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 12 * sss,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: HotkeyGamepad.lsRb,
-                                      child: Center(
-                                        child: Text(
-                                          "LeftStick+RB",
-                                          style: GoogleFonts.poppins(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 12 * sss,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                  onChanged: (value) {
-                                    if (value != null) {
-                                      ref
-                                          .read(hotkeyGamepadProvider.notifier)
-                                          .state = value;
-                                      SharedPrefUtils().setHotkeyGamepad(value);
-                                    }
-                                  },
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                  ),
-                                ),
+                                        )
+                                        : null,
                               ),
                             ),
                           ),
@@ -607,46 +631,56 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           borderRadius: BorderRadius.circular(20 * sss),
                         ),
                         child: Center(
-                          child: DropdownButton(
-                            isExpanded: true,
-                            value: context.locale,
-                            borderRadius: BorderRadius.circular(20 * sss),
-                            dropdownColor: const Color(0xFF2B2930),
-
-                            underline: SizedBox(),
-                            items:
-                                context.supportedLocales.map((locale) {
-                                  return DropdownMenuItem(
-                                    value: locale,
-                                    child: Center(
-                                      child: Text(
-                                        locale.toLanguageName(),
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12 * sss,
-                                        ),
-                                      ),
+                          child:
+                              ref.watch(tabIndexProvider) == 2
+                                  ? DropdownButton(
+                                    isExpanded: true,
+                                    value: context.locale,
+                                    borderRadius: BorderRadius.circular(
+                                      20 * sss,
                                     ),
-                                  );
-                                }).toList(),
-                            onChanged: (locale) {
-                              if (locale != null) {
-                                context.setLocale(locale);
-                                ref
-                                    .read(alertDialogShownProvider.notifier)
-                                    .state = true;
-                                showDialog(
-                                  barrierDismissible: false,
-                                  context: context,
-                                  builder:
-                                      (context) =>
-                                          ChangeLanguageDialog(locale: locale),
-                                );
-                              }
-                            },
-                            style: GoogleFonts.poppins(color: Colors.white),
-                          ),
+                                    dropdownColor: const Color(0xFF2B2930),
+
+                                    underline: SizedBox(),
+                                    items:
+                                        context.supportedLocales.map((locale) {
+                                          return DropdownMenuItem(
+                                            value: locale,
+                                            child: Center(
+                                              child: Text(
+                                                locale.toLanguageName(),
+                                                style: GoogleFonts.poppins(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 12 * sss,
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
+                                    onChanged: (locale) {
+                                      if (locale != null) {
+                                        context.setLocale(locale);
+                                        ref
+                                            .read(
+                                              alertDialogShownProvider.notifier,
+                                            )
+                                            .state = true;
+                                        showDialog(
+                                          barrierDismissible: false,
+                                          context: context,
+                                          builder:
+                                              (context) => ChangeLanguageDialog(
+                                                locale: locale,
+                                              ),
+                                        );
+                                      }
+                                    },
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                  : null,
                         ),
                       ),
 
@@ -871,6 +905,34 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                       ),
                                     ],
                                   ),
+                                ],
+                              ),
+                            ],
+                          ),
+
+                          Container(width: 20 * sss),
+                          Column(
+                            children: [
+                              Text(
+                                'Search'.tr(),
+                                style: GoogleFonts.poppins(
+                                  color: const Color.fromARGB(
+                                    200,
+                                    255,
+                                    255,
+                                    255,
+                                  ),
+                                  fontSize: 11 * sss,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Column(
+                                children: [
+                                  Image.asset(
+                                    'assets/keys_icon/keySpace_icon.png',
+                                    height: 40 * sss,
+                                  ),
+                                  Container(height: 40 * sss),
                                 ],
                               ),
                             ],

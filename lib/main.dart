@@ -284,6 +284,24 @@ class _BackgroundState extends ConsumerState<Background> {
                           ),
                         ),
                       ),
+                    if (ref.watch(tabIndexProvider) == 1 &&
+                        ref.watch(modGroupDataProvider).isNotEmpty)
+                      PopupMenuItem(
+                        height: 37 * sss,
+                        onTap: () {
+                          ref.read(searchBarShownProvider.notifier).state =
+                              true;
+                        },
+                        value: 'Search',
+                        child: Text(
+                          'Search'.tr(),
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12 * sss,
+                          ),
+                        ),
+                      ),
                     ref.watch(windowIsPinnedProvider)
                         ? PopupMenuItem(
                           height: 37 * sss,
@@ -928,6 +946,7 @@ class _MainViewState extends ConsumerState<MainView>
     ImageRefreshListener.refreshImages(ref.read(modGroupDataProvider));
 
     ref.read(validModsPath.notifier).state = null;
+    ref.read(searchBarShownProvider.notifier).state = false;
 
     setState(() {
       _views = [TabKeybinds(), TabModsLoading(), TabSettings()];

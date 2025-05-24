@@ -82,3 +82,5 @@ final bgTransparencyProvider = StateProvider<int>((ref) {
   SharedPrefUtils().init();
   return SharedPrefUtils().getBgTransparency();
 });
+
+final searchBarShownProvider = StateProvider<bool>((ref) => false);

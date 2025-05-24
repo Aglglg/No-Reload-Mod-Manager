@@ -127,5 +127,7 @@
   "Folders excluded because folder is parent folder of target group folder:": "\n已排除資料夾（是目標群組資料夾的上層目錄）：\n",
   "This folder contains the target group folder/parent folder of target group": "此資料夾包含目標群組資料夾或是目標群組的上層目錄\n",
   "Folders excluded to prevent unexpected error:": "\n已排除資料夾（防止意外錯誤）：\n",
-  "This folder contains subfolders with name _MANAGED_ or is parent folder of _MANAGED_ folder": "此資料夾包含名為 _MANAGED_ 的子資料夾，或是 _MANAGED_ 資料夾的上層目錄\n"
+  "This folder contains subfolders with name _MANAGED_ or is parent folder of _MANAGED_ folder": "此資料夾包含名為 _MANAGED_ 的子資料夾，或是 _MANAGED_ 資料夾的上層目錄\n",
+  "Search mod/group by name or real folder name": "搜尋模組/群組（依名稱或實際資料夾名稱）",
+  "Search": "搜尋"
 }

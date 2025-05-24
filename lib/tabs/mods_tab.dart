@@ -12,6 +12,7 @@ import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/keypress_simulator_manager.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/mod_navigator.dart';
+import 'package:no_reload_mod_manager/utils/mod_searcher.dart';
 import 'package:no_reload_mod_manager/utils/refreshable_image.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
@@ -26,7 +27,9 @@ class TabMods extends ConsumerStatefulWidget {
   ConsumerState<TabMods> createState() => _TabModsState();
 }
 
-class _TabModsState extends ConsumerState<TabMods> {
+class _TabModsState extends ConsumerState<TabMods> with ModNavigationListener {
+  final searchController = TextEditingController();
+  final searchFocus = FocusNode();
   String getTextDragAndDrop() {
     String text = '';
     if (ref.watch(modGroupDataProvider).isEmpty) {
@@ -42,67 +45,141 @@ class _TabModsState extends ConsumerState<TabMods> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    ref.listenManual(searchBarShownProvider, (previous, next) {
+      if (next == true) {
+        searchFocus.requestFocus();
+      }
+    });
+    ModNavigationListener.addListener(this);
+  }
+
+  @override
+  void dispose() {
+    ModNavigationListener.removeListener(this);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
     return Padding(
       padding: EdgeInsets.only(top: 67 * sss, right: 45 * sss, left: 45 * sss),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Stack(
         children: [
-          if (ref.watch(windowIsPinnedProvider) ||
-              ref.watch(modGroupDataProvider).isEmpty)
-            Center(
-              child: Column(
-                children: [
-                  IgnorePointer(
-                    child: Text(
-                      getTextDragAndDrop(),
-                      textAlign: TextAlign.center,
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: false,
-                      style: GoogleFonts.poppins(
-                        color:
-                            ref.watch(windowIsPinnedProvider)
-                                ? Colors.blue
-                                : const Color.fromARGB(127, 255, 255, 255),
-                        fontSize: 12 * sss,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          if (ref.watch(modGroupDataProvider).isNotEmpty)
-            Column(
-              children: [
-                IgnorePointer(child: Container(height: 12 * sss)),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (ref.watch(windowIsPinnedProvider) ||
+                  ref.watch(modGroupDataProvider).isEmpty)
                 Center(
-                  child: Row(
+                  child: Column(
                     children: [
-                      GroupArea(
-                        initialGroupIndex: ref.watch(currentGroupIndexProvider),
-                      ),
-
                       IgnorePointer(
-                        child: SizedBox(width: 45 * sss, height: 200 * sss),
-                      ),
-
-                      ModArea(
-                        currentGroupData:
-                            ref.watch(modGroupDataProvider)[ref.watch(
-                              currentGroupIndexProvider,
-                            )],
+                        child: Text(
+                          getTextDragAndDrop(),
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: false,
+                          style: GoogleFonts.poppins(
+                            color:
+                                ref.watch(windowIsPinnedProvider)
+                                    ? Colors.blue
+                                    : const Color.fromARGB(127, 255, 255, 255),
+                            fontSize: 12 * sss,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
-              ],
+
+              if (ref.watch(modGroupDataProvider).isNotEmpty)
+                Column(
+                  children: [
+                    IgnorePointer(child: Container(height: 12 * sss)),
+                    Center(
+                      child: Row(
+                        children: [
+                          GroupArea(
+                            initialGroupIndex: ref.watch(
+                              currentGroupIndexProvider,
+                            ),
+                          ),
+
+                          IgnorePointer(
+                            child: SizedBox(width: 45 * sss, height: 200 * sss),
+                          ),
+
+                          ModArea(
+                            currentGroupData:
+                                ref.watch(modGroupDataProvider)[ref.watch(
+                                  currentGroupIndexProvider,
+                                )],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+          if (ref.watch(searchBarShownProvider))
+            Align(
+              alignment: Alignment.topCenter,
+              child: Padding(
+                padding: EdgeInsets.only(top: 15.0 * sss),
+                child: SizedBox(
+                  height: 38 * sss,
+                  child: SearchBar(
+                    focusNode: searchFocus,
+                    controller: searchController,
+                    onChanged:
+                        (value) =>
+                            value.isNotEmpty
+                                ? goToSearchResult(ref, value)
+                                : null,
+                    onSubmitted:
+                        (value) =>
+                            ref.read(searchBarShownProvider.notifier).state =
+                                false,
+                    onTapOutside:
+                        (event) =>
+                            ref.read(searchBarShownProvider.notifier).state =
+                                false,
+                    leading: Icon(Icons.search),
+                    hintText:
+                        'Search mod/group by name or real folder name'.tr(),
+                    hintStyle: WidgetStatePropertyAll(
+                      GoogleFonts.poppins(fontSize: 13 * sss),
+                    ),
+                    textStyle: WidgetStatePropertyAll(
+                      GoogleFonts.poppins(fontSize: 13 * sss),
+                    ),
+                    shape: WidgetStatePropertyAll(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadiusGeometry.circular(20 * sss),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
         ],
       ),
     );
+  }
+
+  @override
+  void onKeyEvent(KeyEvent value, Controller? controller) {
+    if (value.physicalKey == PhysicalKeyboardKey.space &&
+        ref.read(tabIndexProvider) == 1 &&
+        ref.read(modGroupDataProvider).isNotEmpty) {
+      ref.read(searchBarShownProvider.notifier).state =
+          !ref.read(searchBarShownProvider);
+    }
   }
 }
 
@@ -115,7 +192,7 @@ class GroupArea extends ConsumerStatefulWidget {
 }
 
 class _GroupAreaState extends ConsumerState<GroupArea>
-    with ModNavigationListener {
+    with ModNavigationListener, ModSearcherListener {
   final CarouselSliderController _carouselSliderGroupController =
       CarouselSliderController();
   final TextEditingController _groupNameTextFieldController =
@@ -129,11 +206,13 @@ class _GroupAreaState extends ConsumerState<GroupArea>
     super.initState();
     getCurrentGroupName(widget.initialGroupIndex, calledFromInitState: true);
     ModNavigationListener.addListener(this);
+    ModSearcherListener.addListener(this);
   }
 
   @override
   void dispose() {
     ModNavigationListener.removeListener(this);
+    ModSearcherListener.removeListener(this);
     groupTextFieldFocusNode.dispose();
     super.dispose();
   }
@@ -481,9 +560,15 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                         ),
                       ),
                   ],
-                  child: GroupContainer(
-                    index: index,
-                    currentIndex: currentPageIndex,
+                  child: Tooltip(
+                    message: p.basename(
+                      ref.read(modGroupDataProvider)[index].groupDir.path,
+                    ),
+                    waitDuration: Duration(milliseconds: 500),
+                    child: GroupContainer(
+                      index: index,
+                      currentIndex: currentPageIndex,
+                    ),
                   ),
                 );
               },
@@ -581,6 +666,15 @@ class _GroupAreaState extends ConsumerState<GroupArea>
       }
     }
   }
+
+  @override
+  void onSearched(int groupIndex, int? modIndex) {
+    _carouselSliderGroupController.animateToPage(
+      groupIndex,
+      duration: Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+    );
+  }
 }
 
 class GroupContainer extends ConsumerStatefulWidget {
@@ -650,7 +744,7 @@ class ModArea extends ConsumerStatefulWidget {
 }
 
 class _ModAreaState extends ConsumerState<ModArea>
-    with WindowListener, ModNavigationListener {
+    with WindowListener, ModNavigationListener, ModSearcherListener {
   final CarouselSliderController _carouselSliderModController =
       CarouselSliderController();
   double windowWidth = 0;
@@ -707,12 +801,14 @@ class _ModAreaState extends ConsumerState<ModArea>
     });
     onWindowResize();
     ModNavigationListener.addListener(this);
+    ModSearcherListener.addListener(this);
   }
 
   @override
   void dispose() {
     windowManager.removeListener(this);
     ModNavigationListener.removeListener(this);
+    ModSearcherListener.removeListener(this);
     super.dispose();
   }
 
@@ -820,6 +916,17 @@ class _ModAreaState extends ConsumerState<ModArea>
           curve: Curves.easeOut,
         );
       }
+    }
+  }
+
+  @override
+  void onSearched(int groupIndex, int? modIndex) {
+    if (modIndex != null) {
+      _carouselSliderModController.animateToPage(
+        modIndex,
+        duration: Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
     }
   }
 }
@@ -1103,47 +1210,53 @@ class _ModContainerState extends ConsumerState<ModContainer>
                   (_) => setState(() {
                     isHovering = false;
                   }),
-              child: AnimatedContainer(
-                duration: Duration(milliseconds: 250),
-                curve: Curves.easeOut,
-                height: widget.itemHeight,
-                width: 156.816 * sss,
-                decoration: BoxDecoration(
-                  color: Colors.transparent,
-                  border: Border.all(
-                    strokeAlign: BorderSide.strokeAlignInside,
-                    color:
-                        widget.isSelected
-                            ? Colors.blue
-                            : isHovering
-                            ? Colors.white
-                            : const Color.fromARGB(127, 255, 255, 255),
-                    width: 3 * sss,
-                  ),
-                  borderRadius: BorderRadius.circular(17 * sss),
+              child: Tooltip(
+                message: p.basename(
+                  widget.currentGroupData.modsInGroup[widget.index].modDir.path,
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16 * sss),
-                  clipBehavior: Clip.antiAlias,
-                  child:
-                      widget.index != 0
-                          ? RefreshableLocalImage(
-                            imageWidget:
-                                widget
-                                    .currentGroupData
-                                    .modsInGroup[widget.index]
-                                    .modIcon,
-                            errorWidget: Icon(
-                              size: 40 * sss,
-                              Icons.image_outlined,
+                waitDuration: Duration(milliseconds: 500),
+                child: AnimatedContainer(
+                  duration: Duration(milliseconds: 250),
+                  curve: Curves.easeOut,
+                  height: widget.itemHeight,
+                  width: 156.816 * sss,
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    border: Border.all(
+                      strokeAlign: BorderSide.strokeAlignInside,
+                      color:
+                          widget.isSelected
+                              ? Colors.blue
+                              : isHovering
+                              ? Colors.white
+                              : const Color.fromARGB(127, 255, 255, 255),
+                      width: 3 * sss,
+                    ),
+                    borderRadius: BorderRadius.circular(17 * sss),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16 * sss),
+                    clipBehavior: Clip.antiAlias,
+                    child:
+                        widget.index != 0
+                            ? RefreshableLocalImage(
+                              imageWidget:
+                                  widget
+                                      .currentGroupData
+                                      .modsInGroup[widget.index]
+                                      .modIcon,
+                              errorWidget: Icon(
+                                size: 40 * sss,
+                                Icons.image_outlined,
+                                color: const Color.fromARGB(127, 255, 255, 255),
+                              ),
+                            )
+                            : Icon(
+                              size: 45 * sss,
+                              Icons.close,
                               color: const Color.fromARGB(127, 255, 255, 255),
                             ),
-                          )
-                          : Icon(
-                            size: 45 * sss,
-                            Icons.close,
-                            color: const Color.fromARGB(127, 255, 255, 255),
-                          ),
+                  ),
                 ),
               ),
             ),

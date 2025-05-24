@@ -127,5 +127,7 @@
   "Folders excluded because folder is parent folder of target group folder:": "\nFolders excluded because folder is parent folder of target group folder:\n",
   "This folder contains the target group folder/parent folder of target group": "This folder contains the target group folder/parent folder of target group\n",
   "Folders excluded to prevent unexpected error:": "\nFolders excluded to prevent unexpected error:\n",
-  "This folder contains subfolders with name _MANAGED_ or is parent folder of _MANAGED_ folder": "This folder contains subfolders with name _MANAGED_ or is parent folder of _MANAGED_ folder\n"
+  "This folder contains subfolders with name _MANAGED_ or is parent folder of _MANAGED_ folder": "This folder contains subfolders with name _MANAGED_ or is parent folder of _MANAGED_ folder\n",
+  "Search mod/group by name or real folder name": "Search mod/group (by name or actual folder name)",
+  "Search": "Search"
 }
