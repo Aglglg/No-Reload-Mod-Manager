@@ -777,17 +777,19 @@ class _ModAreaState extends ConsumerState<ModArea>
       _currentModRealIndex = 10000;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      try {
-        _carouselSliderModController.jumpToPage(
-          _currentModRealIndex,
-          isRealIndex: true,
-        );
-        _carouselSliderModController.animateToPage(
-          widget.currentGroupData.previousSelectedModOnGroup,
-          duration: Duration(milliseconds: 250),
-          curve: Curves.easeOut,
-        );
-      } catch (e) {}
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        try {
+          _carouselSliderModController.jumpToPage(
+            _currentModRealIndex,
+            isRealIndex: true,
+          );
+          _carouselSliderModController.animateToPage(
+            widget.currentGroupData.previousSelectedModOnGroup,
+            duration: Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+          );
+        } catch (e) {}
+      });
     });
   }
 
