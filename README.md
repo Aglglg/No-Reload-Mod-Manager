@@ -1,3 +1,9 @@
+### Repository Contribution
+Feel free to contribute on this project, especially adding more languages translation. Or providing auto character icon data. Or anything else.
+How? Of course, first of all you must know [How to contribute to open sourced project on Github](https://youtu.be/CML6vfKjQss).
+
+---
+
 # No Reload Mod Manager / Skin Selection
 (for XXMI Launcher supported games, or 3dmigoto mod)
 
