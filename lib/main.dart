@@ -1,4 +1,4 @@
-//Sorry the code is messy and carousel_slider might have an error, I'll fix carousel_slider repo tomorrow
+//Sorry the code is messy
 import 'dart:io';
 import 'package:auto_updater/auto_updater.dart';
 import 'package:flutter/services.dart';
