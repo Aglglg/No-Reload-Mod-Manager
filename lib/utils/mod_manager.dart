@@ -992,7 +992,7 @@ Future<List<IniSection>> _parseIniSections(List<String> allLines) async {
     if (section.name.toLowerCase().startsWith('texture')) {
       bool matchPriorityIsPresent = false;
       for (var line in section.lines) {
-        if (line.toLowerCase().startsWith('match_priority')) {
+        if (line.trim().toLowerCase().startsWith('match_priority')) {
           matchPriorityIsPresent = true;
           break;
         }
