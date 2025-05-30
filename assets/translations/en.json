@@ -31,7 +31,6 @@
   "Rename": "Rename",
   "Try auto icon": "Auto icon",
   "Clipboard icon": "Clipboard icon",
-  "Change icon": "Change icon",
   "Remove group": "Remove group",
   "Remove mod": "Remove mod",
   "Auto group icon failed. No matching character hash.": "Auto group icon failed. No matching character hash.",
@@ -129,5 +128,8 @@
   "Folders excluded to prevent unexpected error:": "\nFolders excluded to prevent unexpected error:\n",
   "This folder contains subfolders with name _MANAGED_ or is parent folder of _MANAGED_ folder": "This folder contains subfolders with name _MANAGED_ or is parent folder of _MANAGED_ folder\n",
   "Search mod/group by name or real folder name": "Search mod/group (by name or actual folder name)",
-  "Search": "Search"
+  "Search": "Search",
+  "Custom icon": "Custom icon",
+  "Mod icon": "Mod icon",
+  "Group icon": "Group icon"
 }

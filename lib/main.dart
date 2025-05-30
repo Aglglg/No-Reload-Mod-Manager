@@ -2,9 +2,11 @@
 import 'dart:io';
 import 'package:auto_updater/auto_updater.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:no_reload_mod_manager/utils/auto_group_icon.dart';
 import 'package:no_reload_mod_manager/utils/check_admin_privillege.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
 import 'package:no_reload_mod_manager/utils/get_cloud_data.dart';
 import 'package:no_reload_mod_manager/utils/hotkey_handler.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
@@ -244,13 +246,13 @@ class _BackgroundState extends ConsumerState<Background> {
                             .groupDir
                             .path,
                   ),
-                RightClickMenuWrapper(
-                  menuItems: [
+                RightClickMenuRegion(
+                  menuItems: <ContextMenuEntry>[
                     if (ref.watch(tabIndexProvider) == 1 &&
                         ref.watch(modGroupDataProvider).isEmpty)
-                      PopupMenuItem(
-                        height: 37 * sss,
-                        onTap: () async {
+                      CustomMenuItem(
+                        scale: sss,
+                        onSelected: () async {
                           await addGroup(
                             ref,
                             p.join(
@@ -259,141 +261,77 @@ class _BackgroundState extends ConsumerState<Background> {
                             ),
                           );
                         },
-                        value: 'Add group',
-                        child: Text(
-                          'Add group'.tr(),
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12 * sss,
-                          ),
-                        ),
+                        label: 'Add group'.tr(),
                       ),
                     if (ref.watch(tabIndexProvider) != 2)
-                      PopupMenuItem(
-                        height: 37 * sss,
-                        onTap: () async {
+                      CustomMenuItem(
+                        scale: sss,
+                        onSelected: () async {
                           triggerRefresh(ref);
                         },
-                        value: 'Refresh',
-                        child: Text(
-                          'Refresh'.tr(),
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12 * sss,
-                          ),
-                        ),
+                        label: 'Refresh'.tr(),
                       ),
                     if (ref.watch(tabIndexProvider) == 1 &&
                         ref.watch(modGroupDataProvider).isNotEmpty)
-                      PopupMenuItem(
-                        height: 37 * sss,
-                        onTap: () {
+                      CustomMenuItem(
+                        scale: sss,
+                        onSelected: () {
                           ref.read(searchBarShownProvider.notifier).state =
                               true;
                         },
-                        value: 'Search',
-                        child: Text(
-                          'Search'.tr(),
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12 * sss,
-                          ),
-                        ),
+                        label: 'Search'.tr(),
                       ),
                     ref.watch(windowIsPinnedProvider)
-                        ? PopupMenuItem(
-                          height: 37 * sss,
-                          onTap:
+                        ? CustomMenuItem(
+                          scale: sss,
+                          onSelected:
                               () =>
                                   ref
                                       .read(windowIsPinnedProvider.notifier)
                                       .state = false,
-                          value: 'Unpin window',
-                          child: Text(
-                            'Unpin window'.tr(),
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 12 * sss,
-                            ),
-                          ),
+                          label: 'Unpin window'.tr(),
                         )
-                        : PopupMenuItem(
-                          height: 37 * sss,
-                          onTap:
+                        : CustomMenuItem(
+                          scale: sss,
+                          onSelected:
                               () =>
                                   ref
                                       .read(windowIsPinnedProvider.notifier)
                                       .state = true,
-                          value: 'Pin window',
-                          child: Text(
-                            'Pin window'.tr(),
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 12 * sss,
-                            ),
-                          ),
+                          label: 'Pin window'.tr(),
                         ),
-                    PopupMenuItem(
-                      height: 37 * sss,
-                      onTap: () async {
+                    CustomMenuItem(
+                      scale: sss,
+                      onSelected: () async {
                         ref.read(targetGameProvider.notifier).state =
                             TargetGame.none;
                         await windowManager.hide();
                         DynamicDirectoryWatcher.stop();
                       },
-                      value: 'Hide window',
-                      child: Text(
-                        'Hide window'.tr(),
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 12 * sss,
-                        ),
-                      ),
+                      label: 'Hide window'.tr(),
                     ),
                     if (ref.watch(tabIndexProvider) == 0)
-                      PopupMenuItem(
-                        height: 37 * sss,
-                        onTap: () async {
+                      CustomMenuItem(
+                        scale: sss,
+                        onSelected: () async {
                           try {
                             if (!await launchUrl(
                               Uri.parse(ConstantVar.urlValidKeysExample),
                             )) {}
                           } catch (e) {}
                         },
-                        value: 'Valid keys',
-                        child: Text(
-                          'Valid keys'.tr(),
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12 * sss,
-                          ),
-                        ),
+                        label: 'Valid keys'.tr(),
                       ),
-                    PopupMenuItem(
-                      height: 37 * sss,
-                      onTap: () async {
+                    CustomMenuItem(
+                      scale: sss,
+                      onSelected: () async {
                         try {
                           if (!await launchUrl(
                             Uri.parse(ref.read(tutorialLinkProvider)),
                           )) {}
                         } catch (e) {}
                       },
-                      value: 'Tutorial',
-                      child: Text(
-                        'Tutorial'.tr(),
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 12 * sss,
-                        ),
-                      ),
+                      label: 'Tutorial'.tr(),
                     ),
                   ],
                   child: MoveWindow(onDoubleTap: () {}),

@@ -31,7 +31,6 @@
   "Rename": "重命名",
   "Try auto icon": "自动图标",
   "Clipboard icon": "剪贴板图标",
-  "Change icon": "更改图标",
   "Remove group": "移除分组",
   "Remove mod": "移除模组",
   "Auto group icon failed. No matching character hash.": "自动分组图标失败：无匹配的角色哈希值.",
@@ -129,5 +128,8 @@
   "Folders excluded to prevent unexpected error:": "\n已排除文件夹（防止意外错误）：\n",
   "This folder contains subfolders with name _MANAGED_ or is parent folder of _MANAGED_ folder": "此文件夹包含名为 _MANAGED_ 的子文件夹，或是 _MANAGED_ 文件夹的上级目录\n",
   "Search mod/group by name or real folder name": "搜索模组/分组（按名称或实际文件夹名）",
-  "Search": "搜索"
+  "Search": "搜索",
+  "Custom icon": "自定义图标",
+  "Mod icon": "模组图标",
+  "Group icon": "分组图标"
 }

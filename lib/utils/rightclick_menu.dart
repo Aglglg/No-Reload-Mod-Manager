@@ -1,26 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 
-class RightClickMenuWrapper extends ConsumerStatefulWidget {
+class RightClickMenuRegion extends ConsumerStatefulWidget {
   final Widget child;
-  final List<PopupMenuEntry<String>> menuItems;
+  final List<ContextMenuEntry<dynamic>> menuItems;
 
-  const RightClickMenuWrapper({
+  const RightClickMenuRegion({
     super.key,
     required this.child,
     required this.menuItems,
   });
 
   @override
-  ConsumerState<RightClickMenuWrapper> createState() =>
-      _RightClickMenuWrapperState();
+  ConsumerState<RightClickMenuRegion> createState() =>
+      _RightClickMenuRegionState();
 }
 
-class _RightClickMenuWrapperState extends ConsumerState<RightClickMenuWrapper> {
+class _RightClickMenuRegionState extends ConsumerState<RightClickMenuRegion> {
   Future<void> _showContextMenu(BuildContext context, Offset position) async {
     final sss = ref.read(zoomScaleProvider);
-    // ✅ Use container instead of ref, for safety
+
     final container = ProviderScope.containerOf(context, listen: false);
 
     if (container.read(popupMenuShownProvider)) return;
@@ -28,27 +29,19 @@ class _RightClickMenuWrapperState extends ConsumerState<RightClickMenuWrapper> {
 
     container.read(popupMenuShownProvider.notifier).state = true;
 
-    await showMenu<String>(
-      popUpAnimationStyle: AnimationStyle(
-        duration: Duration(milliseconds: 150),
+    final contextMenu = ContextMenu(
+      entries: widget.menuItems,
+      padding: EdgeInsets.all(0),
+      boxDecoration: BoxDecoration(
+        color: const Color(0xFF2B2930),
+        borderRadius: BorderRadius.circular(15 * sss),
       ),
-      constraints: BoxConstraints(maxWidth: 120 * sss, minWidth: 120 * sss),
-      menuPadding: EdgeInsets.zero,
-      color: const Color(0xFF2B2930),
-      context: context,
-      position: RelativeRect.fromLTRB(
-        position.dx,
-        position.dy,
-        position.dx,
-        position.dy,
-      ),
-      items: widget.menuItems,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20 * sss),
-      ),
+      position: position,
     );
 
-    // ✅ Will still work even if widget is gone
+    await contextMenu.show(context);
+
+    // Will still work even if widget is gone
     container.read(popupMenuShownProvider.notifier).state = false;
   }
 
@@ -56,7 +49,7 @@ class _RightClickMenuWrapperState extends ConsumerState<RightClickMenuWrapper> {
   Widget build(BuildContext context) {
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
-      onSecondaryTapDown: (TapDownDetails details) {
+      onSecondaryTapUp: (TapUpDetails details) {
         _showContextMenu(context, details.globalPosition);
       },
       child: widget.child,

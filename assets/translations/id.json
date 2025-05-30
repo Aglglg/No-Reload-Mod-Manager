@@ -31,7 +31,6 @@
   "Rename": "Ganti nama",
   "Try auto icon": "Ikon otomatis",
   "Clipboard icon": "Ikon clipboard",
-  "Change icon": "Ganti ikon",
   "Remove group": "Hapus grup",
   "Remove mod": "Hapus mod",
   "Auto group icon failed. No matching character hash.": "Ikon grup otomatis gagal. Tidak ada hash karakter yg cocok.",
@@ -129,5 +128,8 @@
   "Folders excluded to prevent unexpected error:": "\nFolder dikecualikan:\n",
   "This folder contains subfolders with name _MANAGED_ or is parent folder of _MANAGED_ folder": "Folder ini di dalamnya ada folder _MANAGED_\n",
   "Search mod/group by name or real folder name": "Cari mod/group (namanya atau nama folder aslinya)",
-  "Search": "Cari"
+  "Search": "Cari",
+  "Custom icon": "Ikon kustom",
+  "Mod icon": "Ikon mod",
+  "Group icon": "Ikon grup"
 }

@@ -31,7 +31,6 @@
   "Rename": "重新命名",
   "Try auto icon": "自動圖示",
   "Clipboard icon": "剪貼簿圖示",
-  "Change icon": "變更圖示",
   "Remove group": "移除群組",
   "Remove mod": "移除模組",
   "Auto group icon failed. No matching character hash.": "自動群組圖示失敗：無相符的角色雜湊值.",
@@ -129,5 +128,8 @@
   "Folders excluded to prevent unexpected error:": "\n已排除資料夾（防止意外錯誤）：\n",
   "This folder contains subfolders with name _MANAGED_ or is parent folder of _MANAGED_ folder": "此資料夾包含名為 _MANAGED_ 的子資料夾，或是 _MANAGED_ 資料夾的上層目錄\n",
   "Search mod/group by name or real folder name": "搜尋模組/群組（依名稱或實際資料夾名稱）",
-  "Search": "搜尋"
+  "Search": "搜尋",
+  "Custom icon": "自訂圖示",
+  "Mod icon": "模組圖示",
+  "Group icon": "群組圖示"
 }

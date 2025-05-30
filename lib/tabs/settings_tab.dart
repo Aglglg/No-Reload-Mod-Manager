@@ -6,6 +6,7 @@ import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
 import 'package:no_reload_mod_manager/utils/languages_name.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mods_dropzone.dart';
@@ -83,79 +84,47 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                 },
                 scrollbars: false,
               ),
-              child: RightClickMenuWrapper(
+              child: RightClickMenuRegion(
                 menuItems: [
                   ref.watch(windowIsPinnedProvider)
-                      ? PopupMenuItem(
-                        height: 37 * sss,
-                        onTap:
+                      ? CustomMenuItem(
+                        scale: sss,
+                        onSelected:
                             () =>
                                 ref
                                     .read(windowIsPinnedProvider.notifier)
                                     .state = false,
-                        value: 'Unpin window',
-                        child: Text(
-                          'Unpin window'.tr(),
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12 * sss,
-                          ),
-                        ),
+                        label: 'Unpin window'.tr(),
                       )
-                      : PopupMenuItem(
-                        height: 37 * sss,
-                        onTap:
+                      : CustomMenuItem(
+                        scale: sss,
+                        onSelected:
                             () =>
                                 ref
                                     .read(windowIsPinnedProvider.notifier)
                                     .state = true,
-                        value: 'Pin window',
-                        child: Text(
-                          'Pin window'.tr(),
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12 * sss,
-                          ),
-                        ),
+                        label: 'Pin window'.tr(),
                       ),
-                  PopupMenuItem(
-                    height: 37 * sss,
-                    onTap: () async {
+                  CustomMenuItem(
+                    scale: sss,
+                    onSelected: () async {
                       ref.read(targetGameProvider.notifier).state =
                           TargetGame.none;
                       await windowManager.hide();
                       DynamicDirectoryWatcher.stop();
                     },
-                    value: 'Hide window',
-                    child: Text(
-                      'Hide window'.tr(),
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 12 * sss,
-                      ),
-                    ),
+                    label: 'Hide window'.tr(),
                   ),
-                  PopupMenuItem(
-                    height: 37 * sss,
-                    onTap: () async {
+                  CustomMenuItem(
+                    scale: sss,
+                    onSelected: () async {
                       try {
                         if (!await launchUrl(
                           Uri.parse(ref.read(tutorialLinkProvider)),
                         )) {}
                       } catch (e) {}
                     },
-                    value: 'Tutorial',
-                    child: Text(
-                      'Tutorial'.tr(),
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 12 * sss,
-                      ),
-                    ),
+                    label: 'Tutorial'.tr(),
                   ),
                 ],
                 child: SingleChildScrollView(

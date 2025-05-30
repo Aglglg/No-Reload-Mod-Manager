@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/utils/auto_group_icon.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
 import 'package:no_reload_mod_manager/utils/keypress_simulator_manager.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/mod_navigator.dart';
@@ -270,11 +271,11 @@ class _GroupAreaState extends ConsumerState<GroupArea>
         SizedBox(
           width: 93.6 * sss,
           height: 130 * sss,
-          child: RightClickMenuWrapper(
+          child: RightClickMenuRegion(
             menuItems: [
-              PopupMenuItem(
-                height: 37 * sss,
-                onTap: () async {
+              CustomMenuItem(
+                scale: sss,
+                onSelected: () async {
                   if (!context.mounted) return;
                   int? groupIndex = await addGroup(
                     ref,
@@ -323,25 +324,17 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                     );
                   }
                 },
-                value: 'Add group',
-                child: Text(
-                  'Add group'.tr(),
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 12 * sss,
-                  ),
-                ),
+                label: 'Add group'.tr(),
               ),
             ],
             child: CarouselSlider.builder(
               itemCount: ref.watch(modGroupDataProvider).length,
               itemBuilder: (context, index, realIndex) {
-                return RightClickMenuWrapper(
+                return RightClickMenuRegion(
                   menuItems: [
-                    PopupMenuItem(
-                      height: 37 * sss,
-                      onTap: () async {
+                    CustomMenuItem(
+                      scale: sss,
+                      onSelected: () async {
                         if (!context.mounted) return;
                         int? groupIndex = await addGroup(
                           ref,
@@ -390,20 +383,12 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                           );
                         }
                       },
-                      value: 'Add group',
-                      child: Text(
-                        'Add group'.tr(),
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 12 * sss,
-                        ),
-                      ),
+                      label: 'Add group'.tr(),
                     ),
                     if (index == currentPageIndex)
-                      PopupMenuItem(
-                        height: 37 * sss,
-                        onTap: () {
+                      CustomMenuItem(
+                        scale: sss,
+                        onSelected: () {
                           if (!context.mounted) return;
                           setState(() {
                             groupTextFieldEnabled = true;
@@ -418,119 +403,106 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                             groupTextFieldFocusNode.requestFocus();
                           });
                         },
-                        value: 'Rename',
-                        child: Text(
-                          'Rename'.tr(),
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12 * sss,
-                          ),
-                        ),
+                        label: 'Rename'.tr(),
                       ),
                     if (index == currentPageIndex)
-                      PopupMenuItem(
-                        height: 37 * sss,
-                        onTap: () async {
-                          if (!context.mounted) return;
-                          bool success = await tryGetIcon(
-                            ref.read(modGroupDataProvider)[index].groupDir.path,
-                            ref.read(autoIconProvider),
-                          );
-                          if (!context.mounted) return;
-                          if (!success) {
-                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                backgroundColor: const Color(0xFF2B2930),
-                                margin: EdgeInsets.only(
-                                  left: 20,
-                                  right: 20,
-                                  bottom: 20,
-                                ),
-                                duration: Duration(seconds: 3),
-                                behavior: SnackBarBehavior.floating,
-                                closeIconColor: Colors.blue,
-                                showCloseIcon: true,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                content: Text(
-                                  'Auto group icon failed. No matching character hash.'
-                                      .tr(),
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.yellow,
-                                    fontSize: 13 * sss,
-                                  ),
-                                ),
-                                dismissDirection: DismissDirection.down,
-                              ),
-                            );
-                          }
-                        },
-                        value: 'Try auto icon',
-                        child: Text(
-                          'Try auto icon'.tr(),
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12 * sss,
-                          ),
-                        ),
-                      ),
-                    if (index == currentPageIndex)
-                      PopupMenuItem(
-                        height: 37 * sss,
-                        onTap: () async {
-                          if (!context.mounted) return;
-                          await setGroupOrModIcon(
-                            ref,
-                            ref.read(modGroupDataProvider)[index].groupDir,
-                            ref.read(modGroupDataProvider)[index].groupIcon,
-                            fromClipboard: true,
-                            isGroup: true,
-                            modDir: null,
-                          );
-                        },
-                        value: 'Clipboard icon',
-                        child: Text(
-                          'Clipboard icon'.tr(),
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12 * sss,
-                          ),
-                        ),
-                      ),
-                    if (index == currentPageIndex)
-                      PopupMenuItem(
-                        height: 37 * sss,
-                        onTap: () {
-                          if (!context.mounted) return;
-                          setGroupOrModIcon(
-                            ref,
-                            ref.read(modGroupDataProvider)[index].groupDir,
-                            ref.read(modGroupDataProvider)[index].groupIcon,
-                            fromClipboard: false,
-                            isGroup: true,
-                            modDir: null,
-                          );
-                        },
-                        value: 'Change icon',
-                        child: Text(
-                          'Change icon'.tr(),
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12 * sss,
-                          ),
-                        ),
-                      ),
+                      CustomMenuItem.submenu(
+                        items: [
+                          CustomMenuItem(
+                            scale: sss,
 
+                            onSelected: () async {
+                              if (!context.mounted) return;
+                              bool success = await tryGetIcon(
+                                ref
+                                    .read(modGroupDataProvider)[index]
+                                    .groupDir
+                                    .path,
+                                ref.read(autoIconProvider),
+                              );
+                              if (!context.mounted) return;
+                              if (!success) {
+                                ScaffoldMessenger.of(
+                                  context,
+                                ).hideCurrentSnackBar();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    backgroundColor: const Color(0xFF2B2930),
+                                    margin: EdgeInsets.only(
+                                      left: 20,
+                                      right: 20,
+                                      bottom: 20,
+                                    ),
+                                    duration: Duration(seconds: 3),
+                                    behavior: SnackBarBehavior.floating,
+                                    closeIconColor: Colors.blue,
+                                    showCloseIcon: true,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    content: Text(
+                                      'Auto group icon failed. No matching character hash.'
+                                          .tr(),
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.yellow,
+                                        fontSize: 13 * sss,
+                                      ),
+                                    ),
+                                    dismissDirection: DismissDirection.down,
+                                  ),
+                                );
+                              }
+                            },
+                            label: 'Try auto icon'.tr(),
+                          ),
+                          if (index == currentPageIndex)
+                            CustomMenuItem(
+                              scale: sss,
+                              onSelected: () async {
+                                if (!context.mounted) return;
+                                await setGroupOrModIcon(
+                                  ref,
+                                  ref
+                                      .read(modGroupDataProvider)[index]
+                                      .groupDir,
+                                  ref
+                                      .read(modGroupDataProvider)[index]
+                                      .groupIcon,
+                                  fromClipboard: true,
+                                  isGroup: true,
+                                  modDir: null,
+                                );
+                              },
+                              label: 'Clipboard icon'.tr(),
+                            ),
+                          if (index == currentPageIndex)
+                            CustomMenuItem(
+                              scale: sss,
+                              onSelected: () {
+                                if (!context.mounted) return;
+                                setGroupOrModIcon(
+                                  ref,
+                                  ref
+                                      .read(modGroupDataProvider)[index]
+                                      .groupDir,
+                                  ref
+                                      .read(modGroupDataProvider)[index]
+                                      .groupIcon,
+                                  fromClipboard: false,
+                                  isGroup: true,
+                                  modDir: null,
+                                );
+                              },
+                              label: 'Custom icon'.tr(),
+                            ),
+                        ],
+                        scale: sss,
+                        label: 'Group icon'.tr(),
+                      ),
                     if (index == currentPageIndex)
-                      PopupMenuItem(
-                        height: 37 * sss,
-                        onTap: () {
+                      CustomMenuItem(
+                        scale: sss,
+                        onSelected: () {
                           if (!context.mounted) return;
                           ref.read(alertDialogShownProvider.notifier).state =
                               true;
@@ -549,15 +521,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                                 ),
                           );
                         },
-                        value: 'Remove group',
-                        child: Text(
-                          'Remove group'.tr(),
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12 * sss,
-                          ),
-                        ),
+                        label: 'Remove group'.tr(),
                       ),
                   ],
                   child: Tooltip(
@@ -830,24 +794,16 @@ class _ModAreaState extends ConsumerState<ModArea>
     return Expanded(
       child: SizedBox(
         height: 200 * sss * 1.2,
-        child: RightClickMenuWrapper(
+        child: RightClickMenuRegion(
           menuItems: [
             if (!ref.watch(windowIsPinnedProvider))
-              PopupMenuItem(
-                height: 37 * sss,
-                onTap: () {
+              CustomMenuItem(
+                scale: sss,
+                onSelected: () {
                   if (!context.mounted) return;
                   ref.read(windowIsPinnedProvider.notifier).state = true;
                 },
-                value: 'Add mods',
-                child: Text(
-                  'Add mods'.tr(),
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 12 * sss,
-                  ),
-                ),
+                label: 'Add mods'.tr(),
               ),
           ],
           child: CarouselSlider.builder(
@@ -1027,45 +983,83 @@ class _ModContainerState extends ConsumerState<ModContainer>
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        RightClickMenuWrapper(
+        RightClickMenuRegion(
           menuItems: [
-            PopupMenuItem(
-              height: 37 * sss,
-              onTap: () {
+            CustomMenuItem(
+              scale: sss,
+              onSelected: () {
                 if (!context.mounted) return;
                 widget.onSelected();
               },
-              value: 'Select',
-              child: Text(
-                'Select'.tr(),
-                style: GoogleFonts.poppins(
-                  color: Colors.blue,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 12 * sss,
-                ),
-              ),
+              label: 'Select'.tr(),
+              textColor: Colors.blue,
             ),
             if (!ref.watch(windowIsPinnedProvider))
-              PopupMenuItem(
-                height: 37 * sss,
-                onTap: () {
+              CustomMenuItem(
+                scale: sss,
+                onSelected: () {
                   if (!context.mounted) return;
                   ref.read(windowIsPinnedProvider.notifier).state = true;
                 },
-                value: 'Add mods',
-                child: Text(
-                  'Add mods'.tr(),
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 12 * sss,
-                  ),
-                ),
+                label: 'Add mods'.tr(),
               ),
             if (widget.index != 0)
-              PopupMenuItem(
-                height: 37 * sss,
-                onTap: () {
+              CustomMenuItem.submenu(
+                items: [
+                  if (widget.index != 0)
+                    CustomMenuItem(
+                      scale: sss,
+                      onSelected: () async {
+                        if (!context.mounted) return;
+                        await setGroupOrModIcon(
+                          ref,
+                          widget.currentGroupData.groupDir,
+                          widget
+                              .currentGroupData
+                              .modsInGroup[widget.index]
+                              .modIcon,
+                          fromClipboard: true,
+                          isGroup: false,
+                          modDir:
+                              widget
+                                  .currentGroupData
+                                  .modsInGroup[widget.index]
+                                  .modDir,
+                        );
+                      },
+                      label: 'Clipboard icon'.tr(),
+                    ),
+                  if (widget.index != 0)
+                    CustomMenuItem(
+                      scale: sss,
+                      onSelected: () async {
+                        if (!context.mounted) return;
+                        await setGroupOrModIcon(
+                          ref,
+                          widget.currentGroupData.groupDir,
+                          widget
+                              .currentGroupData
+                              .modsInGroup[widget.index]
+                              .modIcon,
+                          fromClipboard: false,
+                          isGroup: false,
+                          modDir:
+                              widget
+                                  .currentGroupData
+                                  .modsInGroup[widget.index]
+                                  .modDir,
+                        );
+                      },
+                      label: 'Custom icon'.tr(),
+                    ),
+                ],
+                label: 'Mod icon'.tr(),
+                scale: sss,
+              ),
+            if (widget.index != 0)
+              CustomMenuItem(
+                scale: sss,
+                onSelected: () {
                   if (!context.mounted) return;
                   setState(() {
                     modTextFieldEnabled = true;
@@ -1078,20 +1072,12 @@ class _ModContainerState extends ConsumerState<ModContainer>
                     modTextFieldFocusNode.requestFocus();
                   });
                 },
-                value: 'Rename',
-                child: Text(
-                  'Rename'.tr(),
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 12 * sss,
-                  ),
-                ),
+                label: 'Rename'.tr(),
               ),
             if (widget.index != 0)
-              PopupMenuItem(
-                height: 37 * sss,
-                onTap: () {
+              CustomMenuItem(
+                scale: sss,
+                onSelected: () {
                   if (!context.mounted) return;
                   ref.read(modKeybindProvider.notifier).state = null;
                   ref.read(modKeybindProvider.notifier).state = (
@@ -1100,77 +1086,12 @@ class _ModContainerState extends ConsumerState<ModContainer>
                     ref.read(targetGameProvider),
                   );
                 },
-                value: 'Keybinds',
-                child: Text(
-                  'Keybinds'.tr(),
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 12 * sss,
-                  ),
-                ),
+                label: 'Keybinds'.tr(),
               ),
             if (widget.index != 0)
-              PopupMenuItem(
-                height: 37 * sss,
-                onTap: () async {
-                  if (!context.mounted) return;
-                  await setGroupOrModIcon(
-                    ref,
-                    widget.currentGroupData.groupDir,
-                    widget.currentGroupData.modsInGroup[widget.index].modIcon,
-                    fromClipboard: true,
-                    isGroup: false,
-                    modDir:
-                        widget
-                            .currentGroupData
-                            .modsInGroup[widget.index]
-                            .modDir,
-                  );
-                },
-                value: 'Clipboard icon',
-                child: Text(
-                  'Clipboard icon'.tr(),
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 12 * sss,
-                  ),
-                ),
-              ),
-            if (widget.index != 0)
-              PopupMenuItem(
-                height: 37 * sss,
-                onTap: () async {
-                  if (!context.mounted) return;
-                  await setGroupOrModIcon(
-                    ref,
-                    widget.currentGroupData.groupDir,
-                    widget.currentGroupData.modsInGroup[widget.index].modIcon,
-                    fromClipboard: false,
-                    isGroup: false,
-                    modDir:
-                        widget
-                            .currentGroupData
-                            .modsInGroup[widget.index]
-                            .modDir,
-                  );
-                },
-                value: 'Change icon',
-                child: Text(
-                  'Change icon'.tr(),
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 12 * sss,
-                  ),
-                ),
-              ),
-
-            if (widget.index != 0)
-              PopupMenuItem(
-                height: 37 * sss,
-                onTap: () {
+              CustomMenuItem(
+                scale: sss,
+                onSelected: () {
                   if (!context.mounted) return;
                   ref.read(alertDialogShownProvider.notifier).state = true;
                   showDialog(
@@ -1189,15 +1110,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                         ),
                   );
                 },
-                value: 'Remove mod',
-                child: Text(
-                  'Remove mod'.tr(),
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 12 * sss,
-                  ),
-                ),
+                label: 'Remove mod'.tr(),
               ),
           ],
           child: GestureDetector(
