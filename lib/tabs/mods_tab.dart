@@ -62,6 +62,23 @@ class _TabModsState extends ConsumerState<TabMods> with ModNavigationListener {
     super.dispose();
   }
 
+  String getSearchBarHint() {
+    int mode = ref.watch(searchBarMode);
+    switch (mode) {
+      case 0:
+        return 'Search mod/group by name or real folder name'.tr();
+      case 1:
+        return 'Search group by name or real folder name'.tr();
+      case 2:
+        return 'Search mod by name or real folder name'.tr();
+      case 3:
+        return 'Search mod in the current group by name or real folder name'
+            .tr();
+      default:
+        return 'Search mod/group by name or real folder name'.tr();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
@@ -137,11 +154,16 @@ class _TabModsState extends ConsumerState<TabMods> with ModNavigationListener {
                   child: SearchBar(
                     focusNode: searchFocus,
                     controller: searchController,
-                    onChanged:
-                        (value) =>
-                            value.isNotEmpty
-                                ? goToSearchResult(ref, value)
-                                : null,
+                    onChanged: (value) {
+                      if (value == ' ') {
+                        ref.read(searchBarMode.notifier).state =
+                            (ref.read(searchBarMode) + 1) %
+                            4; //4 modes: all, group, mod, ingroup
+                        searchController.text = '';
+                        return;
+                      }
+                      if (value.isNotEmpty) goToSearchResult(ref, value);
+                    },
                     onSubmitted:
                         (value) =>
                             ref.read(searchBarShownProvider.notifier).state =
@@ -151,8 +173,7 @@ class _TabModsState extends ConsumerState<TabMods> with ModNavigationListener {
                             ref.read(searchBarShownProvider.notifier).state =
                                 false,
                     leading: Icon(Icons.search),
-                    hintText:
-                        'Search mod/group by name or real folder name'.tr(),
+                    hintText: getSearchBarHint(),
                     hintStyle: WidgetStatePropertyAll(
                       GoogleFonts.poppins(fontSize: 13 * sss),
                     ),
@@ -988,6 +1009,14 @@ class _ModContainerState extends ConsumerState<ModContainer>
     await setModNameOnDisk(oldMod.modDir, _modNameTextFieldController.text);
   }
 
+  bool isModDisabled(String modPath) {
+    if (p.basename(modPath).toLowerCase().startsWith('disabled')) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
@@ -1166,7 +1195,15 @@ class _ModContainerState extends ConsumerState<ModContainer>
                     border: Border.all(
                       strokeAlign: BorderSide.strokeAlignInside,
                       color:
-                          widget.isSelected
+                          isModDisabled(
+                                widget
+                                    .currentGroupData
+                                    .modsInGroup[widget.index]
+                                    .modDir
+                                    .path,
+                              )
+                              ? Colors.red
+                              : widget.isSelected
                               ? Colors.blue
                               : isHovering
                               ? Colors.white

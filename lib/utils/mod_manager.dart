@@ -31,7 +31,7 @@ Future<List<ModGroupData>> refreshModData(Directory managedDir) async {
 
   List<ModGroupData> results = await Future.wait(
     validGroupFolders.map((group) async {
-      List<ModData> modsInGroup = await getModsOnGroup(group.$1);
+      List<ModData> modsInGroup = await getModsOnGroup(group.$1, true);
       return ModGroupData(
         groupDir: group.$1,
         groupIcon: getModOrGroupIcon(group.$1),
@@ -454,7 +454,7 @@ void _updateModIconProvider(
 
 //////////////////////////////
 
-Future<List<ModData>> getModsOnGroup(Directory groupDir) async {
+Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
   try {
     final List<Directory> modDirs = [];
 
@@ -467,7 +467,13 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir) async {
     }
 
     // Limit to only 40 mod directories
-    final limitedModDirs = modDirs.take(40).toList();
+    List<Directory> limitedModDirs;
+
+    if (limited) {
+      limitedModDirs = modDirs.take(40).toList();
+    } else {
+      limitedModDirs = modDirs;
+    }
 
     final List<ModData> modDatas = await Future.wait(
       limitedModDirs.map((modDir) async {
@@ -484,6 +490,9 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir) async {
       ModData(modDir: Directory("None"), modIcon: null, modName: "None".tr()),
     );
 
+    for (var element in modDatas) {
+      print(p.basename(element.modDir.path));
+    }
     return modDatas;
   } catch (e) {
     print('Error reading directory: $e');
@@ -655,19 +664,18 @@ Future<List<TextSpan>> updateModData(
           await _deleteGroupIniFiles(groupDir.path, operationLogs);
           await _createGroupIni(groupDir.path, groupIndex, operationLogs);
 
-          final modFullPaths = await _getModFoldersOnSpecifiedGroup(
-            groupDir.path,
-          );
+          final modFullPaths = await getModsOnGroup(groupDir, false);
 
           await Future.wait([
             for (var j = 0; j < modFullPaths.length; j++)
-              _manageMod(
-                modFullPaths[j],
-                'group_$groupIndex',
-                j + 1,
-                groupIndex,
-                operationLogs,
-              ),
+              if (j != 0)
+                _manageMod(
+                  modFullPaths[j].modDir.path,
+                  'group_$groupIndex',
+                  j,
+                  groupIndex,
+                  operationLogs,
+                ),
           ]);
         }(),
     ]);
@@ -784,23 +792,6 @@ Future<void> _createManagerGroupIni(
       ),
     );
   }
-}
-
-Future<List<String>> _getModFoldersOnSpecifiedGroup(
-  String groupFullPath,
-) async {
-  final List<String> modFullPaths = [];
-  final directory = Directory(groupFullPath);
-
-  if (await directory.exists()) {
-    await for (final entity in directory.list()) {
-      if (entity is Directory) {
-        modFullPaths.add(entity.path);
-      }
-    }
-  }
-
-  return modFullPaths;
 }
 
 Future<void> _deleteGroupIniFiles(
@@ -1893,4 +1884,26 @@ Future<void> openFileExplorerToSpecifiedPath(String path) async {
       } catch (e) {}
     }
   }
+}
+
+void completeDisableMod(Directory modDir) {
+  try {
+    String renamedPath = p.join(
+      p.dirname(modDir.path),
+      'DISABLED${p.basename(modDir.path)}',
+    );
+    modDir.rename(renamedPath);
+  } catch (e) {}
+}
+
+void enableMod(Directory modDir) {
+  try {
+    String renamedPath = p.join(
+      p.dirname(modDir.path),
+      p
+          .basename(modDir.path)
+          .replaceFirst(RegExp(r'^DISABLED', caseSensitive: false), ''),
+    );
+    modDir.rename(renamedPath);
+  } catch (e) {}
 }

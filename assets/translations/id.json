@@ -127,11 +127,14 @@
   "This folder contains the target group folder/parent folder of target group": "Di dalam folder ini ada folder target grup atau parent/induk dari folder target grup\n",
   "Folders excluded to prevent unexpected error:": "\nFolder dikecualikan:\n",
   "This folder contains subfolders with name _MANAGED_ or is parent folder of _MANAGED_ folder": "Folder ini di dalamnya ada folder _MANAGED_\n",
-  "Search mod/group by name or real folder name": "Cari mod/group (namanya atau nama folder aslinya)",
+  "Search mod/group by name or real folder name": "Cari mod/group (tekan spasi lagi untuk ganti mode)",
   "Search": "Cari",
   "Custom icon": "Ikon kustom",
   "Mod icon": "Ikon mod",
   "Group icon": "Ikon grup",
   "Open in File Explorer": "Buka di File Explorer",
-  "Contact for help": "Kontak bantuan"
+  "Contact for help": "Kontak bantuan",
+  "Search group by name or real folder name": "Cari group (tekan spasi lagi untuk ganti mode)",
+  "Search mod by name or real folder name": "Cari mod (tekan spasi lagi untuk ganti mode)",
+  "Search mod in the current group by name or real folder name": "Cari mod di grup saat ini (tekan spasi lagi untuk ganti mode)"
 }

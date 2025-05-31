@@ -949,100 +949,106 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Column(
-                            children: [
-                              Text(
-                                "Support me".tr(),
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontSize: 12 * sss,
-                                  fontWeight: FontWeight.w600,
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Text(
+                                  "Support me".tr(),
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontSize: 12 * sss,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              ),
-                              Container(height: 8 * sss),
-                              CustomImageButtonLink(
-                                link: ref.watch(supportLinkProvider),
-                                imageNormal: Image.network(
-                                  ConstantVar.urlSupportIcon,
-                                  height: 25 * sss,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Icon(Icons.error);
-                                  },
+                                Container(height: 8 * sss),
+                                CustomImageButtonLink(
+                                  link: ref.watch(supportLinkProvider),
+                                  imageNormal: Image.network(
+                                    ConstantVar.urlSupportIcon,
+                                    height: 25 * sss,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(Icons.error);
+                                    },
+                                  ),
+                                  imageOnHover: Image.network(
+                                    ConstantVar.urlSupportIconOnHover,
+                                    height: 25 * sss,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(Icons.error);
+                                    },
+                                  ),
                                 ),
-                                imageOnHover: Image.network(
-                                  ConstantVar.urlSupportIconOnHover,
-                                  height: 25 * sss,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Icon(Icons.error);
-                                  },
-                                ),
-                              ),
-                              Container(height: 15 * sss),
-                            ],
+                                Container(height: 15 * sss),
+                              ],
+                            ),
                           ),
-                          Container(width: 30 * sss),
-                          Column(
-                            children: [
-                              Text(
-                                "Contact for help".tr(),
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontSize: 12 * sss,
-                                  fontWeight: FontWeight.w600,
+                          Container(width: 15 * sss),
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Text(
+                                  "Contact for help".tr(),
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontSize: 12 * sss,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              ),
-                              Container(height: 8 * sss),
-                              CustomImageButtonLink(
-                                link: ref.watch(contactLinkProvider),
-                                imageNormal: Image.network(
-                                  ConstantVar.urlContactIcon,
-                                  height: 25 * sss,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Icon(Icons.error);
-                                  },
+                                Container(height: 8 * sss),
+                                CustomImageButtonLink(
+                                  link: ref.watch(contactLinkProvider),
+                                  imageNormal: Image.network(
+                                    ConstantVar.urlContactIcon,
+                                    height: 25 * sss,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(Icons.error);
+                                    },
+                                  ),
+                                  imageOnHover: Image.network(
+                                    ConstantVar.urlContactIconOnHover,
+                                    height: 25 * sss,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(Icons.error);
+                                    },
+                                  ),
                                 ),
-                                imageOnHover: Image.network(
-                                  ConstantVar.urlContactIconOnHover,
-                                  height: 25 * sss,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Icon(Icons.error);
-                                  },
-                                ),
-                              ),
-                              Container(height: 15 * sss),
-                            ],
+                                Container(height: 15 * sss),
+                              ],
+                            ),
                           ),
-                          Container(width: 30 * sss),
-                          Column(
-                            children: [
-                              Text(
-                                "Tutorial".tr(),
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontSize: 12 * sss,
-                                  fontWeight: FontWeight.w600,
+                          Container(width: 15 * sss),
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Text(
+                                  "Tutorial".tr(),
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontSize: 12 * sss,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              ),
-                              Container(height: 8 * sss),
-                              CustomImageButtonLink(
-                                link: ref.watch(tutorialLinkProvider),
-                                imageNormal: Image.network(
-                                  ConstantVar.urlTutorialIcon,
-                                  height: 25 * sss,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Icon(Icons.error);
-                                  },
+                                Container(height: 8 * sss),
+                                CustomImageButtonLink(
+                                  link: ref.watch(tutorialLinkProvider),
+                                  imageNormal: Image.network(
+                                    ConstantVar.urlTutorialIcon,
+                                    height: 25 * sss,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(Icons.error);
+                                    },
+                                  ),
+                                  imageOnHover: Image.network(
+                                    ConstantVar.urlTutorialIconOnHover,
+                                    height: 25 * sss,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(Icons.error);
+                                    },
+                                  ),
                                 ),
-                                imageOnHover: Image.network(
-                                  ConstantVar.urlTutorialIconOnHover,
-                                  height: 25 * sss,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Icon(Icons.error);
-                                  },
-                                ),
-                              ),
-                              Container(height: 15 * sss),
-                            ],
+                                Container(height: 15 * sss),
+                              ],
+                            ),
                           ),
                         ],
                       ),

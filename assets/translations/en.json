@@ -127,11 +127,14 @@
   "This folder contains the target group folder/parent folder of target group": "This folder contains the target group folder/parent folder of target group\n",
   "Folders excluded to prevent unexpected error:": "\nFolders excluded to prevent unexpected error:\n",
   "This folder contains subfolders with name _MANAGED_ or is parent folder of _MANAGED_ folder": "This folder contains subfolders with name _MANAGED_ or is parent folder of _MANAGED_ folder\n",
-  "Search mod/group by name or real folder name": "Search mod/group (by name or actual folder name)",
+  "Search mod/group by name or real folder name": "Search mod/group (press space key again to switch search modes)",
   "Search": "Search",
   "Custom icon": "Custom icon",
   "Mod icon": "Mod icon",
   "Group icon": "Group icon",
   "Open in File Explorer": "Open in File Explorer",
-  "Contact for help": "Contact for help"
+  "Contact for help": "Contact for help",
+  "Search group by name or real folder name": "Search group (press space key again to switch search modes)",
+  "Search mod by name or real folder name": "Search mod (press space key again to switch search modes)",
+  "Search mod in the current group by name or real folder name": "Search mod in current group (press space key again to switch search modes)"
 }

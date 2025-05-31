@@ -127,11 +127,14 @@
   "This folder contains the target group folder/parent folder of target group": "此資料夾包含目標群組資料夾或是目標群組的上層目錄\n",
   "Folders excluded to prevent unexpected error:": "\n已排除資料夾（防止意外錯誤）：\n",
   "This folder contains subfolders with name _MANAGED_ or is parent folder of _MANAGED_ folder": "此資料夾包含名為 _MANAGED_ 的子資料夾，或是 _MANAGED_ 資料夾的上層目錄\n",
-  "Search mod/group by name or real folder name": "搜尋模組/群組（依名稱或實際資料夾名稱）",
+  "Search mod/group by name or real folder name": "搜尋模組/群組（再次按空白鍵切換搜尋模式）",
   "Search": "搜尋",
   "Custom icon": "自訂圖示",
   "Mod icon": "模組圖示",
   "Group icon": "群組圖示",
   "Open in File Explorer": "在檔案總管中開啟",
-  "Contact for help": "聯絡支援"
+  "Contact for help": "聯絡支援",
+  "Search group by name or real folder name": "搜尋群組（再次按空白鍵切換搜尋模式）",
+  "Search mod by name or real folder name": "搜尋模組（再次按空白鍵切換搜尋模式）",
+  "Search mod in the current group by name or real folder name": "搜尋當前群組中的模組（再次按空白鍵切換搜尋模式）"
 }

@@ -29,15 +29,37 @@ abstract mixin class ModSearcherListener {
 void goToSearchResult(WidgetRef ref, String query) {
   List<(String, int, int?)> names = [];
 
-  List<ModGroupData> modGroupDatas = ref.read(modGroupDataProvider);
-  for (var i = 0; i < modGroupDatas.length; i++) {
-    names.add((modGroupDatas[i].groupName.trim(), i, null));
-    names.add((p.basename(modGroupDatas[i].groupDir.path).trim(), i, null));
+  bool isGroupOnly = ref.read(searchBarMode) == 1;
+  bool isModOnly = ref.read(searchBarMode) == 2;
+  bool isModOnGroupOnly = ref.read(searchBarMode) == 3;
 
-    List<ModData> modDatas = modGroupDatas[i].modsInGroup;
-    for (var j = 0; j < modDatas.length; j++) {
-      names.add((modDatas[j].modName.trim(), i, j));
-      names.add((p.basename(modDatas[j].modDir.path).trim(), i, j));
+  List<ModGroupData> modGroupDatas = ref.read(modGroupDataProvider);
+  if (!isModOnGroupOnly) {
+    for (var i = 0; i < modGroupDatas.length; i++) {
+      if (!isModOnly) {
+        names.add((modGroupDatas[i].groupName.trim(), i, null));
+        names.add((p.basename(modGroupDatas[i].groupDir.path).trim(), i, null));
+      }
+
+      if (!isGroupOnly) {
+        List<ModData> modDatas = modGroupDatas[i].modsInGroup;
+        for (var j = 0; j < modDatas.length; j++) {
+          names.add((modDatas[j].modName.trim(), i, j));
+          names.add((p.basename(modDatas[j].modDir.path).trim(), i, j));
+        }
+      }
+    }
+  } else {
+    int currentGroupIndex = ref.read(currentGroupIndexProvider);
+    List<ModData> modDatas =
+        ref.read(modGroupDataProvider)[currentGroupIndex].modsInGroup;
+    for (var i = 0; i < modDatas.length; i++) {
+      names.add((modDatas[i].modName.trim(), currentGroupIndex, i));
+      names.add((
+        p.basename(modDatas[i].modDir.path).trim(),
+        currentGroupIndex,
+        i,
+      ));
     }
   }
 
