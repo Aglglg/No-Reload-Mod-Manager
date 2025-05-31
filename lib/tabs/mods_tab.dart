@@ -504,6 +504,17 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                         scale: sss,
                         onSelected: () {
                           if (!context.mounted) return;
+                          openFileExplorerToSpecifiedPath(
+                            ref.read(modGroupDataProvider)[index].groupDir.path,
+                          );
+                        },
+                        label: 'Open in File Explorer'.tr(),
+                      ),
+                    if (index == currentPageIndex)
+                      CustomMenuItem(
+                        scale: sss,
+                        onSelected: () {
+                          if (!context.mounted) return;
                           ref.read(alertDialogShownProvider.notifier).state =
                               true;
                           showDialog(
@@ -1087,6 +1098,21 @@ class _ModContainerState extends ConsumerState<ModContainer>
                   );
                 },
                 label: 'Keybinds'.tr(),
+              ),
+            if (widget.index != 0)
+              CustomMenuItem(
+                scale: sss,
+                onSelected: () {
+                  if (!context.mounted) return;
+                  openFileExplorerToSpecifiedPath(
+                    widget
+                        .currentGroupData
+                        .modsInGroup[widget.index]
+                        .modDir
+                        .path,
+                  );
+                },
+                label: 'Open in File Explorer'.tr(),
               ),
             if (widget.index != 0)
               CustomMenuItem(

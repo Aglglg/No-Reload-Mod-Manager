@@ -594,6 +594,13 @@ class _MainViewState extends ConsumerState<MainView>
             "https://youtu.be/mBO9KEc6LA8",
           );
     }
+    if (ref.read(contactLinkProvider).isEmpty) {
+      ref.read(contactLinkProvider.notifier).state = await CloudData()
+          .loadTextFromCloud(
+            ConstantVar.urlToGetContactLink,
+            "https://discord.com",
+          );
+    }
     ref.read(autoIconProvider.notifier).state = await fetchGroupIconData();
   }
 

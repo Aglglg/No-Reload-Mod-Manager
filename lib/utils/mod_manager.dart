@@ -1884,3 +1884,13 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
     );
   }
 }
+
+Future<void> openFileExplorerToSpecifiedPath(String path) async {
+  if (Platform.isWindows) {
+    if (await Directory(path).exists()) {
+      try {
+        Process.run('explorer', [path]);
+      } catch (e) {}
+    }
+  }
+}

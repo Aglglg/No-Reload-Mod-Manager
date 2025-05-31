@@ -984,6 +984,38 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           Column(
                             children: [
                               Text(
+                                "Contact for help".tr(),
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 12 * sss,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Container(height: 8 * sss),
+                              CustomImageButtonLink(
+                                link: ref.watch(contactLinkProvider),
+                                imageNormal: Image.network(
+                                  ConstantVar.urlContactIcon,
+                                  height: 25 * sss,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Icon(Icons.error);
+                                  },
+                                ),
+                                imageOnHover: Image.network(
+                                  ConstantVar.urlContactIconOnHover,
+                                  height: 25 * sss,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Icon(Icons.error);
+                                  },
+                                ),
+                              ),
+                              Container(height: 15 * sss),
+                            ],
+                          ),
+                          Container(width: 30 * sss),
+                          Column(
+                            children: [
+                              Text(
                                 "Tutorial".tr(),
                                 style: GoogleFonts.poppins(
                                   color: Colors.white,
@@ -1291,17 +1323,6 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
     }
   }
 
-  Future<void> _openFileExplorer() async {
-    String path = _modsPathTextFieldController.text;
-    if (Platform.isWindows) {
-      if (await Directory(path).exists()) {
-        try {
-          Process.run('explorer', [path]);
-        } catch (e) {}
-      }
-    }
-  }
-
   void _onUpdateModDataClicked() {
     ref.read(alertDialogShownProvider.notifier).state = true;
     showDialog(
@@ -1518,7 +1539,10 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                           child: SizedBox(
                             height: 42 * sss,
                             child: ElevatedButton(
-                              onLongPress: () => _openFileExplorer(),
+                              onLongPress:
+                                  () => openFileExplorerToSpecifiedPath(
+                                    _modsPathTextFieldController.text,
+                                  ),
                               onPressed: _isPickingFolder ? null : _pickFolder,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.grey,

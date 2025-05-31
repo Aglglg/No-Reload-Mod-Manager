@@ -20,10 +20,16 @@ class ConstantVar {
       "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/icon_tutorial.png";
   static const String urlTutorialIconOnHover =
       "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/icon_tutorial_onhover.png";
+  static const String urlContactIcon =
+      "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/icon_contact.png";
+  static const String urlContactIconOnHover =
+      "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/icon_contact_onhover.png";
   static const String urlToGetSupportLink =
       "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/link_support.txt";
   static const String urlToGetTutorialLink =
       "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/link_tutorial.txt";
+  static const String urlToGetContactLink =
+      "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/link_contact.txt";
   static const String urlMessageWuwa =
       "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/message_wuwa.txt";
   static const String urlMessageGenshin =

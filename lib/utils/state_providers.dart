@@ -27,6 +27,9 @@ final StateProvider<String> supportLinkProvider = StateProvider<String>(
 final StateProvider<String> tutorialLinkProvider = StateProvider<String>(
   (ref) => "",
 );
+final StateProvider<String> contactLinkProvider = StateProvider<String>(
+  (ref) => "",
+);
 
 final StateProvider<Map<String, String>> autoIconProvider =
     StateProvider<Map<String, String>>((ref) => {});
