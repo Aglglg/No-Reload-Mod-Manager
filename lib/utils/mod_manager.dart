@@ -490,9 +490,6 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
       ModData(modDir: Directory("None"), modIcon: null, modName: "None".tr()),
     );
 
-    for (var element in modDatas) {
-      print(p.basename(element.modDir.path));
-    }
     return modDatas;
   } catch (e) {
     print('Error reading directory: $e');
@@ -1886,17 +1883,20 @@ Future<void> openFileExplorerToSpecifiedPath(String path) async {
   }
 }
 
-void completeDisableMod(Directory modDir) {
+Future<bool> completeDisableMod(Directory modDir) async {
   try {
     String renamedPath = p.join(
       p.dirname(modDir.path),
       'DISABLED${p.basename(modDir.path)}',
     );
-    modDir.rename(renamedPath);
-  } catch (e) {}
+    await modDir.rename(renamedPath);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
-void enableMod(Directory modDir) {
+Future<bool> enableMod(Directory modDir) async {
   try {
     String renamedPath = p.join(
       p.dirname(modDir.path),
@@ -1904,6 +1904,9 @@ void enableMod(Directory modDir) {
           .basename(modDir.path)
           .replaceFirst(RegExp(r'^DISABLED', caseSensitive: false), ''),
     );
-    modDir.rename(renamedPath);
-  } catch (e) {}
+    await modDir.rename(renamedPath);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }

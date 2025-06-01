@@ -1143,6 +1143,120 @@ class _ModContainerState extends ConsumerState<ModContainer>
                 },
                 label: 'Open in File Explorer'.tr(),
               ),
+            if (widget.index != 0 &&
+                !isModDisabled(
+                  widget.currentGroupData.modsInGroup[widget.index].modDir.path,
+                ))
+              CustomMenuItem(
+                scale: sss,
+                onSelected: () async {
+                  if (!context.mounted) return;
+
+                  bool success = await completeDisableMod(
+                    widget.currentGroupData.modsInGroup[widget.index].modDir,
+                  );
+
+                  if (!context.mounted) return;
+
+                  if (success) {
+                    ref.read(alertDialogShownProvider.notifier).state = true;
+                    await showDialog(
+                      barrierDismissible: false,
+                      context: context,
+                      builder:
+                          (context) => UpdateModDialog(
+                            modsPath: ref.read(validModsPath)!,
+                          ),
+                    );
+                    triggerRefresh(ref);
+                  } else {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: const Color(0xFF2B2930),
+                        margin: EdgeInsets.only(
+                          left: 20,
+                          right: 20,
+                          bottom: 20,
+                        ),
+                        duration: Duration(seconds: 3),
+                        behavior: SnackBarBehavior.floating,
+                        closeIconColor: Colors.blue,
+                        showCloseIcon: true,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        content: Text(
+                          'Failed to disable mod'.tr(),
+                          style: GoogleFonts.poppins(
+                            color: Colors.yellow,
+                            fontSize: 13 * ref.read(zoomScaleProvider),
+                          ),
+                        ),
+                        dismissDirection: DismissDirection.down,
+                      ),
+                    );
+                  }
+                },
+                label: 'Disable mod completely'.tr(),
+              ),
+            if (widget.index != 0 &&
+                isModDisabled(
+                  widget.currentGroupData.modsInGroup[widget.index].modDir.path,
+                ))
+              CustomMenuItem(
+                scale: sss,
+                onSelected: () async {
+                  if (!context.mounted) return;
+
+                  bool success = await enableMod(
+                    widget.currentGroupData.modsInGroup[widget.index].modDir,
+                  );
+
+                  if (!context.mounted) return;
+
+                  if (success) {
+                    ref.read(alertDialogShownProvider.notifier).state = true;
+                    await showDialog(
+                      barrierDismissible: false,
+                      context: context,
+                      builder:
+                          (context) => UpdateModDialog(
+                            modsPath: ref.read(validModsPath)!,
+                          ),
+                    );
+                    triggerRefresh(ref);
+                  } else {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: const Color(0xFF2B2930),
+                        margin: EdgeInsets.only(
+                          left: 20,
+                          right: 20,
+                          bottom: 20,
+                        ),
+                        duration: Duration(seconds: 3),
+                        behavior: SnackBarBehavior.floating,
+                        closeIconColor: Colors.blue,
+                        showCloseIcon: true,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        content: Text(
+                          'Failed to enable mod'.tr(),
+                          style: GoogleFonts.poppins(
+                            color: Colors.yellow,
+                            fontSize: 13 * ref.read(zoomScaleProvider),
+                          ),
+                        ),
+                        dismissDirection: DismissDirection.down,
+                      ),
+                    );
+                  }
+                },
+                label: 'Enable mod'.tr(),
+              ),
             if (widget.index != 0)
               CustomMenuItem(
                 scale: sss,

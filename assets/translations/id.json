@@ -136,5 +136,9 @@
   "Contact for help": "Kontak bantuan",
   "Search group by name or real folder name": "Cari group (tekan spasi lagi untuk ganti mode)",
   "Search mod by name or real folder name": "Cari mod (tekan spasi lagi untuk ganti mode)",
-  "Search mod in the current group by name or real folder name": "Cari mod di grup saat ini (tekan spasi lagi untuk ganti mode)"
+  "Search mod in the current group by name or real folder name": "Cari mod di grup saat ini (tekan spasi lagi untuk ganti mode)",
+  "Failed to enable mod": "Gagal mengaktifkan mod.\nRename mod folder secara manual di File Explorer. Kemudian 'Update Mod Data' di Setelan.",
+  "Failed to disable mod": "Gagal disable mod.\nRename mod folder secara manual di File Explorer. Kemudian 'Update Mod Data' di Setelan.",
+  "Disable mod completely": "Disable mod secara penuh",
+  "Enable mod": "Aktifkan mod"
 }

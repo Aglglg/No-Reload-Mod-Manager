@@ -136,5 +136,9 @@
   "Contact for help": "Contact for help",
   "Search group by name or real folder name": "Search group (press space key again to switch search modes)",
   "Search mod by name or real folder name": "Search mod (press space key again to switch search modes)",
-  "Search mod in the current group by name or real folder name": "Search mod in current group (press space key again to switch search modes)"
+  "Search mod in the current group by name or real folder name": "Search mod in current group (press space key again to switch search modes)",
+  "Failed to enable mod": "Failed to enable mod.\nPlease rename the mod folder manually with File Explorer. And then 'Update Mod Data' on Settings.",
+  "Failed to disable mod": "Failed to disable mod.\nPlease rename the mod folder manually with File Explorer. And then 'Update Mod Data' on Settings.",
+  "Disable mod completely": "Disable mod completely",
+  "Enable mod": "Enable mod"
 }

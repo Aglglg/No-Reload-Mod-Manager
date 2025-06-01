@@ -136,5 +136,9 @@
   "Contact for help": "联系帮助",
   "Search group by name or real folder name": "搜索分组（再次按空格键切换搜索模式）",
   "Search mod by name or real folder name": "搜索模组（再次按空格键切换搜索模式）",
-  "Search mod in the current group by name or real folder name": "搜索当前分组中的模组（再次按空格键切换搜索模式）"
+  "Search mod in the current group by name or real folder name": "搜索当前分组中的模组（再次按空格键切换搜索模式）",
+  "Failed to enable mod": "启用模组失败.\n请使用文件资源管理器手动重命名模组文件夹，然后在设置中点击「更新模组数据」.",
+  "Failed to disable mod": "禁用模组失败.\n请使用文件资源管理器手动重命名模组文件夹，然后在设置中点击「更新模组数据」.",
+  "Disable mod completely": "彻底禁用模组",
+  "Enable mod": "启用模组"
 }
