@@ -845,7 +845,7 @@ class _ModAreaState extends ConsumerState<ModArea>
             itemCount: widget.currentGroupData.modsInGroup.length,
             carouselController: _carouselSliderModController,
             options: CarouselOptions(
-              animateToClosest: false,
+              animateToClosest: true,
               initialPage: 0,
               enableInfiniteScroll: true,
               scrollDirection: Axis.horizontal,
