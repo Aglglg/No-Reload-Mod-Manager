@@ -19,16 +19,6 @@ class RefreshableLocalImage extends ConsumerStatefulWidget {
 
 class _RefreshableLocalImageState extends ConsumerState<RefreshableLocalImage> {
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     if (widget.imageWidget != null) {
       return widget.imageWidget!;

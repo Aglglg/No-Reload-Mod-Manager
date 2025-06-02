@@ -1141,6 +1141,13 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
     });
   }
 
+  @override
+  void dispose() {
+    _targetProcessTextFieldController.dispose();
+    _modsPathTextFieldController.dispose();
+    super.dispose();
+  }
+
   String _getTargetProcessHintText() {
     switch (ref.watch(targetGameProvider)) {
       case TargetGame.Wuthering_Waves:

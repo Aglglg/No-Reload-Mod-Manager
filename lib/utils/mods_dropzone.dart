@@ -295,6 +295,12 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
     checkFolders();
   }
 
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   Future<void> checkFolders() async {
     final mValidFolders = await getValidFolders(widget.droppedFolders);
     ////////////////////

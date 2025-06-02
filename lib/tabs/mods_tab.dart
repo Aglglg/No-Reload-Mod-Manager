@@ -59,6 +59,8 @@ class _TabModsState extends ConsumerState<TabMods> with ModNavigationListener {
   @override
   void dispose() {
     ModNavigationListener.removeListener(this);
+    searchController.dispose();
+    searchFocus.dispose();
     super.dispose();
   }
 
@@ -236,6 +238,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
     ModNavigationListener.removeListener(this);
     ModSearcherListener.removeListener(this);
     groupTextFieldFocusNode.dispose();
+    _groupNameTextFieldController.dispose();
     super.dispose();
   }
 
@@ -968,6 +971,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
   void dispose() {
     ModNavigationListener.removeListener(this);
     modTextFieldFocusNode.dispose();
+    _modNameTextFieldController.dispose();
     super.dispose();
   }
 

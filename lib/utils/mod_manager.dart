@@ -1223,6 +1223,12 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
     copyMods();
   }
 
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   Future<void> copyMods() async {
     setState(() {
       contents = [];
@@ -1420,6 +1426,12 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
     validatingModsPath();
   }
 
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   Future<void> validatingModsPath() async {
     setState(() {
       contents = [];
@@ -1567,6 +1579,12 @@ class _RevertModDialogState extends ConsumerState<RevertModDialog> {
     revertMods();
   }
 
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   Future<void> revertMods() async {
     setState(() {
       contents = [];
@@ -1673,6 +1691,12 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
   void initState() {
     super.initState();
     showWarning();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void showWarning() {
