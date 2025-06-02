@@ -580,6 +580,16 @@ class _MainViewState extends ConsumerState<MainView>
       context,
       onError: (exception, stackTrace) {},
     );
+    precacheImage(
+      NetworkImage(ConstantVar.urlContactIcon),
+      context,
+      onError: (exception, stackTrace) {},
+    );
+    precacheImage(
+      NetworkImage(ConstantVar.urlContactIconOnHover),
+      context,
+      onError: (exception, stackTrace) {},
+    );
     if (ref.read(supportLinkProvider).isEmpty) {
       ref.read(supportLinkProvider.notifier).state = await CloudData()
           .loadTextFromCloud(
