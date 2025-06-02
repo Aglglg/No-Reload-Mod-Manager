@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
@@ -36,16 +37,27 @@ class IniFileAsLines {
   }
 }
 
-class KeybindKeyData {
-  String section;
+class KeyData {
   String key;
+  int lineIndex;
+  bool isMainKey;
+  KeyData({
+    required this.key,
+    required this.lineIndex,
+    required this.isMainKey,
+  });
+}
+
+class KeybindData {
+  String section;
+  List<KeyData> key;
   IniFileAsLines iniFileAsLines;
-  int keyLineIndex;
-  KeybindKeyData({
+  int sectionLineIndex;
+  KeybindData({
     required this.section,
     required this.key,
     required this.iniFileAsLines,
-    required this.keyLineIndex,
+    required this.sectionLineIndex,
   });
 }
 
@@ -62,7 +74,8 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
   bool isEditing = false;
 
   List<IniFileAsLines> iniFilesAsLines = [];
-  List<KeybindKeyData> keys = [];
+  List<KeybindData> keys = [];
+  final Map<KeybindData, GlobalKey<_KeyCardState>> childKeys = {};
 
   @override
   void initState() {
@@ -132,53 +145,141 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
       iniFilesAsLines = data;
     });
 
-    List<KeybindKeyData> resultKeys = [];
+    List<KeybindData> resultKeys = [];
 
     final keySectionRegExp = RegExp(
-      r'^\s*\[(Key[^\]\r\n]*)',
+      r'^\s*\[Key([^\]\r\n]*)',
       caseSensitive: false,
     );
 
     final keyValueRegExp = RegExp(r'^\s*key\s*=\s*(.+)', caseSensitive: false);
+    final backValueRegExp = RegExp(
+      r'^\s*back\s*=\s*(.+)',
+      caseSensitive: false,
+    );
 
     for (var ini in iniFilesAsLines) {
       String? currentSection;
+      int? sectionLineIndex;
+      List<KeyData>? currentKeys;
 
       for (int i = 0; i < ini.lines.length; i++) {
         final line = ini.lines[i];
 
         final sectionMatch = keySectionRegExp.firstMatch(line);
         if (sectionMatch != null) {
+          //to get previous key
+          if (currentKeys != null && currentKeys.isNotEmpty) {
+            if (currentSection != null && sectionLineIndex != null) {
+              resultKeys.add(
+                KeybindData(
+                  section: currentSection,
+                  key: currentKeys,
+                  iniFileAsLines: ini,
+                  sectionLineIndex: sectionLineIndex,
+                ),
+              );
+            }
+          }
+          //
           currentSection = sectionMatch.group(1);
+          sectionLineIndex = i;
+          currentKeys = [];
           continue;
         }
 
         final keyMatch = keyValueRegExp.firstMatch(line);
-        if (keyMatch != null && currentSection != null) {
+        if (keyMatch != null &&
+            currentSection != null &&
+            sectionLineIndex != null &&
+            currentKeys != null) {
           final keyValue = keyMatch.group(1)!.trim();
+          currentKeys.add(
+            KeyData(key: keyValue, lineIndex: i, isMainKey: true),
+          );
+        }
+
+        final backMatch = backValueRegExp.firstMatch(line);
+        if (backMatch != null &&
+            currentSection != null &&
+            sectionLineIndex != null &&
+            currentKeys != null) {
+          final keyValue = backMatch.group(1)!.trim();
+          currentKeys.add(
+            KeyData(key: keyValue, lineIndex: i, isMainKey: false),
+          );
+        }
+      }
+
+      // to get the last key
+      if (currentKeys != null && currentKeys.isNotEmpty) {
+        if (currentSection != null && sectionLineIndex != null) {
           resultKeys.add(
-            KeybindKeyData(
+            KeybindData(
               section: currentSection,
-              key: keyValue,
+              key: currentKeys,
               iniFileAsLines: ini,
-              keyLineIndex: i,
+              sectionLineIndex: sectionLineIndex,
             ),
           );
         }
       }
+      //
     }
 
     setState(() {
       keys = resultKeys;
     });
+
+    for (var key in keys) {
+      childKeys[key] = GlobalKey<_KeyCardState>();
+    }
   }
 
   Future<void> saveKeys() async {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      for (var iniFileAsline in iniFilesAsLines) {
-        await iniFileAsline.saveKeybind();
+      List<String> lowerCasedSections = [];
+      for (var key in childKeys.values) {
+        if (key.currentState != null) {
+          lowerCasedSections.add(
+            key.currentState!.updateKeybindAndGetSectionNameLowerCased(),
+          );
+        }
       }
-      simulateKeyF10();
+      //Check for duplicate sections
+      if (lowerCasedSections.length == lowerCasedSections.toSet().length) {
+        for (var iniFileAsline in iniFilesAsLines) {
+          await iniFileAsline.saveKeybind();
+        }
+        simulateKeyF10();
+        setState(() {
+          isEditing = false;
+        });
+      } else {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFF2B2930),
+            margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
+            duration: Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            closeIconColor: Colors.blue,
+            showCloseIcon: true,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            content: Text(
+              'Each section name must be unique (case-insensitive), cannot save.'
+                  .tr(),
+              style: GoogleFonts.poppins(
+                color: Colors.yellow,
+                fontSize: 13 * ref.read(zoomScaleProvider),
+              ),
+            ),
+            dismissDirection: DismissDirection.down,
+          ),
+        );
+      }
     });
   }
 
@@ -289,10 +390,11 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                       children:
                           keys.map((keyData) {
                             return _KeyCard(
+                              key: childKeys[keyData],
                               sectionName: keyData.section,
                               keybindKey: keyData.key,
                               iniFileAsLines: keyData.iniFileAsLines,
-                              keyLineIndex: keyData.keyLineIndex,
+                              sectionLineIndex: keyData.sectionLineIndex,
                               isEditing: isEditing,
                             );
                           }).toList(),
@@ -311,9 +413,6 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                     onPressed: () {
                       if (isEditing) {
                         saveKeys();
-                        setState(() {
-                          isEditing = false;
-                        });
                       } else {
                         setState(() {
                           isEditing = true;
@@ -363,16 +462,17 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
 
 class _KeyCard extends ConsumerStatefulWidget {
   final String sectionName;
-  final String keybindKey;
+  final List<KeyData> keybindKey;
   final IniFileAsLines iniFileAsLines;
-  final int keyLineIndex;
+  final int sectionLineIndex;
   final bool isEditing;
 
   const _KeyCard({
+    super.key,
     required this.sectionName,
     required this.keybindKey,
     required this.iniFileAsLines,
-    required this.keyLineIndex,
+    required this.sectionLineIndex,
     required this.isEditing,
   });
 
@@ -381,11 +481,41 @@ class _KeyCard extends ConsumerStatefulWidget {
 }
 
 class _KeyCardState extends ConsumerState<_KeyCard> {
-  final textController = TextEditingController();
+  final textSectionController = TextEditingController();
+  late List<TextEditingController> controllers;
+
   @override
   void initState() {
     super.initState();
-    textController.text = widget.keybindKey;
+    textSectionController.text = widget.sectionName;
+    controllers =
+        widget.keybindKey
+            .map((keybind) => TextEditingController(text: keybind.key))
+            .toList();
+  }
+
+  @override
+  void dispose() {
+    textSectionController.dispose();
+    for (var controller in controllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  String updateKeybindAndGetSectionNameLowerCased() {
+    //sectionName
+    widget.iniFileAsLines.lines[widget.sectionLineIndex] =
+        "[Key${textSectionController.text}]";
+
+    //keys
+    for (var index = 0; index < controllers.length; index++) {
+      widget.iniFileAsLines.lines[widget.keybindKey[index].lineIndex] =
+          widget.keybindKey[index].isMainKey
+              ? "key = ${controllers[index].text}"
+              : "back = ${controllers[index].text}";
+    }
+    return textSectionController.text.toLowerCase();
   }
 
   @override
@@ -406,39 +536,10 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            '[${widget.sectionName}]',
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: 13 * sss,
-            ),
-          ),
-          SizedBox(height: 4 * sss),
-
-          SizedBox(height: 4 * sss),
           IntrinsicWidth(
             child: IntrinsicHeight(
               child: TextField(
-                onEditingComplete: () {
-                  textController.text = textController.text.replaceAll(
-                    '\n',
-                    '',
-                  );
-                  widget.iniFileAsLines.lines[widget.keyLineIndex] =
-                      "key = ${textController.text}";
-                  FocusScope.of(context).unfocus();
-                },
-                onTapOutside: (v) {
-                  textController.text = textController.text.replaceAll(
-                    '\n',
-                    '',
-                  );
-                  widget.iniFileAsLines.lines[widget.keyLineIndex] =
-                      "key = ${textController.text}";
-                  FocusScope.of(context).unfocus();
-                },
-                controller: textController,
+                controller: textSectionController,
                 enabled: widget.isEditing,
                 decoration: InputDecoration(
                   isDense: true,
@@ -447,15 +548,54 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
                 maxLines: null,
                 keyboardType: TextInputType.none,
                 style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w400,
+                  fontWeight: FontWeight.bold,
                   color: Colors.white,
                   fontSize: 13 * sss,
                 ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.deny(
+                    RegExp(r'[\n\r\u0085\u2028\u2029]'),
+                  ),
+                ],
               ),
             ),
+          ),
+
+          SizedBox(height: 4 * sss),
+
+          SizedBox(height: 4 * sss),
+          Column(
+            children: List.generate(controllers.length, (index) {
+              return IntrinsicWidth(
+                child: IntrinsicHeight(
+                  child: TextField(
+                    controller: controllers[index],
+                    enabled: widget.isEditing,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      disabledBorder: InputBorder.none,
+                    ),
+                    maxLines: null,
+                    keyboardType: TextInputType.none,
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white,
+                      fontSize: 13 * sss,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.deny(
+                        RegExp(r'[\n\r\u0085\u2028\u2029]'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
           ),
         ],
       ),
     );
   }
 }
+
+//TODO: FIX Text don't saved/tap outside not triggered when tap on another textfield

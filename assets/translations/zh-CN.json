@@ -140,5 +140,6 @@
   "Failed to enable mod": "启用模组失败.\n请使用文件资源管理器手动重命名模组文件夹，然后在设置中点击「更新模组数据」.",
   "Failed to disable mod": "禁用模组失败.\n请使用文件资源管理器手动重命名模组文件夹，然后在设置中点击「更新模组数据」.",
   "Disable mod completely": "彻底禁用模组",
-  "Enable mod": "启用模组"
+  "Enable mod": "启用模组",
+  "Each section name must be unique (case-insensitive), cannot save.": "区块名称不能相同（不区分大小写），无法保存."
 }

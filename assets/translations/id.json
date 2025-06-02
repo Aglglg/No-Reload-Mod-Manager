@@ -140,5 +140,6 @@
   "Failed to enable mod": "Gagal mengaktifkan mod.\nRename mod folder secara manual di File Explorer. Kemudian 'Update Mod Data' di Setelan.",
   "Failed to disable mod": "Gagal disable mod.\nRename mod folder secara manual di File Explorer. Kemudian 'Update Mod Data' di Setelan.",
   "Disable mod completely": "Disable mod secara penuh",
-  "Enable mod": "Aktifkan mod"
+  "Enable mod": "Aktifkan mod",
+  "Each section name must be unique (case-insensitive), cannot save.": "Setiap section harus punya nama yang berbeda (kapital diabaikan), gagal menyimpan."
 }
