@@ -1,5 +1,5 @@
 ### Repository Contribution
-Feel free to contribute on this project, especially adding more languages translation. Or providing auto character icon data. Or anything else.
+Feel free to contribute on this project, especially adding more [languages translation](https://github.com/Aglglg/No-Reload-Mod-Manager/tree/main/assets/translations). Or providing [auto character icon data](https://github.com/Aglglg/No-Reload-Mod-Manager/tree/main/assets/cloud_data/auto_icon). Or anything else.
 How? Of course, first of all you must know [How to contribute to open sourced project on Github](https://youtu.be/CML6vfKjQss).
 
 ---
