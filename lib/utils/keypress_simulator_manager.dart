@@ -1,4 +1,3 @@
-import 'package:flutter/services.dart';
 import 'package:no_reload_mod_manager/utils/keypress_simulate.dart';
 import 'package:win32/win32.dart';
 
@@ -17,14 +16,6 @@ Future<void> simulateKeySelectMod(int realGroupIndex, int modIndex) async {
   await _simulateKeypress(keysGroupToBeSimulated);
   await _simulateKeypress(keysModToBeSimulated);
   simulateKeyUp(VK_CLEAR);
-}
-
-void somethingA(List<PhysicalKeyboardKey> keys) {
-  keys.add(PhysicalKeyboardKey.slash);
-}
-
-void somethingB(List<PhysicalKeyboardKey> keys) {
-  keys.add(PhysicalKeyboardKey.keyN);
 }
 
 Future<void> _simulateKeypress(List<int> keys) async {
