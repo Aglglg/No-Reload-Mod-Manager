@@ -141,5 +141,9 @@
   "Failed to disable mod": "Failed to disable mod.\nPlease rename the mod folder manually with File Explorer. And then 'Update Mod Data' on Settings.",
   "Disable mod completely": "Disable mod completely",
   "Enable mod": "Enable mod",
-  "Each section name must be unique (case-insensitive), cannot save.": "Each section name must be different (case-insensitive), cannot save."
+  "Each section name must be unique (case-insensitive), cannot save.": "Each section name must be different (case-insensitive), cannot save.",
+  "Sort group by": "Sort group by",
+  "Name": "Name",
+  "Index": "Index",
+  "Remove icon": "Remove icon"
 }

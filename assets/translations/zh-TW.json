@@ -141,5 +141,9 @@
   "Failed to disable mod": "停用模組失敗.\n請使用檔案總管手動重新命名模組資料夾，然後在設定中點擊「更新模組資料」.",
   "Disable mod completely": "完全停用模組",
   "Enable mod": "啟用模組",
-  "Each section name must be unique (case-insensitive), cannot save.": "區塊名稱不可相同（不分大小寫），無法儲存."
+  "Each section name must be unique (case-insensitive), cannot save.": "區塊名稱不可相同（不分大小寫），無法儲存.",
+  "Sort group by": "群組排序方式",
+  "Name": "名稱",
+  "Index": "索引",
+  "Remove icon": "移除圖示"
 }
