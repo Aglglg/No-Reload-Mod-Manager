@@ -944,6 +944,40 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                         ),
                       ),
 
+                      Container(height: 15 * sss),
+                      Divider(
+                        color: const Color.fromARGB(127, 33, 149, 243),
+                        thickness: 1 * sss,
+                      ),
+                      Container(height: 15 * sss),
+
+                      ElevatedButton(
+                        onPressed: () {
+                          exit(0);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          overlayColor: Colors.white,
+                          backgroundColor: const Color.fromARGB(
+                            127,
+                            255,
+                            255,
+                            255,
+                          ),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8 * sss),
+                          child: Text(
+                            'Exit'.tr(),
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12 * sss,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+
                       Container(height: 20 * sss),
 
                       Row(

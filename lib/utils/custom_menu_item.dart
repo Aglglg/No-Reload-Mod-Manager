@@ -4,13 +4,15 @@ import 'package:google_fonts/google_fonts.dart';
 
 final class CustomMenuItem<T> extends ContextMenuItem<T> {
   final String label;
-  final IconData? icon;
+  final IconData? leftIcon;
+  final IconData? rightIcon;
   final double scale;
   final Color? textColor;
 
   const CustomMenuItem({
     required this.label,
-    this.icon,
+    this.leftIcon,
+    this.rightIcon,
     super.value,
     super.onSelected,
     super.enabled,
@@ -21,7 +23,8 @@ final class CustomMenuItem<T> extends ContextMenuItem<T> {
   const CustomMenuItem.submenu({
     required this.label,
     required List<ContextMenuEntry> items,
-    this.icon,
+    this.leftIcon,
+    this.rightIcon,
     super.onSelected,
     super.enabled,
     required this.scale,
@@ -61,12 +64,16 @@ final class CustomMenuItem<T> extends ContextMenuItem<T> {
             style: textStyle,
             child: Row(
               children: [
-                if (icon != null)
+                if (leftIcon != null)
                   SizedBox.square(
                     dimension: 32.0 * scale,
-                    child: Icon(icon, size: 16.0 * scale, color: Colors.white),
+                    child: Icon(
+                      leftIcon,
+                      size: 16.0 * scale,
+                      color: Colors.white,
+                    ),
                   ),
-                SizedBox(width: (icon == null ? 15.0 : 4.0) * scale),
+                SizedBox(width: (leftIcon == null ? 15.0 : 4.0) * scale),
                 Expanded(
                   child: Text(
                     label,
@@ -74,14 +81,18 @@ final class CustomMenuItem<T> extends ContextMenuItem<T> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                SizedBox(width: (isSubmenuItem ? 8.0 : 17.0) * scale),
-                if (isSubmenuItem)
+                SizedBox(
+                  width:
+                      ((isSubmenuItem || rightIcon != null) ? 8.0 : 17.0) *
+                      scale,
+                ),
+                if (isSubmenuItem || rightIcon != null)
                   SizedBox.square(
                     dimension: 32.0 * scale,
                     child: Align(
                       alignment: AlignmentDirectional.centerStart,
                       child: Icon(
-                        isSubmenuItem ? Icons.arrow_right : null,
+                        isSubmenuItem ? Icons.arrow_right : rightIcon,
                         size: 16.0 * scale,
                         color: Colors.white,
                       ),

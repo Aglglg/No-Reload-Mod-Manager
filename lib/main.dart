@@ -959,9 +959,18 @@ class _MainViewState extends ConsumerState<MainView>
       }
 
       if (existAndValid) {
-        ref.read(modGroupDataProvider.notifier).state = await refreshModData(
-          Directory(managedPath),
-        );
+        //Load mod & group datas
+        final datas = await refreshModData(Directory(managedPath));
+
+        ref.read(sortGroupMethod.notifier).state =
+            SharedPrefUtils().getGroupSort();
+
+        if (ref.read(sortGroupMethod) == 1) {
+          datas.sort((a, b) => a.groupName.compareTo(b.groupName));
+        }
+
+        ref.read(modGroupDataProvider.notifier).state = datas;
+
         ref.read(validModsPath.notifier).state = modsPath;
         int groupIndex = await getSelectedGroupIndex(
           managedPath,

@@ -16,6 +16,7 @@ import 'package:no_reload_mod_manager/utils/mod_navigator.dart';
 import 'package:no_reload_mod_manager/utils/mod_searcher.dart';
 import 'package:no_reload_mod_manager/utils/refreshable_image.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
+import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:path/path.dart' as p;
@@ -350,6 +351,36 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                 },
                 label: 'Add group'.tr(),
               ),
+              CustomMenuItem.submenu(
+                label: 'Sort group by'.tr(),
+                scale: sss,
+                items: [
+                  CustomMenuItem(
+                    label: 'Index'.tr(),
+                    scale: sss,
+                    rightIcon:
+                        ref.read(sortGroupMethod) == 0 ? Icons.check : null,
+                    onSelected: () async {
+                      if (!context.mounted) return;
+                      await SharedPrefUtils().setGroupSort(0);
+                      if (!context.mounted) return;
+                      triggerRefresh(ref);
+                    },
+                  ),
+                  CustomMenuItem(
+                    label: 'Name'.tr(),
+                    scale: sss,
+                    rightIcon:
+                        ref.read(sortGroupMethod) == 1 ? Icons.check : null,
+                    onSelected: () async {
+                      if (!context.mounted) return;
+                      await SharedPrefUtils().setGroupSort(1);
+                      if (!context.mounted) return;
+                      triggerRefresh(ref);
+                    },
+                  ),
+                ],
+              ),
             ],
             child: CarouselSlider.builder(
               itemCount: ref.watch(modGroupDataProvider).length,
@@ -410,9 +441,38 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                       label: 'Add group'.tr(),
                     ),
                     CustomMenuItem.submenu(
-                      label: 'Sort by'.tr(),
+                      label: 'Sort group by'.tr(),
                       scale: sss,
-                      items: [],
+                      items: [
+                        CustomMenuItem(
+                          label: 'Index'.tr(),
+                          scale: sss,
+                          rightIcon:
+                              ref.read(sortGroupMethod) == 0
+                                  ? Icons.check
+                                  : null,
+                          onSelected: () async {
+                            if (!context.mounted) return;
+                            await SharedPrefUtils().setGroupSort(0);
+                            if (!context.mounted) return;
+                            triggerRefresh(ref);
+                          },
+                        ),
+                        CustomMenuItem(
+                          label: 'Name'.tr(),
+                          scale: sss,
+                          rightIcon:
+                              ref.read(sortGroupMethod) == 1
+                                  ? Icons.check
+                                  : null,
+                          onSelected: () async {
+                            if (!context.mounted) return;
+                            await SharedPrefUtils().setGroupSort(1);
+                            if (!context.mounted) return;
+                            triggerRefresh(ref);
+                          },
+                        ),
+                      ],
                     ),
                     if (index == currentPageIndex)
                       CustomMenuItem(
@@ -507,9 +567,9 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                           if (index == currentPageIndex)
                             CustomMenuItem(
                               scale: sss,
-                              onSelected: () {
+                              onSelected: () async {
                                 if (!context.mounted) return;
-                                setGroupOrModIcon(
+                                await setGroupOrModIcon(
                                   ref,
                                   ref
                                       .read(modGroupDataProvider)[index]
@@ -527,9 +587,9 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                           if (index == currentPageIndex)
                             CustomMenuItem(
                               scale: sss,
-                              onSelected: () {
+                              onSelected: () async {
                                 if (!context.mounted) return;
-                                unsetGroupOrModIcon(
+                                await unsetGroupOrModIcon(
                                   ref,
                                   ref
                                       .read(modGroupDataProvider)[index]

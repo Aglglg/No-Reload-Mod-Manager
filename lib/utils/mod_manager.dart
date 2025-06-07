@@ -46,7 +46,6 @@ Future<List<ModGroupData>> refreshModData(Directory managedDir) async {
       );
     }),
   );
-  results.sort((a, b) => a.groupName.compareTo(b.groupName));
   return results;
 }
 

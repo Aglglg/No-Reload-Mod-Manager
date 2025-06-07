@@ -225,6 +225,19 @@ class SharedPrefUtils {
     await _prefs?.setInt(keyBgTransparency, alpha);
   }
 
+  Future<void> setGroupSort(int sortMethod) async {
+    await _prefs?.setInt(keySortGroupMethod, sortMethod);
+  }
+
+  int getGroupSort() {
+    int? result = _prefs?.getInt(keySortGroupMethod);
+    if (result == null) {
+      return 0;
+    } else {
+      return result.clamp(0, 1).toInt();
+    }
+  }
+
   static const String keyTargetProcessWuwa = 'targetProcessWuwa';
   static const String keyTargetProcessGenshin = 'targetProcessGenshin';
   static const String keyTargetProcessHsr = 'targetProcessHsr';
@@ -250,6 +263,8 @@ class SharedPrefUtils {
 
   static const String keyOverallScale = "overallScale";
   static const String keyBgTransparency = "backgroundTransparency";
+
+  static const String keySortGroupMethod = "sortGroup";
 
   String getUserProfilePath() {
     if (Platform.isWindows) {
