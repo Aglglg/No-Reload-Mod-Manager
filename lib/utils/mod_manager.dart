@@ -118,7 +118,12 @@ void _addGroupToRiverpod(WidgetRef ref, Directory groupDir, int index) {
     groupIcon: getModOrGroupIcon(groupDir),
     groupName: p.basename(groupDir.path),
     modsInGroup: [
-      ModData(modDir: Directory("None"), modIcon: null, modName: "None".tr()),
+      ModData(
+        modDir: Directory("None"),
+        modIcon: null,
+        modName: "None".tr(),
+        realIndex: 0,
+      ),
     ],
     realIndex: index + 1,
     previousSelectedModOnGroup: 0,
@@ -482,6 +487,7 @@ void _updateModIconProvider(
                     modDir: mod.modDir,
                     modIcon: newIcon,
                     modName: mod.modName,
+                    realIndex: mod.realIndex,
                   );
                 }
                 return mod;
@@ -526,18 +532,26 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
     }
 
     final List<ModData> modDatas = await Future.wait(
-      limitedModDirs.map((modDir) async {
+      limitedModDirs.asMap().entries.map((entry) async {
+        final int index = entry.key;
+        final modDir = entry.value;
         return ModData(
           modDir: modDir,
           modIcon: getModOrGroupIcon(modDir),
           modName: await getModName(modDir),
+          realIndex: index + 1, //0 will be none
         );
       }).toList(),
     );
 
     modDatas.insert(
       0,
-      ModData(modDir: Directory("None"), modIcon: null, modName: "None".tr()),
+      ModData(
+        modDir: Directory("None"),
+        modIcon: null,
+        modName: "None".tr(),
+        realIndex: 0,
+      ),
     );
 
     return modDatas;

@@ -24,6 +24,12 @@ class ModData {
   final Directory modDir;
   final Image? modIcon;
   final String modName;
+  final int realIndex;
 
-  ModData({required this.modDir, required this.modIcon, required this.modName});
+  ModData({
+    required this.modDir,
+    required this.modIcon,
+    required this.modName,
+    required this.realIndex,
+  });
 }

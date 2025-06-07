@@ -136,11 +136,26 @@ Future<void> setupWindow(List<String> args) async {
   });
 }
 
-class MyApp extends ConsumerWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> {
+  final FocusNode focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    ref.listenManual(targetGameProvider, (previous, next) {
+      focusNode.requestFocus();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return KeyboardListener(
       onKeyEvent: (value) {
         if (value is KeyUpEvent ||
@@ -150,7 +165,7 @@ class MyApp extends ConsumerWidget {
           ModNavigationListener.notifyListeners(value, null);
         }
       },
-      focusNode: FocusNode(),
+      focusNode: focusNode,
       autofocus: true,
       child: MaterialApp(
         localizationsDelegates: context.localizationDelegates,
@@ -1009,9 +1024,6 @@ class _MainViewState extends ConsumerState<MainView>
 
   Future<void> toggleWindow() async {
     if (await windowManager.isVisible()) {
-      try {
-        FocusScope.of(context).unfocus();
-      } catch (e) {}
       if (!ref.read(alertDialogShownProvider)) {
         ref.read(targetGameProvider.notifier).state = TargetGame.none;
       }

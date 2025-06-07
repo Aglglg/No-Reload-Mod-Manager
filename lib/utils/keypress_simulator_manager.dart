@@ -7,10 +7,10 @@ void simulateKeyF10() {
   _simulateKeypressOnly(VK_F10);
 }
 
-Future<void> simulateKeySelectMod(int realGroupIndex, int modIndex) async {
+Future<void> simulateKeySelectMod(int realGroupIndex, int realModIndex) async {
   simulateKeyDown(VK_CLEAR);
-  await _simulateSelectGroupMod(VK_SPACE, modIndex, realGroupIndex);
-  await _simulateSelectGroupMod(VK_RETURN, modIndex, realGroupIndex);
+  await _simulateSelectGroupMod(VK_SPACE, realModIndex, realGroupIndex);
+  await _simulateSelectGroupMod(VK_RETURN, realModIndex, realGroupIndex);
   simulateKeyUp(VK_CLEAR);
 }
 

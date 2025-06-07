@@ -90,3 +90,5 @@ final searchBarShownProvider = StateProvider<bool>((ref) => false);
 final searchBarMode = StateProvider<int>((ref) => 0);
 
 final sortGroupMethod = StateProvider<int>((ref) => 0);
+
+final isCarouselLayoutProvider = StateProvider<bool>((ref) => true);

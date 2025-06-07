@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -29,7 +30,54 @@ class TabMods extends ConsumerStatefulWidget {
   ConsumerState<TabMods> createState() => _TabModsState();
 }
 
-class _TabModsState extends ConsumerState<TabMods> with ModNavigationListener {
+class _TabModsState extends ConsumerState<TabMods> with WindowListener {
+  @override
+  void initState() {
+    super.initState();
+    windowManager.addListener(this);
+  }
+
+  @override
+  void dispose() {
+    windowManager.removeListener(this);
+    super.dispose();
+  }
+
+  @override
+  void onWindowResize() async {
+    final size = await windowManager.getSize();
+    if (mounted) {
+      double minimalHeight = 370 * ref.read(zoomScaleProvider);
+      double currentHeight = size.height;
+      if (minimalHeight * 1.3 <= currentHeight) {
+        if (ref.read(isCarouselLayoutProvider)) {
+          ref.read(isCarouselLayoutProvider.notifier).state = false;
+        }
+      } else {
+        if (!ref.read(isCarouselLayoutProvider)) {
+          ref.read(isCarouselLayoutProvider.notifier).state = true;
+        }
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ref.watch(isCarouselLayoutProvider)
+        ? TabModsCarousel()
+        : TabModsGrid();
+  }
+}
+
+class TabModsCarousel extends ConsumerStatefulWidget {
+  const TabModsCarousel({super.key});
+
+  @override
+  ConsumerState<TabModsCarousel> createState() => _TabModsCarouselState();
+}
+
+class _TabModsCarouselState extends ConsumerState<TabModsCarousel>
+    with ModNavigationListener {
   final searchController = TextEditingController();
   final searchFocus = FocusNode();
   String getTextDragAndDrop() {
@@ -124,7 +172,7 @@ class _TabModsState extends ConsumerState<TabMods> with ModNavigationListener {
                     Center(
                       child: Row(
                         children: [
-                          GroupArea(
+                          GroupAreaCarousel(
                             initialGroupIndex: ref.watch(
                               currentGroupIndexProvider,
                             ),
@@ -134,7 +182,7 @@ class _TabModsState extends ConsumerState<TabMods> with ModNavigationListener {
                             child: SizedBox(width: 45 * sss, height: 200 * sss),
                           ),
 
-                          ModArea(
+                          ModAreaCarousel(
                             currentGroupData:
                                 ref.watch(modGroupDataProvider)[ref.watch(
                                   currentGroupIndexProvider,
@@ -208,15 +256,15 @@ class _TabModsState extends ConsumerState<TabMods> with ModNavigationListener {
   }
 }
 
-class GroupArea extends ConsumerStatefulWidget {
+class GroupAreaCarousel extends ConsumerStatefulWidget {
   final int initialGroupIndex;
-  const GroupArea({super.key, required this.initialGroupIndex});
+  const GroupAreaCarousel({super.key, required this.initialGroupIndex});
 
   @override
-  ConsumerState<GroupArea> createState() => _GroupAreaState();
+  ConsumerState<GroupAreaCarousel> createState() => _GroupAreaState();
 }
 
-class _GroupAreaState extends ConsumerState<GroupArea>
+class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
     with ModNavigationListener, ModSearcherListener {
   final CarouselSliderController _carouselSliderGroupController =
       CarouselSliderController();
@@ -816,20 +864,20 @@ class _GroupContainerState extends ConsumerState<GroupContainer> {
   }
 }
 
-class ModArea extends ConsumerStatefulWidget {
+class ModAreaCarousel extends ConsumerStatefulWidget {
   final ModGroupData currentGroupData;
-  const ModArea({super.key, required this.currentGroupData});
+  const ModAreaCarousel({super.key, required this.currentGroupData});
 
   @override
-  ConsumerState<ModArea> createState() => _ModAreaState();
+  ConsumerState<ModAreaCarousel> createState() => _ModAreaState();
 }
 
-class _ModAreaState extends ConsumerState<ModArea>
+class _ModAreaState extends ConsumerState<ModAreaCarousel>
     with WindowListener, ModNavigationListener, ModSearcherListener {
   final CarouselSliderController _carouselSliderModController =
       CarouselSliderController();
   double windowWidth = 0;
-  int _currentModRealIndex = 10000;
+  int _currentModCarouselRealIndex = 10000;
 
   double remap(
     double value,
@@ -855,17 +903,21 @@ class _ModAreaState extends ConsumerState<ModArea>
 
   void goToSelectedModIndex() {
     setState(() {
-      _currentModRealIndex = 10000;
+      _currentModCarouselRealIndex = 10000;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         try {
           _carouselSliderModController.jumpToPage(
-            _currentModRealIndex,
+            _currentModCarouselRealIndex,
             isRealIndex: true,
           );
           _carouselSliderModController.animateToPage(
-            widget.currentGroupData.previousSelectedModOnGroup,
+            widget.currentGroupData.modsInGroup.indexWhere(
+              (mod) =>
+                  mod.realIndex ==
+                  widget.currentGroupData.previousSelectedModOnGroup,
+            ),
             duration: Duration(milliseconds: 250),
             curve: Curves.easeOut,
           );
@@ -932,34 +984,32 @@ class _ModAreaState extends ConsumerState<ModArea>
               enableInfiniteScroll: true,
               scrollDirection: Axis.horizontal,
               viewportFraction: getViewportFraction(),
-              onPageChanged: (index, reason, realIndex) {
+              onPageChanged: (index, reason, carouselRealIndex) {
                 setState(() {
-                  _currentModRealIndex = realIndex;
+                  _currentModCarouselRealIndex = carouselRealIndex;
                 });
               },
             ),
-            itemBuilder: (context, index, realIndex) {
-              bool isCentered = _currentModRealIndex == realIndex;
+            itemBuilder: (context, index, carouselRealIndex) {
+              bool isCentered =
+                  _currentModCarouselRealIndex == carouselRealIndex;
               double itemHeight = isCentered ? 217.8 * sss : 156.816 * sss;
               return ModContainer(
                 isSelected:
-                    widget.currentGroupData.previousSelectedModOnGroup == index,
+                    widget.currentGroupData.previousSelectedModOnGroup ==
+                    widget.currentGroupData.modsInGroup[index].realIndex,
                 index: index,
                 currentGroupData: widget.currentGroupData,
                 itemHeight: itemHeight,
                 isCentered: isCentered,
                 onSelected: () async {
                   simulateKeySelectMod(
-                    ref
-                        .read(modGroupDataProvider)[ref.read(
-                          currentGroupIndexProvider,
-                        )]
-                        .realIndex,
-                    index,
+                    widget.currentGroupData.realIndex,
+                    widget.currentGroupData.modsInGroup[index].realIndex,
                   );
                   setSelectedModIndex(
                     ref,
-                    index,
+                    widget.currentGroupData.modsInGroup[index].realIndex,
                     widget.currentGroupData.groupDir,
                   );
                 },
@@ -1073,6 +1123,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
     updatedMods[widget.index] = ModData(
       modDir: oldMod.modDir,
       modIcon: oldMod.modIcon,
+      realIndex: oldMod.realIndex,
       modName: _modNameTextFieldController.text,
     );
 
@@ -1463,7 +1514,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
             ),
           ),
         ),
-        Container(height: 3 * sss),
+        SizedBox(height: 3 * sss, width: 156.816 * sss),
         SizedBox(
           width: 156.816 * sss,
           child: TextField(
@@ -1626,6 +1677,567 @@ class TabModsLoading extends ConsumerWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+////////////////
+////////////////
+//////////////
+/////////////
+///
+
+class TabModsGrid extends ConsumerStatefulWidget {
+  const TabModsGrid({super.key});
+
+  @override
+  ConsumerState<TabModsGrid> createState() => _TabModsGridState();
+}
+
+class _TabModsGridState extends ConsumerState<TabModsGrid>
+    with ModNavigationListener {
+  final searchController = TextEditingController();
+  final searchFocus = FocusNode();
+  String getTextDragAndDrop() {
+    String text = '';
+    if (ref.watch(modGroupDataProvider).isEmpty) {
+      text = "Right-click and add group, then you can add mods.".tr();
+    } else {
+      if (ref.watch(windowIsPinnedProvider)) {
+        text =
+            'Drag & Drop mod folders here to add mods to this group (1 folder = 1 mod).'
+                .tr();
+      }
+    }
+    return text;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    ref.listenManual(searchBarShownProvider, (previous, next) {
+      if (next == true) {
+        searchFocus.requestFocus();
+      }
+    });
+    ModNavigationListener.addListener(this);
+  }
+
+  @override
+  void dispose() {
+    ModNavigationListener.removeListener(this);
+    searchController.dispose();
+    searchFocus.dispose();
+    super.dispose();
+  }
+
+  String getSearchBarHint() {
+    int mode = ref.watch(searchBarMode);
+    switch (mode) {
+      case 0:
+        return 'Search mod/group by name or real folder name'.tr();
+      case 1:
+        return 'Search group by name or real folder name'.tr();
+      case 2:
+        return 'Search mod by name or real folder name'.tr();
+      case 3:
+        return 'Search mod in the current group by name or real folder name'
+            .tr();
+      default:
+        return 'Search mod/group by name or real folder name'.tr();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sss = ref.watch(zoomScaleProvider);
+    return Stack(
+      children: [
+        Stack(
+          children: [
+            if (ref.watch(windowIsPinnedProvider) ||
+                ref.watch(modGroupDataProvider).isEmpty)
+              Align(
+                alignment: Alignment.topCenter,
+                child: Padding(
+                  padding: EdgeInsets.only(top: 85 * sss),
+                  child: IgnorePointer(
+                    child: Text(
+                      getTextDragAndDrop(),
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: false,
+                      style: GoogleFonts.poppins(
+                        color:
+                            ref.watch(windowIsPinnedProvider)
+                                ? Colors.blue
+                                : const Color.fromARGB(127, 255, 255, 255),
+                        fontSize: 12 * sss,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+            if (ref.watch(modGroupDataProvider).isNotEmpty)
+              Padding(
+                padding: EdgeInsets.only(
+                  top: 120 * sss,
+                  right: 45 * sss,
+                  left: 45 * sss,
+                  bottom: 40 * sss,
+                ),
+                child: GroupAreaGrid(
+                  initialGroupIndex: ref.watch(currentGroupIndexProvider),
+                ),
+              ),
+
+            if (ref.watch(modGroupDataProvider).isNotEmpty)
+              Padding(
+                padding: EdgeInsets.only(
+                  top: 205 * sss,
+                  right: 45 * sss,
+                  left: 45 * sss,
+                  bottom: 40 * sss,
+                ),
+                child: Center(
+                  child: ModAreaGrid(
+                    currentGroupData:
+                        ref.watch(modGroupDataProvider)[ref.watch(
+                          currentGroupIndexProvider,
+                        )],
+                  ),
+                ),
+              ),
+          ],
+        ),
+        //
+        //Search
+        if (ref.watch(searchBarShownProvider))
+          Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: EdgeInsets.only(top: 15.0 * sss),
+              child: SizedBox(
+                height: 38 * sss,
+                child: SearchBar(
+                  focusNode: searchFocus,
+                  controller: searchController,
+                  onChanged: (value) {
+                    if (value == ' ') {
+                      ref.read(searchBarMode.notifier).state =
+                          (ref.read(searchBarMode) + 1) %
+                          4; //4 modes: all, group, mod, ingroup
+                      searchController.text = '';
+                      return;
+                    }
+                    if (value.isNotEmpty) goToSearchResult(ref, value);
+                  },
+                  onSubmitted:
+                      (value) =>
+                          ref.read(searchBarShownProvider.notifier).state =
+                              false,
+                  onTapOutside:
+                      (event) =>
+                          ref.read(searchBarShownProvider.notifier).state =
+                              false,
+                  leading: Icon(Icons.search),
+                  hintText: getSearchBarHint(),
+                  hintStyle: WidgetStatePropertyAll(
+                    GoogleFonts.poppins(fontSize: 13 * sss),
+                  ),
+                  textStyle: WidgetStatePropertyAll(
+                    GoogleFonts.poppins(fontSize: 13 * sss),
+                  ),
+                  shape: WidgetStatePropertyAll(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadiusGeometry.circular(20 * sss),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  @override
+  void onKeyEvent(KeyEvent value, Controller? controller) {
+    if (value.physicalKey == PhysicalKeyboardKey.space &&
+        ref.read(tabIndexProvider) == 1 &&
+        ref.read(modGroupDataProvider).isNotEmpty) {
+      ref.read(searchBarShownProvider.notifier).state =
+          !ref.read(searchBarShownProvider);
+    }
+  }
+}
+
+class GroupAreaGrid extends ConsumerStatefulWidget {
+  final int initialGroupIndex;
+  const GroupAreaGrid({super.key, required this.initialGroupIndex});
+
+  @override
+  ConsumerState<GroupAreaGrid> createState() => _GroupAreaGridState();
+}
+
+class _GroupAreaGridState extends ConsumerState<GroupAreaGrid> {
+  @override
+  Widget build(BuildContext context) {
+    double sss = ref.watch(zoomScaleProvider);
+    return SizedBox(
+      height: 70 * sss,
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(
+          dragDevices: {
+            PointerDeviceKind.touch,
+            PointerDeviceKind.mouse,
+            PointerDeviceKind.trackpad,
+          },
+          scrollbars: false,
+        ),
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+
+          children:
+              ref.watch(modGroupDataProvider).asMap().entries.map((e) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 15.0),
+                  child: RightClickMenuRegion(
+                    menuItems: [
+                      // CustomMenuItem(
+                      //   scale: sss,
+                      //   onSelected: () async {
+                      //     if (!context.mounted) return;
+                      //     int? groupIndex = await addGroup(
+                      //       ref,
+                      //       p.join(
+                      //         getCurrentModsPath(ref.read(targetGameProvider)),
+                      //         ConstantVar.managedFolderName,
+                      //       ),
+                      //     );
+                      //     if (!context.mounted) return;
+                      //     if (groupIndex != null) {
+                      //       getCurrentGroupName(groupIndex - 1);
+                      //       WidgetsBinding.instance.addPostFrameCallback((_) {
+                      //         _carouselSliderGroupController.animateToPage(
+                      //           groupIndex - 1,
+                      //           duration: Duration(milliseconds: 250),
+                      //           curve: Curves.easeOut,
+                      //         );
+                      //       });
+                      //     } else {
+                      //       ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      //       ScaffoldMessenger.of(context).showSnackBar(
+                      //         SnackBar(
+                      //           backgroundColor: const Color(0xFF2B2930),
+                      //           margin: EdgeInsets.only(
+                      //             left: 20,
+                      //             right: 20,
+                      //             bottom: 20,
+                      //           ),
+                      //           duration: Duration(seconds: 3),
+                      //           behavior: SnackBarBehavior.floating,
+                      //           closeIconColor: Colors.blue,
+                      //           showCloseIcon: true,
+                      //           shape: RoundedRectangleBorder(
+                      //             borderRadius: BorderRadius.circular(20),
+                      //           ),
+                      //           content: Text(
+                      //             'Max group reached (500 Groups). Unable to add more group.'
+                      //                 .tr(),
+                      //             style: GoogleFonts.poppins(
+                      //               color: Colors.yellow,
+                      //               fontSize: 13 * sss,
+                      //             ),
+                      //           ),
+                      //           dismissDirection: DismissDirection.down,
+                      //         ),
+                      //       );
+                      //     }
+                      //   },
+                      //   label: 'Add group'.tr(),
+                      // ),
+                      // CustomMenuItem.submenu(
+                      //   label: 'Sort group by'.tr(),
+                      //   scale: sss,
+                      //   items: [
+                      //     CustomMenuItem(
+                      //       label: 'Index'.tr(),
+                      //       scale: sss,
+                      //       rightIcon:
+                      //           ref.read(sortGroupMethod) == 0
+                      //               ? Icons.check
+                      //               : null,
+                      //       onSelected: () async {
+                      //         if (!context.mounted) return;
+                      //         await SharedPrefUtils().setGroupSort(0);
+                      //         if (!context.mounted) return;
+                      //         triggerRefresh(ref);
+                      //       },
+                      //     ),
+                      //     CustomMenuItem(
+                      //       label: 'Name'.tr(),
+                      //       scale: sss,
+                      //       rightIcon:
+                      //           ref.read(sortGroupMethod) == 1
+                      //               ? Icons.check
+                      //               : null,
+                      //       onSelected: () async {
+                      //         if (!context.mounted) return;
+                      //         await SharedPrefUtils().setGroupSort(1);
+                      //         if (!context.mounted) return;
+                      //         triggerRefresh(ref);
+                      //       },
+                      //     ),
+                      //   ],
+                      // ),
+                      // if (index == currentPageIndex)
+                      //   CustomMenuItem(
+                      //     scale: sss,
+                      //     onSelected: () {
+                      //       if (!context.mounted) return;
+                      //       setState(() {
+                      //         groupTextFieldEnabled = true;
+                      //       });
+                      //       _groupNameTextFieldController
+                      //           .selection = TextSelection(
+                      //         baseOffset: 0,
+                      //         extentOffset:
+                      //             _groupNameTextFieldController.text.length,
+                      //       );
+                      //       WidgetsBinding.instance.addPostFrameCallback((_) {
+                      //         groupTextFieldFocusNode.requestFocus();
+                      //       });
+                      //     },
+                      //     label: 'Rename'.tr(),
+                      //   ),
+                      // if (index == currentPageIndex)
+                      //   CustomMenuItem.submenu(
+                      //     items: [
+                      //       CustomMenuItem(
+                      //         scale: sss,
+
+                      //         onSelected: () async {
+                      //           if (!context.mounted) return;
+                      //           bool success = await tryGetIcon(
+                      //             ref
+                      //                 .read(modGroupDataProvider)[index]
+                      //                 .groupDir
+                      //                 .path,
+                      //             ref.read(autoIconProvider),
+                      //           );
+                      //           if (!context.mounted) return;
+                      //           if (!success) {
+                      //             ScaffoldMessenger.of(
+                      //               context,
+                      //             ).hideCurrentSnackBar();
+                      //             ScaffoldMessenger.of(context).showSnackBar(
+                      //               SnackBar(
+                      //                 backgroundColor: const Color(0xFF2B2930),
+                      //                 margin: EdgeInsets.only(
+                      //                   left: 20,
+                      //                   right: 20,
+                      //                   bottom: 20,
+                      //                 ),
+                      //                 duration: Duration(seconds: 3),
+                      //                 behavior: SnackBarBehavior.floating,
+                      //                 closeIconColor: Colors.blue,
+                      //                 showCloseIcon: true,
+                      //                 shape: RoundedRectangleBorder(
+                      //                   borderRadius: BorderRadius.circular(20),
+                      //                 ),
+                      //                 content: Text(
+                      //                   'Auto group icon failed. No matching character hash.'
+                      //                       .tr(),
+                      //                   style: GoogleFonts.poppins(
+                      //                     color: Colors.yellow,
+                      //                     fontSize: 13 * sss,
+                      //                   ),
+                      //                 ),
+                      //                 dismissDirection: DismissDirection.down,
+                      //               ),
+                      //             );
+                      //           }
+                      //         },
+                      //         label: 'Try auto icon'.tr(),
+                      //       ),
+                      //       if (index == currentPageIndex)
+                      //         CustomMenuItem(
+                      //           scale: sss,
+                      //           onSelected: () async {
+                      //             if (!context.mounted) return;
+                      //             await setGroupOrModIcon(
+                      //               ref,
+                      //               ref
+                      //                   .read(modGroupDataProvider)[index]
+                      //                   .groupDir,
+                      //               ref
+                      //                   .read(modGroupDataProvider)[index]
+                      //                   .groupIcon,
+                      //               fromClipboard: true,
+                      //               isGroup: true,
+                      //               modDir: null,
+                      //             );
+                      //           },
+                      //           label: 'Clipboard icon'.tr(),
+                      //         ),
+                      //       if (index == currentPageIndex)
+                      //         CustomMenuItem(
+                      //           scale: sss,
+                      //           onSelected: () async {
+                      //             if (!context.mounted) return;
+                      //             await setGroupOrModIcon(
+                      //               ref,
+                      //               ref
+                      //                   .read(modGroupDataProvider)[index]
+                      //                   .groupDir,
+                      //               ref
+                      //                   .read(modGroupDataProvider)[index]
+                      //                   .groupIcon,
+                      //               fromClipboard: false,
+                      //               isGroup: true,
+                      //               modDir: null,
+                      //             );
+                      //           },
+                      //           label: 'Custom icon'.tr(),
+                      //         ),
+                      //       if (index == currentPageIndex)
+                      //         CustomMenuItem(
+                      //           scale: sss,
+                      //           onSelected: () async {
+                      //             if (!context.mounted) return;
+                      //             await unsetGroupOrModIcon(
+                      //               ref,
+                      //               ref
+                      //                   .read(modGroupDataProvider)[index]
+                      //                   .groupDir,
+                      //               ref
+                      //                   .read(modGroupDataProvider)[index]
+                      //                   .groupIcon,
+                      //             );
+                      //           },
+                      //           label: 'Remove icon'.tr(),
+                      //         ),
+                      //     ],
+                      //     scale: sss,
+                      //     label: 'Group icon'.tr(),
+                      //   ),
+                      // if (index == currentPageIndex)
+                      //   CustomMenuItem(
+                      //     scale: sss,
+                      //     onSelected: () {
+                      //       if (!context.mounted) return;
+                      //       openFileExplorerToSpecifiedPath(
+                      //         ref.read(modGroupDataProvider)[index].groupDir.path,
+                      //       );
+                      //     },
+                      //     label: 'Open in File Explorer'.tr(),
+                      //   ),
+                      // if (index == currentPageIndex)
+                      //   CustomMenuItem(
+                      //     scale: sss,
+                      //     onSelected: () {
+                      //       if (!context.mounted) return;
+                      //       ref.read(alertDialogShownProvider.notifier).state =
+                      //           true;
+                      //       showDialog(
+                      //         barrierDismissible: false,
+                      //         context: context,
+                      //         builder:
+                      //             (context) => RemoveModGroupDialog(
+                      //               name: _groupNameTextFieldController.text,
+                      //               validModsPath: ref.read(validModsPath)!,
+                      //               modOrGroupDir:
+                      //                   ref
+                      //                       .read(modGroupDataProvider)[index]
+                      //                       .groupDir,
+                      //               isGroup: true,
+                      //             ),
+                      //       );
+                      //     },
+                      //     label: 'Remove group'.tr(),
+                      //   ),
+                    ],
+                    child: Tooltip(
+                      message: p.basename(
+                        ref.read(modGroupDataProvider)[e.key].groupName,
+                      ),
+                      waitDuration: Duration(milliseconds: 500),
+                      child: GroupContainer(index: e.key, currentIndex: e.key),
+                    ),
+                  ),
+                );
+              }).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+class ModAreaGrid extends ConsumerStatefulWidget {
+  final ModGroupData currentGroupData;
+  const ModAreaGrid({super.key, required this.currentGroupData});
+
+  @override
+  ConsumerState<ModAreaGrid> createState() => _ModAreaGridState();
+}
+
+class _ModAreaGridState extends ConsumerState<ModAreaGrid> {
+  @override
+  Widget build(BuildContext context) {
+    double sss = ref.watch(zoomScaleProvider);
+    return ScrollConfiguration(
+      behavior: ScrollConfiguration.of(context).copyWith(
+        dragDevices: {
+          PointerDeviceKind.touch,
+          PointerDeviceKind.mouse,
+          PointerDeviceKind.trackpad,
+        },
+        scrollbars: false,
+      ),
+      child: SingleChildScrollView(
+        child: Wrap(
+          spacing: 15 * sss,
+          runSpacing: 15 * sss,
+          children:
+              widget.currentGroupData.modsInGroup.asMap().entries.map((
+                modData,
+              ) {
+                return ModContainer(
+                  itemHeight: 217.8 * sss,
+                  isCentered: true,
+                  onSelected: () async {
+                    simulateKeySelectMod(
+                      widget.currentGroupData.realIndex,
+                      widget
+                          .currentGroupData
+                          .modsInGroup[modData.key]
+                          .realIndex,
+                    );
+                    setSelectedModIndex(
+                      ref,
+                      widget
+                          .currentGroupData
+                          .modsInGroup[modData.key]
+                          .realIndex,
+                      widget.currentGroupData.groupDir,
+                    );
+                  },
+                  onTap: () {},
+                  index: modData.key,
+                  isSelected:
+                      widget.currentGroupData.previousSelectedModOnGroup ==
+                      widget
+                          .currentGroupData
+                          .modsInGroup[modData.key]
+                          .realIndex,
+                  currentGroupData: widget.currentGroupData,
+                );
+              }).toList(),
         ),
       ),
     );
