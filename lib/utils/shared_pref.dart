@@ -204,7 +204,7 @@ class SharedPrefUtils {
     if (result == null) {
       return 1;
     } else {
-      return result.clamp(0.85, 1.5);
+      return result.clamp(0.85, 2.0);
     }
   }
 

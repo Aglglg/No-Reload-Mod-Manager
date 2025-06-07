@@ -258,7 +258,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           label:
                               "${ref.read(zoomScaleProvider).toStringAsFixed(2)}x",
                           activeColor: Colors.blue,
-                          divisions: 13,
+                          divisions: 23,
                           value: sss,
                           onChangeEnd: (value) {
                             SharedPrefUtils().setOverallScale(value);
@@ -275,7 +275,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                             );
                           },
                           min: 0.85,
-                          max: 1.5,
+                          max: 2.0,
                         ),
                       ),
                       Container(height: 10),
