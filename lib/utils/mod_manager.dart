@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
+import 'package:no_reload_mod_manager/utils/auto_group_icon.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/keypress_simulator_manager.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
@@ -45,7 +46,7 @@ Future<List<ModGroupData>> refreshModData(Directory managedDir) async {
       );
     }),
   );
-
+  results.sort((a, b) => a.groupName.compareTo(b.groupName));
   return results;
 }
 
@@ -64,7 +65,7 @@ Future<List<(Directory, int)>> getGroupFolders(
         if (entity is Directory) {
           final folderName = p.basename(entity.path);
           final match = RegExp(
-            r'^group_([1-9]|[1-3][0-9]|4[0-8])$',
+            r'^group_([1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)$',
             caseSensitive: true,
           ).firstMatch(folderName);
 
@@ -91,7 +92,7 @@ Future<List<(Directory, int)>> getGroupFolders(
 Future<int?> addGroup(WidgetRef ref, String managedPath) async {
   String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
   DynamicDirectoryWatcher.stop();
-  for (int i = 1; i <= 48; i++) {
+  for (int i = 1; i <= 500; i++) {
     String folderName = 'group_$i';
     Directory folder = Directory('$managedPath/$folderName');
 
@@ -389,6 +390,56 @@ Future<void> setGroupOrModIcon(
   }
 }
 
+Future<void> unsetGroupOrModIcon(
+  WidgetRef ref,
+  Directory groupDir,
+  Image? oldImage, {
+  Directory? modDir,
+}) async {
+  String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
+  DynamicDirectoryWatcher.stop();
+  oldImage?.image.evict();
+  if (modDir == null) {
+    Image imgResult = Image.file(
+      File(''),
+      cacheWidth: 108 * 2,
+      fit: BoxFit.cover,
+      errorBuilder:
+          (context, error, stackTrace) => Icon(
+            size: 35,
+            Icons.image_outlined,
+            color: const Color.fromARGB(127, 255, 255, 255),
+          ),
+    );
+    _updateGroupIconProvider(ref, groupDir, imgResult);
+    try {
+      File sourceFile = File(p.join(groupDir.path, "icon.png"));
+      await sourceFile.delete();
+    } catch (e) {}
+  } else {
+    Image imgResult = Image.file(
+      File(''),
+      cacheWidth: 108 * 2,
+      fit: BoxFit.cover,
+      errorBuilder:
+          (context, error, stackTrace) => Icon(
+            size: 35,
+            Icons.image_outlined,
+            color: const Color.fromARGB(127, 255, 255, 255),
+          ),
+    );
+    _updateModIconProvider(ref, groupDir, modDir, imgResult);
+    try {
+      File sourceFile = File(p.join(modDir.path, "icon.png"));
+      await sourceFile.delete();
+    } catch (e) {}
+  }
+
+  if (watchedPath != null) {
+    DynamicDirectoryWatcher.watch(watchedPath);
+  }
+}
+
 void _updateGroupIconProvider(
   WidgetRef ref,
   Directory groupDir,
@@ -466,11 +517,11 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
       }
     }
 
-    // Limit to only 40 mod directories
+    // Limit to only 500 mod directories
     List<Directory> limitedModDirs;
 
     if (limited) {
-      limitedModDirs = modDirs.take(40).toList();
+      limitedModDirs = modDirs.take(500).toList();
     } else {
       limitedModDirs = modDirs;
     }
@@ -1283,6 +1334,7 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
       _showClose = true;
       contents = operationLogs;
     });
+
     _scrollToBottom();
   }
 
@@ -1475,6 +1527,25 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
         contents = operationResults;
       });
       _scrollToBottom();
+      final groupFolders = await getGroupFolders(
+        p.join(widget.modsPath, ConstantVar.managedFolderName),
+      );
+
+      //Auto group Icon
+      final futures = <Future>[];
+
+      for (var group in groupFolders) {
+        final iconPath = p.join(group.$1.path, 'icon.png');
+        final iconFile = File(iconPath);
+
+        if (!await iconFile.exists()) {
+          if (!context.mounted) return;
+          futures.add(tryGetIcon(group.$1.path, ref.read(autoIconProvider)));
+        }
+      }
+
+      await Future.wait(futures);
+      //
     } else {
       setState(() {
         _showClose = true;

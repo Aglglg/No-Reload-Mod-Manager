@@ -81,8 +81,8 @@ class _ModsDropZoneState extends ConsumerState<ModsDropZone> {
         if (widget.checkForMaxMods != null &&
             widget.currentModsCountInGroup != null) {
           if (widget.checkForMaxMods == true) {
-            //Max actually 40, but 41, because index 0 is None mod
-            if (widget.currentModsCountInGroup! + droppedFolders.length > 41) {
+            //Max actually 500, but 501, because index 0 is None mod
+            if (widget.currentModsCountInGroup! + droppedFolders.length > 501) {
               showMaxMessage(
                 'Max mod info'.tr(
                   args: [

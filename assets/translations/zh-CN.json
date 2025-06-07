@@ -27,7 +27,7 @@
   "Right-click a mod and select Keybind.": "右键点击模组并选择『快速切换』，  \n或直接对模组按下 [R (键盘)] / [X (手柄)].",
   "Right-click and add group, then you can add mods.": "右键点击添加分组，即可加入模组.",
   "Drag & Drop mod folders here to add mods to this group (1 folder = 1 mod).": "将模组文件夹拖拽至此，即可加入此分组（1 个文件夹 = 1 个模组）.",
-  "Max group reached (48 Groups). Unable to add more group.": "已达最大分组数量（48 组），无法添加更多分组.",
+  "Max group reached (500 Groups). Unable to add more group.": "已达最大分组数量（500 组），无法添加更多分组.",
   "Rename": "重命名",
   "Try auto icon": "自动图标",
   "Clipboard icon": "剪贴板图标",

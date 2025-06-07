@@ -300,16 +300,7 @@ class _BackgroundState extends ConsumerState<Background> {
                                       .state = true,
                           label: 'Pin window'.tr(),
                         ),
-                    CustomMenuItem(
-                      scale: sss,
-                      onSelected: () async {
-                        ref.read(targetGameProvider.notifier).state =
-                            TargetGame.none;
-                        await windowManager.hide();
-                        DynamicDirectoryWatcher.stop();
-                      },
-                      label: 'Hide window'.tr(),
-                    ),
+
                     if (ref.watch(tabIndexProvider) == 0)
                       CustomMenuItem(
                         scale: sss,
@@ -332,6 +323,16 @@ class _BackgroundState extends ConsumerState<Background> {
                         } catch (e) {}
                       },
                       label: 'Tutorial'.tr(),
+                    ),
+                    CustomMenuItem(
+                      scale: sss,
+                      onSelected: () async {
+                        ref.read(targetGameProvider.notifier).state =
+                            TargetGame.none;
+                        await windowManager.hide();
+                        DynamicDirectoryWatcher.stop();
+                      },
+                      label: 'Hide window'.tr(),
                     ),
                   ],
                   child: MoveWindow(onDoubleTap: () {}),
@@ -999,6 +1000,9 @@ class _MainViewState extends ConsumerState<MainView>
 
   Future<void> toggleWindow() async {
     if (await windowManager.isVisible()) {
+      try {
+        FocusScope.of(context).unfocus();
+      } catch (e) {}
       if (!ref.read(alertDialogShownProvider)) {
         ref.read(targetGameProvider.notifier).state = TargetGame.none;
       }

@@ -63,10 +63,10 @@ This tool supports **mouse**, **keyboard**, and **gamepad (XInput only)** inputs
 3. Right-click on mods selection area and select **Add mod**.
 4. Now you can drag & drop mod folders. 1 folder = 1 mod.
 5. Press F10 to reload **if not automatically reloaded**.
-6. Max mods per group is **40 mods**. Max group is **48 groups.**
+6. Max mods per group is **500 mods**. Max group is **500 groups.**
 ### 🆕 How To Add Group/Mod directly via File Explorer
 1. Go to your **\_MANAGED\_** folder on your **Mods** folder.
-2. In there, you can create new folder, it is group folder. The naming format is **group_x** where x is 1-48. Make sure the naming format is exactly correct and in lower-case. **Example: group_1, group_14, group_48.**
+2. In there, you can create new folder, it is group folder. The naming format is **group_x** where x is 1-500. Make sure the naming format is exactly correct and in lower-case. **Example: group_1, group_14, group_48.**
 3. Go to group folder, you can paste your mods folder here. 1 folder = 1 mod.
 4. Open Mod Manager Window. Press **Update Mod Data**. This step is **very important**.
 5. Press F10 to reload **if not automatically reloaded**.

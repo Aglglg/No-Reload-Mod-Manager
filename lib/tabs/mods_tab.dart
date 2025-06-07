@@ -336,7 +336,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                           borderRadius: BorderRadius.circular(20),
                         ),
                         content: Text(
-                          'Max group reached (48 Groups). Unable to add more group.'
+                          'Max group reached (500 Groups). Unable to add more group.'
                               .tr(),
                           style: GoogleFonts.poppins(
                             color: Colors.yellow,
@@ -395,7 +395,7 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               content: Text(
-                                'Max group reached (48 Groups). Unable to add more group.'
+                                'Max group reached (500 Groups). Unable to add more group.'
                                     .tr(),
                                 style: GoogleFonts.poppins(
                                   color: Colors.yellow,
@@ -408,6 +408,11 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                         }
                       },
                       label: 'Add group'.tr(),
+                    ),
+                    CustomMenuItem.submenu(
+                      label: 'Sort by'.tr(),
+                      scale: sss,
+                      items: [],
                     ),
                     if (index == currentPageIndex)
                       CustomMenuItem(
@@ -518,6 +523,23 @@ class _GroupAreaState extends ConsumerState<GroupArea>
                                 );
                               },
                               label: 'Custom icon'.tr(),
+                            ),
+                          if (index == currentPageIndex)
+                            CustomMenuItem(
+                              scale: sss,
+                              onSelected: () {
+                                if (!context.mounted) return;
+                                unsetGroupOrModIcon(
+                                  ref,
+                                  ref
+                                      .read(modGroupDataProvider)[index]
+                                      .groupDir,
+                                  ref
+                                      .read(modGroupDataProvider)[index]
+                                      .groupIcon,
+                                );
+                              },
+                              label: 'Remove icon'.tr(),
                             ),
                         ],
                         scale: sss,
@@ -976,8 +998,10 @@ class _ModContainerState extends ConsumerState<ModContainer>
   }
 
   void getModName() {
-    _modNameTextFieldController.text =
-        widget.currentGroupData.modsInGroup[widget.index].modName;
+    try {
+      _modNameTextFieldController.text =
+          widget.currentGroupData.modsInGroup[widget.index].modName;
+    } catch (e) {}
   }
 
   Future<void> setCurrentModName() async {
@@ -1095,6 +1119,27 @@ class _ModContainerState extends ConsumerState<ModContainer>
                         );
                       },
                       label: 'Custom icon'.tr(),
+                    ),
+                  if (widget.index != 0)
+                    CustomMenuItem(
+                      scale: sss,
+                      onSelected: () async {
+                        if (!context.mounted) return;
+                        await unsetGroupOrModIcon(
+                          ref,
+                          widget.currentGroupData.groupDir,
+                          modDir:
+                              widget
+                                  .currentGroupData
+                                  .modsInGroup[widget.index]
+                                  .modDir,
+                          widget
+                              .currentGroupData
+                              .modsInGroup[widget.index]
+                              .modIcon,
+                        );
+                      },
+                      label: 'Remove icon'.tr(),
                     ),
                 ],
                 label: 'Mod icon'.tr(),
