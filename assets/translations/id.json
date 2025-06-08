@@ -145,5 +145,9 @@
   "Sort group by": "Urutan grup",
   "Name": "Nama",
   "Index": "Indeks",
-  "Remove icon": "Hapus ikon"
+  "Remove icon": "Hapus ikon",
+  "Layout": "Layout",
+  "Auto": "Otomatis",
+  "Carousel": "Carousel",
+  "Grid": "Grid"
 }

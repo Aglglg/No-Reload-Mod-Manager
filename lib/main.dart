@@ -296,6 +296,52 @@ class _BackgroundState extends ConsumerState<Background> {
                         },
                         label: 'Search'.tr(),
                       ),
+                    if (ref.watch(tabIndexProvider) == 1)
+                      CustomMenuItem.submenu(
+                        scale: sss,
+                        items: [
+                          CustomMenuItem(
+                            leftIcon: Icons.laptop_windows_outlined,
+                            rightIcon:
+                                ref.watch(layoutModeProvider) == 0
+                                    ? Icons.check
+                                    : null,
+                            label: 'Auto'.tr(),
+                            scale: sss,
+                            onSelected: () {
+                              SharedPrefUtils().setLayoutMode(0);
+                              ref.read(layoutModeProvider.notifier).state = 0;
+                            },
+                          ),
+                          CustomMenuItem(
+                            leftIcon: Icons.view_carousel_outlined,
+                            rightIcon:
+                                ref.watch(layoutModeProvider) == 1
+                                    ? Icons.check
+                                    : null,
+                            label: 'Carousel'.tr(),
+                            scale: sss,
+                            onSelected: () {
+                              SharedPrefUtils().setLayoutMode(1);
+                              ref.read(layoutModeProvider.notifier).state = 1;
+                            },
+                          ),
+                          CustomMenuItem(
+                            leftIcon: Icons.window_outlined,
+                            rightIcon:
+                                ref.watch(layoutModeProvider) == 2
+                                    ? Icons.check
+                                    : null,
+                            label: 'Grid'.tr(),
+                            scale: sss,
+                            onSelected: () {
+                              SharedPrefUtils().setLayoutMode(2);
+                              ref.read(layoutModeProvider.notifier).state = 2;
+                            },
+                          ),
+                        ],
+                        label: 'Layout'.tr(),
+                      ),
                     ref.watch(windowIsPinnedProvider)
                         ? CustomMenuItem(
                           scale: sss,
@@ -757,6 +803,8 @@ class _MainViewState extends ConsumerState<MainView>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       loadNetworkDatas();
+      ref.read(layoutModeProvider.notifier).state =
+          SharedPrefUtils().getLayoutMode();
     });
     ref.listenManual(targetGameProvider, checkToShowInfoMessage);
 

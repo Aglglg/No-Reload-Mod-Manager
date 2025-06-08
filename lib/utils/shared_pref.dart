@@ -238,6 +238,19 @@ class SharedPrefUtils {
     }
   }
 
+  Future<void> setLayoutMode(int layoutMode) async {
+    await _prefs?.setInt(keyLayoutMode, layoutMode);
+  }
+
+  int getLayoutMode() {
+    int? result = _prefs?.getInt(keyLayoutMode);
+    if (result == null) {
+      return 0;
+    } else {
+      return result.clamp(0, 2).toInt();
+    }
+  }
+
   static const String keyTargetProcessWuwa = 'targetProcessWuwa';
   static const String keyTargetProcessGenshin = 'targetProcessGenshin';
   static const String keyTargetProcessHsr = 'targetProcessHsr';
@@ -265,6 +278,8 @@ class SharedPrefUtils {
   static const String keyBgTransparency = "backgroundTransparency";
 
   static const String keySortGroupMethod = "sortGroup";
+
+  static const String keyLayoutMode = "layoutMode";
 
   String getUserProfilePath() {
     if (Platform.isWindows) {

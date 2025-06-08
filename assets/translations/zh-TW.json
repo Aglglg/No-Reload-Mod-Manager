@@ -145,5 +145,9 @@
   "Sort group by": "群組排序方式",
   "Name": "名稱",
   "Index": "索引",
-  "Remove icon": "移除圖示"
+  "Remove icon": "移除圖示",
+  "Layout": "佈局",
+  "Auto": "自動",
+  "Carousel": "輪播",
+  "Grid": "網格"
 }

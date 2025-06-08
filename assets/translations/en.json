@@ -145,5 +145,9 @@
   "Sort group by": "Sort group by",
   "Name": "Name",
   "Index": "Index",
-  "Remove icon": "Remove icon"
+  "Remove icon": "Remove icon",
+  "Layout": "Layout",
+  "Auto": "Auto",
+  "Carousel": "Carousel",
+  "Grid": "Grid"
 }
