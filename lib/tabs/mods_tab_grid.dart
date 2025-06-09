@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'dart:ui';
 
 import 'package:carousel_slider/carousel_slider.dart';
@@ -392,16 +391,14 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
   }
 
   double getViewportFraction() {
-    double zoomScale = ref.watch(zoomScaleProvider);
+    double sss = ref.watch(zoomScaleProvider);
     if (windowWidth <= 0) {
-      return 0.25 * remap(zoomScale, 0.85, 2.0, 1.3, 1.74) * zoomScale;
+      return 0.5;
     }
 
-    final k =
-        1579.37 * 1.13 * remap(zoomScale, 0.85, 2.0, 1.3, 1.74) * zoomScale;
-    const exponent = 1.3219 * 1.13;
-    double result = k / pow(windowWidth, exponent);
-    return result;
+    // Calculate how much of the viewport each card should occupy
+    final viewportFraction = ((65 * sss) + (30 * sss)) / windowWidth;
+    return viewportFraction;
   }
 
   @override
@@ -410,6 +407,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
     if (mounted) {
       setState(() {
         windowWidth = size.width;
+        print(windowWidth);
       });
     }
   }
