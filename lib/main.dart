@@ -9,6 +9,7 @@ import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
 import 'package:no_reload_mod_manager/utils/get_cloud_data.dart';
 import 'package:no_reload_mod_manager/utils/hotkey_handler.dart';
+import 'package:no_reload_mod_manager/utils/keypress_simulate.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/mod_navigator.dart';
@@ -18,7 +19,7 @@ import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:path/path.dart' as p;
 
-import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:bitsdojo_window/bitsdojo_window.dart' as bitsdojo;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:no_reload_mod_manager/tabs/keybinds_tab.dart';
 import 'package:no_reload_mod_manager/tabs/mods_tab.dart';
@@ -28,6 +29,7 @@ import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:system_tray/system_tray.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:win32/win32.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:animated_segmented_tab_control/animated_segmented_tab_control.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
@@ -112,14 +114,14 @@ Future<void> setupWindow(List<String> args) async {
   await autoUpdater.setFeedURL(feedURL);
   await autoUpdater.setScheduledCheckInterval(0);
 
-  doWhenWindowReady(() async {
+  bitsdojo.doWhenWindowReady(() async {
     final initialSize = Size(
       750 * SharedPrefUtils().getOverallScale(),
       370 * SharedPrefUtils().getOverallScale(),
     );
-    appWindow.minSize = initialSize;
-    appWindow.size = initialSize;
-    appWindow.alignment = Alignment.center;
+    bitsdojo.appWindow.minSize = initialSize;
+    bitsdojo.appWindow.size = initialSize;
+    bitsdojo.appWindow.alignment = Alignment.center;
 
     WindowOptions windowOptions = WindowOptions(
       backgroundColor: Colors.transparent,
@@ -150,6 +152,9 @@ class _MyAppState extends ConsumerState<MyApp> {
   void initState() {
     super.initState();
     ref.listenManual(targetGameProvider, (previous, next) {
+      //Fix stuck on windows menu when press Alt
+      simulateKeyDown(VK_ESCAPE);
+      simulateKeyUp(VK_ESCAPE);
       focusNode.requestFocus();
     });
   }
@@ -163,6 +168,15 @@ class _MyAppState extends ConsumerState<MyApp> {
             ref.read(popupMenuShownProvider)) {
         } else {
           ModNavigationListener.notifyListeners(value, null);
+        }
+
+        //Fix stuck on windows menu when press Alt
+        if ((value.physicalKey == PhysicalKeyboardKey.altLeft ||
+                value.physicalKey == PhysicalKeyboardKey.altRight) &&
+            value is KeyUpEvent) {
+          simulateKeyDown(VK_ESCAPE);
+          simulateKeyUp(VK_ESCAPE);
+          focusNode.requestFocus();
         }
       },
       focusNode: focusNode,
@@ -396,7 +410,7 @@ class _BackgroundState extends ConsumerState<Background> {
                       label: 'Hide window'.tr(),
                     ),
                   ],
-                  child: MoveWindow(onDoubleTap: () {}),
+                  child: bitsdojo.MoveWindow(onDoubleTap: () {}),
                 ),
                 MainView(),
               ],
@@ -743,7 +757,7 @@ class _MainViewState extends ConsumerState<MainView>
       MenuSeparator(),
       MenuItemLabel(
         label: 'Hide'.tr(),
-        onClicked: (menuItem) => appWindow.hide(),
+        onClicked: (menuItem) => bitsdojo.appWindow.hide(),
       ),
       MenuSeparator(),
       MenuItemLabel(label: 'Exit'.tr(), onClicked: (menuItem) => exit(0)),
