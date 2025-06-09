@@ -1,4 +1,5 @@
 //Sorry the code is messy
+import 'dart:convert';
 import 'dart:io';
 import 'package:auto_updater/auto_updater.dart';
 import 'package:flutter/services.dart';
@@ -1035,6 +1036,22 @@ class _MainViewState extends ConsumerState<MainView>
             "Mods path is correct, but some requirements are missing.".tr();
       }
 
+      //Check for ini configuration version
+      if (existAndValid) {
+        String managedPath = p.join(modsPath, ConstantVar.managedFolderName);
+
+        String managerGroupPath = p.join(
+          managedPath,
+          ConstantVar.managerGroupFileName,
+        );
+        final firstLine = await readFirstLine(managerGroupPath);
+        if (firstLine?.trim() != ";revision_2") {
+          existAndValid = false;
+          notReadyReason =
+              "Everything is correct, but config files are outdated.".tr();
+        }
+      }
+
       if (existAndValid) {
         //Load mod & group datas
         final datas = await refreshModData(Directory(managedPath));
@@ -1139,6 +1156,27 @@ class _MainViewState extends ConsumerState<MainView>
       }
       await windowManager.hide();
       DynamicDirectoryWatcher.stop();
+    }
+  }
+
+  Future<String?> readFirstLine(String filePath) async {
+    final file = File(filePath);
+
+    if (!await file.exists()) return null;
+
+    // Open file as a stream of bytes
+    final stream = file.openRead();
+
+    // Decode bytes to UTF-8 text, split into lines
+    final lines = stream
+        .transform(utf8.decoder)
+        .transform(const LineSplitter());
+
+    // Return the first line
+    try {
+      return await lines.first;
+    } catch (_) {
+      return null; // File might be empty
     }
   }
 

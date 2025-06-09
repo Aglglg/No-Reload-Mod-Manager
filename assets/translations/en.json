@@ -149,5 +149,6 @@
   "Layout": "Layout",
   "Auto": "Auto",
   "Carousel": "Carousel",
-  "Grid": "Grid"
+  "Grid": "Grid",
+  "Everything is correct, but config files are outdated.": "Everything is correct, but config files are outdated."
 }

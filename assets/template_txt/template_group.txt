@@ -1,4 +1,4 @@
-;vx.x.x
+;revision_2
 ;dynamic
 ;e.g: group_1
 namespace = modmanageragl\{group_x}

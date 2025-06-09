@@ -149,5 +149,6 @@
   "Layout": "Layout",
   "Auto": "Otomatis",
   "Carousel": "Carousel",
-  "Grid": "Grid"
+  "Grid": "Grid",
+  "Everything is correct, but config files are outdated.": "Semuanya benar, tapi file konfigurasi masih versi lama."
 }
