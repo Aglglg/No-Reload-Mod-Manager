@@ -651,6 +651,12 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                       index: index,
                       currentIndex: currentPageIndex,
                       size: 93.6,
+                      onTap:
+                          () => _carouselSliderGroupController.animateToPage(
+                            index,
+                            duration: Duration(milliseconds: 250),
+                            curve: Curves.easeOut,
+                          ),
                     ),
                   ),
                 );
@@ -786,14 +792,15 @@ class _ModAreaState extends ConsumerState<ModAreaCarousel>
   }
 
   double getViewportFraction() {
-    double zoomScale = ref.watch(zoomScaleProvider);
+    double sss = ref.watch(zoomScaleProvider);
     if (windowWidth <= 0) {
-      return 0.25 * remap(zoomScale, 0.85, 2.0, 1.3, 1.74) * zoomScale;
+      return 0.25 * remap(sss, 0.85, 2.0, 1.3, 1.74) * sss;
     }
 
-    final k = 1579.37 * remap(zoomScale, 0.85, 2.0, 1.3, 1.74) * zoomScale;
+    final k = 1579.37 * remap(sss, 0.85, 2.0, 1.3, 1.74) * sss;
     const exponent = 1.3219;
     double result = k / pow(windowWidth, exponent);
+    result = result.clamp(0.09767833948818701 * sss, 1.0);
     return result;
   }
 

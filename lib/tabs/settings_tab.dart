@@ -672,57 +672,6 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Column(
-                            children: [
-                              Text(
-                                'Group Navigation'.tr(),
-                                style: GoogleFonts.poppins(
-                                  color: const Color.fromARGB(
-                                    200,
-                                    255,
-                                    255,
-                                    255,
-                                  ),
-                                  fontSize: 11 * sss,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              Column(
-                                children: [
-                                  Row(
-                                    children: [
-                                      Image.asset(
-                                        'assets/keys_icon/keyW_icon.png',
-                                        height: 40 * sss,
-                                      ),
-                                      Image.asset(
-                                        'assets/keys_icon/keyS_icon.png',
-                                        height: 40 * sss,
-                                      ),
-                                    ],
-                                  ),
-                                  Row(
-                                    children: [
-                                      Transform.rotate(
-                                        angle: pi / 2,
-                                        child: Image.asset(
-                                          'assets/keys_icon/dpad_icon.png',
-                                          height: 40 * sss,
-                                        ),
-                                      ),
-                                      Transform.rotate(
-                                        angle: pi / -2,
-                                        child: Image.asset(
-                                          'assets/keys_icon/dpad_icon.png',
-                                          height: 40 * sss,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
                           Container(width: 20 * sss),
                           Column(
                             children: [
@@ -744,7 +693,15 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                   Row(
                                     children: [
                                       Image.asset(
+                                        'assets/keys_icon/keyW_icon.png',
+                                        height: 40 * sss,
+                                      ),
+                                      Image.asset(
                                         'assets/keys_icon/keyA_icon.png',
+                                        height: 40 * sss,
+                                      ),
+                                      Image.asset(
+                                        'assets/keys_icon/keyS_icon.png',
                                         height: 40 * sss,
                                       ),
                                       Image.asset(
@@ -755,10 +712,25 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                   ),
                                   Row(
                                     children: [
+                                      Transform.rotate(
+                                        angle: pi / 2,
+                                        child: Image.asset(
+                                          'assets/keys_icon/dpad_icon.png',
+                                          height: 40 * sss,
+                                        ),
+                                      ),
                                       Image.asset(
                                         'assets/keys_icon/dpad_icon.png',
                                         height: 40 * sss,
                                       ),
+                                      Transform.rotate(
+                                        angle: pi / -2,
+                                        child: Image.asset(
+                                          'assets/keys_icon/dpad_icon.png',
+                                          height: 40 * sss,
+                                        ),
+                                      ),
+
                                       Transform.rotate(
                                         angle: pi,
                                         child: Image.asset(

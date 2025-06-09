@@ -150,15 +150,6 @@ class _MyAppState extends ConsumerState<MyApp> {
   final FocusNode focusNode = FocusNode();
 
   @override
-  void initState() {
-    super.initState();
-    ref.listenManual(targetGameProvider, (previous, next) {
-      //Fix stuck on windows menu when press Alt
-      focusNode.requestFocus();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     return KeyboardListener(
       onKeyEvent: (value) {

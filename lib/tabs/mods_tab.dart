@@ -80,11 +80,13 @@ class GroupContainer extends ConsumerStatefulWidget {
   final int currentIndex;
   final double size;
   final Color? selectedColor;
+  final Function() onTap;
   const GroupContainer({
     super.key,
     required this.index,
     required this.currentIndex,
     required this.size,
+    required this.onTap,
     this.selectedColor,
   });
 
@@ -106,32 +108,35 @@ class _GroupContainerState extends ConsumerState<GroupContainer> {
           (_) => setState(() {
             isHovering = false;
           }),
-      child: Container(
-        height: widget.size * sss,
-        width: widget.size * sss,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            width: 3 * sss,
-            color:
-                widget.selectedColor != null
-                    ? widget.selectedColor!
-                    : isHovering && widget.index == widget.currentIndex
-                    ? Colors.white
-                    : const Color.fromARGB(127, 255, 255, 255),
-            strokeAlign: BorderSide.strokeAlignInside,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Container(
+          height: widget.size * sss,
+          width: widget.size * sss,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              width: 3 * sss,
+              color:
+                  widget.selectedColor != null
+                      ? widget.selectedColor!
+                      : isHovering
+                      ? Colors.white
+                      : const Color.fromARGB(127, 255, 255, 255),
+              strokeAlign: BorderSide.strokeAlignInside,
+            ),
+            color: Colors.transparent,
           ),
-          color: Colors.transparent,
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(999),
-          child: RefreshableLocalImage(
-            imageWidget:
-                ref.watch(modGroupDataProvider)[widget.index].groupIcon,
-            errorWidget: Icon(
-              size: 35 * sss,
-              Icons.image_outlined,
-              color: const Color.fromARGB(127, 255, 255, 255),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: RefreshableLocalImage(
+              imageWidget:
+                  ref.watch(modGroupDataProvider)[widget.index].groupIcon,
+              errorWidget: Icon(
+                size: 35 * sss,
+                Icons.image_outlined,
+                color: const Color.fromARGB(127, 255, 255, 255),
+              ),
             ),
           ),
         ),
