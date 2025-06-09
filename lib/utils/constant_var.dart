@@ -59,4 +59,4 @@ enum TargetGame {
 
 enum HotkeyKeyboard { altW, altS, altA, altD }
 
-enum HotkeyGamepad { none, lsB, lsA, lsRb }
+enum HotkeyGamepad { none, lsB, lsA, lsRb, selectStart }

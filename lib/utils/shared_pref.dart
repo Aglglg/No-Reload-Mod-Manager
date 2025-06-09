@@ -57,6 +57,8 @@ class SharedPrefUtils {
           return HotkeyGamepad.lsA;
         case "lsRb":
           return HotkeyGamepad.lsRb;
+        case "selectStart":
+          return HotkeyGamepad.selectStart;
         default:
           return HotkeyGamepad.none;
       }

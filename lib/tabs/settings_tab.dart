@@ -542,6 +542,19 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                                 ),
                                               ),
                                             ),
+                                            DropdownMenuItem(
+                                              value: HotkeyGamepad.selectStart,
+                                              child: Center(
+                                                child: Text(
+                                                  "Select+Start",
+                                                  style: GoogleFonts.poppins(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 12 * sss,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
                                           ],
                                           onChanged: (value) {
                                             if (value != null) {

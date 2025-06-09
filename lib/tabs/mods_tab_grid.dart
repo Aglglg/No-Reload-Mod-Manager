@@ -396,7 +396,6 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
       return 0.5;
     }
 
-    // Calculate how much of the viewport each card should occupy
     final viewportFraction = ((65 * sss) + (30 * sss)) / windowWidth;
     return viewportFraction;
   }
@@ -407,7 +406,6 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
     if (mounted) {
       setState(() {
         windowWidth = size.width;
-        print(windowWidth);
       });
     }
   }

@@ -456,6 +456,11 @@ class _MainViewState extends ConsumerState<MainView>
             toggleWindow();
           }
         },
+        {ControllerButton.BACK, ControllerButton.START}: () {
+          if (ref.read(hotkeyGamepadProvider) == HotkeyGamepad.selectStart) {
+            toggleWindow();
+          }
+        },
       },
     );
     controller.leftVibrationSpeed = 56535;
