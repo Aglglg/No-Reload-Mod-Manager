@@ -154,8 +154,6 @@ class _MyAppState extends ConsumerState<MyApp> {
     super.initState();
     ref.listenManual(targetGameProvider, (previous, next) {
       //Fix stuck on windows menu when press Alt
-      simulateKeyDown(VK_ESCAPE);
-      simulateKeyUp(VK_ESCAPE);
       focusNode.requestFocus();
     });
   }

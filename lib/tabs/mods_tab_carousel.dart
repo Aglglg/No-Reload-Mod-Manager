@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:carousel_slider/carousel_controller.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -789,10 +788,10 @@ class _ModAreaState extends ConsumerState<ModAreaCarousel>
   double getViewportFraction() {
     double zoomScale = ref.watch(zoomScaleProvider);
     if (windowWidth <= 0) {
-      return 0.25 * remap(zoomScale, 0.85, 1.5, 1.3, 1.58) * zoomScale;
+      return 0.25 * remap(zoomScale, 0.85, 2.0, 1.3, 1.74) * zoomScale;
     }
 
-    final k = 1579.37 * remap(zoomScale, 0.85, 1.5, 1.3, 1.58) * zoomScale;
+    final k = 1579.37 * remap(zoomScale, 0.85, 2.0, 1.3, 1.74) * zoomScale;
     const exponent = 1.3219;
     double result = k / pow(windowWidth, exponent);
     return result;
