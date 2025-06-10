@@ -91,4 +91,9 @@ final searchBarMode = StateProvider<int>((ref) => 0);
 
 final sortGroupMethod = StateProvider<int>((ref) => 0);
 
-final layoutModeProvider = StateProvider<int>((ref) => 0);
+final layoutModeProvider = StateProvider<int>((ref) {
+  SharedPrefUtils().init();
+  return SharedPrefUtils().getLayoutMode();
+});
+
+final isCarouselProvider = StateProvider((ref) => true);

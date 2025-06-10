@@ -67,23 +67,6 @@ class _TabModsGridState extends ConsumerState<TabModsGrid>
     super.dispose();
   }
 
-  String getSearchBarHint() {
-    int mode = ref.watch(searchBarMode);
-    switch (mode) {
-      case 0:
-        return 'Search mod/group by name or real folder name'.tr();
-      case 1:
-        return 'Search group by name or real folder name'.tr();
-      case 2:
-        return 'Search mod by name or real folder name'.tr();
-      case 3:
-        return 'Search mod in the current group by name or real folder name'
-            .tr();
-      default:
-        return 'Search mod/group by name or real folder name'.tr();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
@@ -176,13 +159,7 @@ class _TabModsGridState extends ConsumerState<TabModsGrid>
                   focusNode: searchFocus,
                   controller: searchController,
                   onChanged: (value) {
-                    if (value == ' ') {
-                      ref.read(searchBarMode.notifier).state =
-                          (ref.read(searchBarMode) + 1) %
-                          4; //4 modes: all, group, mod, ingroup
-                      searchController.text = '';
-                      return;
-                    }
+                    ref.read(searchBarMode.notifier).state = 1;
                     if (value.isNotEmpty) goToSearchResult(ref, value);
                   },
                   onSubmitted:
@@ -194,7 +171,8 @@ class _TabModsGridState extends ConsumerState<TabModsGrid>
                           ref.read(searchBarShownProvider.notifier).state =
                               false,
                   leading: Icon(Icons.search),
-                  hintText: getSearchBarHint(),
+                  hintText:
+                      'Search group by name or real folder name only'.tr(),
                   hintStyle: WidgetStatePropertyAll(
                     GoogleFonts.poppins(fontSize: 13 * sss),
                   ),
@@ -233,68 +211,205 @@ class ModAreaGrid extends ConsumerStatefulWidget {
   ConsumerState<ModAreaGrid> createState() => _ModAreaGridState();
 }
 
-class _ModAreaGridState extends ConsumerState<ModAreaGrid> {
+class _ModAreaGridState extends ConsumerState<ModAreaGrid>
+    with ModNavigationListener {
+  late List<GlobalKey> _itemKeys;
+  int indexOfActiveGridMod = -1;
+  double widgetWidth = 0;
+  bool mouseWasMoved = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToItem(widget.currentGroupData.previousSelectedModOnGroup);
+    });
+    ref.listenManual(currentGroupIndexProvider, (previous, next) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToItem(widget.currentGroupData.previousSelectedModOnGroup);
+      });
+    });
+    ModNavigationListener.addListener(this);
+  }
+
+  @override
+  void dispose() {
+    ModNavigationListener.removeListener(this);
+    super.dispose();
+  }
+
+  void _scrollToItem(int index) {
+    final context = _itemKeys[index].currentContext;
+    if (context != null) {
+      Scrollable.ensureVisible(
+        context,
+        duration: Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+        alignment: 0.5, // 0.0 = top, 1.0 = bottom
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     double sss = ref.watch(zoomScaleProvider);
-    return ScrollConfiguration(
-      behavior: ScrollConfiguration.of(context).copyWith(
-        dragDevices: {
-          PointerDeviceKind.touch,
-          PointerDeviceKind.mouse,
-          PointerDeviceKind.trackpad,
+    _itemKeys = List.generate(
+      widget.currentGroupData.modsInGroup.length,
+      (_) => GlobalKey(),
+    );
+    return MouseRegion(
+      onHover: (_) {
+        if (!mouseWasMoved) {
+          setState(() {
+            mouseWasMoved = true;
+          });
+        }
+      },
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          widgetWidth = constraints.maxWidth;
+          return ScrollConfiguration(
+            behavior: ScrollConfiguration.of(context).copyWith(
+              dragDevices: {
+                PointerDeviceKind.touch,
+                PointerDeviceKind.mouse,
+                PointerDeviceKind.trackpad,
+              },
+              scrollbars: false,
+            ),
+            child: SingleChildScrollView(
+              child: Wrap(
+                spacing: 8 * sss,
+                runSpacing: 15 * sss,
+                children:
+                    widget.currentGroupData.modsInGroup.asMap().entries.map((
+                      modData,
+                    ) {
+                      return MouseRegion(
+                        onEnter: (_) {
+                          if (!mouseWasMoved) return;
+                          if (ref.read(popupMenuShownProvider) ||
+                              isTextInputFocused()) {
+                            return;
+                          }
+                          setState(() {
+                            indexOfActiveGridMod = modData.key;
+                          });
+                        },
+                        onExit: (_) {
+                          if (!mouseWasMoved) return;
+                          if (ref.read(popupMenuShownProvider) ||
+                              isTextInputFocused()) {
+                            return;
+                          }
+                          setState(() {
+                            indexOfActiveGridMod = -1;
+                          });
+                        },
+                        child: ModContainer(
+                          key: _itemKeys[modData.key],
+                          itemHeight: 217.8 * sss,
+                          isCentered: false,
+                          isActiveInGrid: modData.key == indexOfActiveGridMod,
+                          isGrid: true,
+                          onSelected: () async {
+                            _scrollToItem(modData.key);
+                            simulateKeySelectMod(
+                              widget.currentGroupData.realIndex,
+                              widget
+                                  .currentGroupData
+                                  .modsInGroup[modData.key]
+                                  .realIndex,
+                            );
+                            setSelectedModIndex(
+                              ref,
+                              widget
+                                  .currentGroupData
+                                  .modsInGroup[modData.key]
+                                  .realIndex,
+                              widget.currentGroupData.groupDir,
+                            );
+                          },
+                          onTap: () {},
+                          index: modData.key,
+                          isSelected:
+                              widget
+                                  .currentGroupData
+                                  .previousSelectedModOnGroup ==
+                              widget
+                                  .currentGroupData
+                                  .modsInGroup[modData.key]
+                                  .realIndex,
+                          currentGroupData: widget.currentGroupData,
+                        ),
+                      );
+                    }).toList(),
+              ),
+            ),
+          );
         },
-        scrollbars: false,
-      ),
-      child: SingleChildScrollView(
-        child: Wrap(
-          spacing: 8 * sss,
-          runSpacing: 15 * sss,
-          children:
-              widget.currentGroupData.modsInGroup.asMap().entries.map((
-                modData,
-              ) {
-                return ModContainer(
-                  itemHeight: 217.8 * sss,
-                  isCentered: true,
-                  onSelected: () async {
-                    simulateKeySelectMod(
-                      widget.currentGroupData.realIndex,
-                      widget
-                          .currentGroupData
-                          .modsInGroup[modData.key]
-                          .realIndex,
-                    );
-                    setSelectedModIndex(
-                      ref,
-                      widget
-                          .currentGroupData
-                          .modsInGroup[modData.key]
-                          .realIndex,
-                      widget.currentGroupData.groupDir,
-                    );
-                  },
-                  onTap: () {},
-                  index: modData.key,
-                  isSelected:
-                      widget.currentGroupData.previousSelectedModOnGroup ==
-                      widget
-                          .currentGroupData
-                          .modsInGroup[modData.key]
-                          .realIndex,
-                  currentGroupData: widget.currentGroupData,
-                );
-              }).toList(),
-        ),
       ),
     );
   }
-}
 
-/////////
-/////////
-///
-///
+  @override
+  void onKeyEvent(KeyEvent value, Controller? controller) {
+    double sss = ref.read(zoomScaleProvider);
+    int itemsPerLine =
+        ((widgetWidth + (8 * sss)) / ((156.816 * sss) + (8 * sss))).floor();
+    if (mouseWasMoved) {
+      setState(() {
+        mouseWasMoved = false;
+      });
+    }
+
+    if (ref.read(tabIndexProvider) == 1) {
+      if (value.physicalKey == PhysicalKeyboardKey.keyD) {
+        setState(() {
+          if (indexOfActiveGridMod >=
+              widget.currentGroupData.modsInGroup.length - 1) {
+            indexOfActiveGridMod = 0;
+          } else {
+            indexOfActiveGridMod = indexOfActiveGridMod + 1;
+          }
+        });
+        _scrollToItem(indexOfActiveGridMod);
+      } else if (value.physicalKey == PhysicalKeyboardKey.keyA) {
+        setState(() {
+          if (indexOfActiveGridMod <= 0) {
+            indexOfActiveGridMod =
+                widget.currentGroupData.modsInGroup.length - 1;
+          } else {
+            indexOfActiveGridMod = indexOfActiveGridMod - 1;
+          }
+        });
+        _scrollToItem(indexOfActiveGridMod);
+      } else if (value.physicalKey == PhysicalKeyboardKey.keyW) {
+        int targetIndex = indexOfActiveGridMod - itemsPerLine;
+        if (targetIndex < 0) {
+          targetIndex = widget.currentGroupData.modsInGroup.length - 1;
+        }
+        setState(() {
+          indexOfActiveGridMod = targetIndex;
+        });
+        _scrollToItem(indexOfActiveGridMod);
+      } else if (value.physicalKey == PhysicalKeyboardKey.keyS) {
+        int targetIndex = indexOfActiveGridMod + itemsPerLine;
+        if (targetIndex > widget.currentGroupData.modsInGroup.length - 1) {
+          targetIndex = widget.currentGroupData.modsInGroup.length - 1;
+        }
+        if (indexOfActiveGridMod ==
+            widget.currentGroupData.modsInGroup.length - 1) {
+          targetIndex = 0;
+        }
+        setState(() {
+          indexOfActiveGridMod = targetIndex;
+        });
+        _scrollToItem(indexOfActiveGridMod);
+      }
+    }
+  }
+}
 
 class GroupAreaGrid extends ConsumerStatefulWidget {
   final int initialGroupIndex;
@@ -894,12 +1009,12 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
   @override
   void onKeyEvent(KeyEvent value, Controller? controller) {
     if (ref.read(tabIndexProvider) == 1) {
-      if (value.physicalKey == PhysicalKeyboardKey.keyD) {
+      if (value.physicalKey == PhysicalKeyboardKey.keyE) {
         _carouselSliderGroupController.nextPage(
           duration: Duration(milliseconds: 150),
           curve: Curves.easeOut,
         );
-      } else if (value.physicalKey == PhysicalKeyboardKey.keyA) {
+      } else if (value.physicalKey == PhysicalKeyboardKey.keyQ) {
         _carouselSliderGroupController.previousPage(
           duration: Duration(milliseconds: 150),
           curve: Curves.easeOut,

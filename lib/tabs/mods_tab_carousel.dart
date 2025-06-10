@@ -905,6 +905,8 @@ class _ModAreaState extends ConsumerState<ModAreaCarousel>
                 currentGroupData: widget.currentGroupData,
                 itemHeight: itemHeight,
                 isCentered: isCentered,
+                isGrid: false,
+                isActiveInGrid: false,
                 onSelected: () async {
                   simulateKeySelectMod(
                     widget.currentGroupData.realIndex,

@@ -150,5 +150,6 @@
   "Auto": "Auto",
   "Carousel": "Carousel",
   "Grid": "Grid",
-  "Everything is correct, but config files are outdated.": "Everything is correct, but config files are outdated."
+  "Everything is correct, but config files are outdated.": "Everything is correct, but config files are outdated.",
+  "Search group by name or real folder name only": "Search group"
 }

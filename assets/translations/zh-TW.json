@@ -150,5 +150,6 @@
   "Auto": "自動",
   "Carousel": "輪播",
   "Grid": "網格",
-  "Everything is correct, but config files are outdated.": "一切正常，但設定檔已過時."
+  "Everything is correct, but config files are outdated.": "一切正常，但設定檔已過時.",
+  "Search group by name or real folder name only": "搜尋群組"
 }

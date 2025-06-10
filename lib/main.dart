@@ -812,8 +812,6 @@ class _MainViewState extends ConsumerState<MainView>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       loadNetworkDatas();
-      ref.read(layoutModeProvider.notifier).state =
-          SharedPrefUtils().getLayoutMode();
     });
     ref.listenManual(targetGameProvider, checkToShowInfoMessage);
 
@@ -1229,6 +1227,7 @@ class _MainViewState extends ConsumerState<MainView>
 
   @override
   void onKeyEvent(KeyEvent value, Controller? controller) {
+    if (_tabController.index == 1 && !ref.read(isCarouselProvider)) return;
     if (value.physicalKey == PhysicalKeyboardKey.keyE &&
         _tabController.index != 2) {
       _tabController.animateTo(_tabController.index + 1);

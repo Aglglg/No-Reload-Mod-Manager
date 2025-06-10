@@ -24,7 +24,6 @@ class TabMods extends ConsumerStatefulWidget {
 }
 
 class _TabModsState extends ConsumerState<TabMods> with WindowListener {
-  bool isCarousel = true;
   @override
   void initState() {
     super.initState();
@@ -45,13 +44,9 @@ class _TabModsState extends ConsumerState<TabMods> with WindowListener {
       double minimalHeight = 370 * ref.read(zoomScaleProvider);
       double currentHeight = size.height;
       if (minimalHeight * 1.3 <= currentHeight) {
-        setState(() {
-          isCarousel = false;
-        });
+        ref.read(isCarouselProvider.notifier).state = false;
       } else {
-        setState(() {
-          isCarousel = true;
-        });
+        ref.read(isCarouselProvider.notifier).state = true;
       }
     }
   }
@@ -60,7 +55,7 @@ class _TabModsState extends ConsumerState<TabMods> with WindowListener {
   Widget build(BuildContext context) {
     int layoutMode = ref.watch(layoutModeProvider);
     if (layoutMode == 0) {
-      if (isCarousel) {
+      if (ref.watch(isCarouselProvider)) {
         return TabModsCarousel();
       } else {
         return TabModsGrid();
@@ -151,17 +146,21 @@ class ModContainer extends ConsumerStatefulWidget {
   final ModGroupData currentGroupData;
   final double itemHeight;
   final bool isCentered;
+  final bool isActiveInGrid;
+  final bool isGrid;
   final void Function() onSelected;
   final void Function() onTap;
   const ModContainer({
     super.key,
     required this.itemHeight,
     required this.isCentered,
+    required this.isGrid,
     required this.onSelected,
     required this.onTap,
     required this.index,
     required this.isSelected,
     required this.currentGroupData,
+    required this.isActiveInGrid,
   });
 
   @override
@@ -532,7 +531,8 @@ class _ModContainerState extends ConsumerState<ModContainer>
               ),
           ],
           child: GestureDetector(
-            onDoubleTap: widget.isCentered ? widget.onSelected : null,
+            onDoubleTap:
+                widget.isCentered || widget.isGrid ? widget.onSelected : null,
             onTap: widget.onTap,
             child: MouseRegion(
               onEnter:
@@ -558,7 +558,10 @@ class _ModContainerState extends ConsumerState<ModContainer>
                     border: Border.all(
                       strokeAlign: BorderSide.strokeAlignInside,
                       color:
-                          isModDisabled(
+                          (isHovering && !widget.isGrid) ||
+                                  (widget.isActiveInGrid && widget.isGrid)
+                              ? Colors.white
+                              : isModDisabled(
                                 widget
                                     .currentGroupData
                                     .modsInGroup[widget.index]
@@ -568,10 +571,8 @@ class _ModContainerState extends ConsumerState<ModContainer>
                               ? Colors.red
                               : widget.isSelected
                               ? Colors.blue
-                              : isHovering
-                              ? Colors.white
                               : const Color.fromARGB(127, 255, 255, 255),
-                      width: 3 * sss,
+                      width: !widget.isActiveInGrid ? 3 * sss : 4 * sss,
                     ),
                     borderRadius: BorderRadius.circular(17 * sss),
                   ),
@@ -654,13 +655,13 @@ class _ModContainerState extends ConsumerState<ModContainer>
   void onKeyEvent(KeyEvent value, Controller? controller) {
     if (ref.read(tabIndexProvider) == 1) {
       if (value.physicalKey == PhysicalKeyboardKey.keyF) {
-        if (widget.isCentered) {
+        if (widget.isCentered || widget.isActiveInGrid) {
           widget.onSelected();
           controller?.vibrate(Duration(milliseconds: 80));
         }
       }
       if (value.physicalKey == PhysicalKeyboardKey.keyR) {
-        if (widget.isCentered) {
+        if (widget.isCentered || widget.isActiveInGrid) {
           ref.read(modKeybindProvider.notifier).state = null;
           ref.read(modKeybindProvider.notifier).state = (
             widget.currentGroupData.modsInGroup[widget.index],

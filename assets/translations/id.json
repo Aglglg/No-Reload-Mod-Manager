@@ -150,5 +150,6 @@
   "Auto": "Otomatis",
   "Carousel": "Carousel",
   "Grid": "Grid",
-  "Everything is correct, but config files are outdated.": "Semuanya benar, tapi file konfigurasi masih versi lama."
+  "Everything is correct, but config files are outdated.": "Semuanya benar, tapi file konfigurasi masih versi lama.",
+  "Search group by name or real folder name only": "Cari group"
 }
