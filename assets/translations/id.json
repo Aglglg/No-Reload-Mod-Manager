@@ -151,5 +151,6 @@
   "Carousel": "Carousel",
   "Grid": "Grid",
   "Everything is correct, but config files are outdated.": "Semuanya benar, tapi file konfigurasi masih versi lama.",
-  "Search group by name or real folder name only": "Cari group"
+  "Search group by name or real folder name only": "Cari group",
+  "Mod forced to be fixed & might not working properly": "Mod dipaksa tuk dikelola & mungkin tidak berfungsi secara benar.\nJika kamu pembuat mod nya, buka file-nya dan cari 'NRMM'.\n{}\n\n"
 }

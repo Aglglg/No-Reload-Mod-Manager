@@ -860,7 +860,7 @@ Future<void> _deleteGroupIniFiles(
   List<TextSpan> operationLogs,
 ) async {
   final dir = Directory(folderPath);
-  final regex = RegExp(r'^group_(?:[1-9]|[1-3][0-9]|4[0-8])\.ini$');
+  final regex = RegExp(r'^group_(?:[1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)\.ini$');
 
   if (await dir.exists()) {
     await for (final entity in dir.list()) {
@@ -987,6 +987,25 @@ Future<void> _modifyIniFile(
     // Modify the INI file sections based on the given modIndex and groupIndex
     _checkAndModifySections(parsedIni, modIndex, groupIndex);
 
+    //Force fix LOL, these broken mods annoying.
+    //PLEASE CHECK YOUR MODS BEFORE POSTING IT!
+    bool forcedFix = forceFixIniSections(parsedIni);
+
+    if (forcedFix) {
+      operationLogs.add(
+        TextSpan(
+          text: 'Mod forced to be fixed & might not working properly'.tr(
+            args: [iniFilePath],
+          ),
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 189, 170, 0),
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      );
+    }
+
     // Write the modified content back to the INI file
     await file.writeAsString(_getLiteralIni(parsedIni));
   } catch (e) {
@@ -1059,13 +1078,143 @@ Future<List<IniSection>> _parseIniSections(List<String> allLines) async {
   return sections;
 }
 
+bool forceFixIniSections(List<IniSection> sections) {
+  bool forcedFix = false;
+  //add missing endif
+  for (var section in sections) {
+    if (_isExcludedSection(section.name) || _isKeySection(section.name)) {
+      continue;
+    }
+    int totalIfFound = 0;
+    int totalEndifFound = 0;
+    int totalEndifShouldBeAdded = 0;
+    for (var line in section.lines) {
+      if (line.toLowerCase().trim().startsWith('if ')) {
+        totalIfFound = totalIfFound + 1;
+      }
+      if (line.toLowerCase().trim() == 'endif') {
+        totalEndifFound = totalEndifFound + 1;
+      }
+    }
+    totalEndifShouldBeAdded = totalIfFound - totalEndifFound;
+    for (var i = 0; i < totalEndifShouldBeAdded; i++) {
+      section.lines.add(
+        ';Force add line by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\nendif',
+      );
+      forcedFix = true;
+    }
+  }
+
+  //remove too many endif
+  for (var section in sections) {
+    if (_isExcludedSection(section.name) || _isKeySection(section.name)) {
+      continue;
+    }
+    List<int> indexesIfFound = [];
+    List<int> indexesEndifFound = [];
+    for (var i = 0; i < section.lines.length; i++) {
+      if (section.lines[i].toLowerCase().trim().startsWith('if ')) {
+        indexesIfFound.add(i);
+      }
+      if (section.lines[i].toLowerCase().trim() == 'endif') {
+        indexesEndifFound.add(i);
+      }
+    }
+
+    int totalEndifShouldBeRemoved =
+        indexesEndifFound.length - indexesIfFound.length;
+    int totalEndifHasBeenRemoved = 0;
+    indexesEndifFound = indexesEndifFound.reversed.toList();
+    for (var index in indexesEndifFound) {
+      if (totalEndifHasBeenRemoved >= totalEndifShouldBeRemoved) {
+        break;
+      }
+      section.lines[index] =
+          ";Force remove line by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;${section.lines[index]}";
+      totalEndifHasBeenRemoved = totalEndifHasBeenRemoved + 1;
+      forcedFix = true;
+    }
+  }
+
+  //add missing variable on Constants
+  List<String> variablesFound = [];
+  List<String> variablesShouldBeAdded = [];
+
+  for (var section in sections) {
+    if (section.name.toLowerCase().trim() == "constants") {
+      for (var line in section.lines) {
+        final regex = RegExp(r'(?<!\\)(\$[a-zA-Z_][a-zA-Z0-9_]*)');
+
+        final matches = regex.allMatches(line);
+        final results = matches.map((m) => m.group(1)!).toList();
+        for (var result in results) {
+          variablesFound.add(result.toLowerCase());
+        }
+      }
+    }
+  }
+
+  for (var section in sections) {
+    if (_isExcludedSection(section.name) || _isKeySection(section.name)) {
+      continue;
+    }
+    List<String> localVariablesFound = [];
+
+    for (var line in section.lines) {
+      final regex = RegExp(
+        r'local\s+(?<!\\)(\$[a-zA-Z_][a-zA-Z0-9_]*)',
+        caseSensitive: false,
+      );
+
+      final matches = regex.allMatches(line);
+      final results = matches.map((m) => m.group(1)!.toLowerCase()).toList();
+
+      for (var result in results) {
+        localVariablesFound.add(result);
+      }
+    }
+
+    for (var line in section.lines) {
+      final regex = RegExp(r'(?<!\\)(\$[a-zA-Z_][a-zA-Z0-9_]*)');
+
+      final matches = regex.allMatches(line);
+      final results = matches.map((m) => m.group(1)!).toList();
+      for (var result in results) {
+        if (!variablesFound.contains(result.toLowerCase())) {
+          variablesFound.add(result.toLowerCase());
+          if (!variablesShouldBeAdded.contains(result.toLowerCase())) {
+            if (!localVariablesFound.contains(result.toLowerCase())) {
+              print(localVariablesFound.length);
+              variablesShouldBeAdded.add(result.toLowerCase());
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (variablesShouldBeAdded.isNotEmpty) {
+    List<String> lines = [];
+    lines.add(
+      ';Force add line by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.',
+    );
+    for (var variable in variablesShouldBeAdded) {
+      lines.add('global $variable == 1');
+    }
+    sections.add(IniSection('Constants', lines));
+    forcedFix = true;
+  }
+
+  return forcedFix;
+}
+
 void _checkAndModifySections(
   List<IniSection> sections,
   int modIndex,
   int groupIndex,
 ) {
   final managedPattern = RegExp(
-    r'(\\modmanageragl\\group_)([1-9]|[1-3][0-9]|4[0-8])(\\active_slot)',
+    r'(\\modmanageragl\\group_)([1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)(\\active_slot)',
   );
   bool managedIdVarAdded = false;
 

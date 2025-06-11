@@ -151,5 +151,6 @@
   "Carousel": "轮播",
   "Grid": "网格",
   "Everything is correct, but config files are outdated.": "一切正常，但配置文件已过时.",
-  "Search group by name or real folder name only": "搜索分组"
+  "Search group by name or real folder name only": "搜索分组",
+  "Mod forced to be fixed & might not working properly": "模组已被强制托管，可能无法正常工作.\n如果你是模组创作者，请打开文件并搜索「NRMM」.\n{}\n\n"
 }

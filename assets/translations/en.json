@@ -151,5 +151,6 @@
   "Carousel": "Carousel",
   "Grid": "Grid",
   "Everything is correct, but config files are outdated.": "Everything is correct, but config files are outdated.",
-  "Search group by name or real folder name only": "Search group"
+  "Search group by name or real folder name only": "Search group",
+  "Mod forced to be fixed & might not working properly": "Mod forced to be managed & might not working properly.\nIf you're the mod creator, open the file and search for 'NRMM'.\n{}\n\n"
 }
