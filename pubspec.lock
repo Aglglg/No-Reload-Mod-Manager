@@ -119,7 +119,7 @@ packages:
     description:
       path: "."
       ref: HEAD
-      resolved-ref: c10c0a72e82f4153af5cdabb73859b17670d6590
+      resolved-ref: f09698cb0dbedfba4cc1b42209776099fd0857eb
       url: "https://github.com/Aglglg/flutter_carousel_slider.git"
     source: git
     version: "5.0.0"
@@ -252,10 +252,10 @@ packages:
     dependency: "direct dev"
     description:
       name: flutter_launcher_icons
-      sha256: bfa04787c85d80ecb3f8777bde5fc10c3de809240c48fa061a2c2bf15ea5211c
+      sha256: "10f13781741a2e3972126fae08393d3c4e01fa4cd7473326b94b72cf594195e7"
       url: "https://pub.dev"
     source: hosted
-    version: "0.14.3"
+    version: "0.14.4"
   flutter_lints:
     dependency: "direct dev"
     description:
