@@ -1,4 +1,4 @@
-;revision_2
+;revision_3
 namespace = modmanageragl\group_manager
 
 [Constants]

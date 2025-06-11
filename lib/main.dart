@@ -1037,7 +1037,7 @@ class _MainViewState extends ConsumerState<MainView>
           ConstantVar.managerGroupFileName,
         );
         final firstLine = await readFirstLine(managerGroupPath);
-        if (firstLine?.trim() != ";revision_2") {
+        if (firstLine?.trim() != ";revision_3") {
           existAndValid = false;
           notReadyReason =
               "Everything is correct, but config files are outdated.".tr();
