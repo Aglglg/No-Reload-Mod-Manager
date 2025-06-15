@@ -5,14 +5,14 @@
         <description>Mod Manager for games that support XXMI</description>
         <language>en</language>
         <item>
-            <title>Version 2.6.1</title>
+            <title>Version 2.6.2</title>
             <sparkle:releaseNotesLink>
                 https://github.com/Aglglg/No-Reload-Mod-Manager/releases
             </sparkle:releaseNotesLink>
-            <pubDate>Wednesday, 11 June 2025 19:30:00 +0700</pubDate>
-            <enclosure url="https://github.com/Aglglg/No-Reload-Mod-Manager/releases/download/v2.6.1/no_reload_mod_manager-2.6.1+1-windows-setup.exe"
-                       sparkle:dsaSignature="MD0CHEoBtY/zIpgvkBt7F/RlVok4B66X7yN12NVS5XYCHQCZhde6PvH5Ptx1BGMeMc4FdVS55V7BMvtDoXHa"
-                       sparkle:version="2.6.1+1"
+            <pubDate>Sunday, 15 June 2025 16:00:00 +0700</pubDate>
+            <enclosure url="https://github.com/Aglglg/No-Reload-Mod-Manager/releases/download/v2.6.2/no_reload_mod_manager-2.6.2+1-windows-setup.exe"
+                       sparkle:dsaSignature="MD0CHQCWnN1lKjSMgOjao4wWFqkcLjR0NIqex4ZCpn7MAhwPEu0aqZ+lfNT46OOhQgE+NVI42y7amJMapjYG"
+                       sparkle:version="2.6.2+1"
                        sparkle:os="windows"
                        length="0"
                        type="application/octet-stream" />
