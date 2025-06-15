@@ -1,4 +1,5 @@
 //Sorry the code is messy
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:auto_updater/auto_updater.dart';
@@ -116,12 +117,24 @@ Future<void> setupWindow(List<String> args) async {
   await autoUpdater.setScheduledCheckInterval(0);
 
   bitsdojo.doWhenWindowReady(() async {
-    final initialSize = Size(
+    final minSize = Size(
       750 * SharedPrefUtils().getOverallScale(),
       370 * SharedPrefUtils().getOverallScale(),
     );
-    bitsdojo.appWindow.minSize = initialSize;
-    bitsdojo.appWindow.size = initialSize;
+
+    Size? savedSize = SharedPrefUtils().getSavedWindowSize();
+
+    savedSize ??= minSize;
+
+    double savedSizeWidth =
+        savedSize.width < minSize.width ? minSize.width : savedSize.width;
+    double savedSizeHeight =
+        savedSize.height < minSize.height ? minSize.height : savedSize.height;
+
+    savedSize = Size(savedSizeWidth, savedSizeHeight);
+
+    bitsdojo.appWindow.minSize = minSize;
+    bitsdojo.appWindow.size = savedSize;
     bitsdojo.appWindow.alignment = Alignment.center;
 
     WindowOptions windowOptions = WindowOptions(
@@ -146,8 +159,35 @@ class MyApp extends ConsumerStatefulWidget {
   ConsumerState<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends ConsumerState<MyApp> {
+class _MyAppState extends ConsumerState<MyApp> with WindowListener {
   final FocusNode focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    windowManager.addListener(this);
+    onWindowResize();
+  }
+
+  @override
+  void dispose() {
+    windowManager.removeListener(this);
+    _resizeDebounce?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void onWindowResize() {
+    debouncedSaveWindowSize();
+  }
+
+  Timer? _resizeDebounce;
+  void debouncedSaveWindowSize() {
+    _resizeDebounce?.cancel();
+    _resizeDebounce = Timer(const Duration(milliseconds: 500), () async {
+      SharedPrefUtils().setSavedWindow(await windowManager.getSize());
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -328,6 +368,8 @@ class _BackgroundState extends ConsumerState<Background> {
                             onSelected: () {
                               SharedPrefUtils().setLayoutMode(1);
                               ref.read(layoutModeProvider.notifier).state = 1;
+                              ref.read(isCarouselProvider.notifier).state =
+                                  true;
                             },
                           ),
                           CustomMenuItem(
@@ -341,6 +383,8 @@ class _BackgroundState extends ConsumerState<Background> {
                             onSelected: () {
                               SharedPrefUtils().setLayoutMode(2);
                               ref.read(layoutModeProvider.notifier).state = 2;
+                              ref.read(isCarouselProvider.notifier).state =
+                                  false;
                             },
                           ),
                         ],
@@ -458,6 +502,11 @@ class _MainViewState extends ConsumerState<MainView>
         },
         {ControllerButton.BACK, ControllerButton.START}: () {
           if (ref.read(hotkeyGamepadProvider) == HotkeyGamepad.selectStart) {
+            toggleWindow();
+          }
+        },
+        {ControllerButton.LEFT_THUMB, ControllerButton.RIGHT_THUMB}: () {
+          if (ref.read(hotkeyGamepadProvider) == HotkeyGamepad.lsRs) {
             toggleWindow();
           }
         },

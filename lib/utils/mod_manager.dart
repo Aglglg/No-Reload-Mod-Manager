@@ -987,8 +987,11 @@ Future<void> _modifyIniFile(
     // Modify the INI file sections based on the given modIndex and groupIndex
     _checkAndModifySections(parsedIni, modIndex, groupIndex);
 
-    //Force fix LOL, these broken mods annoying.
-    //PLEASE CHECK YOUR MODS BEFORE POSTING IT!
+    //v2.6.1 problem
+    cleanVariableBugFromPreviousVersion(parsedIni);
+
+    //Force fix only, these broken mods annoying. Might still broken or behaves abnormally, its only purpose is to make broken mods don't interfere other mods.
+    //PLEASE CHECK YOUR MODS BEFORE POSTING IT! TURN OFF 'MUTE WARNINGS'
     bool forcedFix = forceFixIniSections(parsedIni);
 
     if (forcedFix) {
@@ -1076,6 +1079,25 @@ Future<List<IniSection>> _parseIniSections(List<String> allLines) async {
   }
 
   return sections;
+}
+
+//On v2.6.1 it tried to fix missing variables on ini files,
+//but instead of writing the variable (global $myvar = 1),
+//it's checking the variable instead (global $myvar == 1), which does nothing and cause another error on ini files
+void cleanVariableBugFromPreviousVersion(List<IniSection> sections) {
+  for (var section in sections) {
+    if (section.name.toLowerCase().trim() == "constants") {
+      bool nrmmMarkFound = false;
+      for (var line in section.lines) {
+        if (line.contains('NRMM')) {
+          nrmmMarkFound = true;
+        }
+        if (nrmmMarkFound) {
+          line = line.replaceAll('==', '=');
+        }
+      }
+    }
+  }
 }
 
 bool forceFixIniSections(List<IniSection> sections) {
@@ -1199,7 +1221,7 @@ bool forceFixIniSections(List<IniSection> sections) {
       ';Force add line by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.',
     );
     for (var variable in variablesShouldBeAdded) {
-      lines.add('global $variable == 1');
+      lines.add('global $variable = 1');
     }
     sections.add(IniSection('Constants', lines));
     forcedFix = true;

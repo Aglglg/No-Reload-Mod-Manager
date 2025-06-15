@@ -555,6 +555,19 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                                 ),
                                               ),
                                             ),
+                                            DropdownMenuItem(
+                                              value: HotkeyGamepad.lsRs,
+                                              child: Center(
+                                                child: Text(
+                                                  "LeftStick+RightStick",
+                                                  style: GoogleFonts.poppins(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 12 * sss,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
                                           ],
                                           onChanged: (value) {
                                             if (value != null) {

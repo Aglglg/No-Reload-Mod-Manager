@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -59,6 +60,8 @@ class SharedPrefUtils {
           return HotkeyGamepad.lsRb;
         case "selectStart":
           return HotkeyGamepad.selectStart;
+        case "lsRs":
+          return HotkeyGamepad.lsRs;
         default:
           return HotkeyGamepad.none;
       }
@@ -253,6 +256,22 @@ class SharedPrefUtils {
     }
   }
 
+  Future<void> setSavedWindow(Size windowSize) async {
+    await _prefs?.setDouble(keyWindowWidth, windowSize.width);
+    await _prefs?.setDouble(keyWindowHeight, windowSize.height);
+  }
+
+  Size? getSavedWindowSize() {
+    double? width = _prefs?.getDouble(keyWindowWidth);
+    double? height = _prefs?.getDouble(keyWindowHeight);
+
+    if (width == null || height == null) {
+      return null;
+    } else {
+      return Size(width, height);
+    }
+  }
+
   static const String keyTargetProcessWuwa = 'targetProcessWuwa';
   static const String keyTargetProcessGenshin = 'targetProcessGenshin';
   static const String keyTargetProcessHsr = 'targetProcessHsr';
@@ -282,6 +301,9 @@ class SharedPrefUtils {
   static const String keySortGroupMethod = "sortGroup";
 
   static const String keyLayoutMode = "layoutMode";
+
+  static const String keyWindowWidth = "windowWidth";
+  static const String keyWindowHeight = "windowHeight";
 
   String getUserProfilePath() {
     if (Platform.isWindows) {

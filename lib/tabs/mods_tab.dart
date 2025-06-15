@@ -29,6 +29,9 @@ class _TabModsState extends ConsumerState<TabMods> with WindowListener {
     super.initState();
     windowManager.addListener(this);
     onWindowResize();
+    ref.listenManual(layoutModeProvider, (_, _) {
+      onWindowResize();
+    });
   }
 
   @override
@@ -39,6 +42,7 @@ class _TabModsState extends ConsumerState<TabMods> with WindowListener {
 
   @override
   void onWindowResize() async {
+    if (ref.read(layoutModeProvider) != 0) return;
     final size = await windowManager.getSize();
     if (mounted) {
       double minimalHeight = 370 * ref.read(zoomScaleProvider);
