@@ -1088,12 +1088,13 @@ void cleanVariableBugFromPreviousVersion(List<IniSection> sections) {
   for (var section in sections) {
     if (section.name.toLowerCase().trim() == "constants") {
       bool nrmmMarkFound = false;
-      for (var line in section.lines) {
+      for (int i = 0; i < section.lines.length; i++) {
+        var line = section.lines[i];
         if (line.contains('NRMM')) {
           nrmmMarkFound = true;
         }
         if (nrmmMarkFound) {
-          line = line.replaceAll('==', '=');
+          section.lines[i] = line.replaceAll('==', '=');
         }
       }
     }

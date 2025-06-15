@@ -96,4 +96,6 @@ final layoutModeProvider = StateProvider<int>((ref) {
   return SharedPrefUtils().getLayoutMode();
 });
 
-final isCarouselProvider = StateProvider((ref) => true);
+final isCarouselProvider = StateProvider<bool>(
+  (ref) => SharedPrefUtils().getLayoutMode() == 1,
+);
