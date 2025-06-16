@@ -22,9 +22,11 @@ bool _hasIndex(int index, int listLength) {
 }
 
 void triggerRefresh(WidgetRef ref) {
-  TargetGame currentTargetGame = ref.read(targetGameProvider);
-  ref.read(targetGameProvider.notifier).state = TargetGame.none;
-  ref.read(targetGameProvider.notifier).state = currentTargetGame;
+  try {
+    TargetGame currentTargetGame = ref.read(targetGameProvider);
+    ref.read(targetGameProvider.notifier).state = TargetGame.none;
+    ref.read(targetGameProvider.notifier).state = currentTargetGame;
+  } catch (e) {}
 }
 
 Future<List<ModGroupData>> refreshModData(Directory managedDir) async {
@@ -987,12 +989,13 @@ Future<void> _modifyIniFile(
     // Modify the INI file sections based on the given modIndex and groupIndex
     _checkAndModifySections(parsedIni, modIndex, groupIndex);
 
-    //v2.6.1 problem
-    cleanVariableBugFromPreviousVersion(parsedIni);
-
     //Force fix only, these broken mods annoying. Might still broken or behaves abnormally, its only purpose is to make broken mods don't interfere other mods.
     //PLEASE CHECK YOUR MODS BEFORE POSTING IT! TURN OFF 'MUTE WARNINGS'
     bool forcedFix = forceFixIniSections(parsedIni);
+
+    //v2.6.1 problem
+    cleanVariableBugFromPreviousVersion(parsedIni);
+    cleanCommentedEndifFromPreviousVersion(parsedIni);
 
     if (forcedFix) {
       operationLogs.add(
@@ -1095,7 +1098,53 @@ void cleanVariableBugFromPreviousVersion(List<IniSection> sections) {
         }
         if (nrmmMarkFound) {
           section.lines[i] = line.replaceAll('==', '=');
+
+          //really specific mod
+          if (section.lines[i] == r'global $active = 1') {
+            for (var section in sections) {
+              if (section.name.toLowerCase().startsWith('textureoverride')) {
+                bool activeSpecified = false;
+                for (var line in section.lines) {
+                  if (line.trim().toLowerCase() == r"$active = 1") {
+                    activeSpecified = true;
+                  }
+                }
+                if (activeSpecified == false) {
+                  section.lines.add(
+                    ';Force add line by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n\$active = 1',
+                  );
+                }
+              }
+            }
+          }
         }
+      }
+    }
+  }
+}
+
+//On v2.6.1 it tried to fix too much endif on ini files,
+//but then there are mods that don't use 'if' from beginning of conditional statement and only using 'elif' WTF,
+//then this tool accidentally remove endif needed for if $managed_slot_id ;-;
+//AND EVEN WITH TOO MANY ENDIF 3dmigoto don't care, because it just ignore wrong/errored lines
+void cleanCommentedEndifFromPreviousVersion(List<IniSection> sections) {
+  for (var section in sections) {
+    if (_isExcludedSection(section.name) || _isKeySection(section.name)) {
+      continue;
+    }
+    bool nrmmMarkFound = false;
+    for (int i = 0; i < section.lines.length; i++) {
+      var line = section.lines[i];
+      if (line.contains('Force remove line by NRMM')) {
+        nrmmMarkFound = true;
+        section.lines[i] = '';
+      } else {
+        if (nrmmMarkFound) {
+          if (line.trim() == ';endif') {
+            section.lines[i] = section.lines[i].replaceAll(';', '');
+          }
+        }
+        nrmmMarkFound = false;
       }
     }
   }
@@ -1103,61 +1152,158 @@ void cleanVariableBugFromPreviousVersion(List<IniSection> sections) {
 
 bool forceFixIniSections(List<IniSection> sections) {
   bool forcedFix = false;
-  //add missing endif
+
+  //fix syntax error on if elif else if statement
+  //replace elseif to be else if
+  //replace else or elif or else if to be 'if' because it wasn't even started with 'if'
+  //use = instead of ==, use =< and => instead of <= and >=, use =! instead of !=
   for (var section in sections) {
     if (_isExcludedSection(section.name) || _isKeySection(section.name)) {
       continue;
     }
-    int totalIfFound = 0;
-    int totalEndifFound = 0;
-    int totalEndifShouldBeAdded = 0;
-    for (var line in section.lines) {
-      if (line.toLowerCase().trim().startsWith('if ')) {
-        totalIfFound = totalIfFound + 1;
-      }
-      if (line.toLowerCase().trim() == 'endif') {
-        totalEndifFound = totalEndifFound + 1;
-      }
-    }
-    totalEndifShouldBeAdded = totalIfFound - totalEndifFound;
-    for (var i = 0; i < totalEndifShouldBeAdded; i++) {
-      section.lines.add(
-        ';Force add line by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\nendif',
-      );
-      forcedFix = true;
-    }
-  }
 
-  //remove too many endif
-  for (var section in sections) {
-    if (_isExcludedSection(section.name) || _isKeySection(section.name)) {
-      continue;
-    }
-    List<int> indexesIfFound = [];
-    List<int> indexesEndifFound = [];
-    for (var i = 0; i < section.lines.length; i++) {
-      if (section.lines[i].toLowerCase().trim().startsWith('if ')) {
-        indexesIfFound.add(i);
-      }
-      if (section.lines[i].toLowerCase().trim() == 'endif') {
-        indexesEndifFound.add(i);
+    //replace elseif to be else if
+    for (int i = 0; i < section.lines.length; i++) {
+      var line = section.lines[i];
+      if (line.toLowerCase().trim().startsWith('elseif ')) {
+        String modifiedLine = line.replaceFirst('elseif', 'else if');
+        if (modifiedLine != line) {
+          section.lines[i] =
+              ';Force fix syntax by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;$line\n$modifiedLine';
+          forcedFix = true;
+        }
       }
     }
 
-    int totalEndifShouldBeRemoved =
-        indexesEndifFound.length - indexesIfFound.length;
-    int totalEndifHasBeenRemoved = 0;
-    indexesEndifFound = indexesEndifFound.reversed.toList();
-    for (var index in indexesEndifFound) {
-      if (totalEndifHasBeenRemoved >= totalEndifShouldBeRemoved) {
-        break;
+    //Replace else if and elif to be if, in-case if statement was not opened
+    bool ifStatementWasOpened = false;
+    for (int i = 0; i < section.lines.length; i++) {
+      var line = section.lines[i];
+      if (line.toLowerCase().trim().startsWith('if ') &&
+          !line.toLowerCase().trim().contains(r'$\modmanageragl')) {
+        ifStatementWasOpened = true;
       }
-      section.lines[index] =
-          ";Force remove line by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;${section.lines[index]}";
-      totalEndifHasBeenRemoved = totalEndifHasBeenRemoved + 1;
-      forcedFix = true;
+
+      if (line.toLowerCase().trim().startsWith('else if ')) {
+        if (!ifStatementWasOpened) {
+          String modifiedLine = line.replaceFirst('else if', 'if');
+          section.lines[i] =
+              ';Force fix syntax by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;$line\n$modifiedLine';
+          forcedFix = true;
+          ifStatementWasOpened = true;
+        }
+      }
+
+      if (line.toLowerCase().trim().startsWith('elif ')) {
+        if (!ifStatementWasOpened) {
+          String modifiedLine = line.replaceFirst('elif', 'if');
+          section.lines[i] =
+              ';Force fix syntax by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;$line\n$modifiedLine';
+          forcedFix = true;
+          ifStatementWasOpened = true;
+        }
+      }
+    }
+
+    //fix if to be elif or just give endif here
+
+    //fix $active always 0 on added constants
+
+    //Replace =! with !=
+    for (int i = 0; i < section.lines.length; i++) {
+      var line = section.lines[i];
+      if (line.toLowerCase().trim().startsWith('if ') ||
+          line.toLowerCase().trim().startsWith('elif ') ||
+          line.toLowerCase().trim().startsWith('else if ')) {
+        String modifiedLine = line.replaceAll('=!', '!=');
+        if (modifiedLine != line) {
+          section.lines[i] =
+              ';Force fix syntax by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;$line\n$modifiedLine';
+          forcedFix = true;
+        }
+      }
+    }
+
+    //Replace => with >=
+    for (int i = 0; i < section.lines.length; i++) {
+      var line = section.lines[i];
+      if (line.toLowerCase().trim().startsWith('if ') ||
+          line.toLowerCase().trim().startsWith('elif ') ||
+          line.toLowerCase().trim().startsWith('else if ')) {
+        String modifiedLine = line.replaceAll('=>', '>=');
+        if (modifiedLine != line) {
+          section.lines[i] =
+              ';Force fix syntax by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;$line\n$modifiedLine';
+          forcedFix = true;
+        }
+      }
+    }
+
+    //Replace =< with <=
+    for (int i = 0; i < section.lines.length; i++) {
+      var line = section.lines[i];
+      if (line.toLowerCase().trim().startsWith('if ') ||
+          line.toLowerCase().trim().startsWith('elif ') ||
+          line.toLowerCase().trim().startsWith('else if ')) {
+        String modifiedLine = line.replaceAll('=<', '<=');
+        if (modifiedLine != line) {
+          section.lines[i] =
+              ';Force fix syntax by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;$line\n$modifiedLine';
+          forcedFix = true;
+        }
+      }
+    }
+
+    //Replace = with ==
+    for (int i = 0; i < section.lines.length; i++) {
+      var line = section.lines[i];
+      if (line.toLowerCase().trim().startsWith('if ') ||
+          line.toLowerCase().trim().startsWith('elif ') ||
+          line.toLowerCase().trim().startsWith('else if ')) {
+        final regex = RegExp(r'(?<![=!<>])=(?![=])');
+        String modifiedLine = line.replaceAllMapped(regex, (m) => '==');
+        if (modifiedLine != line) {
+          section.lines[i] =
+              ';Force fix syntax by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;$line\n$modifiedLine';
+          forcedFix = true;
+        }
+      }
     }
   }
+
+  //NOT NEEDED, SOME MODS CREATOR DON'T EVEN START THEIR CONDITIONAL STATEMENT WITH 'IF" BUT WITH 'ELIF'!!!!!!!!!!
+  //OR ALREADY USE ENDIF BUT AT WRONG POSITION
+  //USING THIS WILL CAUSE MODS OVERlAPPED BECAUSE THE ENDIF COUNT IS TOO MANY BUT IT'S AT WRONG POSITION
+  // //remove too many endif
+  // for (var section in sections) {
+  //   if (_isExcludedSection(section.name) || _isKeySection(section.name)) {
+  //     continue;
+  //   }
+  //   List<int> indexesIfFound = [];
+  //   List<int> indexesEndifFound = [];
+  //   for (var i = 0; i < section.lines.length; i++) {
+  //     if (section.lines[i].toLowerCase().trim().startsWith('if ')) {
+  //       indexesIfFound.add(i);
+  //     }
+  //     if (section.lines[i].toLowerCase().trim() == 'endif') {
+  //       indexesEndifFound.add(i);
+  //     }
+  //   }
+
+  //   int totalEndifShouldBeRemoved =
+  //       indexesEndifFound.length - indexesIfFound.length;
+  //   int totalEndifHasBeenRemoved = 0;
+  //   indexesEndifFound = indexesEndifFound.reversed.toList();
+  //   for (var index in indexesEndifFound) {
+  //     if (totalEndifHasBeenRemoved >= totalEndifShouldBeRemoved) {
+  //       break;
+  //     }
+  //     section.lines[index] =
+  //         ";Force remove line by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;${section.lines[index]}";
+  //     totalEndifHasBeenRemoved = totalEndifHasBeenRemoved + 1;
+  //     forcedFix = true;
+  //   }
+  // }
 
   //add missing variable on Constants
   List<String> variablesFound = [];
@@ -1207,7 +1353,6 @@ bool forceFixIniSections(List<IniSection> sections) {
           variablesFound.add(result.toLowerCase());
           if (!variablesShouldBeAdded.contains(result.toLowerCase())) {
             if (!localVariablesFound.contains(result.toLowerCase())) {
-              print(localVariablesFound.length);
               variablesShouldBeAdded.add(result.toLowerCase());
             }
           }
@@ -1226,6 +1371,31 @@ bool forceFixIniSections(List<IniSection> sections) {
     }
     sections.add(IniSection('Constants', lines));
     forcedFix = true;
+  }
+
+  //add missing endif
+  for (var section in sections) {
+    if (_isExcludedSection(section.name) || _isKeySection(section.name)) {
+      continue;
+    }
+    int totalIfFound = 0;
+    int totalEndifFound = 0;
+    int totalEndifShouldBeAdded = 0;
+    for (var line in section.lines) {
+      if (line.toLowerCase().trim().startsWith('if ')) {
+        totalIfFound = totalIfFound + 1;
+      }
+      if (line.toLowerCase().trim() == 'endif') {
+        totalEndifFound = totalEndifFound + 1;
+      }
+    }
+    totalEndifShouldBeAdded = totalIfFound - totalEndifFound;
+    for (var i = 0; i < totalEndifShouldBeAdded; i++) {
+      section.lines.add(
+        ';Force add line by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\nendif',
+      );
+      forcedFix = true;
+    }
   }
 
   return forcedFix;
