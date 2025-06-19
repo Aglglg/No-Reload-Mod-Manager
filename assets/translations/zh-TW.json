@@ -152,5 +152,6 @@
   "Grid": "網格",
   "Everything is correct, but config files are outdated.": "一切正常，但設定檔已過時.",
   "Search group by name or real folder name only": "搜尋群組",
-  "Mod forced to be fixed & might not working properly": "模組已被強制託管，可能無法正常運作.\n如果你是模組創作者，請開啟檔案並搜尋「NRMM」.\n{}\n\n"
+  "Mod forced to be fixed & might not working properly": "模組已被強制託管，可能無法正常運作.\n如果你是模組創作者，請開啟檔案並搜尋「NRMM」.\n{}\n\n",
+  "Mods path is invalid, please remove all illegal characters.": "模組路徑無效，請移除所有非法字元/符號."
 }

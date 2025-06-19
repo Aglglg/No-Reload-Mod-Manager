@@ -1035,13 +1035,18 @@ class _MainViewState extends ConsumerState<MainView>
     bool existAndValid = false;
     String notReadyReason = "";
 
-    if (!await Directory(modsPath).exists()) {
-      existAndValid = false;
-      notReadyReason = "Mods path does not exist.".tr();
-    } else if (modsPath.toLowerCase().endsWith('mods') ||
-        modsPath.toLowerCase().endsWith('mods\\')) {
-      existAndValid = true;
-    } else {
+    try {
+      if (!await Directory(modsPath).exists()) {
+        existAndValid = false;
+        notReadyReason = "Mods path does not exist.".tr();
+      } else if (modsPath.toLowerCase().endsWith('mods') ||
+          modsPath.toLowerCase().endsWith('mods\\')) {
+        existAndValid = true;
+      } else {
+        existAndValid = false;
+        notReadyReason = "Mods path invalid.".tr();
+      }
+    } catch (e) {
       existAndValid = false;
       notReadyReason = "Mods path invalid.".tr();
     }

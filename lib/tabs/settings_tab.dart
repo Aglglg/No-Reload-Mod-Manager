@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:auto_updater/auto_updater.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/services.dart';
 import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
@@ -1309,18 +1310,26 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
 
   Future<bool> isModsPathValid(String path) async {
     bool valid = false;
-    if (!await Directory(path).exists()) {
-      valid = false;
-      setState(() {
-        modsPathText = "Mods Path (path doesn't exist)".tr();
-      });
-    } else if (path.toLowerCase().endsWith('mods') ||
-        path.toLowerCase().endsWith('mods\\')) {
-      valid = true;
-      setState(() {
-        modsPathText = "Mods Path".tr();
-      });
-    } else {
+
+    try {
+      if (!await Directory(path).exists()) {
+        valid = false;
+        setState(() {
+          modsPathText = "Mods Path (path doesn't exist)".tr();
+        });
+      } else if (path.toLowerCase().endsWith('mods') ||
+          path.toLowerCase().endsWith('mods\\')) {
+        valid = true;
+        setState(() {
+          modsPathText = "Mods Path".tr();
+        });
+      } else {
+        valid = false;
+        setState(() {
+          modsPathText = "Mods Path (Invalid)".tr();
+        });
+      }
+    } catch (e) {
       valid = false;
       setState(() {
         modsPathText = "Mods Path (Invalid)".tr();
@@ -1575,6 +1584,11 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                                 _saveModsPath(value);
                                 isModsPathValid(value);
                               },
+                              inputFormatters: [
+                                FilteringTextInputFormatter.deny(
+                                  RegExp('["\'\n\r\u0085\u2028\u2029]'),
+                                ),
+                              ],
                             ),
                           ),
                         ),

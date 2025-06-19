@@ -1850,64 +1850,78 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
       );
     });
 
-    if (!await Directory(widget.modsPath).exists()) {
-      setState(() {
-        _showClose = true;
-        contents = [
-          TextSpan(
-            text: "Mods path doesn't exist".tr(),
-            style: GoogleFonts.poppins(color: Colors.red),
-          ),
-        ];
-      });
-    } else if (widget.modsPath.toLowerCase().endsWith('mods') ||
-        widget.modsPath.toLowerCase().endsWith('mods\\')) {
-      setState(() {
-        contents = [
-          TextSpan(
-            text: "Modifying mods...".tr(),
-            style: GoogleFonts.poppins(color: Colors.white),
-          ),
-        ];
-      });
-      final operationResults = await updateModData(widget.modsPath, (
-        needReload,
-      ) {
+    try {
+      if (!await Directory(widget.modsPath).exists()) {
         setState(() {
-          _needReload = needReload;
+          _showClose = true;
+          contents = [
+            TextSpan(
+              text: "Mods path doesn't exist".tr(),
+              style: GoogleFonts.poppins(color: Colors.red),
+            ),
+          ];
         });
-      });
-      setState(() {
-        _showClose = true;
-        contents = operationResults;
-      });
-      _scrollToBottom();
-      final groupFolders = await getGroupFolders(
-        p.join(widget.modsPath, ConstantVar.managedFolderName),
-      );
+      } else if (widget.modsPath.toLowerCase().endsWith('mods') ||
+          widget.modsPath.toLowerCase().endsWith('mods\\')) {
+        setState(() {
+          contents = [
+            TextSpan(
+              text: "Modifying mods...".tr(),
+              style: GoogleFonts.poppins(color: Colors.white),
+            ),
+          ];
+        });
+        final operationResults = await updateModData(widget.modsPath, (
+          needReload,
+        ) {
+          setState(() {
+            _needReload = needReload;
+          });
+        });
+        setState(() {
+          _showClose = true;
+          contents = operationResults;
+        });
+        _scrollToBottom();
+        final groupFolders = await getGroupFolders(
+          p.join(widget.modsPath, ConstantVar.managedFolderName),
+        );
 
-      //Auto group Icon
-      final futures = <Future>[];
+        //Auto group Icon
+        final futures = <Future>[];
 
-      for (var group in groupFolders) {
-        final iconPath = p.join(group.$1.path, 'icon.png');
-        final iconFile = File(iconPath);
+        for (var group in groupFolders) {
+          final iconPath = p.join(group.$1.path, 'icon.png');
+          final iconFile = File(iconPath);
 
-        if (!await iconFile.exists()) {
-          if (!context.mounted) return;
-          futures.add(tryGetIcon(group.$1.path, ref.read(autoIconProvider)));
+          if (!await iconFile.exists()) {
+            if (!context.mounted) return;
+            futures.add(tryGetIcon(group.$1.path, ref.read(autoIconProvider)));
+          }
         }
-      }
 
-      await Future.wait(futures);
-      //
-    } else {
+        await Future.wait(futures);
+        //
+      } else {
+        setState(() {
+          _showClose = true;
+          contents = [
+            TextSpan(
+              text:
+                  "Mods path is invalid. Make sure you're targetting \"Mods\" folder."
+                      .tr(),
+              style: GoogleFonts.poppins(color: Colors.red),
+            ),
+          ];
+        });
+      }
+    } catch (e) {
       setState(() {
         _showClose = true;
         contents = [
           TextSpan(
             text:
-                "Mods path is invalid. Make sure you're targetting \"Mods\" folder."
+                "Mods path is invalid, please remove all illegal characters."
                     .tr(),
             style: GoogleFonts.poppins(color: Colors.red),
           ),
