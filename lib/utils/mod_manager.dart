@@ -1100,6 +1100,7 @@ void cleanVariableBugFromPreviousVersion(List<IniSection> sections) {
           section.lines[i] = line.replaceAll('==', '=');
 
           //really specific mod
+          //TODO: Better checker, not only by checking 'active' but checking variables that was used in condition line under key section
           if (section.lines[i] == r'global $active = 1') {
             for (var section in sections) {
               if (section.name.toLowerCase().startsWith('textureoverride')) {
