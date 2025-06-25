@@ -1098,26 +1098,6 @@ void cleanVariableBugFromPreviousVersion(List<IniSection> sections) {
         }
         if (nrmmMarkFound) {
           section.lines[i] = line.replaceAll('==', '=');
-
-          //really specific mod
-          //TODO: Better checker, not only by checking 'active' but checking variables that was used in condition line under key section
-          if (section.lines[i] == r'global $active = 1') {
-            for (var section in sections) {
-              if (section.name.toLowerCase().startsWith('textureoverride')) {
-                bool activeSpecified = false;
-                for (var line in section.lines) {
-                  if (line.trim().toLowerCase() == r"$active = 1") {
-                    activeSpecified = true;
-                  }
-                }
-                if (activeSpecified == false) {
-                  section.lines.add(
-                    ';Force add line by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n\$active = 1',
-                  );
-                }
-              }
-            }
-          }
         }
       }
     }
@@ -1206,9 +1186,23 @@ bool forceFixIniSections(List<IniSection> sections) {
       }
     }
 
-    //fix if to be elif or just give endif here
+    //Fix 'if' to be 'elif' or just give endif here
 
-    //fix $active always 0 on added constants
+    //Example:
+    //if something == 0
+    //DoSomething0
+    //if something == 1
+    //DoSomething1
+    //endif
+
+    //To Be:
+    //if something == 0
+    //DoSomething0
+    //elif something == 1
+    //DoSomething1
+    //endif
+
+    //NEVERMIND IT'S REALLY DIFFICULT TO HANDLE SOMETHING LIKE THAT
 
     //Replace =! with !=
     for (int i = 0; i < section.lines.length; i++) {
@@ -1272,40 +1266,6 @@ bool forceFixIniSections(List<IniSection> sections) {
     }
   }
 
-  //NOT NEEDED, SOME MODS CREATOR DON'T EVEN START THEIR CONDITIONAL STATEMENT WITH 'IF" BUT WITH 'ELIF'!!!!!!!!!!
-  //OR ALREADY USE ENDIF BUT AT WRONG POSITION
-  //USING THIS WILL CAUSE MODS OVERlAPPED BECAUSE THE ENDIF COUNT IS TOO MANY BUT IT'S AT WRONG POSITION
-  // //remove too many endif
-  // for (var section in sections) {
-  //   if (_isExcludedSection(section.name) || _isKeySection(section.name)) {
-  //     continue;
-  //   }
-  //   List<int> indexesIfFound = [];
-  //   List<int> indexesEndifFound = [];
-  //   for (var i = 0; i < section.lines.length; i++) {
-  //     if (section.lines[i].toLowerCase().trim().startsWith('if ')) {
-  //       indexesIfFound.add(i);
-  //     }
-  //     if (section.lines[i].toLowerCase().trim() == 'endif') {
-  //       indexesEndifFound.add(i);
-  //     }
-  //   }
-
-  //   int totalEndifShouldBeRemoved =
-  //       indexesEndifFound.length - indexesIfFound.length;
-  //   int totalEndifHasBeenRemoved = 0;
-  //   indexesEndifFound = indexesEndifFound.reversed.toList();
-  //   for (var index in indexesEndifFound) {
-  //     if (totalEndifHasBeenRemoved >= totalEndifShouldBeRemoved) {
-  //       break;
-  //     }
-  //     section.lines[index] =
-  //         ";Force remove line by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;${section.lines[index]}";
-  //     totalEndifHasBeenRemoved = totalEndifHasBeenRemoved + 1;
-  //     forcedFix = true;
-  //   }
-  // }
-
   //add missing variable on Constants
   List<String> variablesFound = [];
   List<String> variablesShouldBeAdded = [];
@@ -1313,6 +1273,9 @@ bool forceFixIniSections(List<IniSection> sections) {
   for (var section in sections) {
     if (section.name.toLowerCase().trim() == "constants") {
       for (var line in section.lines) {
+        if (line.trim().startsWith(';')) {
+          continue;
+        }
         final regex = RegExp(r'(?<!\\)(\$[a-zA-Z_][a-zA-Z0-9_]*)');
 
         final matches = regex.allMatches(line);
@@ -1325,12 +1288,15 @@ bool forceFixIniSections(List<IniSection> sections) {
   }
 
   for (var section in sections) {
-    if (_isExcludedSection(section.name) || _isKeySection(section.name)) {
+    if (_isExcludedSection(section.name)) {
       continue;
     }
     List<String> localVariablesFound = [];
 
     for (var line in section.lines) {
+      if (line.trim().startsWith(';')) {
+        continue;
+      }
       final regex = RegExp(
         r'local\s+(?<!\\)(\$[a-zA-Z_][a-zA-Z0-9_]*)',
         caseSensitive: false,
@@ -1345,6 +1311,9 @@ bool forceFixIniSections(List<IniSection> sections) {
     }
 
     for (var line in section.lines) {
+      if (line.trim().startsWith(';')) {
+        continue;
+      }
       final regex = RegExp(r'(?<!\\)(\$[a-zA-Z_][a-zA-Z0-9_]*)');
 
       final matches = regex.allMatches(line);
@@ -1372,6 +1341,102 @@ bool forceFixIniSections(List<IniSection> sections) {
     }
     sections.add(IniSection('Constants', lines));
     forcedFix = true;
+  }
+
+  //Fix missing variable that was used in [Key]
+  //and was already added on [Constants] by NRMM
+  //but always disabled (value 0) in [Present]
+  //and never being enabled (value 1) in [TextureOverride]
+  for (var section in sections) {
+    //Only for [Key] section
+    if (_isKeySection(section.name)) {
+      for (var line in section.lines) {
+        if (line.toLowerCase().trim().startsWith('condition')) {
+          final regex = RegExp(r'(?<!\\)(\$[a-zA-Z_][a-zA-Z0-9_]*)');
+
+          final matches = regex.allMatches(line);
+          final results = matches.map((m) => m.group(1)!).toList();
+          for (var result in results) {
+            bool wasUsedInPresent = false;
+            bool wasAddedByNRMM = false;
+
+            //Check if it was used in Present and always disabled (value 0)
+            for (var section in sections) {
+              if (section.name.toLowerCase() == "present") {
+                for (var line in section.lines) {
+                  if (line.trim().toLowerCase().replaceAll(' ', '') ==
+                      'post${result.toLowerCase()}=0') {
+                    wasUsedInPresent = true;
+                    break;
+                  }
+                }
+              }
+            }
+
+            //Check if the variable was added by NRMM in Constants
+            for (var section in sections) {
+              if (section.name.toLowerCase() == "constants") {
+                bool nrmmMarkFound = false;
+                for (var line in section.lines) {
+                  if (line.contains('NRMM')) {
+                    nrmmMarkFound = true;
+                    break;
+                  }
+                }
+
+                //If constants section is not by NRMM, continue to next iteration or skip current iteration
+                if (!nrmmMarkFound) {
+                  continue;
+                }
+
+                //Check if the variable was found in Constants section and was added by NRMM
+                for (var line in section.lines) {
+                  // == because on older version of NRMM it was wrongly written like that,
+                  // and be fixed on newer version of NRMM, but the fixing process is later
+                  // after this forceFix function
+                  if (line.trim().toLowerCase().replaceAll(' ', '') ==
+                          'global${result.toLowerCase()}=1' ||
+                      line.trim().toLowerCase().replaceAll(' ', '') ==
+                          'global${result.toLowerCase()}==1') {
+                    wasAddedByNRMM = true;
+                    break;
+                  }
+                }
+              }
+            }
+
+            //If the variable was used in Present and was added by NRMM, check if it was already specified on TextureOverride
+            if (wasAddedByNRMM && wasUsedInPresent) {
+              for (var section in sections) {
+                if (section.name.toLowerCase().startsWith('textureoverride')) {
+                  bool varAlreadyWritten = false;
+                  //Check on every lines if it's already written
+                  for (var line in section.lines) {
+                    if (line.trim().startsWith(';')) {
+                      continue;
+                    }
+                    if (line
+                        .trim()
+                        .toLowerCase()
+                        .replaceAll(' ', '')
+                        .contains("${result.toLowerCase()}=1")) {
+                      varAlreadyWritten = true;
+                      break;
+                    }
+                  }
+                  if (varAlreadyWritten == false) {
+                    section.lines.add(
+                      ';Force add line by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n$result = 1',
+                    );
+                    forcedFix = true;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   //add missing endif
