@@ -1,6 +1,16 @@
 import 'package:flutter/services.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:window_manager/window_manager.dart';
+
+Future<void> registerHotkeyResetWindowPos() async {
+  await hotKeyManager.register(
+    _hotKeyAltT,
+    keyDownHandler: (hotKey) async {
+      await windowManager.center();
+    },
+  );
+}
 
 void hotkeyKeyboardChanged(
   HotkeyKeyboard? prevHotkey,
@@ -89,6 +99,12 @@ final HotKey _hotKeyAltA = HotKey(
 );
 final HotKey _hotKeyAltD = HotKey(
   key: PhysicalKeyboardKey.keyD,
+  modifiers: [HotKeyModifier.alt],
+  scope: HotKeyScope.system,
+);
+
+final HotKey _hotKeyAltT = HotKey(
+  key: PhysicalKeyboardKey.keyT,
   modifiers: [HotKeyModifier.alt],
   scope: HotKeyScope.system,
 );

@@ -842,6 +842,7 @@ class _MainViewState extends ConsumerState<MainView>
           hotkeyKeyboardChanged(prevHotkey, newHotkey, toggleWindow),
     );
     hotkeyKeyboardChanged(null, ref.read(hotkeyKeyboardProvider), toggleWindow);
+    registerHotkeyResetWindowPos();
 
     initSystemTray();
     windowManager.addListener(this);

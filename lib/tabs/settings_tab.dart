@@ -951,6 +951,45 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                       Container(height: 15 * sss),
 
                       ElevatedButton(
+                        onPressed: () async {
+                          await windowManager.center();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          overlayColor: Colors.white,
+                          backgroundColor: const Color.fromARGB(
+                            127,
+                            255,
+                            255,
+                            255,
+                          ),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8 * sss),
+                          child: Text(
+                            'Reset Position'.tr(),
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12 * sss,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Container(height: 2 * sss),
+                      Text(
+                        "Alt+T",
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(
+                          color: const Color.fromARGB(200, 255, 255, 255),
+                          fontSize: 11 * sss,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+
+                      Container(height: 15 * sss),
+
+                      ElevatedButton(
                         onPressed: () {
                           exit(0);
                         },
