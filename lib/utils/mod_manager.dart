@@ -1412,7 +1412,8 @@ bool forceFixIniSections(List<IniSection> sections) {
                   bool varAlreadyWritten = false;
                   //Check on every lines if it's already written
                   for (var line in section.lines) {
-                    if (line.trim().startsWith(';')) {
+                    if (line.trim().startsWith(';') &&
+                        !line.trim().contains('\n')) {
                       continue;
                     }
                     if (line
