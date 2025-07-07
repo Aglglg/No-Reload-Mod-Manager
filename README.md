@@ -3,6 +3,13 @@ Feel free to contribute on this project, especially adding more [languages trans
 How? Of course, first of all you must know [How to contribute to open sourced project on Github](https://youtu.be/CML6vfKjQss).
 
 ---
+### To-do list
+- When managing mod, look for line 'NRMM' on ini files. If found, mark that mod as forced to be managed and give warning symbol on corresponding mod card.
+- When managing mod, look for ShaderRegex section, check if that section is checking texture override. If so, mark that mod as unoptimized mod and give warning symbol on corresponding mod card.
+- When refreshing mod, look for file called 'RabbitFx.ini' on entire 'Mods' folder. If found more than 1, give Snackbar warning info.
+- Support all kinds of gamepads, not only XInput Gamepad.
+
+---
 
 # No Reload Mod Manager / Skin Selection
 (for XXMI Launcher supported games, or 3dmigoto mod)
