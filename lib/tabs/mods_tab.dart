@@ -217,6 +217,9 @@ class _ModContainerState extends ConsumerState<ModContainer>
       modIcon: oldMod.modIcon,
       realIndex: oldMod.realIndex,
       modName: _modNameTextFieldController.text,
+      isForced: oldMod.isForced,
+      isIncludingRabbitFx: oldMod.isIncludingRabbitFx,
+      isUnoptimized: oldMod.isUnoptimized,
     );
 
     // Clone the ModGroupData with updated mod list
@@ -581,27 +584,135 @@ class _ModContainerState extends ConsumerState<ModContainer>
                     borderRadius: BorderRadius.circular(17 * sss),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16 * sss),
+                    borderRadius: BorderRadius.circular(14 * sss),
                     clipBehavior: Clip.antiAlias,
-                    child:
+                    child: Stack(
+                      children: [
                         widget.index != 0
-                            ? RefreshableLocalImage(
-                              imageWidget:
-                                  widget
-                                      .currentGroupData
-                                      .modsInGroup[widget.index]
-                                      .modIcon,
-                              errorWidget: Icon(
-                                size: 40 * sss,
-                                Icons.image_outlined,
-                                color: const Color.fromARGB(127, 255, 255, 255),
+                            ? SizedBox.expand(
+                              child: RefreshableLocalImage(
+                                imageWidget:
+                                    widget
+                                        .currentGroupData
+                                        .modsInGroup[widget.index]
+                                        .modIcon,
+                                errorWidget: Icon(
+                                  size: 40 * sss,
+                                  Icons.image_outlined,
+                                  color: const Color.fromARGB(
+                                    127,
+                                    255,
+                                    255,
+                                    255,
+                                  ),
+                                ),
                               ),
                             )
-                            : Icon(
-                              size: 45 * sss,
-                              Icons.close,
-                              color: const Color.fromARGB(127, 255, 255, 255),
+                            : SizedBox.expand(
+                              child: Icon(
+                                size: 45 * sss,
+                                Icons.close,
+                                color: const Color.fromARGB(127, 255, 255, 255),
+                              ),
                             ),
+
+                        if (widget
+                                .currentGroupData
+                                .modsInGroup[widget.index]
+                                .isForced ||
+                            widget
+                                .currentGroupData
+                                .modsInGroup[widget.index]
+                                .isIncludingRabbitFx ||
+                            widget
+                                .currentGroupData
+                                .modsInGroup[widget.index]
+                                .isUnoptimized)
+                          Align(
+                            alignment: Alignment.bottomCenter,
+                            child: Container(
+                              height: 30 * sss,
+                              width: 156.816 * sss,
+                              color: const Color.fromARGB(150, 0, 0, 0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                spacing: 8 * sss,
+                                children: [
+                                  if (widget
+                                      .currentGroupData
+                                      .modsInGroup[widget.index]
+                                      .isForced)
+                                    Tooltip(
+                                      richMessage: TextSpan(
+                                        text:
+                                            'Mod was forced to be managed and might not working properly.'
+                                                .tr(),
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 12 * sss,
+                                        ),
+                                      ),
+                                      child: HoverableIcon(
+                                        iconData: Icons.sync_problem_rounded,
+                                        scaleFactor: sss,
+                                        idleColor: Colors.yellow,
+                                        activeColor: Colors.white,
+                                      ),
+                                    ),
+                                  if (widget
+                                      .currentGroupData
+                                      .modsInGroup[widget.index]
+                                      .isIncludingRabbitFx)
+                                    Tooltip(
+                                      richMessage: TextSpan(
+                                        text:
+                                            'Mod contains RabbitFx.ini, please remove it. You must only have 1 RabbitFx accross your entire "Mods" folder.'
+                                                .tr(),
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 12 * sss,
+                                        ),
+                                      ),
+                                      child: HoverableIcon(
+                                        iconData: Icons.warning_amber_rounded,
+                                        scaleFactor: sss,
+                                        idleColor: Colors.yellow,
+                                        activeColor: Colors.white,
+                                      ),
+                                    ),
+                                  if (widget
+                                      .currentGroupData
+                                      .modsInGroup[widget.index]
+                                      .isUnoptimized)
+                                    Tooltip(
+                                      richMessage: TextSpan(
+                                        text:
+                                            'Mod is unoptimized and might slow down performance or even break other mods.'
+                                                .tr(),
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 12 * sss,
+                                        ),
+                                      ),
+                                      child: Transform.scale(
+                                        scaleX: -1,
+                                        child: HoverableIcon(
+                                          iconData: Icons.speed_rounded,
+                                          scaleFactor: sss,
+                                          idleColor: Colors.yellow,
+                                          activeColor: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -772,6 +883,48 @@ class TabModsLoading extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class HoverableIcon extends StatefulWidget {
+  final IconData iconData;
+  final double scaleFactor;
+  final Color idleColor;
+  final Color activeColor;
+  const HoverableIcon({
+    super.key,
+    required this.iconData,
+    required this.scaleFactor,
+    required this.idleColor,
+    required this.activeColor,
+  });
+
+  @override
+  State<HoverableIcon> createState() => _HoverableIconState();
+}
+
+class _HoverableIconState extends State<HoverableIcon> {
+  bool isHovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (event) {
+        setState(() {
+          isHovering = true;
+        });
+      },
+      onExit: (event) {
+        setState(() {
+          isHovering = false;
+        });
+      },
+      child: Icon(
+        widget.iconData,
+        color: !isHovering ? widget.idleColor : widget.activeColor,
+        size: 20 * widget.scaleFactor,
       ),
     );
   }

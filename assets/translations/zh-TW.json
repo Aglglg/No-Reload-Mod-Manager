@@ -154,5 +154,9 @@
   "Search group by name or real folder name only": "搜尋群組",
   "Mod forced to be fixed & might not working properly": "模組已被強制託管，可能無法正常運作.\n如果你是模組創作者，請開啟檔案並搜尋「NRMM」.\n{}\n\n",
   "Mods path is invalid, please remove all illegal characters.": "模組路徑無效，請移除所有非法字元/符號.",
-  "Reset Position": "重設視窗位置"
+  "Reset Position": "重設視窗位置",
+  "Mod was forced to be managed and might not working properly.": "模組已被強制託管，可能無法正常運作.",
+  "Mod contains RabbitFx.ini, please remove it. You must only have 1 RabbitFx accross your entire \"Mods\" folder.": "模組中包含 RabbitFx.ini，請將其移除.\n你的整個「Mods」資料夾中只能有一個 RabbitFx.",
+  "Mod is unoptimized and might slow down performance or even break other mods.": "該模組未經過優化，可能會降低效能，甚至導致其他模組發生錯誤.",
+  "Found more than 1 RabbitFx.ini on your \"Mods\" folder, please use only 1.": "在你的「Mods」資料夾中發現多個 RabbitFx.ini，請只保留一個."
 }

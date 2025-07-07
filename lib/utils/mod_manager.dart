@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 
@@ -51,6 +52,20 @@ Future<List<ModGroupData>> refreshModData(Directory managedDir) async {
   return results;
 }
 
+Future<List<String>> checkForDuplicateRabbitFx(Directory modsDir) async {
+  List<String> rabbitFxPath = [];
+
+  try {
+    final iniFiles = await findIniFilesRecursiveExcludeDisabled(modsDir.path);
+    for (var file in iniFiles) {
+      if (p.basename(file).toLowerCase() == "rabbitfx.ini") {
+        rabbitFxPath.add(file);
+      }
+    }
+  } catch (e) {}
+
+  return rabbitFxPath;
+}
 //////////////////////////
 
 Future<List<(Directory, int)>> getGroupFolders(
@@ -125,6 +140,9 @@ void _addGroupToRiverpod(WidgetRef ref, Directory groupDir, int index) {
         modIcon: null,
         modName: "None".tr(),
         realIndex: 0,
+        isForced: false,
+        isIncludingRabbitFx: false,
+        isUnoptimized: false,
       ),
     ],
     realIndex: index + 1,
@@ -490,6 +508,9 @@ void _updateModIconProvider(
                     modIcon: newIcon,
                     modName: mod.modName,
                     realIndex: mod.realIndex,
+                    isForced: mod.isForced,
+                    isIncludingRabbitFx: mod.isIncludingRabbitFx,
+                    isUnoptimized: mod.isUnoptimized,
                   );
                 }
                 return mod;
@@ -542,6 +563,9 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
           modIcon: getModOrGroupIcon(modDir),
           modName: await getModName(modDir),
           realIndex: index + 1, //0 will be none
+          isForced: await checkModWasMarkedAsForced(modDir),
+          isIncludingRabbitFx: await checkModContainsRabbitFx(modDir),
+          isUnoptimized: await checkModWasMarkedAsUnoptimized(modDir),
         );
       }).toList(),
     );
@@ -553,6 +577,9 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
         modIcon: null,
         modName: "None".tr(),
         realIndex: 0,
+        isForced: false,
+        isIncludingRabbitFx: false,
+        isUnoptimized: false,
       ),
     );
 
@@ -561,6 +588,44 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
     print('Error reading directory: $e');
     return [];
   }
+}
+
+Future<bool> checkModWasMarkedAsForced(Directory modDir) async {
+  try {
+    final fileForcedName = File(p.join(modDir.path, 'modforced'));
+    if (await fileForcedName.exists()) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (e) {
+    return false;
+  }
+}
+
+Future<bool> checkModWasMarkedAsUnoptimized(Directory modDir) async {
+  try {
+    final fileForcedName = File(p.join(modDir.path, 'modunoptimized'));
+    if (await fileForcedName.exists()) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (e) {
+    return false;
+  }
+}
+
+Future<bool> checkModContainsRabbitFx(Directory modDir) async {
+  try {
+    final iniFiles = await findIniFilesRecursiveExcludeDisabled(modDir.path);
+    for (var file in iniFiles) {
+      if (p.basename(file).toLowerCase() == "rabbitfx.ini") {
+        return true;
+      }
+    }
+  } catch (e) {}
+  return false;
 }
 
 Future<String> getModName(Directory modDir) async {
@@ -960,6 +1025,9 @@ Future<void> _manageMod(
 
     // Wait for all the tasks to complete concurrently
     await Future.wait(futures);
+
+    await tryMarkAsForcedToBeManaged(modFolder, iniFiles);
+    await tryMarkAsUnoptimized(modFolder, iniFiles);
   } catch (e) {
     operationLogs.add(
       TextSpan(
@@ -1022,6 +1090,121 @@ Future<void> _modifyIniFile(
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );
+  }
+}
+
+Future<bool> containsNrmmMark(List<String> paths) async {
+  for (final path in paths) {
+    final file = File(path);
+
+    if (!file.existsSync()) continue;
+
+    final lines = file
+        .openRead()
+        .transform(SystemEncoding().decoder)
+        .transform(const LineSplitter());
+
+    try {
+      // Read line by line to avoid loading the whole file into memory
+      await for (final line in lines) {
+        if (line.contains('by NRMM,')) {
+          return true; // Early exit
+        }
+      }
+    } catch (e) {
+      // Skip unreadable files
+      continue;
+    }
+  }
+  return false;
+}
+
+Future<void> tryMarkAsForcedToBeManaged(
+  String modPath,
+  List<String> iniFiles,
+) async {
+  bool found = await containsNrmmMark(iniFiles);
+
+  if (found) {
+    try {
+      final fileMarkForced = File(p.join(modPath, 'modforced'));
+
+      await fileMarkForced.writeAsString('');
+    } catch (e) {}
+  } else {
+    try {
+      final fileMarkForced = File(p.join(modPath, 'modforced'));
+
+      await fileMarkForced.delete();
+    } catch (e) {}
+  }
+}
+
+Future<bool> containsCheckTextureOverride(List<IniSection> parsedIni) async {
+  for (var section in parsedIni) {
+    if (section.name.toLowerCase().startsWith('shaderregex')) {
+      for (var line in section.lines) {
+        if (line.trim().startsWith(';')) continue;
+        if (line.toLowerCase().contains('checktextureoverride')) {
+          return true;
+        } else if (line.toLowerCase().replaceAll(' ', '').startsWith('run=')) {
+          final match = RegExp(
+            r'^\s*run\s*=\s*(\S+)\s*$',
+            caseSensitive: false,
+          ).firstMatch(line);
+
+          if (match != null) {
+            final command = match.group(1); // "CommandListSomething"
+
+            //if CommandList or something found
+            if (command != null) {
+              //loop again on parsedini sections
+              for (var section in parsedIni) {
+                //if looping and found section name that is the same as commandlist earlier
+                if (section.name.toLowerCase() == command.toLowerCase()) {
+                  //loop on every lines on this section
+                  for (var line in section.lines) {
+                    if (line.trim().startsWith(';')) continue;
+                    if (line.toLowerCase().contains('checktextureoverride')) {
+                      return true;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return false;
+}
+
+Future<void> tryMarkAsUnoptimized(String modPath, List<String> iniFiles) async {
+  bool found = true;
+
+  for (var iniFilePath in iniFiles) {
+    final file = File(iniFilePath);
+    final lines = await file.readAsLines();
+
+    var parsedIni = await _parseIniSections(lines);
+
+    found = await containsCheckTextureOverride(parsedIni);
+    if (found) break;
+  }
+
+  if (found) {
+    try {
+      final fileMarkUnoptimized = File(p.join(modPath, 'modunoptimized'));
+
+      await fileMarkUnoptimized.writeAsString('');
+    } catch (e) {}
+  } else {
+    try {
+      final fileMarkUnoptimized = File(p.join(modPath, 'modunoptimized'));
+
+      await fileMarkUnoptimized.delete();
+    } catch (e) {}
   }
 }
 
@@ -2162,6 +2345,101 @@ class _RevertModDialogState extends ConsumerState<RevertModDialog> {
                 ),
               ]
               : [],
+    );
+  }
+}
+
+class DuplicatedRabbitFxDialog extends ConsumerStatefulWidget {
+  final List<String> rabbitFxPaths;
+  const DuplicatedRabbitFxDialog({super.key, required this.rabbitFxPaths});
+
+  @override
+  ConsumerState<DuplicatedRabbitFxDialog> createState() =>
+      _DuplicatedRabbitFxDialogState();
+}
+
+class _DuplicatedRabbitFxDialogState
+    extends ConsumerState<DuplicatedRabbitFxDialog> {
+  final ScrollController _scrollController = ScrollController();
+  List<TextSpan> contents = [];
+
+  @override
+  void initState() {
+    super.initState();
+    revertMods();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> revertMods() async {
+    setState(() {
+      contents = [];
+      for (var path in widget.rabbitFxPaths) {
+        contents.add(
+          TextSpan(
+            text: '$path\n\n',
+            style: GoogleFonts.poppins(color: Colors.white),
+          ),
+        );
+      }
+    });
+
+    _scrollToBottom();
+  }
+
+  Future<void> _scrollToBottom() async {
+    // Wait until scrollController has a valid position
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (!_scrollController.hasClients) return;
+
+    await _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        'Details'.tr(),
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
+      ),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.trackpad,
+            },
+          ),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: RichText(text: TextSpan(children: contents)),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+            ref.read(alertDialogShownProvider.notifier).state = false;
+          },
+          child: Text(
+            'Close'.tr(),
+            style: GoogleFonts.poppins(color: Colors.blue),
+          ),
+        ),
+      ],
     );
   }
 }
