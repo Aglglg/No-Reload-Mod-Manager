@@ -1134,7 +1134,8 @@ class _MainViewState extends ConsumerState<MainView>
                 borderRadius: BorderRadius.circular(20),
               ),
               content: Text(
-                'Found more than 1 RabbitFx.ini on your "Mods" folder, please use only 1.',
+                'Found more than 1 RabbitFx.ini on your "Mods" folder, please use only 1.'
+                    .tr(),
                 style: GoogleFonts.poppins(
                   color: Colors.yellow,
                   fontSize: 13 * ref.read(zoomScaleProvider),
