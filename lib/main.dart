@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui';
 import 'package:auto_updater/auto_updater.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
@@ -44,7 +45,7 @@ import 'package:easy_localization/easy_localization.dart';
 
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
-  await SharedPrefUtils().init();
+  bool successLoadPref = await SharedPrefUtils().tryInit();
   await EasyLocalization.ensureInitialized();
   await setupWindow(args);
   runApp(
@@ -58,14 +59,14 @@ void main(List<String> args) async {
         ],
         path: 'assets/translations',
         fallbackLocale: Locale('en'),
-        child: MyApp(),
+        child: MyApp(successLoadPref: successLoadPref),
       ),
     ),
   );
 }
 
 Future<void> relaunchAsNormalUser() async {
-  final exePath = Platform.resolvedExecutable; // This works for compiled .exe
+  final exePath = Platform.resolvedExecutable;
 
   await Process.start('explorer.exe', [
     exePath,
@@ -153,7 +154,8 @@ Future<void> setupWindow(List<String> args) async {
 }
 
 class MyApp extends ConsumerStatefulWidget {
-  const MyApp({super.key});
+  final bool successLoadPref;
+  const MyApp({super.key, required this.successLoadPref});
 
   @override
   ConsumerState<MyApp> createState() => _MyAppState();
@@ -216,7 +218,7 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
         supportedLocales: context.supportedLocales,
         locale: context.locale,
         debugShowCheckedModeBanner: false,
-        home: Background(),
+        home: Background(successLoadPref: widget.successLoadPref),
         theme: ThemeData.dark(),
       ),
     );
@@ -224,13 +226,28 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
 }
 
 class Background extends ConsumerStatefulWidget {
-  const Background({super.key});
+  final bool successLoadPref;
+  const Background({super.key, required this.successLoadPref});
 
   @override
   ConsumerState<Background> createState() => _BackgroundState();
 }
 
 class _BackgroundState extends ConsumerState<Background> {
+  @override
+  void initState() {
+    super.initState();
+    if (!widget.successLoadPref) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showDialog(
+          barrierDismissible: false,
+          context: context,
+          builder: (context) => PrefCorruptedDialog(),
+        );
+      });
+    }
+  }
+
   Color getBorderColor(WidgetRef ref) {
     if (ref.watch(windowIsPinnedProvider)) {
       return const Color.fromARGB(255, 33, 149, 243);
@@ -1349,4 +1366,117 @@ class CustomKeyEvent extends KeyEvent {
     required super.logicalKey,
     required super.timeStamp,
   });
+}
+
+class PrefCorruptedDialog extends ConsumerStatefulWidget {
+  const PrefCorruptedDialog({super.key});
+
+  @override
+  ConsumerState<PrefCorruptedDialog> createState() =>
+      _PrefCorruptedDialogState();
+}
+
+class _PrefCorruptedDialogState extends ConsumerState<PrefCorruptedDialog> {
+  final ScrollController _scrollController = ScrollController();
+  List<TextSpan> contents = [];
+
+  @override
+  void initState() {
+    super.initState();
+    showCorruptedPrefInfo();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> showCorruptedPrefInfo() async {
+    setState(() {
+      contents = [];
+      contents.add(
+        TextSpan(
+          text:
+              "Settings data corrupted. Data automatically deleted to prevent error."
+                  .tr(),
+          style: GoogleFonts.poppins(color: Colors.white),
+        ),
+      );
+      contents.add(
+        TextSpan(
+          text:
+              "Make sure to re-check 'Mods Path' and anything else, on Settings tab."
+                  .tr(),
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+      contents.add(
+        TextSpan(
+          text: "Don't worry, mod datas are still fine!".tr(),
+          style: GoogleFonts.poppins(
+            color: Colors.green,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    });
+
+    _scrollToBottom();
+  }
+
+  Future<void> _scrollToBottom() async {
+    // Wait until scrollController has a valid position
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (!_scrollController.hasClients) return;
+
+    await _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        'Warning'.tr(),
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
+      ),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.trackpad,
+            },
+          ),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: RichText(text: TextSpan(children: contents)),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+            ref.read(alertDialogShownProvider.notifier).state = false;
+          },
+          child: Text(
+            'Close'.tr(),
+            style: GoogleFonts.poppins(color: Colors.blue),
+          ),
+        ),
+      ],
+    );
+  }
 }

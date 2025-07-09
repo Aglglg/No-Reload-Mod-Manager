@@ -158,5 +158,8 @@
   "Mod was forced to be managed and might not working properly.": "Mod was forced to be managed and might not working properly.",
   "Mod contains RabbitFx.ini, please remove it. You must only have 1 RabbitFx accross your entire \"Mods\" folder.": "Mod contains RabbitFx.ini, please remove it.\nYou must only have 1 RabbitFx accross your entire \"Mods\" folder.",
   "Mod is unoptimized and might slow down performance or even break other mods.": "Mod is unoptimized and might slow down performance or even break other mods.",
-  "Found more than 1 RabbitFx.ini on your \"Mods\" folder, please use only 1.": "Found more than 1 RabbitFx.ini on your \"Mods\" folder, please use only 1."
+  "Found more than 1 RabbitFx.ini on your \"Mods\" folder, please use only 1.": "Found more than 1 RabbitFx.ini on your \"Mods\" folder, please use only 1.",
+  "Settings data corrupted. Data automatically deleted to prevent error.": "Settings data corrupted.\nData automatically deleted to prevent error.\n\n",
+  "Make sure to re-check 'Mods Path' and anything else, on Settings tab.": "Make sure to re-check 'Mods Path' and anything else, on Settings tab.\n",
+  "Don't worry, mod datas are still fine!": "Don't worry, mod datas are still fine!"
 }

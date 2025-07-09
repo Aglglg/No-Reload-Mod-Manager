@@ -49,12 +49,12 @@ final StateProvider<bool> messageZzzDismissedProvider = StateProvider<bool>(
 
 final StateProvider<HotkeyKeyboard> hotkeyKeyboardProvider =
     StateProvider<HotkeyKeyboard>((ref) {
-      SharedPrefUtils().init();
+      SharedPrefUtils().tryInit();
       return SharedPrefUtils().getHotkeyKeyboard();
     });
 final StateProvider<HotkeyGamepad> hotkeyGamepadProvider =
     StateProvider<HotkeyGamepad>((ref) {
-      SharedPrefUtils().init();
+      SharedPrefUtils().tryInit();
       return SharedPrefUtils().getHotkeyGamepad();
     });
 
@@ -77,12 +77,12 @@ final modKeybindProvider =
 final leftThumbWasTriggered = StateProvider<bool>((ref) => false);
 
 final zoomScaleProvider = StateProvider<double>((ref) {
-  SharedPrefUtils().init();
+  SharedPrefUtils().tryInit();
   return SharedPrefUtils().getOverallScale();
 });
 
 final bgTransparencyProvider = StateProvider<int>((ref) {
-  SharedPrefUtils().init();
+  SharedPrefUtils().tryInit();
   return SharedPrefUtils().getBgTransparency();
 });
 
@@ -92,7 +92,7 @@ final searchBarMode = StateProvider<int>((ref) => 0);
 final sortGroupMethod = StateProvider<int>((ref) => 0);
 
 final layoutModeProvider = StateProvider<int>((ref) {
-  SharedPrefUtils().init();
+  SharedPrefUtils().tryInit();
   return SharedPrefUtils().getLayoutMode();
 });
 

@@ -2366,7 +2366,7 @@ class _DuplicatedRabbitFxDialogState
   @override
   void initState() {
     super.initState();
-    revertMods();
+    showPaths();
   }
 
   @override
@@ -2375,7 +2375,7 @@ class _DuplicatedRabbitFxDialogState
     super.dispose();
   }
 
-  Future<void> revertMods() async {
+  Future<void> showPaths() async {
     setState(() {
       contents = [];
       for (var path in widget.rabbitFxPaths) {

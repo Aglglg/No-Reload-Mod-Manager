@@ -158,5 +158,8 @@
   "Mod was forced to be managed and might not working properly.": "模组已被强制托管，可能无法正常工作.",
   "Mod contains RabbitFx.ini, please remove it. You must only have 1 RabbitFx accross your entire \"Mods\" folder.": "模组中包含 RabbitFx.ini，请将其移除.\n你的整个“Mods”文件夹中只能有一个 RabbitFx.",
   "Mod is unoptimized and might slow down performance or even break other mods.": "该模组未经过优化，可能会降低性能，甚至导致其他模组出错.",
-  "Found more than 1 RabbitFx.ini on your \"Mods\" folder, please use only 1.": "在你的“Mods”文件夹中发现多个 RabbitFx.ini，请只保留一个."
+  "Found more than 1 RabbitFx.ini on your \"Mods\" folder, please use only 1.": "在你的“Mods”文件夹中发现多个 RabbitFx.ini，请只保留一个.",
+  "Settings data corrupted. Data automatically deleted to prevent error.": "设置数据已损坏.\n为防止错误，数据已自动删除.\n\n",
+  "Make sure to re-check 'Mods Path' and anything else, on Settings tab.": "请重新检查“模组路径”和其他设置项，位于“设置”选项卡中.\n",
+  "Don't worry, mod datas are still fine!": "别担心，模组数据还是好的！"
 }

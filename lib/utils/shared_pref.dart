@@ -12,8 +12,24 @@ class SharedPrefUtils {
 
   SharedPrefUtils._internal();
 
-  Future<void> init() async {
-    _prefs ??= await SharedPreferences.getInstance();
+  String getSharedPrefPath() {
+    String prefPath = p.join(
+      getUserProfilePath(),
+      r'AppData\Roaming\com.aglg\No Reload Mod Manager\shared_preferences.json',
+    );
+
+    return prefPath;
+  }
+
+  Future<bool> tryInit() async {
+    try {
+      _prefs ??= await SharedPreferences.getInstance();
+      return true;
+    } catch (e) {
+      await File(getSharedPrefPath()).delete();
+      _prefs ??= await SharedPreferences.getInstance();
+      return false;
+    }
   }
 
   Future<void> setHotkeyKeyboard(HotkeyKeyboard value) async {
