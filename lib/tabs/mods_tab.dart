@@ -566,6 +566,9 @@ class _ModContainerState extends ConsumerState<ModContainer>
                       strokeAlign: BorderSide.strokeAlignInside,
                       color:
                           (isHovering && !widget.isGrid) ||
+                                  (isHovering &&
+                                      widget.isGrid &&
+                                      !ref.watch(wasUsingKeyboard)) ||
                                   (widget.isActiveInGrid && widget.isGrid)
                               ? Colors.white
                               : isModDisabled(
@@ -770,13 +773,17 @@ class _ModContainerState extends ConsumerState<ModContainer>
   void onKeyEvent(KeyEvent value, Controller? controller) {
     if (ref.read(tabIndexProvider) == 1) {
       if (value.physicalKey == PhysicalKeyboardKey.keyF) {
-        if (widget.isCentered || widget.isActiveInGrid) {
+        if (widget.isCentered ||
+            widget.isActiveInGrid ||
+            (widget.isGrid && isHovering && !ref.read(wasUsingKeyboard))) {
           widget.onSelected();
           controller?.vibrate(Duration(milliseconds: 80));
         }
       }
       if (value.physicalKey == PhysicalKeyboardKey.keyR) {
-        if (widget.isCentered || widget.isActiveInGrid) {
+        if (widget.isCentered ||
+            widget.isActiveInGrid ||
+            (widget.isGrid && isHovering && !ref.read(wasUsingKeyboard))) {
           ref.read(modKeybindProvider.notifier).state = null;
           ref.read(modKeybindProvider.notifier).state = (
             widget.currentGroupData.modsInGroup[widget.index],

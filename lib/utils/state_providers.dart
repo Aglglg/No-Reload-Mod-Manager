@@ -99,3 +99,5 @@ final layoutModeProvider = StateProvider<int>((ref) {
 final isCarouselProvider = StateProvider<bool>(
   (ref) => SharedPrefUtils().getLayoutMode() == 1,
 );
+
+final wasUsingKeyboard = StateProvider<bool>((ref) => false);

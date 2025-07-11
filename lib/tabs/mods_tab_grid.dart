@@ -262,7 +262,9 @@ class _ModAreaGridState extends ConsumerState<ModAreaGrid>
         if (!mouseWasMoved) {
           setState(() {
             mouseWasMoved = true;
+            indexOfActiveGridMod = -1;
           });
+          ref.read(wasUsingKeyboard.notifier).state = false;
         }
       },
       child: LayoutBuilder(
@@ -285,63 +287,41 @@ class _ModAreaGridState extends ConsumerState<ModAreaGrid>
                     widget.currentGroupData.modsInGroup.asMap().entries.map((
                       modData,
                     ) {
-                      return MouseRegion(
-                        onEnter: (_) {
-                          if (!mouseWasMoved) return;
-                          if (ref.read(popupMenuShownProvider) ||
-                              isTextInputFocused()) {
-                            return;
-                          }
-                          setState(() {
-                            indexOfActiveGridMod = modData.key;
-                          });
+                      return ModContainer(
+                        key: _itemKeys[modData.key],
+                        itemHeight: 217.8 * sss,
+                        isCentered: false,
+                        isActiveInGrid: modData.key == indexOfActiveGridMod,
+                        isGrid: true,
+                        onSelected: () async {
+                          _scrollToItem(modData.key);
+                          simulateKeySelectMod(
+                            widget.currentGroupData.realIndex,
+                            widget
+                                .currentGroupData
+                                .modsInGroup[modData.key]
+                                .realIndex,
+                          );
+                          setSelectedModIndex(
+                            ref,
+                            widget
+                                .currentGroupData
+                                .modsInGroup[modData.key]
+                                .realIndex,
+                            widget.currentGroupData.groupDir,
+                          );
                         },
-                        onExit: (_) {
-                          if (!mouseWasMoved) return;
-                          if (ref.read(popupMenuShownProvider) ||
-                              isTextInputFocused()) {
-                            return;
-                          }
-                          setState(() {
-                            indexOfActiveGridMod = -1;
-                          });
-                        },
-                        child: ModContainer(
-                          key: _itemKeys[modData.key],
-                          itemHeight: 217.8 * sss,
-                          isCentered: false,
-                          isActiveInGrid: modData.key == indexOfActiveGridMod,
-                          isGrid: true,
-                          onSelected: () async {
-                            _scrollToItem(modData.key);
-                            simulateKeySelectMod(
-                              widget.currentGroupData.realIndex,
-                              widget
-                                  .currentGroupData
-                                  .modsInGroup[modData.key]
-                                  .realIndex,
-                            );
-                            setSelectedModIndex(
-                              ref,
-                              widget
-                                  .currentGroupData
-                                  .modsInGroup[modData.key]
-                                  .realIndex,
-                              widget.currentGroupData.groupDir,
-                            );
-                          },
-                          onTap: () {},
-                          index: modData.key,
-                          isSelected:
-                              widget
-                                  .currentGroupData
-                                  .previousSelectedModOnGroup ==
-                              widget
-                                  .currentGroupData
-                                  .modsInGroup[modData.key]
-                                  .realIndex,
-                          currentGroupData: widget.currentGroupData,
-                        ),
+                        onTap: () {},
+                        index: modData.key,
+                        isSelected:
+                            widget
+                                .currentGroupData
+                                .previousSelectedModOnGroup ==
+                            widget
+                                .currentGroupData
+                                .modsInGroup[modData.key]
+                                .realIndex,
+                        currentGroupData: widget.currentGroupData,
                       );
                     }).toList(),
               ),
@@ -364,6 +344,12 @@ class _ModAreaGridState extends ConsumerState<ModAreaGrid>
     }
 
     if (ref.read(tabIndexProvider) == 1) {
+      if (value.physicalKey == PhysicalKeyboardKey.keyD ||
+          value.physicalKey == PhysicalKeyboardKey.keyA ||
+          value.physicalKey == PhysicalKeyboardKey.keyW ||
+          value.physicalKey == PhysicalKeyboardKey.keyS) {
+        ref.read(wasUsingKeyboard.notifier).state = true;
+      }
       if (value.physicalKey == PhysicalKeyboardKey.keyD) {
         setState(() {
           if (indexOfActiveGridMod >=
