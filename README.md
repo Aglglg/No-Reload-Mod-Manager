@@ -5,7 +5,6 @@ How? Of course, first of all you must know [How to contribute to open sourced pr
 ---
 ### To-do list
 - Support all kinds of gamepads, not only XInput Gamepad.
-- Fix some functions on right-click menu while in Grid Layout not working.
 ---
 
 # No Reload Mod Manager / Skin Selection
