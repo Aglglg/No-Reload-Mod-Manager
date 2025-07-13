@@ -556,7 +556,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                 ),
                 waitDuration: Duration(milliseconds: 500),
                 child: AnimatedContainer(
-                  duration: Duration(milliseconds: 250),
+                  duration: Duration(milliseconds: !widget.isGrid ? 250 : 0),
                   curve: Curves.easeOut,
                   height: widget.itemHeight,
                   width: 156.816 * sss,
@@ -582,7 +582,13 @@ class _ModContainerState extends ConsumerState<ModContainer>
                               : widget.isSelected
                               ? Colors.blue
                               : const Color.fromARGB(127, 255, 255, 255),
-                      width: !widget.isActiveInGrid ? 3 * sss : 4 * sss,
+                      width:
+                          (isHovering &&
+                                      widget.isGrid &&
+                                      !ref.watch(wasUsingKeyboard)) ||
+                                  (widget.isActiveInGrid && widget.isGrid)
+                              ? 4 * sss
+                              : 3 * sss,
                     ),
                     borderRadius: BorderRadius.circular(17 * sss),
                   ),
