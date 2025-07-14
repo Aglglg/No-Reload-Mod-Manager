@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +14,7 @@ import 'package:no_reload_mod_manager/utils/mod_navigator.dart';
 import 'package:no_reload_mod_manager/utils/refreshable_image.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:path/path.dart' as p;
 import 'package:xinput_gamepad/xinput_gamepad.dart';
@@ -511,6 +514,58 @@ class _ModContainerState extends ConsumerState<ModContainer>
                   }
                 },
                 label: 'Enable mod'.tr(),
+              ),
+            if (widget.index != 0)
+              CustomMenuItem.submenu(
+                items: [
+                  if (widget.index != 0)
+                    CustomMenuItem(
+                      scale: sss,
+                      onSelected: () async {
+                        if (!context.mounted) return;
+                        try {
+                          String urlPath = p.join(
+                            widget
+                                .currentGroupData
+                                .modsInGroup[widget.index]
+                                .modDir
+                                .path,
+                            'modlink',
+                          );
+                          String url = await File(urlPath).readAsString();
+                          if (!await launchUrl(Uri.parse(url))) {}
+                        } catch (e) {}
+                      },
+                      label: 'Open in browser'.tr(),
+                    ),
+                  if (widget.index != 0)
+                    CustomMenuItem(
+                      scale: sss,
+                      onSelected: () async {
+                        if (!context.mounted) return;
+                        String urlPath = p.join(
+                          widget
+                              .currentGroupData
+                              .modsInGroup[widget.index]
+                              .modDir
+                              .path,
+                          'modlink',
+                        );
+                        ref.read(alertDialogShownProvider.notifier).state =
+                            true;
+                        showDialog(
+                          barrierDismissible: false,
+                          context: context,
+                          builder:
+                              (context) =>
+                                  EditModLinkDialog(modLinkFile: File(urlPath)),
+                        );
+                      },
+                      label: 'Edit link'.tr(),
+                    ),
+                ],
+                label: 'Mod source'.tr(),
+                scale: sss,
               ),
             if (widget.index != 0)
               CustomMenuItem(

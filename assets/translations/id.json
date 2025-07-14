@@ -161,5 +161,9 @@
   "Found more than 1 RabbitFx.ini on your \"Mods\" folder, please use only 1.": "Ditemukan lebih dari 1 RabbitFx.ini di dalam folder \"Mods\", gunakan 1 saja, hapus yang lainnya.",
   "Settings data corrupted. Data automatically deleted to prevent error.": "Data Settings/Setelan rusak.\nData dihapus otomatis agar tidak error.\n\n",
   "Make sure to re-check 'Mods Path' and anything else, on Settings tab.": "Pastikan untuk mengecek ulang 'Mods Path' dan lain-lain, di tab Setelan.\n",
-  "Don't worry, mod datas are still fine!": "Tak perlu khawatir, data mod tetap aman!"
+  "Don't worry, mod datas are still fine!": "Tak perlu khawatir, data mod tetap aman!",
+  "Open in browser": "Buka di browser",
+  "Edit link": "Edit link",
+  "Mod link": "Link mod",
+  "Mod source": "Sumber mod"
 }

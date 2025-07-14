@@ -2682,6 +2682,91 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
   }
 }
 
+class EditModLinkDialog extends ConsumerStatefulWidget {
+  final File modLinkFile;
+  const EditModLinkDialog({super.key, required this.modLinkFile});
+
+  @override
+  ConsumerState<EditModLinkDialog> createState() => _EditModLinkDialogState();
+}
+
+class _EditModLinkDialogState extends ConsumerState<EditModLinkDialog> {
+  final textController = TextEditingController();
+  @override
+  void initState() {
+    super.initState();
+    loadModLink();
+  }
+
+  Future<void> loadModLink() async {
+    try {
+      String url = await widget.modLinkFile.readAsString();
+      textController.text = url;
+    } catch (e) {}
+  }
+
+  @override
+  void dispose() {
+    textController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        'Mod link'.tr(),
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
+      ),
+      content: TextField(
+        controller: textController,
+        decoration: InputDecoration(
+          isDense: true,
+          disabledBorder: InputBorder.none,
+          hintText: 'https://modlink.example',
+          hintStyle: GoogleFonts.poppins(
+            fontWeight: FontWeight.w400,
+            color: const Color.fromARGB(30, 255, 255, 255),
+            fontSize: 13,
+          ),
+        ),
+        maxLines: null,
+        keyboardType: TextInputType.none,
+        style: GoogleFonts.poppins(
+          fontWeight: FontWeight.w400,
+          color: Colors.white,
+          fontSize: 13,
+        ),
+        inputFormatters: [
+          FilteringTextInputFormatter.deny(RegExp(r'[\n\r\u0085\u2028\u2029]')),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+            ref.read(alertDialogShownProvider.notifier).state = false;
+          },
+          child: Text(
+            'Cancel'.tr(),
+            style: GoogleFonts.poppins(color: Colors.blue),
+          ),
+        ),
+        TextButton(
+          onPressed: () async {
+            Navigator.of(context).pop();
+            await widget.modLinkFile.writeAsString(textController.text);
+          },
+          child: Text(
+            'Confirm'.tr(),
+            style: GoogleFonts.poppins(color: Colors.blue),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 Future<void> openFileExplorerToSpecifiedPath(String path) async {
   if (Platform.isWindows) {
     if (await Directory(path).exists()) {

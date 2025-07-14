@@ -161,5 +161,9 @@
   "Found more than 1 RabbitFx.ini on your \"Mods\" folder, please use only 1.": "在你的“Mods”文件夹中发现多个 RabbitFx.ini，请只保留一个.",
   "Settings data corrupted. Data automatically deleted to prevent error.": "设置数据已损坏.\n为防止错误，数据已自动删除.\n\n",
   "Make sure to re-check 'Mods Path' and anything else, on Settings tab.": "请重新检查“模组路径”和其他设置项，位于“设置”选项卡中.\n",
-  "Don't worry, mod datas are still fine!": "别担心，模组数据还是好的！"
+  "Don't worry, mod datas are still fine!": "别担心，模组数据还是好的！",
+  "Open in browser": "在浏览器中打开",
+  "Edit link": "编辑链接",
+  "Mod link": "模组链接",
+  "Mod source": "模组来源"
 }
