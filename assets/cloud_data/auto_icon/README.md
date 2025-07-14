@@ -9,4 +9,5 @@
 1. Fork the repository.
 2. Create new branch.
 3. Update/modify that branch.
-4. Create Pull Request from that branch.
+4. Create Pull Request from that branch.  
+5. [More info here](https://github.com/Aglglg/No-Reload-Mod-Manager#repository-contribution)
