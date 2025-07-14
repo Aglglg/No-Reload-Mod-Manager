@@ -2050,7 +2050,6 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
                     Navigator.of(context).pop();
                     ref.read(alertDialogShownProvider.notifier).state = false;
                     _onConfirmToUpdateModClicked();
-                    triggerRefresh(ref);
                   },
                   child: Text(
                     'Confirm'.tr(),
@@ -2227,6 +2226,7 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
                         ref.read(alertDialogShownProvider.notifier).state =
                             false;
                         simulateKeyF10();
+                        triggerRefresh(ref);
                       },
                       child: Text(
                         'Close & Reload'.tr(),
@@ -2238,6 +2238,7 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
                         Navigator.of(context).pop();
                         ref.read(alertDialogShownProvider.notifier).state =
                             false;
+                        triggerRefresh(ref);
                       },
                       child: Text(
                         'Close'.tr(),
@@ -2576,7 +2577,6 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
       _isLoading = false;
     });
 
-    triggerRefresh(ref);
     _scrollToBottom();
   }
 
