@@ -1299,6 +1299,7 @@ class _MainViewState extends ConsumerState<MainView>
     final sss = ref.watch(zoomScaleProvider);
     return Stack(
       children: [
+        Align(alignment: Alignment.topCenter, child: Text('Intended to be used with Custom XXMI Lib', style: GoogleFonts.poppins(color: Colors.amber, fontSize: 10 * sss),),),
         ///Tab views
         IndexedStack(index: ref.watch(tabIndexProvider), children: _views),
 

@@ -1,2 +1,2 @@
-[System]
-check_foreground_window = 0
+[Loader]
+manager = No_Reload_Mod_Manager.exe

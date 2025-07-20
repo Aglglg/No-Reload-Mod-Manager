@@ -220,7 +220,6 @@ class _ModContainerState extends ConsumerState<ModContainer>
       modIcon: oldMod.modIcon,
       realIndex: oldMod.realIndex,
       modName: _modNameTextFieldController.text,
-      isForced: oldMod.isForced,
       isIncludingRabbitFx: oldMod.isIncludingRabbitFx,
       isUnoptimized: oldMod.isUnoptimized,
     );
@@ -680,10 +679,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                               ),
                             ),
 
-                        if (widget
-                                .currentGroupData
-                                .modsInGroup[widget.index]
-                                .isForced ||
+                        if (
                             widget
                                 .currentGroupData
                                 .modsInGroup[widget.index]
@@ -702,28 +698,6 @@ class _ModContainerState extends ConsumerState<ModContainer>
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 spacing: 8 * sss,
                                 children: [
-                                  if (widget
-                                      .currentGroupData
-                                      .modsInGroup[widget.index]
-                                      .isForced)
-                                    Tooltip(
-                                      richMessage: TextSpan(
-                                        text:
-                                            'Mod was forced to be managed and might not working properly.'
-                                                .tr(),
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12 * sss,
-                                        ),
-                                      ),
-                                      child: HoverableIcon(
-                                        iconData: Icons.sync_problem_rounded,
-                                        scaleFactor: sss,
-                                        idleColor: Colors.yellow,
-                                        activeColor: Colors.white,
-                                      ),
-                                    ),
                                   if (widget
                                       .currentGroupData
                                       .modsInGroup[widget.index]

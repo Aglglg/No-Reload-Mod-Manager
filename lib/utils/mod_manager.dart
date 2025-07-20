@@ -140,7 +140,6 @@ void _addGroupToRiverpod(WidgetRef ref, Directory groupDir, int index) {
         modIcon: null,
         modName: "None".tr(),
         realIndex: 0,
-        isForced: false,
         isIncludingRabbitFx: false,
         isUnoptimized: false,
       ),
@@ -508,7 +507,6 @@ void _updateModIconProvider(
                     modIcon: newIcon,
                     modName: mod.modName,
                     realIndex: mod.realIndex,
-                    isForced: mod.isForced,
                     isIncludingRabbitFx: mod.isIncludingRabbitFx,
                     isUnoptimized: mod.isUnoptimized,
                   );
@@ -563,7 +561,6 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
           modIcon: getModOrGroupIcon(modDir),
           modName: await getModName(modDir),
           realIndex: index + 1, //0 will be none
-          isForced: await checkModWasMarkedAsForced(modDir),
           isIncludingRabbitFx: await checkModContainsRabbitFx(modDir),
           isUnoptimized: await checkModWasMarkedAsUnoptimized(modDir),
         );
@@ -577,7 +574,6 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
         modIcon: null,
         modName: "None".tr(),
         realIndex: 0,
-        isForced: false,
         isIncludingRabbitFx: false,
         isUnoptimized: false,
       ),
@@ -1026,7 +1022,6 @@ Future<void> _manageMod(
     // Wait for all the tasks to complete concurrently
     await Future.wait(futures);
 
-    await tryMarkAsForcedToBeManaged(modFolder, iniFiles);
     await tryMarkAsUnoptimized(modFolder, iniFiles);
   } catch (e) {
     operationLogs.add(
@@ -1056,29 +1051,6 @@ Future<void> _modifyIniFile(
 
     // Modify the INI file sections based on the given modIndex and groupIndex
     _checkAndModifySections(parsedIni, modIndex, groupIndex);
-
-    //Force fix only, these broken mods annoying. Might still broken or behaves abnormally, its only purpose is to make broken mods don't interfere other mods.
-    //PLEASE CHECK YOUR MODS BEFORE POSTING IT! TURN OFF 'MUTE WARNINGS'
-    bool forcedFix = forceFixIniSections(parsedIni);
-
-    //v2.6.1 problem
-    cleanVariableBugFromPreviousVersion(parsedIni);
-    cleanCommentedEndifFromPreviousVersion(parsedIni);
-
-    if (forcedFix) {
-      operationLogs.add(
-        TextSpan(
-          text: 'Mod forced to be fixed & might not working properly'.tr(
-            args: [iniFilePath],
-          ),
-          style: GoogleFonts.poppins(
-            color: const Color.fromARGB(255, 189, 170, 0),
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-          ),
-        ),
-      );
-    }
 
     // Write the modified content back to the INI file
     await file.writeAsString(_getLiteralIni(parsedIni));
@@ -1117,27 +1089,6 @@ Future<bool> containsNrmmMark(List<String> paths) async {
     }
   }
   return false;
-}
-
-Future<void> tryMarkAsForcedToBeManaged(
-  String modPath,
-  List<String> iniFiles,
-) async {
-  bool found = await containsNrmmMark(iniFiles);
-
-  if (found) {
-    try {
-      final fileMarkForced = File(p.join(modPath, 'modforced'));
-
-      await fileMarkForced.writeAsString('');
-    } catch (e) {}
-  } else {
-    try {
-      final fileMarkForced = File(p.join(modPath, 'modforced'));
-
-      await fileMarkForced.delete();
-    } catch (e) {}
-  }
 }
 
 Future<bool> containsCheckTextureOverride(List<IniSection> parsedIni) async {
@@ -1314,343 +1265,6 @@ void cleanCommentedEndifFromPreviousVersion(List<IniSection> sections) {
   }
 }
 
-bool forceFixIniSections(List<IniSection> sections) {
-  bool forcedFix = false;
-
-  //fix syntax error on if elif else if statement
-  //replace elseif to be else if
-  //replace else or elif or else if to be 'if' because it wasn't even started with 'if'
-  //use = instead of ==, use =< and => instead of <= and >=, use =! instead of !=
-  for (var section in sections) {
-    if (_isExcludedSection(section.name) || _isKeySection(section.name)) {
-      continue;
-    }
-
-    //replace elseif to be else if
-    for (int i = 0; i < section.lines.length; i++) {
-      var line = section.lines[i];
-      if (line.toLowerCase().trim().startsWith('elseif ')) {
-        String modifiedLine = line.replaceFirst('elseif', 'else if');
-        if (modifiedLine != line) {
-          section.lines[i] =
-              ';Force fix syntax by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;$line\n$modifiedLine';
-          forcedFix = true;
-        }
-      }
-    }
-
-    //Replace else if and elif to be if, in-case if statement was not opened
-    bool ifStatementWasOpened = false;
-    for (int i = 0; i < section.lines.length; i++) {
-      var line = section.lines[i];
-      if (line.toLowerCase().trim().startsWith('if ') &&
-          !line.toLowerCase().trim().contains(r'$\modmanageragl')) {
-        ifStatementWasOpened = true;
-      }
-
-      if (line.toLowerCase().trim().startsWith('else if ')) {
-        if (!ifStatementWasOpened) {
-          String modifiedLine = line.replaceFirst('else if', 'if');
-          section.lines[i] =
-              ';Force fix syntax by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;$line\n$modifiedLine';
-          forcedFix = true;
-          ifStatementWasOpened = true;
-        }
-      }
-
-      if (line.toLowerCase().trim().startsWith('elif ')) {
-        if (!ifStatementWasOpened) {
-          String modifiedLine = line.replaceFirst('elif', 'if');
-          section.lines[i] =
-              ';Force fix syntax by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;$line\n$modifiedLine';
-          forcedFix = true;
-          ifStatementWasOpened = true;
-        }
-      }
-    }
-
-    //Fix 'if' to be 'elif' or just give endif here
-
-    //Example:
-    //if something == 0
-    //DoSomething0
-    //if something == 1
-    //DoSomething1
-    //endif
-
-    //To Be:
-    //if something == 0
-    //DoSomething0
-    //elif something == 1
-    //DoSomething1
-    //endif
-
-    //NEVERMIND IT'S REALLY DIFFICULT TO HANDLE SOMETHING LIKE THAT
-
-    //Replace =! with !=
-    for (int i = 0; i < section.lines.length; i++) {
-      var line = section.lines[i];
-      if (line.toLowerCase().trim().startsWith('if ') ||
-          line.toLowerCase().trim().startsWith('elif ') ||
-          line.toLowerCase().trim().startsWith('else if ')) {
-        String modifiedLine = line.replaceAll('=!', '!=');
-        if (modifiedLine != line) {
-          section.lines[i] =
-              ';Force fix syntax by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;$line\n$modifiedLine';
-          forcedFix = true;
-        }
-      }
-    }
-
-    //Replace => with >=
-    for (int i = 0; i < section.lines.length; i++) {
-      var line = section.lines[i];
-      if (line.toLowerCase().trim().startsWith('if ') ||
-          line.toLowerCase().trim().startsWith('elif ') ||
-          line.toLowerCase().trim().startsWith('else if ')) {
-        String modifiedLine = line.replaceAll('=>', '>=');
-        if (modifiedLine != line) {
-          section.lines[i] =
-              ';Force fix syntax by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;$line\n$modifiedLine';
-          forcedFix = true;
-        }
-      }
-    }
-
-    //Replace =< with <=
-    for (int i = 0; i < section.lines.length; i++) {
-      var line = section.lines[i];
-      if (line.toLowerCase().trim().startsWith('if ') ||
-          line.toLowerCase().trim().startsWith('elif ') ||
-          line.toLowerCase().trim().startsWith('else if ')) {
-        String modifiedLine = line.replaceAll('=<', '<=');
-        if (modifiedLine != line) {
-          section.lines[i] =
-              ';Force fix syntax by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;$line\n$modifiedLine';
-          forcedFix = true;
-        }
-      }
-    }
-
-    //Replace = with ==
-    for (int i = 0; i < section.lines.length; i++) {
-      var line = section.lines[i];
-      if (line.toLowerCase().trim().startsWith('if ') ||
-          line.toLowerCase().trim().startsWith('elif ') ||
-          line.toLowerCase().trim().startsWith('else if ')) {
-        final regex = RegExp(r'(?<![=!<>])=(?![=])');
-        String modifiedLine = line.replaceAllMapped(regex, (m) => '==');
-        if (modifiedLine != line) {
-          section.lines[i] =
-              ';Force fix syntax by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;$line\n$modifiedLine';
-          forcedFix = true;
-        }
-      }
-    }
-  }
-
-  //add missing variable on Constants
-  List<String> variablesFound = [];
-  List<String> variablesShouldBeAdded = [];
-
-  for (var section in sections) {
-    if (section.name.toLowerCase().trim() == "constants") {
-      for (var line in section.lines) {
-        if (line.trim().startsWith(';')) {
-          continue;
-        }
-        final regex = RegExp(r'(?<!\\)(\$[a-zA-Z_][a-zA-Z0-9_]*)');
-
-        final matches = regex.allMatches(line);
-        final results = matches.map((m) => m.group(1)!).toList();
-        for (var result in results) {
-          variablesFound.add(result.toLowerCase());
-        }
-      }
-    }
-  }
-
-  for (var section in sections) {
-    if (_isExcludedSection(section.name)) {
-      continue;
-    }
-    List<String> localVariablesFound = [];
-
-    for (var line in section.lines) {
-      if (line.trim().startsWith(';')) {
-        continue;
-      }
-      final regex = RegExp(
-        r'local\s+(?<!\\)(\$[a-zA-Z_][a-zA-Z0-9_]*)',
-        caseSensitive: false,
-      );
-
-      final matches = regex.allMatches(line);
-      final results = matches.map((m) => m.group(1)!.toLowerCase()).toList();
-
-      for (var result in results) {
-        localVariablesFound.add(result);
-      }
-    }
-
-    for (var line in section.lines) {
-      if (line.trim().startsWith(';')) {
-        continue;
-      }
-      final regex = RegExp(r'(?<!\\)(\$[a-zA-Z_][a-zA-Z0-9_]*)');
-
-      final matches = regex.allMatches(line);
-      final results = matches.map((m) => m.group(1)!).toList();
-      for (var result in results) {
-        if (!variablesFound.contains(result.toLowerCase())) {
-          variablesFound.add(result.toLowerCase());
-          if (!variablesShouldBeAdded.contains(result.toLowerCase())) {
-            if (!localVariablesFound.contains(result.toLowerCase())) {
-              variablesShouldBeAdded.add(result.toLowerCase());
-            }
-          }
-        }
-      }
-    }
-  }
-
-  if (variablesShouldBeAdded.isNotEmpty) {
-    List<String> lines = [];
-    lines.add(
-      ';Force add line by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.',
-    );
-    for (var variable in variablesShouldBeAdded) {
-      lines.add('global $variable = 1');
-    }
-    sections.add(IniSection('Constants', lines));
-    forcedFix = true;
-  }
-
-  //Fix missing variable that was used in [Key]
-  //and was already added on [Constants] by NRMM
-  //but always disabled (value 0) in [Present]
-  //and never being enabled (value 1) in [TextureOverride]
-  for (var section in sections) {
-    //Only for [Key] section
-    if (_isKeySection(section.name)) {
-      for (var line in section.lines) {
-        if (line.toLowerCase().trim().startsWith('condition')) {
-          final regex = RegExp(r'(?<!\\)(\$[a-zA-Z_][a-zA-Z0-9_]*)');
-
-          final matches = regex.allMatches(line);
-          final results = matches.map((m) => m.group(1)!).toList();
-          for (var result in results) {
-            bool wasUsedInPresent = false;
-            bool wasAddedByNRMM = false;
-
-            //Check if it was used in Present and always disabled (value 0)
-            for (var section in sections) {
-              if (section.name.toLowerCase() == "present") {
-                for (var line in section.lines) {
-                  if (line.trim().toLowerCase().replaceAll(' ', '') ==
-                      'post${result.toLowerCase()}=0') {
-                    wasUsedInPresent = true;
-                    break;
-                  }
-                }
-              }
-            }
-
-            //Check if the variable was added by NRMM in Constants
-            for (var section in sections) {
-              if (section.name.toLowerCase() == "constants") {
-                bool nrmmMarkFound = false;
-                for (var line in section.lines) {
-                  if (line.contains('NRMM')) {
-                    nrmmMarkFound = true;
-                    break;
-                  }
-                }
-
-                //If constants section is not by NRMM, continue to next iteration or skip current iteration
-                if (!nrmmMarkFound) {
-                  continue;
-                }
-
-                //Check if the variable was found in Constants section and was added by NRMM
-                for (var line in section.lines) {
-                  // == because on older version of NRMM it was wrongly written like that,
-                  // and be fixed on newer version of NRMM, but the fixing process is later
-                  // after this forceFix function
-                  if (line.trim().toLowerCase().replaceAll(' ', '') ==
-                          'global${result.toLowerCase()}=1' ||
-                      line.trim().toLowerCase().replaceAll(' ', '') ==
-                          'global${result.toLowerCase()}==1') {
-                    wasAddedByNRMM = true;
-                    break;
-                  }
-                }
-              }
-            }
-
-            //If the variable was used in Present and was added by NRMM, check if it was already specified on TextureOverride
-            if (wasAddedByNRMM && wasUsedInPresent) {
-              for (var section in sections) {
-                if (section.name.toLowerCase().startsWith('textureoverride')) {
-                  bool varAlreadyWritten = false;
-                  //Check on every lines if it's already written
-                  for (var line in section.lines) {
-                    if (line.trim().startsWith(';') &&
-                        !line.trim().contains('\n')) {
-                      continue;
-                    }
-                    if (line
-                        .trim()
-                        .toLowerCase()
-                        .replaceAll(' ', '')
-                        .contains("${result.toLowerCase()}=1")) {
-                      varAlreadyWritten = true;
-                      break;
-                    }
-                  }
-                  if (varAlreadyWritten == false) {
-                    section.lines.add(
-                      ';Force add line by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n$result = 1',
-                    );
-                    forcedFix = true;
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  //add missing endif
-  for (var section in sections) {
-    if (_isExcludedSection(section.name) || _isKeySection(section.name)) {
-      continue;
-    }
-    int totalIfFound = 0;
-    int totalEndifFound = 0;
-    int totalEndifShouldBeAdded = 0;
-    for (var line in section.lines) {
-      if (line.toLowerCase().trim().startsWith('if ')) {
-        totalIfFound = totalIfFound + 1;
-      }
-      if (line.toLowerCase().trim() == 'endif') {
-        totalEndifFound = totalEndifFound + 1;
-      }
-    }
-    totalEndifShouldBeAdded = totalIfFound - totalEndifFound;
-    for (var i = 0; i < totalEndifShouldBeAdded; i++) {
-      section.lines.add(
-        ';Force add line by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\nendif',
-      );
-      forcedFix = true;
-    }
-  }
-
-  return forcedFix;
-}
-
 void _checkAndModifySections(
   List<IniSection> sections,
   int modIndex,
@@ -1707,11 +1321,11 @@ void _checkAndModifySections(
       } else {
         lines.insert(
           0,
-          r'if $managed_slot_id == $\modmanageragl\group_' +
+          r'manager_if $managed_slot_id == $\modmanageragl\group_' +
               groupIndex.toString() +
               r'\active_slot',
         );
-        lines.add('endif');
+        lines.add('manager_endif');
       }
     }
 
