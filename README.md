@@ -1,4 +1,5 @@
 ### For Custom XXMI Lib that I made
+- [Custom XXMI Lib Repository](https://github.com/Aglglg/XXMI-Libs-Package)
 - Do not need background_keypress.ini that's sometimes annoying if often put the game in background
 - Do not need to correct conditional(if-endif) statement, because it will use specialized 'manager_if/manager_endif'
 - **Not intended for wide use & still in testing phase for further tweaks(unlikely)**
