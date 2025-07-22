@@ -1,1 +1,1 @@
-ZZZ mods may have problems, in case this is happening, try to rollback to ZZMI v1.1.6||https://github.com/leotorrez/ZZMI-Package/releases/tag/v1.1.6
+Rollback ZZMI to v1.1.6 (or v1.1.5) to fix broken mods, click "Details" for tutorial.||https://gamebanana.com/tuts/18948
