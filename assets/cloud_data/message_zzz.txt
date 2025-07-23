@@ -1,1 +1,1 @@
-Rollback ZZMI to v1.1.6 (or v1.1.5) to fix broken mods, click "Details" for tutorial.||https://gamebanana.com/tuts/18948
+Mods should be fine after latest update of XXMI, no need to rollback to old version.
