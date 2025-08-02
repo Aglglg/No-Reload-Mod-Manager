@@ -1,1 +1,1 @@
-Mods should be fine after latest update of XXMI, no need to rollback to old version.
+
