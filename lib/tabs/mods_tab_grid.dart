@@ -852,6 +852,34 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                           ),
                           CustomMenuItem(
                             scale: sss,
+                            onSelected: () async {
+                              if (!context.mounted) return;
+                              final mods =
+                                  ref
+                                      .read(modGroupDataProvider)[index]
+                                      .modsInGroup;
+                              for (var mod in mods) {
+                                await completeDisableMod(mod.modDir);
+                              }
+                            },
+                            label: 'Disable all mods'.tr(),
+                          ),
+                          CustomMenuItem(
+                            scale: sss,
+                            onSelected: () async {
+                              if (!context.mounted) return;
+                              final mods =
+                                  ref
+                                      .read(modGroupDataProvider)[index]
+                                      .modsInGroup;
+                              for (var mod in mods) {
+                                await enableMod(mod.modDir);
+                              }
+                            },
+                            label: 'Enable all mods'.tr(),
+                          ),
+                          CustomMenuItem(
+                            scale: sss,
                             onSelected: () {
                               if (!context.mounted) return;
                               ref

@@ -1,4 +1,11 @@
 //Sorry the code is messy
+/*
+TODO:
+1. Do not force update mod data, instead give snackbar at the bottom.
+2. ~Disable/enable all mods in a group.
+3. ~Instead of renaming added folder/mod to be disabled, just delete it. Users usually have archived version or just don't care.
+4. Display full mod name, not only single line (a bit difficult for the current layout).
+*/
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';

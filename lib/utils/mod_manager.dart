@@ -1909,6 +1909,9 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
         destDirPath = await checkForDuplicateFolderName(destDirPath);
         try {
           await copyDirectory(disabledFolder, Directory(destDirPath));
+          //Even though source folder already disabled, after successfully copied, just delete it. Actually just simulating cut/move.
+          //Rename source folder is also the same as testing whether that folder is used by other programs or not.
+          await deleteUnusedFolder(disabledFolder);
           operationLogs.add(
             TextSpan(
               text: 'Folder copied'.tr(args: [p.basename(folder.path)]),
@@ -1960,6 +1963,12 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
         return null;
       }
     }
+  }
+
+  Future<void> deleteUnusedFolder(Directory folder) async {
+    try {
+      await folder.delete(recursive: true);
+    } catch (e) {}
   }
 
   String removeAllDisabledPrefixes(String input) {
@@ -2778,6 +2787,9 @@ Future<void> openFileExplorerToSpecifiedPath(String path) async {
 }
 
 Future<bool> completeDisableMod(Directory modDir) async {
+  if (p.basename(modDir.path).toLowerCase().startsWith('disabled')) {
+    return false;
+  }
   try {
     String renamedPath = p.join(
       p.dirname(modDir.path),

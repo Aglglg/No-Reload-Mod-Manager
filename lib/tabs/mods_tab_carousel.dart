@@ -620,6 +620,32 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                     if (index == currentPageIndex)
                       CustomMenuItem(
                         scale: sss,
+                        onSelected: () async {
+                          if (!context.mounted) return;
+                          final mods =
+                              ref.read(modGroupDataProvider)[index].modsInGroup;
+                          for (var mod in mods) {
+                            await completeDisableMod(mod.modDir);
+                          }
+                        },
+                        label: 'Disable all mods'.tr(),
+                      ),
+                    if (index == currentPageIndex)
+                      CustomMenuItem(
+                        scale: sss,
+                        onSelected: () async {
+                          if (!context.mounted) return;
+                          final mods =
+                              ref.read(modGroupDataProvider)[index].modsInGroup;
+                          for (var mod in mods) {
+                            await enableMod(mod.modDir);
+                          }
+                        },
+                        label: 'Enable all mods'.tr(),
+                      ),
+                    if (index == currentPageIndex)
+                      CustomMenuItem(
+                        scale: sss,
                         onSelected: () {
                           if (!context.mounted) return;
                           ref.read(alertDialogShownProvider.notifier).state =
