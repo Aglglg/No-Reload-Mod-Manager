@@ -1533,7 +1533,7 @@ class _UpdateModDataSnackbarButtonState
                   color: Colors.red,
                   fontStyle: FontStyle.normal,
                   fontWeight: FontWeight.bold,
-                  fontSize: 13 * ref.read(zoomScaleProvider),
+                  fontSize: 14 * ref.read(zoomScaleProvider),
                   decoration: TextDecoration.none,
                 ),
               ),
@@ -1566,7 +1566,7 @@ class _UpdateModDataSnackbarButtonState
                 style: GoogleFonts.poppins(
                   color: Colors.blue,
                   fontWeight: FontWeight.bold,
-                  fontSize: 15 * ref.read(zoomScaleProvider),
+                  fontSize: 14 * ref.read(zoomScaleProvider),
                 ),
               ),
             ),
