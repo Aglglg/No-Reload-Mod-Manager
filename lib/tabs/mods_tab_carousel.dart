@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
+import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/tabs/mods_tab.dart';
 import 'package:no_reload_mod_manager/utils/auto_group_icon.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
@@ -620,6 +621,42 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                     if (index == currentPageIndex)
                       CustomMenuItem(
                         scale: sss,
+                        onSelected: () async {
+                          if (!context.mounted) return;
+                          final mods =
+                              ref.read(modGroupDataProvider)[index].modsInGroup;
+                          for (var mod in mods) {
+                            await completeDisableMod(mod.modDir);
+                          }
+                          if (!context.mounted) return;
+                          showUpdateModSnackbar(
+                            context,
+                            ProviderScope.containerOf(context, listen: false),
+                          );
+                        },
+                        label: 'Disable all mods'.tr(),
+                      ),
+                    if (index == currentPageIndex)
+                      CustomMenuItem(
+                        scale: sss,
+                        onSelected: () async {
+                          if (!context.mounted) return;
+                          final mods =
+                              ref.read(modGroupDataProvider)[index].modsInGroup;
+                          for (var mod in mods) {
+                            await enableMod(mod.modDir);
+                          }
+                          if (!context.mounted) return;
+                          showUpdateModSnackbar(
+                            context,
+                            ProviderScope.containerOf(context, listen: false),
+                          );
+                        },
+                        label: 'Enable all mods'.tr(),
+                      ),
+                    if (index == currentPageIndex)
+                      CustomMenuItem(
+                        scale: sss,
                         onSelected: () {
                           if (!context.mounted) return;
                           ref.read(alertDialogShownProvider.notifier).state =
@@ -690,7 +727,9 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
               ),
             ),
             child: TextField(
+              maxLines: 2,
               focusNode: groupTextFieldFocusNode,
+              textInputAction: TextInputAction.done,
               enabled: groupTextFieldEnabled,
               cursorColor: Colors.blue,
               textAlign: TextAlign.center,
@@ -865,7 +904,7 @@ class _ModAreaState extends ConsumerState<ModAreaCarousel>
     final sss = ref.watch(zoomScaleProvider);
     return Expanded(
       child: SizedBox(
-        height: 200 * sss * 1.2,
+        height: 215 * sss * 1.2,
         child: RightClickMenuRegion(
           menuItems: [
             if (!ref.watch(windowIsPinnedProvider))

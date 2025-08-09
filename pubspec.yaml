@@ -63,6 +63,7 @@ dependencies:
   easy_localization: ^3.0.7+1
   windows_single_instance: ^1.0.1
   flutter_context_menu: ^0.2.2
+  top_snackbar_flutter: ^3.3.0
   
 dev_dependencies:
   flutter_test:

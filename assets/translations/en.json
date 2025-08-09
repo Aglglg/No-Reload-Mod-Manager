@@ -165,5 +165,8 @@
   "Open in browser": "Open in browser",
   "Edit link": "Edit link",
   "Mod link": "Mod link",
-  "Mod source": "Mod source"
+  "Mod source": "Mod source",
+  "Disable all mods": "Disable all mods",
+  "Enable all mods": "Enable all mods",
+  "Do not forget to press Update Mod Data": "Do not forget to press Update Mod Data"
 }

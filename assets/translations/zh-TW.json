@@ -165,5 +165,8 @@
   "Open in browser": "在瀏覽器中開啟",
   "Edit link": "編輯連結",
   "Mod link": "模組連結",
-  "Mod source": "模組來源"
+  "Mod source": "模組來源",
+  "Disable all mods": "停用所有模組",
+  "Enable all mods": "啟用所有模組",
+  "Do not forget to press Update Mod Data": "別忘了按「更新模組資料」"
 }

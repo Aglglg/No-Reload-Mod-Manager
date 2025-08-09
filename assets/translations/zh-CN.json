@@ -165,5 +165,8 @@
   "Open in browser": "在浏览器中打开",
   "Edit link": "编辑链接",
   "Mod link": "模组链接",
-  "Mod source": "模组来源"
+  "Mod source": "模组来源",
+  "Disable all mods": "禁用所有模组",
+  "Enable all mods": "启用所有模组",
+  "Do not forget to press Update Mod Data": "别忘了按“更新模组数据”"
 }

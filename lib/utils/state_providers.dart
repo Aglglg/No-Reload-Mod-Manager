@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
@@ -101,3 +102,7 @@ final isCarouselProvider = StateProvider<bool>(
 );
 
 final wasUsingKeyboard = StateProvider<bool>((ref) => false);
+
+final animControllerSpecialSnackbar = StateProvider<List<AnimationController>>(
+  (ref) => [],
+);

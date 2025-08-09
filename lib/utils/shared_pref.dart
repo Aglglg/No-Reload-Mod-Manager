@@ -288,6 +288,79 @@ class SharedPrefUtils {
     }
   }
 
+  ////////////////
+  bool currentTargetGameNeedUpdateMod(TargetGame targetGame) {
+    switch (targetGame) {
+      case TargetGame.Wuthering_Waves:
+        return getWuwaUpdateModMessageCondition();
+      case TargetGame.Genshin_Impact:
+        return getGenshinUpdateModMessageCondition();
+      case TargetGame.Honkai_Star_Rail:
+        return getHsrUpdateModMessageCondition();
+      case TargetGame.Zenless_Zone_Zero:
+        return getZzzUpdateModMessageCondition();
+      default:
+        return false;
+    }
+  }
+
+  Future<void> setCurrentTargetGameNeedUpdateMod(
+    TargetGame targetGame,
+    bool condition,
+  ) async {
+    switch (targetGame) {
+      case TargetGame.Wuthering_Waves:
+        await setWuwaUpdateModMessageCondition(condition);
+        break;
+      case TargetGame.Genshin_Impact:
+        await setGenshinUpdateModMessageCondition(condition);
+        break;
+      case TargetGame.Honkai_Star_Rail:
+        await setHsrUpdateModMessageCondition(condition);
+        break;
+      case TargetGame.Zenless_Zone_Zero:
+        await setZzzUpdateModMessageCondition(condition);
+        break;
+      default:
+    }
+  }
+
+  Future<void> setWuwaUpdateModMessageCondition(bool condition) async {
+    await _prefs?.setBool(keyWuwaUpdateMod, condition);
+  }
+
+  bool getWuwaUpdateModMessageCondition() {
+    bool? result = _prefs?.getBool(keyWuwaUpdateMod);
+    return result ??= false;
+  }
+
+  Future<void> setZzzUpdateModMessageCondition(bool condition) async {
+    await _prefs?.setBool(keyZzzUpdateMod, condition);
+  }
+
+  bool getZzzUpdateModMessageCondition() {
+    bool? result = _prefs?.getBool(keyZzzUpdateMod);
+    return result ??= false;
+  }
+
+  Future<void> setGenshinUpdateModMessageCondition(bool condition) async {
+    await _prefs?.setBool(keyGenshinUpdateMod, condition);
+  }
+
+  bool getGenshinUpdateModMessageCondition() {
+    bool? result = _prefs?.getBool(keyGenshinUpdateMod);
+    return result ??= false;
+  }
+
+  Future<void> setHsrUpdateModMessageCondition(bool condition) async {
+    await _prefs?.setBool(keyHsrUpdateMod, condition);
+  }
+
+  bool getHsrUpdateModMessageCondition() {
+    bool? result = _prefs?.getBool(keyHsrUpdateMod);
+    return result ??= false;
+  }
+
   static const String keyTargetProcessWuwa = 'targetProcessWuwa';
   static const String keyTargetProcessGenshin = 'targetProcessGenshin';
   static const String keyTargetProcessHsr = 'targetProcessHsr';
@@ -320,6 +393,11 @@ class SharedPrefUtils {
 
   static const String keyWindowWidth = "windowWidth";
   static const String keyWindowHeight = "windowHeight";
+
+  static const String keyWuwaUpdateMod = "wuwaUpdateMod";
+  static const String keyZzzUpdateMod = "zzzUpdateMod";
+  static const String keyGenshinUpdateMod = "genshinUpdateMod";
+  static const String keyHsrUpdateMod = "hsrUpdateMod";
 
   String getUserProfilePath() {
     if (Platform.isWindows) {

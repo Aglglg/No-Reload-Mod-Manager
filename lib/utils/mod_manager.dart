@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
+import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/utils/auto_group_icon.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/keypress_simulator_manager.dart';
@@ -1132,7 +1133,7 @@ Future<bool> containsCheckTextureOverride(List<IniSection> parsedIni) async {
 }
 
 Future<void> tryMarkAsUnoptimized(String modPath, List<String> iniFiles) async {
-  bool found = true;
+  bool found = false;
 
   for (var iniFilePath in iniFiles) {
     final file = File(iniFilePath);
@@ -1523,6 +1524,9 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
         destDirPath = await checkForDuplicateFolderName(destDirPath);
         try {
           await copyDirectory(disabledFolder, Directory(destDirPath));
+          //Even though source folder already disabled, after successfully copied, just delete it. Actually just simulating cut/move.
+          //Rename source folder is also the same as testing whether that folder is used by other programs or not.
+          await deleteUnusedFolder(disabledFolder);
           operationLogs.add(
             TextSpan(
               text: 'Folder copied'.tr(args: [p.basename(folder.path)]),
@@ -1576,6 +1580,12 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
     }
   }
 
+  Future<void> deleteUnusedFolder(Directory folder) async {
+    try {
+      await folder.delete(recursive: true);
+    } catch (e) {}
+  }
+
   String removeAllDisabledPrefixes(String input) {
     return input.replaceFirst(
       RegExp(r'^(disabled\s*)+', caseSensitive: false),
@@ -1623,12 +1633,11 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
   }
 
   void _onConfirmToUpdateModClicked() {
-    ref.read(alertDialogShownProvider.notifier).state = true;
-    showDialog(
-      barrierDismissible: false,
-      context: context,
-      builder: (context) => UpdateModDialog(modsPath: widget.modsPath),
+    showUpdateModSnackbar(
+      context,
+      ProviderScope.containerOf(context, listen: false),
     );
+    triggerRefresh(ref);
   }
 
   @override
@@ -1748,6 +1757,12 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
         _scrollToBottom();
         final groupFolders = await getGroupFolders(
           p.join(widget.modsPath, ConstantVar.managedFolderName),
+        );
+
+        //No need to update mod data
+        SharedPrefUtils().setCurrentTargetGameNeedUpdateMod(
+          ref.read(targetGameProvider),
+          false,
         );
 
         //Auto group Icon
@@ -2220,12 +2235,11 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
   void _onConfirmToUpdateModClicked() {
     String? modsPath = ref.read(validModsPath);
     if (modsPath != null) {
-      ref.read(alertDialogShownProvider.notifier).state = true;
-      showDialog(
-        barrierDismissible: false,
-        context: context,
-        builder: (context) => UpdateModDialog(modsPath: modsPath),
+      showUpdateModSnackbar(
+        context,
+        ProviderScope.containerOf(context, listen: false),
       );
+      triggerRefresh(ref);
     }
   }
 
@@ -2287,7 +2301,7 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
                     _onConfirmToUpdateModClicked();
                   },
                   child: Text(
-                    'Update Mod Data'.tr(),
+                    'Confirm'.tr(),
                     style: GoogleFonts.poppins(color: Colors.blue),
                   ),
                 ),
@@ -2392,6 +2406,9 @@ Future<void> openFileExplorerToSpecifiedPath(String path) async {
 }
 
 Future<bool> completeDisableMod(Directory modDir) async {
+  if (p.basename(modDir.path).toLowerCase().startsWith('disabled')) {
+    return false;
+  }
   try {
     String renamedPath = p.join(
       p.dirname(modDir.path),
