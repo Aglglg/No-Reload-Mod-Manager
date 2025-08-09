@@ -1318,7 +1318,14 @@ class _MainViewState extends ConsumerState<MainView>
     final sss = ref.watch(zoomScaleProvider);
     return Stack(
       children: [
-        Align(alignment: Alignment.topCenter, child: Text('Intended to be used with Custom XXMI Lib', style: GoogleFonts.poppins(color: Colors.amber, fontSize: 10 * sss),),),
+        Align(
+          alignment: Alignment.topCenter,
+          child: Text(
+            'Intended to be used with Custom XXMI Lib',
+            style: GoogleFonts.poppins(color: Colors.amber, fontSize: 10 * sss),
+          ),
+        ),
+
         ///Tab views
         IndexedStack(index: ref.watch(tabIndexProvider), children: _views),
 
@@ -1534,7 +1541,7 @@ class _UpdateModDataSnackbarButtonState
                   color: Colors.red,
                   fontStyle: FontStyle.normal,
                   fontWeight: FontWeight.bold,
-                  fontSize: 13 * ref.read(zoomScaleProvider),
+                  fontSize: 14 * ref.read(zoomScaleProvider),
                   decoration: TextDecoration.none,
                 ),
               ),
@@ -1567,7 +1574,7 @@ class _UpdateModDataSnackbarButtonState
                 style: GoogleFonts.poppins(
                   color: Colors.blue,
                   fontWeight: FontWeight.bold,
-                  fontSize: 15 * ref.read(zoomScaleProvider),
+                  fontSize: 14 * ref.read(zoomScaleProvider),
                 ),
               ),
             ),
