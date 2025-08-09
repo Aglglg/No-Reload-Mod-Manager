@@ -1,11 +1,4 @@
 //Sorry the code is messy
-/*
-TODO:
-1. Do not force update mod data, instead give snackbar at the bottom.
-2. ~Disable/enable all mods in a group.
-3. ~Instead of renaming added folder/mod to be disabled, just delete it. Users usually have archived version or just don't care.
-4. Display full mod name, not only single line (a bit difficult for the current layout).
-*/
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -38,6 +31,7 @@ import 'package:no_reload_mod_manager/utils/get_process_name.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:system_tray/system_tray.dart';
+import 'package:top_snackbar_flutter/top_snack_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:win32/win32.dart';
 import 'package:window_manager/window_manager.dart';
@@ -902,6 +896,24 @@ class _MainViewState extends ConsumerState<MainView>
   ) async {
     if (targetGame == TargetGame.none) return;
 
+    if (SharedPrefUtils().currentTargetGameNeedUpdateMod(targetGame)) {
+      showUpdateModSnackbar(
+        context,
+        ProviderScope.containerOf(context, listen: false),
+      );
+    } else {
+      try {
+        try {
+          final listAnimController = ref.read(animControllerSpecialSnackbar);
+          for (var controller in listAnimController) {
+            try {
+              controller.reverse();
+            } catch (e) {}
+          }
+        } catch (e) {}
+      } catch (e) {}
+    }
+
     String rawMessage = "";
     String message = "";
     String detailUrl = "";
@@ -1486,4 +1498,107 @@ class _PrefCorruptedDialogState extends ConsumerState<PrefCorruptedDialog> {
       ],
     );
   }
+}
+
+class UpdateModDataSnackbarButton extends ConsumerStatefulWidget {
+  const UpdateModDataSnackbarButton({super.key});
+
+  @override
+  ConsumerState<UpdateModDataSnackbarButton> createState() =>
+      _UpdateModDataSnackbarButtonState();
+}
+
+class _UpdateModDataSnackbarButtonState
+    extends ConsumerState<UpdateModDataSnackbarButton> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: const Color(0xFF2B2930),
+      ),
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 20 * ref.read(zoomScaleProvider),
+          right: 20 * ref.read(zoomScaleProvider),
+          bottom: 10 * ref.read(zoomScaleProvider),
+          top: 10 * ref.read(zoomScaleProvider),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Do not forget to press Update Mod Data'.tr(),
+                style: GoogleFonts.poppins(
+                  color: Colors.red,
+                  fontStyle: FontStyle.normal,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13 * ref.read(zoomScaleProvider),
+                  decoration: TextDecoration.none,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (ref.read(validModsPath) == null) return;
+                try {
+                  final listAnimController = ref.read(
+                    animControllerSpecialSnackbar,
+                  );
+                  for (var controller in listAnimController) {
+                    try {
+                      controller.reverse();
+                    } catch (e) {}
+                  }
+                } catch (e) {}
+                ref.read(alertDialogShownProvider.notifier).state = true;
+                await showDialog(
+                  barrierDismissible: false,
+                  context: context,
+                  builder:
+                      (context) =>
+                          UpdateModDialog(modsPath: ref.read(validModsPath)!),
+                );
+                triggerRefresh(ref);
+              },
+              child: Text(
+                'Update Mod Data'.tr(),
+                style: GoogleFonts.poppins(
+                  color: Colors.blue,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15 * ref.read(zoomScaleProvider),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+void showUpdateModSnackbar(BuildContext context, ProviderContainer container) {
+  SharedPrefUtils().setCurrentTargetGameNeedUpdateMod(
+    container.read(targetGameProvider),
+    true,
+  );
+  showTopSnackBar(
+    Overlay.of(context),
+    onAnimationControllerInit: (controller) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        final listAnimController = container.read(
+          animControllerSpecialSnackbar,
+        );
+        listAnimController.add(controller);
+        container.read(animControllerSpecialSnackbar.notifier).state =
+            listAnimController;
+      });
+    },
+    persistent: true,
+    padding: EdgeInsets.only(left: 20, right: 20, bottom: 20),
+    animationDuration: Duration(milliseconds: 500),
+    reverseAnimationDuration: Duration(milliseconds: 250),
+    snackBarPosition: SnackBarPosition.bottom,
+    UpdateModDataSnackbarButton(),
+  );
 }

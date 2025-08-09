@@ -139,7 +139,7 @@
   "Search mod in the current group by name or real folder name": "Cari mod di grup saat ini (tekan spasi lagi untuk ganti mode)",
   "Failed to enable mod": "Gagal mengaktifkan mod.\nRename mod folder secara manual di File Explorer. Kemudian 'Update Mod Data' di Setelan.",
   "Failed to disable mod": "Gagal disable mod.\nRename mod folder secara manual di File Explorer. Kemudian 'Update Mod Data' di Setelan.",
-  "Disable mod completely": "Disable mod secara penuh",
+  "Disable mod completely": "Nonaktifkan mod",
   "Enable mod": "Aktifkan mod",
   "Each section name must be unique (case-insensitive), cannot save.": "Setiap section harus punya nama yang berbeda (kapital diabaikan), gagal menyimpan.",
   "Sort group by": "Urutan grup",
@@ -165,5 +165,8 @@
   "Open in browser": "Buka di browser",
   "Edit link": "Edit link",
   "Mod link": "Link mod",
-  "Mod source": "Sumber mod"
+  "Mod source": "Sumber mod",
+  "Disable all mods": "Nonaktifkan semua mod",
+  "Enable all mods": "Aktifkan semua mod",
+  "Do not forget to press Update Mod Data": "Jangan lupa untuk pencet Update Mod Data"
 }

@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
+import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/tabs/mods_tab.dart';
 import 'package:no_reload_mod_manager/utils/auto_group_icon.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
@@ -861,6 +862,14 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                               for (var mod in mods) {
                                 await completeDisableMod(mod.modDir);
                               }
+                              if (!context.mounted) return;
+                              showUpdateModSnackbar(
+                                context,
+                                ProviderScope.containerOf(
+                                  context,
+                                  listen: false,
+                                ),
+                              );
                             },
                             label: 'Disable all mods'.tr(),
                           ),
@@ -875,6 +884,14 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                               for (var mod in mods) {
                                 await enableMod(mod.modDir);
                               }
+                              if (!context.mounted) return;
+                              showUpdateModSnackbar(
+                                context,
+                                ProviderScope.containerOf(
+                                  context,
+                                  listen: false,
+                                ),
+                              );
                             },
                             label: 'Enable all mods'.tr(),
                           ),

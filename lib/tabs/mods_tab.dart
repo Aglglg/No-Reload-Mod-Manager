@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
+import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/tabs/mods_tab_carousel.dart';
 import 'package:no_reload_mod_manager/tabs/mods_tab_grid.dart';
 import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
@@ -417,14 +418,9 @@ class _ModContainerState extends ConsumerState<ModContainer>
                   if (!context.mounted) return;
 
                   if (success) {
-                    ref.read(alertDialogShownProvider.notifier).state = true;
-                    await showDialog(
-                      barrierDismissible: false,
-                      context: context,
-                      builder:
-                          (context) => UpdateModDialog(
-                            modsPath: ref.read(validModsPath)!,
-                          ),
+                    showUpdateModSnackbar(
+                      context,
+                      ProviderScope.containerOf(context, listen: false),
                     );
                     triggerRefresh(ref);
                   } else {
@@ -474,14 +470,9 @@ class _ModContainerState extends ConsumerState<ModContainer>
                   if (!context.mounted) return;
 
                   if (success) {
-                    ref.read(alertDialogShownProvider.notifier).state = true;
-                    await showDialog(
-                      barrierDismissible: false,
-                      context: context,
-                      builder:
-                          (context) => UpdateModDialog(
-                            modsPath: ref.read(validModsPath)!,
-                          ),
+                    showUpdateModSnackbar(
+                      context,
+                      ProviderScope.containerOf(context, listen: false),
                     );
                     triggerRefresh(ref);
                   } else {
@@ -787,7 +778,9 @@ class _ModContainerState extends ConsumerState<ModContainer>
         SizedBox(
           width: 156.816 * sss,
           child: TextField(
+            maxLines: 2,
             focusNode: modTextFieldFocusNode,
+            textInputAction: TextInputAction.done,
             enabled: modTextFieldEnabled,
             cursorColor: Colors.blue,
             textAlign: TextAlign.center,
