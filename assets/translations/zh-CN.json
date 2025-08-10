@@ -168,5 +168,7 @@
   "Mod source": "模组来源",
   "Disable all mods": "禁用所有模组",
   "Enable all mods": "启用所有模组",
-  "Do not forget to press Update Mod Data": "别忘了按“更新模组数据”"
+  "Do not forget to press Update Mod Data": "别忘了按“更新模组数据”",
+  "Found ORFix.ini on your \"Mods\" folder, please delete it. Latest GIMI already have it.": "在你的“Mods”文件夹中发现 ORFix.ini，请将其删除.\n最新的 GIMI 已自带该文件.",
+  "Disable all": "全部禁用"
 }

@@ -168,5 +168,7 @@
   "Mod source": "Mod source",
   "Disable all mods": "Disable all mods",
   "Enable all mods": "Enable all mods",
-  "Do not forget to press Update Mod Data": "Do not forget to press Update Mod Data"
+  "Do not forget to press Update Mod Data": "Do not forget to press Update Mod Data",
+  "Found ORFix.ini on your \"Mods\" folder, please delete it. Latest GIMI already have it.": "Found ORFix.ini on your \"Mods\" folder, please delete it.\nLatest GIMI already have it.",
+  "Disable all": "Disable all"
 }

@@ -168,5 +168,7 @@
   "Mod source": "Sumber mod",
   "Disable all mods": "Nonaktifkan semua mod",
   "Enable all mods": "Aktifkan semua mod",
-  "Do not forget to press Update Mod Data": "Jangan lupa untuk pencet Update Mod Data"
+  "Do not forget to press Update Mod Data": "Jangan lupa untuk pencet Update Mod Data",
+  "Found ORFix.ini on your \"Mods\" folder, please delete it. Latest GIMI already have it.": "Ditemukan ORFix.ini di dalam folder \"Mods\", sebaiknya dihapus.\nGIMI terbaru sudah ada ORFix-nya.",
+  "Disable all": "Nonaktifkan semua"
 }
