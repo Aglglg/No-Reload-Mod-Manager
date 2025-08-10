@@ -1046,13 +1046,93 @@ class _MainViewState extends ConsumerState<MainView>
     }
   }
 
-  void _onRabbitFxFoundMoreThanOneDetails(List<String> rabbitFxPaths) {
+  Future<void> _checkDuplicateUtilitiesMod(String modsPath) async {
+    //Check for duplicate RabbitFx.ini
+    final rabbitFxPaths = await checkForRabbitFxCount(Directory(modsPath));
+
+    if (rabbitFxPaths.length > 1) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: const Color(0xFF2B2930),
+          margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
+          duration: Duration(days: 1),
+          behavior: SnackBarBehavior.floating,
+          closeIconColor: Colors.blue,
+          showCloseIcon: false,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          content: Text(
+            'Found more than 1 RabbitFx.ini on your "Mods" folder, please use only 1.'
+                .tr(),
+            style: GoogleFonts.poppins(
+              color: Colors.yellow,
+              fontSize: 13 * ref.read(zoomScaleProvider),
+            ),
+          ),
+          action: SnackBarAction(
+            textColor: Colors.blue,
+            label: "Details".tr(),
+            onPressed: () {
+              _onUtilitiesDuplicatedDetails(rabbitFxPaths);
+            },
+          ),
+          dismissDirection: DismissDirection.none,
+        ),
+      );
+    }
+
+    //Check for duplicate ORFix.ini on Genshin Impact
+    if (ref.read(targetGameProvider) == TargetGame.Genshin_Impact) {
+      final orfixPaths = await checkForOrfixCount(Directory(modsPath));
+
+      if (orfixPaths.isNotEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFF2B2930),
+            margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
+            duration: Duration(days: 1),
+            behavior: SnackBarBehavior.floating,
+            closeIconColor: Colors.blue,
+            showCloseIcon: false,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            content: Text(
+              'Found ORFix.ini on your "Mods" folder, please delete it. Latest GIMI already have it.'
+                  .tr(),
+              style: GoogleFonts.poppins(
+                color: Colors.yellow,
+                fontSize: 13 * ref.read(zoomScaleProvider),
+              ),
+            ),
+            action: SnackBarAction(
+              textColor: Colors.blue,
+              label: "Details".tr(),
+              onPressed: () {
+                _onUtilitiesDuplicatedDetails(orfixPaths);
+              },
+            ),
+            dismissDirection: DismissDirection.none,
+          ),
+        );
+      }
+    }
+  }
+
+  void _onUtilitiesDuplicatedDetails(List<String> rabbitFxPaths) {
     ref.read(alertDialogShownProvider.notifier).state = true;
     showDialog(
       barrierDismissible: false,
       context: context,
       builder:
-          (context) => DuplicatedRabbitFxDialog(rabbitFxPaths: rabbitFxPaths),
+          (context) => DuplicatedUtilitiesDialog(utilityPaths: rabbitFxPaths),
     );
   }
 
@@ -1149,45 +1229,8 @@ class _MainViewState extends ConsumerState<MainView>
         //Load mod & group datas
         final datas = await refreshModData(Directory(managedPath));
 
-        //Check for duplicate RabbitFx.ini
-        final rabbitFxPaths = await checkForDuplicateRabbitFx(
-          Directory(modsPath),
-        );
-
-        if (rabbitFxPaths.length > 1) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              backgroundColor: const Color(0xFF2B2930),
-              margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
-              duration: Duration(days: 1),
-              behavior: SnackBarBehavior.floating,
-              closeIconColor: Colors.blue,
-              showCloseIcon: false,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              content: Text(
-                'Found more than 1 RabbitFx.ini on your "Mods" folder, please use only 1.'
-                    .tr(),
-                style: GoogleFonts.poppins(
-                  color: Colors.yellow,
-                  fontSize: 13 * ref.read(zoomScaleProvider),
-                ),
-              ),
-              action: SnackBarAction(
-                textColor: Colors.blue,
-                label: "Details".tr(),
-                onPressed: () {
-                  _onRabbitFxFoundMoreThanOneDetails(rabbitFxPaths);
-                },
-              ),
-              dismissDirection: DismissDirection.none,
-            ),
-          );
-        }
+        //Check for duplicate utilities
+        await _checkDuplicateUtilitiesMod(modsPath);
 
         ref.read(sortGroupMethod.notifier).state =
             SharedPrefUtils().getGroupSort();
@@ -1515,7 +1558,7 @@ class _UpdateModDataSnackbarButtonState
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: const Color(0xFF2B2930),
+        color: const Color.fromARGB(255, 72, 68, 80),
       ),
       child: Padding(
         padding: EdgeInsets.only(

@@ -53,7 +53,7 @@ Future<List<ModGroupData>> refreshModData(Directory managedDir) async {
   return results;
 }
 
-Future<List<String>> checkForDuplicateRabbitFx(Directory modsDir) async {
+Future<List<String>> checkForRabbitFxCount(Directory modsDir) async {
   List<String> rabbitFxPath = [];
 
   try {
@@ -66,6 +66,21 @@ Future<List<String>> checkForDuplicateRabbitFx(Directory modsDir) async {
   } catch (e) {}
 
   return rabbitFxPath;
+}
+
+Future<List<String>> checkForOrfixCount(Directory modsDir) async {
+  List<String> orfixPath = [];
+
+  try {
+    final iniFiles = await findIniFilesRecursiveExcludeDisabled(modsDir.path);
+    for (var file in iniFiles) {
+      if (p.basename(file).toLowerCase() == "orfix.ini") {
+        orfixPath.add(file);
+      }
+    }
+  } catch (e) {}
+
+  return orfixPath;
 }
 //////////////////////////
 
@@ -2365,17 +2380,17 @@ class _RevertModDialogState extends ConsumerState<RevertModDialog> {
   }
 }
 
-class DuplicatedRabbitFxDialog extends ConsumerStatefulWidget {
-  final List<String> rabbitFxPaths;
-  const DuplicatedRabbitFxDialog({super.key, required this.rabbitFxPaths});
+class DuplicatedUtilitiesDialog extends ConsumerStatefulWidget {
+  final List<String> utilityPaths;
+  const DuplicatedUtilitiesDialog({super.key, required this.utilityPaths});
 
   @override
-  ConsumerState<DuplicatedRabbitFxDialog> createState() =>
-      _DuplicatedRabbitFxDialogState();
+  ConsumerState<DuplicatedUtilitiesDialog> createState() =>
+      _DuplicatedUtilitiesDialogState();
 }
 
-class _DuplicatedRabbitFxDialogState
-    extends ConsumerState<DuplicatedRabbitFxDialog> {
+class _DuplicatedUtilitiesDialogState
+    extends ConsumerState<DuplicatedUtilitiesDialog> {
   final ScrollController _scrollController = ScrollController();
   List<TextSpan> contents = [];
 
@@ -2394,7 +2409,7 @@ class _DuplicatedRabbitFxDialogState
   Future<void> showPaths() async {
     setState(() {
       contents = [];
-      for (var path in widget.rabbitFxPaths) {
+      for (var path in widget.utilityPaths) {
         contents.add(
           TextSpan(
             text: '$path\n\n',
@@ -2417,6 +2432,15 @@ class _DuplicatedRabbitFxDialogState
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeOut,
     );
+  }
+
+  Future<void> _disableAllUtilities() async {
+    for (var path in widget.utilityPaths) {
+      String newPath = p.join(p.dirname(path), "DISABLED${p.basename(path)}");
+      try {
+        await File(path).rename(newPath);
+      } catch (e) {}
+    }
   }
 
   @override
@@ -2445,6 +2469,17 @@ class _DuplicatedRabbitFxDialogState
         ),
       ),
       actions: [
+        TextButton(
+          onPressed: () async {
+            Navigator.of(context).pop();
+            ref.read(alertDialogShownProvider.notifier).state = false;
+            await _disableAllUtilities();
+          },
+          child: Text(
+            'Disable all'.tr(),
+            style: GoogleFonts.poppins(color: Colors.blue),
+          ),
+        ),
         TextButton(
           onPressed: () {
             Navigator.of(context).pop();
