@@ -170,5 +170,6 @@
   "Enable all mods": "啟用所有模組",
   "Do not forget to press Update Mod Data": "別忘了按「更新模組資料」",
   "Found ORFix.ini on your \"Mods\" folder, please delete it. Latest GIMI already have it.": "在你的「Mods」資料夾中發現 ORFix.ini，請將其刪除.\n最新的 GIMI 已自帶該檔案.",
-  "Disable all": "全部停用"
+  "Disable all": "全部停用",
+  "Found more than 1 ORFix.ini on your \"Mods\" folder, please use only 1.": "在你的「Mods」資料夾中發現多個 ORFix.ini，請只保留一個."
 }
