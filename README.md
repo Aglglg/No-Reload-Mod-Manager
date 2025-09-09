@@ -6,6 +6,7 @@ How? Of course, first of all you must know [How to contribute to open sourced pr
 ### To-do list
 - Support all kinds of gamepads, not only XInput Gamepad.
 ---
+### The creator is lazy to update readme, some texts might be irrelevant/outdated.
 
 # No Reload Mod Manager / Skin Selection
 (for XXMI Launcher supported games, or 3dmigoto mod)
