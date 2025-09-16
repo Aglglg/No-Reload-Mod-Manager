@@ -68,6 +68,23 @@ Future<List<String>> checkForRabbitFxCount(Directory modsDir) async {
   return rabbitFxPath;
 }
 
+Future<bool> coreOrfixFound(Directory modsDir) async {
+  bool coreOrfixFound = false;
+
+  //Check for ORFix.ini file within Core folder
+  String coreFolderPath = p.join(p.dirname(modsDir.path), "Core");
+  try {
+    final iniFiles = await findIniFilesRecursiveExcludeDisabled(coreFolderPath);
+    for (var file in iniFiles) {
+      if (p.basename(file).toLowerCase() == "orfix.ini") {
+        coreOrfixFound = true;
+      }
+    }
+  } catch (e) {}
+
+  return coreOrfixFound;
+}
+
 Future<List<String>> checkForOrfixCount(Directory modsDir) async {
   List<String> orfixPath = [];
 

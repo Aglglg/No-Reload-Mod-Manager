@@ -1087,9 +1087,11 @@ class _MainViewState extends ConsumerState<MainView>
 
     //Check for duplicate ORFix.ini on Genshin Impact
     if (ref.read(targetGameProvider) == TargetGame.Genshin_Impact) {
+      final isCoreOrfixFound = await coreOrfixFound(Directory(modsPath));
       final orfixPaths = await checkForOrfixCount(Directory(modsPath));
 
-      if (orfixPaths.isNotEmpty) {
+      if ((orfixPaths.isNotEmpty && isCoreOrfixFound) ||
+          (orfixPaths.length > 1 && !isCoreOrfixFound)) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
@@ -1105,8 +1107,11 @@ class _MainViewState extends ConsumerState<MainView>
               borderRadius: BorderRadius.circular(20),
             ),
             content: Text(
-              'Found ORFix.ini on your "Mods" folder, please delete it. Latest GIMI already have it.'
-                  .tr(),
+              isCoreOrfixFound
+                  ? 'Found ORFix.ini on your "Mods" folder, please delete it. Latest GIMI already have it.'
+                      .tr()
+                  : 'Found more than 1 ORFix.ini on your "Mods" folder, please use only 1.'
+                      .tr(),
               style: GoogleFonts.poppins(
                 color: Colors.yellow,
                 fontSize: 13 * ref.read(zoomScaleProvider),

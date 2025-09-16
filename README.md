@@ -4,6 +4,16 @@
 - Do not need to correct conditional(if-endif) statement, because it will use specialized 'manager_if/manager_endif'
 - **Not intended for wide use & still in testing phase for further tweaks(unlikely)**
 
+### Repository Contribution
+Feel free to contribute on this project, especially adding more [languages translation](https://github.com/Aglglg/No-Reload-Mod-Manager/tree/main/assets/translations). Or providing [auto character icon data](https://github.com/Aglglg/No-Reload-Mod-Manager/tree/main/assets/cloud_data/auto_icon). Or anything else.
+How? Of course, first of all you must know [How to contribute to open sourced project on Github](https://youtu.be/CML6vfKjQss).
+
+---
+### To-do list
+- Support all kinds of gamepads, not only XInput Gamepad.
+---
+### The creator is lazy to update readme, some texts might be irrelevant/outdated.
+
 # No Reload Mod Manager / Skin Selection
 (for XXMI Launcher supported games, or 3dmigoto mod)
 
