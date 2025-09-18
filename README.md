@@ -4,7 +4,6 @@ How? Of course, first of all you must know [How to contribute to open sourced pr
 
 ---
 ### To-do list
-- Support all kinds of gamepads, not only XInput Gamepad.
 - Preset & randomize system.
 - Uniquify namespaces & detect duplicated namespaces.
 - Detect duplicated known utility mods.
@@ -124,5 +123,5 @@ Even though this is not main mod loader or mod tool, and only tool to organize m
 ## 🙏 Credits
 Special thanks to:
 - **All bug reporters, testers, users, and supporters!** ❤️
-- Everyone who cares, with their own way.
+- Everyone who cares, with their own unique way.
 ---
