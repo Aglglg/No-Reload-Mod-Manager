@@ -5,8 +5,11 @@ How? Of course, first of all you must know [How to contribute to open sourced pr
 ---
 ### To-do list
 - Support all kinds of gamepads, not only XInput Gamepad.
+- Preset & randomize system.
+- Uniquify namespaces & detect duplicated namespaces.
+- Detect duplicated known utility mods.
+- Give group folder icon if possible.
 ---
-### The creator is lazy to update readme, some texts might be irrelevant/outdated.
 
 # No Reload Mod Manager / Skin Selection
 (for XXMI Launcher supported games, or 3dmigoto mod)
@@ -26,7 +29,6 @@ This tool supports **mouse**, **keyboard**, and **gamepad (XInput only)** inputs
 ## 🚀 Features
 - **Mod Selection**: Choose and apply mods on the fly.
 - **Keybinding Editor**: Modify mod keybindings conveniently.
-- **Automatic Game Detection**: Pressing toggle window shortcut key will open window to corresponding target game.
 
 ---
 
@@ -40,14 +42,14 @@ This tool supports **mouse**, **keyboard**, and **gamepad (XInput only)** inputs
 6. **Click** the icon on system tray, select your target game. It will open the Mod Manager window.
 7. Go to **Settings** tab, make sure **Mods Path** is correct for your specified game.
 8. **Click Update Mod Data**
-9. 🎉 Done! You can now organize mods, edit keybindings, and so on.
+9. Done.
 
 ...
 
 ### 📜 How To Open Mod Manager Window Without Going To System Tray
 1. Make sure your current window is your target game's window.
 2. Press **Alt+W**(default), this will show/hide mod manager window.
-3. If it does nothing, make sure it's running & on system tray an please check on **Settings** tab, make sure **Target Process** is correct. Make sure **Toggle Window Shortcuts** is correct.
+3. If it does nothing, make sure it's running & on system tray. And then, check on **Settings** tab, make sure **Target Process** is correct. Make sure **Toggle Window Shortcuts** is correct.
 
 ...
 
@@ -92,8 +94,7 @@ This tool supports **mouse**, **keyboard**, and **gamepad (XInput only)** inputs
 ---
 
 ## ⚠️ Disclaimer & Warnings
-- This is a **Windows Overlay App**.
-- Simulates **key presses** but does **not** interact directly with the game. Only with WWMI/SRMI/ZZMI/GIMI/3dmigoto.
+Even though this is not main mod loader or mod tool, and only tool to organize mod folders, but:
 - **Use at your own risk.**
 - **Not responsible for account issues due to mod usage.**
 - By downloading and using this tool, you **accept full responsibility**.
@@ -101,15 +102,13 @@ This tool supports **mouse**, **keyboard**, and **gamepad (XInput only)** inputs
 ## 🔧 Technical Details
 - Built with **Flutter (Dart)**.
 - Toggle window shortcuts (Alt+W) works by reading **target game process names** (e.g., `Client-Win64-Shipping.exe`).
-- In order to change selected mods, this tool will do VK_KEYS keypress simulation.
-- **WWMI/GIMI/SRMI/ZZMI will receives keypresses in the background** automatically add background_keypress.ini to your Mods folder.
+- In order to change selected mods, this tool will do VK_KEYS keypress simulation & mouse movement.
+- The mods that you added also being modified, you can revert the changes by dragging it to Reverter area on Settings.
+- **XXMI DLL/3dmigoto (WWMI/GIMI/SRMI/ZZMI) will receives keypresses in the background**, automatically add background_keypress.ini to your Mods folder.
 
 ## 🔑 Keybindings Simulated
-- **Clear Key (VK_CLEAR)** – Base for keypress simulation.
-- **F13 - F24** – Used to change groups.
-- **Enter / Backspace** – Used to change groups.
-- **Tab / Right Ctrl** – Used to change mods.
-- **Numbers 1-5 & Z-B** – Used to change mods.
+- **Clear Key (VK_CLEAR), Space Key (VK_SPACE), Enter Key (VK_RETURN)**
+- **Mouse position x, y coordinate** - determine group index & mod index
 
 > 🛑 **Note:** If your PC/system uses these keys for other shortcuts, you'll need to **change your system settings** if you can/if you want.
 
@@ -117,7 +116,7 @@ This tool supports **mouse**, **keyboard**, and **gamepad (XInput only)** inputs
 
 ## 🛡️ Security Concerns
 - Runs in the **background**, app icon can be seen on Tray.
-- **VirusTotal Reports**: Some antivirus programs may flag this tool's **installer** file. If you scan the installed app it's actually fine, but if you scan the installer, it might be flagged. Because I use **Inno Setup Compiler** to create the **Installer**.
+- **VirusTotal Reports**: Some antivirus programs may flag this tool's **installer** file. If you scan the installed app it's actually fine, but if you scan the installer, it might be flagged.
 - **If unsure, check the GitHub source code before use.** Or build it yourself if you understand flutter(for personal use only). Or just don't use it.
 
 ---
@@ -125,5 +124,5 @@ This tool supports **mouse**, **keyboard**, and **gamepad (XInput only)** inputs
 ## 🙏 Credits
 Special thanks to:
 - **All bug reporters, testers, users, and supporters!** ❤️
-
+- Everyone who cares, with their own way.
 ---
