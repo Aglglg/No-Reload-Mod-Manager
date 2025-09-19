@@ -1366,7 +1366,7 @@ bool forceFixIniSections(List<IniSection> sections) {
         String modifiedLine = line.replaceFirst('elseif', 'else if');
         if (modifiedLine != line) {
           section.lines[i] =
-              ';Force fix syntax by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;$line\n$modifiedLine';
+              ';Force fix syntax by NRMM, to prevent overlapped mods.\n;$line\n$modifiedLine';
           forcedFix = true;
         }
       }
@@ -1385,7 +1385,7 @@ bool forceFixIniSections(List<IniSection> sections) {
         if (!ifStatementWasOpened) {
           String modifiedLine = line.replaceFirst('else if', 'if');
           section.lines[i] =
-              ';Force fix syntax by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;$line\n$modifiedLine';
+              ';Force fix syntax by NRMM, to prevent overlapped mods.\n;$line\n$modifiedLine';
           forcedFix = true;
           ifStatementWasOpened = true;
         }
@@ -1395,7 +1395,7 @@ bool forceFixIniSections(List<IniSection> sections) {
         if (!ifStatementWasOpened) {
           String modifiedLine = line.replaceFirst('elif', 'if');
           section.lines[i] =
-              ';Force fix syntax by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;$line\n$modifiedLine';
+              ';Force fix syntax by NRMM, to prevent overlapped mods.\n;$line\n$modifiedLine';
           forcedFix = true;
           ifStatementWasOpened = true;
         }
@@ -1429,7 +1429,7 @@ bool forceFixIniSections(List<IniSection> sections) {
         String modifiedLine = line.replaceAll('=!', '!=');
         if (modifiedLine != line) {
           section.lines[i] =
-              ';Force fix syntax by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;$line\n$modifiedLine';
+              ';Force fix syntax by NRMM, to prevent overlapped mods.\n;$line\n$modifiedLine';
           forcedFix = true;
         }
       }
@@ -1444,7 +1444,7 @@ bool forceFixIniSections(List<IniSection> sections) {
         String modifiedLine = line.replaceAll('=>', '>=');
         if (modifiedLine != line) {
           section.lines[i] =
-              ';Force fix syntax by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;$line\n$modifiedLine';
+              ';Force fix syntax by NRMM, to prevent overlapped mods.\n;$line\n$modifiedLine';
           forcedFix = true;
         }
       }
@@ -1459,7 +1459,7 @@ bool forceFixIniSections(List<IniSection> sections) {
         String modifiedLine = line.replaceAll('=<', '<=');
         if (modifiedLine != line) {
           section.lines[i] =
-              ';Force fix syntax by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;$line\n$modifiedLine';
+              ';Force fix syntax by NRMM, to prevent overlapped mods.\n;$line\n$modifiedLine';
           forcedFix = true;
         }
       }
@@ -1475,7 +1475,7 @@ bool forceFixIniSections(List<IniSection> sections) {
         String modifiedLine = line.replaceAllMapped(regex, (m) => '==');
         if (modifiedLine != line) {
           section.lines[i] =
-              ';Force fix syntax by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n;$line\n$modifiedLine';
+              ';Force fix syntax by NRMM, to prevent overlapped mods.\n;$line\n$modifiedLine';
           forcedFix = true;
         }
       }
@@ -1550,7 +1550,7 @@ bool forceFixIniSections(List<IniSection> sections) {
   if (variablesShouldBeAdded.isNotEmpty) {
     List<String> lines = [];
     lines.add(
-      ';Force add line by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.',
+      ';Force add line by NRMM, to prevent overlapped mods.',
     );
     for (var variable in variablesShouldBeAdded) {
       lines.add('global $variable = 1');
@@ -1643,7 +1643,7 @@ bool forceFixIniSections(List<IniSection> sections) {
                   }
                   if (varAlreadyWritten == false) {
                     section.lines.add(
-                      ';Force add line by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\n$result = 1',
+                      ';Force add line by NRMM, to prevent overlapped mods.\n$result = 1',
                     );
                     forcedFix = true;
                   }
@@ -1675,7 +1675,7 @@ bool forceFixIniSections(List<IniSection> sections) {
     totalEndifShouldBeAdded = totalIfFound - totalEndifFound;
     for (var i = 0; i < totalEndifShouldBeAdded; i++) {
       section.lines.add(
-        ';Force add line by NRMM, tell mod creator to fix their broken mod. Mod creator, not mod manager creator.\nendif',
+        ';Force add line by NRMM, to prevent overlapped mods.\nendif',
       );
       forcedFix = true;
     }
@@ -2872,4 +2872,19 @@ Future<bool> enableMod(Directory modDir) async {
   } catch (e) {
     return false;
   }
+}
+
+String uniqueifyNamespace(
+  String namespace,
+  List<String> alreadyWrittenNamespaces,
+) {
+  String uniqueNamespace = namespace;
+
+  //Check all currently available namespace, across all mods & groups
+
+  //Add number on namespace if this namespace already written somewhere else (myNamespace1)
+
+  //Check again whether this modified namespace is also already written, if yes, just increment the number, repeat
+
+  return uniqueNamespace;
 }
