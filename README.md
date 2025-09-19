@@ -10,6 +10,7 @@ How? Of course, first of all you must know [How to contribute to open sourced pr
 - Give group folder icon if possible.
 - Give notification that's indicating running on system tray.
 - Give versioning system for cloud message system.
+- Give mark on modified ini files.
 ---
 
 # No Reload Mod Manager / Skin Selection
