@@ -1084,14 +1084,23 @@ Future<void> _modifyIniFile(
     final file = File(iniFilePath);
     final lines = await file.readAsLines();
 
+    // Give nrmm mark
+    bool hasNRMM = lines.any(
+      (line) => line.contains("contact @aglgl on Discord"),
+    );
+    if (!hasNRMM) {
+      lines.insert(
+        0,
+        "; Mod managed with No Reload Mod Manager (NRMM) by Agulag, for any problems, please kindly contact @aglgl on Discord.\n; THE ONLY REAL SOURCES of NRMM are https://gamebanana.com/mods/582623 and https://github.com/Aglglg/No-Reload-Mod-Manager",
+      );
+    }
+
     // Parse the INI file sections
     var parsedIni = await _parseIniSections(lines);
 
     // Modify the INI file sections based on the given modIndex and groupIndex
     _checkAndModifySections(parsedIni, modIndex, groupIndex);
 
-    //Force fix only, these broken mods annoying. Might still broken or behaves abnormally, its only purpose is to make broken mods don't interfere other mods.
-    //PLEASE CHECK YOUR MODS BEFORE POSTING IT! TURN OFF 'MUTE WARNINGS'
     bool forcedFix = forceFixIniSections(parsedIni);
 
     //v2.6.1 problem
@@ -1549,9 +1558,7 @@ bool forceFixIniSections(List<IniSection> sections) {
 
   if (variablesShouldBeAdded.isNotEmpty) {
     List<String> lines = [];
-    lines.add(
-      ';Force add line by NRMM, to prevent overlapped mods.',
-    );
+    lines.add(';Force add line by NRMM, to prevent overlapped mods.');
     for (var variable in variablesShouldBeAdded) {
       lines.add('global $variable = 1');
     }

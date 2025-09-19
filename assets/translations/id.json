@@ -79,7 +79,7 @@
   "Change language": "Ganti bahasa",
   "Restart": "Restart",
   "Language changed, please Restart.": "Bahasa diubah, harus Restart.",
-  "defaultErrorInfo": "Pastikan folder/file bisa diakses.\nCoba tutup program lain/File Explorer yg sedang mengaksesnya.",
+  "defaultErrorInfo": "Pastikan folder/file bisa diakses dan dengan enkoding UTF-8.\nCoba tutup program lain/File Explorer yg sedang mengaksesnya.",
   "Select an image file": "Pilih file gambar",
   "Error reverting": "Gagal revert {}",
   "No backup found": "Tidak ada file backup yg ditemukan di {}.\nFolder dilewati.\n\n",
