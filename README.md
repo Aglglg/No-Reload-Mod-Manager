@@ -8,6 +8,8 @@ How? Of course, first of all you must know [How to contribute to open sourced pr
 - Uniquify namespaces & detect duplicated namespaces.
 - Detect duplicated known utility mods.
 - Give group folder icon if possible.
+- Give notification that's indicating running on system tray.
+- Give versioning system for cloud message system.
 ---
 
 # No Reload Mod Manager / Skin Selection
