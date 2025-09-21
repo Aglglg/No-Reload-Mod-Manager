@@ -1091,7 +1091,7 @@ Future<void> _modifyIniFile(
     if (!hasNRMM) {
       lines.insert(
         0,
-        "; Mod managed with No Reload Mod Manager (NRMM) by Agulag, for any problems, please kindly contact @aglgl on Discord.\n; THE ONLY REAL SOURCES of NRMM are https://gamebanana.com/mods/582623 and https://github.com/Aglglg/No-Reload-Mod-Manager",
+        "; Mod managed with No Reload Mod Manager (NRMM) by Agulag, for any problems, please kindly contact @aglgl on Discord.\n; Source of No_Reload_Mod_Manager https://gamebanana.com/mods/582623\n",
       );
     }
 
@@ -1264,7 +1264,6 @@ Future<List<IniSection>> _parseIniSections(List<String> allLines) async {
 
   for (var rawLine in allLines) {
     String line = rawLine.trim();
-    if (line.isEmpty) continue; // skip empty lines ONLY
 
     if (line.startsWith('[')) {
       // New section
@@ -1821,10 +1820,18 @@ String _getLiteralIni(List<IniSection> sections) {
     if (section.name != '__global__') {
       result.writeln('[${section.name}]');
     }
+
+    bool lineWasEmpty = false;
+
     for (var line in section.lines) {
       result.writeln(line);
+      lineWasEmpty = line.trim().isEmpty;
     }
-    result.writeln(); // Blank line between sections
+
+    if (!lineWasEmpty) {
+      result
+          .writeln(); // Blank line between sections, if previous line is not empty or blank line
+    }
   }
 
   return result.toString();
