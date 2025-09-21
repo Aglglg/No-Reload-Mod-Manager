@@ -152,7 +152,7 @@
   "Grid": "網格",
   "Everything is correct, but config files are outdated.": "一切正常，但設定檔已過時.",
   "Search group by name or real folder name only": "搜尋群組",
-  "Mod forced to be fixed & might not working properly": "模組已被強制託管，可能無法正常運作.\n如果你是模組創作者，請開啟檔案並搜尋「NRMM」.\n{}\n\n",
+  "Mod forced to be fixed & might not working properly": "模組已被強制託管，可能無法正常運作.\n如需了解更多，請開啟檔案並搜尋「NRMM」.\n{}\n\n",
   "Mods path is invalid, please remove all illegal characters.": "模組路徑無效，請移除所有非法字元/符號.",
   "Reset Position": "重設視窗位置",
   "Mod was forced to be managed and might not working properly.": "模組已被強制託管，可能無法正常運作.\n如果一切正常，可以忽略此警告.",
@@ -171,5 +171,7 @@
   "Do not forget to press Update Mod Data": "別忘了按「更新模組資料」",
   "Found ORFix.ini on your \"Mods\" folder, please delete it. Latest GIMI already have it.": "在你的「Mods」資料夾中發現 ORFix.ini，請將其刪除.\n最新的 GIMI 已自帶該檔案.",
   "Disable all": "全部停用",
-  "Found more than 1 ORFix.ini on your \"Mods\" folder, please use only 1.": "在你的「Mods」資料夾中發現多個 ORFix.ini，請只保留一個."
+  "Found more than 1 ORFix.ini on your \"Mods\" folder, please use only 1.": "在你的「Mods」資料夾中發現多個 ORFix.ini，請只保留一個.",
+  "No Reload Mod Manager is running": "No Reload Mod Manager 正在執行",
+  "Access it from Tray or Alt+W(default) while in your target game": "在目標遊戲中，可透過系統列或快速鍵 Alt+W（預設）存取"
 }

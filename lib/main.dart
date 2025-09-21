@@ -6,6 +6,7 @@ import 'dart:ui';
 import 'package:auto_updater/auto_updater.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:no_reload_mod_manager/utils/auto_group_icon.dart';
 import 'package:no_reload_mod_manager/utils/check_admin_privillege.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
@@ -66,6 +67,45 @@ void main(List<String> args) async {
   );
 }
 
+Future<void> initializeAndShowNotification() async {
+  if (!Platform.isWindows) return;
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  //Cannot use something like 'assets/images/app_icon.ico"
+  final String iconPath = p.join(
+    p.dirname(Platform.resolvedExecutable),
+    r"data\flutter_assets\assets\images\app_icon.ico",
+  );
+
+  final WindowsInitializationSettings
+  initializationSettingsWindows = WindowsInitializationSettings(
+    appName: 'No Reload Mod Manager',
+    appUserModelId: 'com.aglg.NoReloadModManager',
+    //guid same as app id from inno setup (\windows\packaging\exe\make_config.yaml)
+    guid: 'DF5B0F87-8365-499D-B8B3-58211FBF6F2A',
+    iconPath: iconPath,
+  );
+
+  final InitializationSettings initializationSettings = InitializationSettings(
+    windows: initializationSettingsWindows,
+  );
+
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+  const WindowsNotificationDetails windowsNotificationDetails =
+      WindowsNotificationDetails(duration: WindowsNotificationDuration.short);
+  const NotificationDetails notificationDetails = NotificationDetails(
+    windows: windowsNotificationDetails,
+  );
+  await flutterLocalNotificationsPlugin.show(
+    0,
+    'No Reload Mod Manager is running'.tr(),
+    'Access it from Tray or Alt+W(default) while in your target game'.tr(),
+    notificationDetails,
+  );
+}
+
 Future<void> relaunchAsNormalUser() async {
   final exePath = Platform.resolvedExecutable;
 
@@ -108,7 +148,7 @@ Future<void> setupWindow(List<String> args) async {
       }
     },
     bringWindowToFront:
-        false, //IMPORTANT, or else it will mess up with always on top or it will be hidden even when it's pinned or blue outline/border
+        false, //IMPORTANT, or else it will mess up with always on top or it will be hidden even when it's pinned or blue outline/border, IDK why
   );
 
   await checkToRelaunch();
@@ -863,6 +903,10 @@ class _MainViewState extends ConsumerState<MainView>
     registerHotkeyResetWindowPos();
 
     initSystemTray();
+
+    //show notif only after system tray loaded successfully
+    initializeAndShowNotification();
+
     windowManager.addListener(this);
 
     _tabController = TabController(

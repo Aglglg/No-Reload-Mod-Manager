@@ -152,7 +152,7 @@
   "Grid": "Grid",
   "Everything is correct, but config files are outdated.": "Semuanya benar, tapi file konfigurasi masih versi lama.",
   "Search group by name or real folder name only": "Cari group",
-  "Mod forced to be fixed & might not working properly": "Mod dipaksa tuk dikelola & mungkin tidak berfungsi secara benar.\nJika kamu pembuat mod nya, buka file-nya dan cari 'NRMM'.\n{}\n\n",
+  "Mod forced to be fixed & might not working properly": "Mod dipaksa tuk dikelola & mungkin tidak berfungsi secara benar.\nUntuk informasi lebih lanjut, buka file-nya dan cari 'NRMM'.\n{}\n\n",
   "Mods path is invalid, please remove all illegal characters.": "Mods path tidak valid, coba hilangkan karakter/simbol ilegal.",
   "Reset Position": "Reset Posisi",
   "Mod was forced to be managed and might not working properly.": "Mod dipaksa tuk dikelola dan mungkin tidak berfungsi secara benar.\nKalau mod tidak bermasalah, abaikan saja.",
@@ -171,5 +171,7 @@
   "Do not forget to press Update Mod Data": "Jangan lupa untuk pencet Update Mod Data",
   "Found ORFix.ini on your \"Mods\" folder, please delete it. Latest GIMI already have it.": "Ditemukan ORFix.ini di dalam folder \"Mods\", sebaiknya dihapus.\nGIMI terbaru sudah ada ORFix-nya.",
   "Disable all": "Nonaktifkan semua",
-  "Found more than 1 ORFix.ini on your \"Mods\" folder, please use only 1.": "Ditemukan lebih dari 1 ORFix.ini di dalam folder \"Mods\", gunakan 1 saja, hapus yang lainnya."
+  "Found more than 1 ORFix.ini on your \"Mods\" folder, please use only 1.": "Ditemukan lebih dari 1 ORFix.ini di dalam folder \"Mods\", gunakan 1 saja, hapus yang lainnya.",
+  "No Reload Mod Manager is running": "No Reload Mod Manager sedang berjalan",
+  "Access it from Tray or Alt+W(default) while in your target game": "Akses dari Tray atau Alt+W (default) ketika sedang di target game"
 }

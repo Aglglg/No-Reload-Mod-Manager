@@ -152,7 +152,7 @@
   "Grid": "Grid",
   "Everything is correct, but config files are outdated.": "Everything is correct, but config files are outdated.",
   "Search group by name or real folder name only": "Search group",
-  "Mod forced to be fixed & might not working properly": "Mod is forced to be managed & might not work properly.\nIf you're the mod creator, open the file and search for 'NRMM'.\n{}\n\n",
+  "Mod forced to be fixed & might not working properly": "The mod is forced to be managed and may not work properly.\nFor more information, open the file and search for 'NRMM'.\n{}\n\n",
   "Mods path is invalid, please remove all illegal characters.": "Mods path is invalid, please remove all illegal characters/symbols.",
   "Reset Position": "Reset Position",
   "Mod was forced to be managed and might not working properly.": "Mod was forced to be managed and might not work properly.\nIf it's working fine, just ignore this warning.",
@@ -171,5 +171,7 @@
   "Do not forget to press Update Mod Data": "Do not forget to press Update Mod Data",
   "Found ORFix.ini on your \"Mods\" folder, please delete it. Latest GIMI already have it.": "Found ORFix.ini in your \"Mods\" folder, please delete it.\nLatest GIMI already have it.",
   "Disable all": "Disable all",
-  "Found more than 1 ORFix.ini on your \"Mods\" folder, please use only 1.": "Found more than 1 ORFix.ini in your \"Mods\" folder, please use only 1."
+  "Found more than 1 ORFix.ini on your \"Mods\" folder, please use only 1.": "Found more than 1 ORFix.ini in your \"Mods\" folder, please use only 1.",
+  "No Reload Mod Manager is running": "No Reload Mod Manager is running",
+  "Access it from Tray or Alt+W(default) while in your target game": "Access it from Tray or Alt+W (default) while in your target game"
 }
