@@ -12,6 +12,7 @@ import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/utils/auto_group_icon.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/custom_group_folder_icon.dart';
 import 'package:no_reload_mod_manager/utils/keypress_simulator_manager.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
@@ -379,6 +380,9 @@ Future<void> setGroupOrModIcon(
           File sourceFile = File(pickResult.files[0].path!);
           String targetDest = p.join(groupDir.path, "icon.png");
           await sourceFile.copy(targetDest);
+
+          //Set folder icon in Explorer
+          setFolderIcon(groupDir.path, targetDest);
         } catch (e) {}
       } else if (modDir != null) {
         Image imgResult = Image.file(
@@ -421,6 +425,9 @@ Future<void> setGroupOrModIcon(
           await File(
             p.join(groupDir.path, "icon.png"),
           ).writeAsBytes(imgBytes.toList());
+
+          //Set folder icon in Explorer
+          setFolderIcon(groupDir.path, p.join(groupDir.path, "icon.png"));
         } else if (modDir != null) {
           Image img = Image.memory(
             imgBytes,
@@ -472,6 +479,9 @@ Future<void> unsetGroupOrModIcon(
     try {
       File sourceFile = File(p.join(groupDir.path, "icon.png"));
       await sourceFile.delete();
+
+      //Unset folder icon in Explorer
+      unsetFolderIcon(groupDir.path);
     } catch (e) {}
   } else {
     Image imgResult = Image.file(

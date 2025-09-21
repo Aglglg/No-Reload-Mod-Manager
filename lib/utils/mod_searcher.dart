@@ -66,7 +66,6 @@ void goToSearchResult(WidgetRef ref, String query) {
   (String, int, int?)? bestMatch = getBestMatch(query, names);
 
   if (bestMatch != null) {
-    print("${bestMatch.$1}, group: ${bestMatch.$2}, mod: ${bestMatch.$3}");
     ModSearcherListener.notifyListeners(bestMatch.$2, bestMatch.$3);
   }
 }

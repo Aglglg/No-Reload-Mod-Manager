@@ -47,13 +47,3 @@ String getForegroundWindowProcessName() {
     malloc.free(processId);
   }
 }
-
-// Usage example:
-// void printForegroundProcess() {
-//   final processName = getForegroundWindowProcessName();
-//   if (processName != null) {
-//     print('Foreground process: $processName');
-//   } else {
-//     print('Could not get foreground process name');
-//   }
-// }

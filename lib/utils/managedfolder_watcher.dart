@@ -22,18 +22,27 @@ class DynamicDirectoryWatcher {
 
     watcher = DirectoryWatcher(path);
     _subscription = watcher?.events.listen((event) {
-      // Reset debounce timer on every event
-      _debounceTimer?.cancel();
-      _debounceTimer = Timer(Duration(milliseconds: 1000), () {
-        print('Debounced refresh triggered');
-        if (ref != null && !ref.read(alertDialogShownProvider)) {
-          triggerRefresh(ref);
-        } else if (prevRef != null &&
-            !prevRef!.read(alertDialogShownProvider)) {
-          triggerRefresh(prevRef!);
-        }
-      });
+      print('Watcher changed:${event.path}');
+      //only if the event path is not excluded
+      if (!fileEventIsExcludedList(event.path)) {
+        // Reset debounce timer on every event
+        _debounceTimer?.cancel();
+        _debounceTimer = Timer(Duration(milliseconds: 1000), () {
+          print('Debounced refresh triggered:${event.path}');
+          if (ref != null && !ref.read(alertDialogShownProvider)) {
+            triggerRefresh(ref);
+          } else if (prevRef != null &&
+              !prevRef!.read(alertDialogShownProvider)) {
+            triggerRefresh(prevRef!);
+          }
+        });
+      }
     });
+  }
+
+  static bool fileEventIsExcludedList(String path) {
+    bool result = path.endsWith('.ico') || path.endsWith('desktop.ini');
+    return result;
   }
 
   static void stop() {
