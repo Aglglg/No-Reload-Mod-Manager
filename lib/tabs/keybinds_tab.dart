@@ -28,7 +28,7 @@ class IniFileAsLines {
       if (await iniFile.exists()) {
         String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
         DynamicDirectoryWatcher.stop();
-        await iniFile.writeAsString(lines.join('\n'));
+        await safeWriteIni(iniFile, lines.join('\n'));
         if (watchedPath != null) {
           DynamicDirectoryWatcher.watch(watchedPath);
         }

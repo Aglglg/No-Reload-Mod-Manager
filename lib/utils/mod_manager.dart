@@ -1143,15 +1143,34 @@ Future<void> _modifyIniFile(
     }
 
     // Write the modified content back to the INI file
-    await file.writeAsString(_getLiteralIni(parsedIni));
+    String modifiedIni = _getLiteralIni(parsedIni);
+    await safeWriteIni(file, modifiedIni);
   } catch (e) {
     operationLogs.add(
       TextSpan(
         text:
-            '${'Error! Cannot modify .ini file'.tr(args: [iniFilePath])}.\n${ConstantVar.defaultErrorInfo}\n\n',
+            '${'Error! Cannot modify .ini file'.tr(args: [iniFilePath])}.\n\n',
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );
+  }
+}
+
+Future<void> safeWriteIni(File file, String content) async {
+  final tempFile = File('${file.path}.tmp');
+
+  //Write to temp file first
+  try {
+    await tempFile.writeAsString(content, flush: true);
+  } catch (e) {
+    throw Exception(e);
+  }
+
+  //Replace original with temp
+  try {
+    await tempFile.rename(file.path);
+  } catch (e) {
+    throw Exception(e);
   }
 }
 
