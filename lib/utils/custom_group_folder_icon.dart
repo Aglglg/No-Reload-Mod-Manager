@@ -111,9 +111,11 @@ Future<void> deletePreviousIcoFiles(
   await for (final entity in dir.list()) {
     if (entity is File && entity.path.toLowerCase().endsWith('.ico')) {
       try {
-        if (entity.path == newIcoPath) return; //do not delete new ico path
+        if (entity.path == newIcoPath) continue; //do not delete new ico file
         await entity.delete();
-      } catch (e) {}
+      } catch (e) {
+        print(e);
+      }
     }
   }
 }
