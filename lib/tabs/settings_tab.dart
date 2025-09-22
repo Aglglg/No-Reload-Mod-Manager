@@ -7,6 +7,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/services.dart';
 import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/custom_group_folder_icon.dart';
 import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
 import 'package:no_reload_mod_manager/utils/languages_name.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
@@ -240,6 +241,109 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                         thickness: 1 * sss,
                       ),
                       Container(height: 10 * sss),
+
+                      Text(
+                        'Group Folder Icon'.tr(),
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 14 * sss,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Container(height: 1 * sss),
+                      Text(
+                        "Optionally show group folder icons within File Explorer."
+                            .tr(),
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(
+                          color: const Color.fromARGB(200, 255, 255, 255),
+                          fontSize: 11 * sss,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+
+                      Container(height: 15 * sss),
+
+                      ElevatedButton(
+                        onPressed: () async {
+                          if (ref.read(validModsPath) == null) return;
+                          ref.read(alertDialogShownProvider.notifier).state =
+                              true;
+                          await showDialog(
+                            barrierDismissible: false,
+                            context: context,
+                            builder:
+                                (context) => GenerateGroupIcoFileDialog(
+                                  validModsPath: ref.read(validModsPath)!,
+                                ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          overlayColor: Colors.white,
+                          backgroundColor: const Color.fromARGB(
+                            127,
+                            255,
+                            255,
+                            255,
+                          ),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8 * sss),
+                          child: Text(
+                            'Generate Group Folder Icon'.tr(),
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12 * sss,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Container(height: 10 * sss),
+                      SizedBox(
+                        height: 25 * sss,
+                        width: 35 * sss,
+                        child: FittedBox(
+                          fit: BoxFit.fill,
+                          child: Switch(
+                            value: ref.watch(isAutoGenerateFolderIconProvider),
+                            onChanged: (value) {
+                              SharedPrefUtils().setAutoGenerateFolderIcon(
+                                value,
+                              );
+                              ref
+                                  .read(
+                                    isAutoGenerateFolderIconProvider.notifier,
+                                  )
+                                  .state = value;
+                            },
+                            activeColor: Colors.blue,
+                            trackOutlineWidth: WidgetStatePropertyAll(0),
+                            trackOutlineColor: WidgetStatePropertyAll(
+                              Colors.transparent,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        'Auto generate folder icon when changing group icon'
+                            .tr(),
+                        style: GoogleFonts.poppins(
+                          color: const Color.fromARGB(255, 255, 255, 255),
+                          fontSize: 12 * sss,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Container(width: 15 * sss),
+
+                      Container(height: 15 * sss),
+                      Divider(
+                        color: const Color.fromARGB(127, 33, 149, 243),
+                        thickness: 1 * sss,
+                      ),
+                      Container(height: 10 * sss),
+
                       Text(
                         'Overall Scale'.tr(),
                         style: GoogleFonts.poppins(

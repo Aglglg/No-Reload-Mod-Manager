@@ -106,3 +106,8 @@ final wasUsingKeyboard = StateProvider<bool>((ref) => false);
 final animControllerSpecialSnackbar = StateProvider<List<AnimationController>>(
   (ref) => [],
 );
+
+final isAutoGenerateFolderIconProvider = StateProvider<bool>((ref) {
+  SharedPrefUtils().tryInit();
+  return SharedPrefUtils().isAutoGenerateFolderIcon();
+});

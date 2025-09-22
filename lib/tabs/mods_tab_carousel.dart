@@ -680,9 +680,9 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                       ),
                   ],
                   child: Tooltip(
-                    message: p.basename(
-                      ref.read(modGroupDataProvider)[index].groupDir.path,
-                    ),
+                    textAlign: TextAlign.center,
+                    message:
+                        "${ref.read(modGroupDataProvider)[index].groupName}\n${p.basename(ref.read(modGroupDataProvider)[index].groupDir.path)}",
                     waitDuration: Duration(milliseconds: 500),
                     child: GroupContainer(
                       index: index,

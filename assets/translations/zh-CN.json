@@ -173,5 +173,13 @@
   "Disable all": "全部禁用",
   "Found more than 1 ORFix.ini on your \"Mods\" folder, please use only 1.": "在你的“Mods”文件夹中发现多个 ORFix.ini，请只保留一个.",
   "No Reload Mod Manager is running": "No Reload Mod Manager 正在运行",
-  "Access it from Tray or Alt+W(default) while in your target game": "在目标游戏中，可通过系统托盘或快捷键 Alt+W（默认）访问"
+  "Access it from Tray or Alt+W(default) while in your target game": "在目标游戏中，可通过系统托盘或快捷键 Alt+W（默认）访问",
+  "Group Folder Icon": "分组文件夹图标",
+  "Optionally show group folder icons within File Explorer.": "在文件资源管理器中可选显示分组文件夹图标",
+  "Generate Group Folder Icon": "生成分组文件夹图标",
+  "Auto generate folder icon when changing group icon": "更改分组图标时自动生成文件夹图标",
+  "Generate ico files for all group folders?": "是否为所有分组文件夹生成 ico 文件？\n这些图标将在文件资源管理器中显示.\n\n根据分组数量，可能需要一些时间.",
+  "Generating folder icon": "正在生成 {} 文件夹图标...\n",
+  "Generated folder icon": "已生成 {} 文件夹图标\n",
+  "Task completed!": "\n任务完成！\n"
 }

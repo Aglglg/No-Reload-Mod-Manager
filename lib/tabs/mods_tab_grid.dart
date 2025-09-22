@@ -924,8 +924,9 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                           ),
                         ],
                         child: Tooltip(
+                          textAlign: TextAlign.center,
                           message:
-                              ref.read(modGroupDataProvider)[index].groupName,
+                              "${ref.read(modGroupDataProvider)[index].groupName}\n${p.basename(ref.read(modGroupDataProvider)[index].groupDir.path)}",
                           waitDuration: Duration(milliseconds: 500),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,

@@ -317,8 +317,8 @@ Future<void> setModNameOnDisk(Directory modDir, String modName) async {
   }
 }
 
-Image? getModOrGroupIcon(Directory groupDir) {
-  final file = File(p.join(groupDir.path, "icon.png"));
+Image? getModOrGroupIcon(Directory dir) {
+  final file = File(p.join(dir.path, "icon.png"));
 
   if (file.existsSync()) {
     try {
@@ -382,7 +382,9 @@ Future<void> setGroupOrModIcon(
           await sourceFile.copy(targetDest);
 
           //Set folder icon in Explorer
-          setFolderIcon(groupDir.path, targetDest);
+          if (SharedPrefUtils().isAutoGenerateFolderIcon()) {
+            setFolderIcon(groupDir.path, targetDest);
+          }
         } catch (e) {}
       } else if (modDir != null) {
         Image imgResult = Image.file(
@@ -427,7 +429,9 @@ Future<void> setGroupOrModIcon(
           ).writeAsBytes(imgBytes.toList());
 
           //Set folder icon in Explorer
-          setFolderIcon(groupDir.path, p.join(groupDir.path, "icon.png"));
+          if (SharedPrefUtils().isAutoGenerateFolderIcon()) {
+            setFolderIcon(groupDir.path, p.join(groupDir.path, "icon.png"));
+          }
         } else if (modDir != null) {
           Image img = Image.memory(
             imgBytes,

@@ -173,5 +173,13 @@
   "Disable all": "全部停用",
   "Found more than 1 ORFix.ini on your \"Mods\" folder, please use only 1.": "在你的「Mods」資料夾中發現多個 ORFix.ini，請只保留一個.",
   "No Reload Mod Manager is running": "No Reload Mod Manager 正在執行",
-  "Access it from Tray or Alt+W(default) while in your target game": "在目標遊戲中，可透過系統列或快速鍵 Alt+W（預設）存取"
+  "Access it from Tray or Alt+W(default) while in your target game": "在目標遊戲中，可透過系統列或快速鍵 Alt+W（預設）存取",
+  "Group Folder Icon": "群組資料夾圖示",
+  "Optionally show group folder icons within File Explorer.": "在檔案總管中可選顯示群組資料夾圖示",
+  "Generate Group Folder Icon": "產生群組資料夾圖示",
+  "Auto generate folder icon when changing group icon": "更改群組圖示時自動產生資料夾圖示",
+  "Generate ico files for all group folders?": "是否要為所有群組資料夾產生 ico 檔？\n這些圖示將會在檔案總管中顯示.\n\n所需時間取決於群組數量.",
+  "Generating folder icon": "正在產生 {} 資料夾圖示...\n",
+  "Generated folder icon": "已產生 {} 資料夾圖示\n",
+  "Task completed!": "\n任務完成！\n"
 }

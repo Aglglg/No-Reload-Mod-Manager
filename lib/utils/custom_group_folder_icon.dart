@@ -1,8 +1,16 @@
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
+import 'dart:ui';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ffi/ffi.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image/image.dart' as img;
+import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/mod_manager.dart';
+import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:path/path.dart' as p;
 import 'package:win32/win32.dart';
 
@@ -115,5 +123,193 @@ Future<void> deletePreviousIcoFiles(
         await entity.delete();
       } catch (e) {}
     }
+  }
+}
+
+//UI DIALOG
+class GenerateGroupIcoFileDialog extends ConsumerStatefulWidget {
+  final String validModsPath;
+  const GenerateGroupIcoFileDialog({super.key, required this.validModsPath});
+
+  @override
+  ConsumerState<GenerateGroupIcoFileDialog> createState() =>
+      _GenerateGroupIcoFileDialogState();
+}
+
+class _GenerateGroupIcoFileDialogState
+    extends ConsumerState<GenerateGroupIcoFileDialog> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showConfirm = true;
+  bool _isLoading = false;
+  List<TextSpan> contents = [];
+
+  @override
+  void initState() {
+    super.initState();
+    showWarning();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void showWarning() {
+    setState(() {
+      contents = [
+        TextSpan(
+          text: "Generate ico files for all group folders?".tr(),
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 255, 255, 255),
+            fontWeight: FontWeight.w400,
+            fontSize: 14,
+          ),
+        ),
+      ];
+    });
+  }
+
+  Future<void> generateIcons() async {
+    setState(() {
+      _showConfirm = false;
+      _isLoading = true;
+    });
+
+    final String managedPath = p.join(
+      widget.validModsPath,
+      ConstantVar.managedFolderName,
+    );
+
+    setState(() {
+      contents = [];
+    });
+
+    final modGroups = await getGroupFolders(managedPath);
+
+    for (var group in modGroups) {
+      setState(() {
+        contents = [
+          ...contents,
+          TextSpan(
+            text: "Generating folder icon".tr(
+              args: [p.basename(group.$1.path)],
+            ),
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ];
+      });
+
+      await setFolderIcon(group.$1.path, p.join(group.$1.path, 'icon.png'));
+
+      setState(() {
+        final newContents = List<TextSpan>.from(contents);
+        newContents.removeLast();
+        newContents.add(
+          TextSpan(
+            text: "Generated folder icon".tr(args: [p.basename(group.$1.path)]),
+            style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+          ),
+        );
+        contents = newContents;
+      });
+      _scrollToBottom();
+    }
+
+    setState(() {
+      _isLoading = false;
+      contents = [
+        ...contents,
+        TextSpan(
+          text: "Task completed!".tr(),
+          style: GoogleFonts.poppins(
+            color: Colors.green,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ];
+    });
+  }
+
+  Future<void> _scrollToBottom() async {
+    // Wait until scrollController has a valid position
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (!_scrollController.hasClients) return;
+
+    await _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        "Generate Group Folder Icon".tr(),
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
+      ),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.trackpad,
+            },
+          ),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: RichText(text: TextSpan(children: contents)),
+          ),
+        ),
+      ),
+      actions:
+          _showConfirm
+              ? [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    ref.read(alertDialogShownProvider.notifier).state = false;
+                  },
+                  child: Text(
+                    'Cancel'.tr(),
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    await generateIcons();
+                  },
+                  child: Text(
+                    'Confirm'.tr(),
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
+              ]
+              : _isLoading
+              ? []
+              : [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    ref.read(alertDialogShownProvider.notifier).state = false;
+                  },
+                  child: Text(
+                    'Confirm'.tr(),
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
+              ],
+    );
   }
 }

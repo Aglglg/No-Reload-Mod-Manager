@@ -173,5 +173,13 @@
   "Disable all": "Nonaktifkan semua",
   "Found more than 1 ORFix.ini on your \"Mods\" folder, please use only 1.": "Ditemukan lebih dari 1 ORFix.ini di dalam folder \"Mods\", gunakan 1 saja, hapus yang lainnya.",
   "No Reload Mod Manager is running": "No Reload Mod Manager sedang berjalan",
-  "Access it from Tray or Alt+W(default) while in your target game": "Akses dari Tray atau Alt+W (default) ketika sedang di target game"
+  "Access it from Tray or Alt+W(default) while in your target game": "Akses dari Tray atau Alt+W (default) ketika sedang di target game",
+  "Group Folder Icon": "Ikon Folder Grup",
+  "Optionally show group folder icons within File Explorer.": "Secara opsional menampilkan ikon folder untuk grup di File Explorer",
+  "Generate Group Folder Icon": "Buat ikon folder grup",
+  "Auto generate folder icon when changing group icon": "Buat ikon folder otomatis ketika mengubah ikon grup",
+  "Generate ico files for all group folders?": "Buat file ico untuk semua folder grup?\nIkon ini akan ditampilkan di File Explorer.\n\nMungkin membutuhkan beberapa waktu tergantung seberapa banyak grup yang kamu punya.",
+  "Generating folder icon": "Membuat ikon folder {}...\n",
+  "Generated folder icon": "Ikon folder {} dibuat",
+  "Task completed!": "\nSelesai!\n"
 }

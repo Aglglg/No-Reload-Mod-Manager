@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_group_folder_icon.dart';
+import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:path/path.dart' as p;
 
 Future<Map<String, String>> fetchGroupIconData() async {
@@ -52,7 +53,10 @@ Future<bool> tryGetIcon(String rootPath, Map<String, String> iconData) async {
             final savePath = p.join(rootPath, 'icon.png');
             final imageFile = File(savePath);
             await imageFile.writeAsBytes(response.bodyBytes);
-            await setFolderIcon(p.dirname(savePath), savePath);
+
+            if (SharedPrefUtils().isAutoGenerateFolderIcon()) {
+              await setFolderIcon(p.dirname(savePath), savePath);
+            }
           }
         } catch (e) {}
 

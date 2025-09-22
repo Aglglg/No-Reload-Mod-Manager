@@ -858,6 +858,12 @@ class _MainViewState extends ConsumerState<MainView>
       ),
       MenuSeparator(),
       MenuItemLabel(
+        label: "${'Reset Position'.tr()} (Alt+T)",
+        onClicked: (menuItem) async {
+          await windowManager.center();
+        },
+      ),
+      MenuItemLabel(
         label: 'Hide'.tr(),
         onClicked: (menuItem) => bitsdojo.appWindow.hide(),
       ),

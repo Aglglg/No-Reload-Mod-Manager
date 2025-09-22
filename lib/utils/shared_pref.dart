@@ -361,6 +361,15 @@ class SharedPrefUtils {
     return result ??= false;
   }
 
+  Future<void> setAutoGenerateFolderIcon(bool value) async {
+    await _prefs?.setBool(keyAutoGenerateFolderIcon, value);
+  }
+
+  bool isAutoGenerateFolderIcon() {
+    bool? result = _prefs?.getBool(keyAutoGenerateFolderIcon);
+    return result ??= true;
+  }
+
   static const String keyTargetProcessWuwa = 'targetProcessWuwa';
   static const String keyTargetProcessGenshin = 'targetProcessGenshin';
   static const String keyTargetProcessHsr = 'targetProcessHsr';
@@ -398,6 +407,8 @@ class SharedPrefUtils {
   static const String keyZzzUpdateMod = "zzzUpdateMod";
   static const String keyGenshinUpdateMod = "genshinUpdateMod";
   static const String keyHsrUpdateMod = "hsrUpdateMod";
+
+  static const String keyAutoGenerateFolderIcon = "autoFolderIco";
 
   String getUserProfilePath() {
     if (Platform.isWindows) {

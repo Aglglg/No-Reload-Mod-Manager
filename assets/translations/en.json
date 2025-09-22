@@ -173,5 +173,13 @@
   "Disable all": "Disable all",
   "Found more than 1 ORFix.ini on your \"Mods\" folder, please use only 1.": "Found more than 1 ORFix.ini in your \"Mods\" folder, please use only 1.",
   "No Reload Mod Manager is running": "No Reload Mod Manager is running",
-  "Access it from Tray or Alt+W(default) while in your target game": "Access it from Tray or Alt+W (default) while in your target game"
+  "Access it from Tray or Alt+W(default) while in your target game": "Access it from Tray or Alt+W (default) while in your target game",
+  "Group Folder Icon": "Group Folder Icon",
+  "Optionally show group folder icons within File Explorer.": "Optionally show group folder icons within File Explorer",
+  "Generate Group Folder Icon": "Generate Group Folder Icon",
+  "Auto generate folder icon when changing group icon": "Auto generate folder icon when changing group icon",
+  "Generate ico files for all group folders?": "Generate ico files for all group folders?\nThese icons will be shown within File Explorer.\n\nIt may takes some times depending on how many groups you have.",
+  "Generating folder icon": "Generating {} folder icon...\n",
+  "Generated folder icon": "Generated {} folder icon\n",
+  "Task completed!": "\nTask completed!\n"
 }
