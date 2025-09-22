@@ -113,9 +113,7 @@ Future<void> deletePreviousIcoFiles(
       try {
         if (entity.path == newIcoPath) continue; //do not delete new ico file
         await entity.delete();
-      } catch (e) {
-        print(e);
-      }
+      } catch (e) {}
     }
   }
 }

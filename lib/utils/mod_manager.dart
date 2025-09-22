@@ -1105,6 +1105,16 @@ Future<void> _modifyIniFile(
       );
     }
 
+    //Rewrite old/previous info
+    for (var i = 0; i < lines.length; i++) {
+      if (lines[i].trim().startsWith(';')) {
+        lines[i] = lines[i].replaceFirst(
+          'tell mod creator to fix their broken mod. Mod creator, not mod manager creator.',
+          'to prevent overlapped mods.',
+        );
+      }
+    }
+
     // Parse the INI file sections
     var parsedIni = await _parseIniSections(lines);
 
