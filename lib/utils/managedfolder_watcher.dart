@@ -22,7 +22,6 @@ class DynamicDirectoryWatcher {
 
     watcher = DirectoryWatcher(path);
     _subscription = watcher?.events.listen((event) {
-      print('Watcher changed:${event.path}');
       //only if the event path is not excluded
       if (!fileEventIsExcludedList(event.path)) {
         // Reset debounce timer on every event

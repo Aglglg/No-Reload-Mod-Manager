@@ -5,10 +5,12 @@ import 'package:auto_updater/auto_updater.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/services.dart';
+import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_group_folder_icon.dart';
 import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
+import 'package:no_reload_mod_manager/utils/keypress_simulator_manager.dart';
 import 'package:no_reload_mod_manager/utils/languages_name.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mods_dropzone.dart';
@@ -301,42 +303,49 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                         ),
                       ),
                       Container(height: 10 * sss),
-                      SizedBox(
-                        height: 25 * sss,
-                        width: 35 * sss,
-                        child: FittedBox(
-                          fit: BoxFit.fill,
-                          child: Switch(
-                            value: ref.watch(isAutoGenerateFolderIconProvider),
-                            onChanged: (value) {
-                              SharedPrefUtils().setAutoGenerateFolderIcon(
-                                value,
-                              );
-                              ref
-                                  .read(
-                                    isAutoGenerateFolderIconProvider.notifier,
-                                  )
-                                  .state = value;
-                            },
-                            activeColor: Colors.blue,
-                            trackOutlineWidth: WidgetStatePropertyAll(0),
-                            trackOutlineColor: WidgetStatePropertyAll(
-                              Colors.transparent,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            height: 25 * sss,
+                            width: 35 * sss,
+                            child: FittedBox(
+                              fit: BoxFit.fill,
+                              child: Switch(
+                                value: ref.watch(
+                                  isAutoGenerateFolderIconProvider,
+                                ),
+                                onChanged: (value) {
+                                  SharedPrefUtils().setAutoGenerateFolderIcon(
+                                    value,
+                                  );
+                                  ref
+                                      .read(
+                                        isAutoGenerateFolderIconProvider
+                                            .notifier,
+                                      )
+                                      .state = value;
+                                },
+                                activeColor: Colors.blue,
+                                trackOutlineWidth: WidgetStatePropertyAll(0),
+                                trackOutlineColor: WidgetStatePropertyAll(
+                                  Colors.transparent,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                          Container(width: 15 * sss),
+                          Text(
+                            'Auto generate folder icon when changing group icon'
+                                .tr(),
+                            style: GoogleFonts.poppins(
+                              color: const Color.fromARGB(255, 255, 255, 255),
+                              fontSize: 12 * sss,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        'Auto generate folder icon when changing group icon'
-                            .tr(),
-                        style: GoogleFonts.poppins(
-                          color: const Color.fromARGB(255, 255, 255, 255),
-                          fontSize: 12 * sss,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      Container(width: 15 * sss),
-
                       Container(height: 15 * sss),
                       Divider(
                         color: const Color.fromARGB(127, 33, 149, 243),
@@ -1531,6 +1540,18 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
     );
   }
 
+  void _onDisableAllModsClicked() {
+    if (ref.read(validModsPath) == null) return;
+    ref.read(alertDialogShownProvider.notifier).state = true;
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder:
+          (context) =>
+              DisableAllModsDialog(validModsPath: ref.read(validModsPath)!),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
@@ -1808,6 +1829,47 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
               fontWeight: FontWeight.w500,
             ),
           ),
+
+          Container(height: 15),
+
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    _onDisableAllModsClicked();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    overlayColor: Colors.white,
+                    backgroundColor: const Color.fromARGB(127, 255, 255, 255),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12 * sss),
+                    child: Text(
+                      'Disable All Mods'.tr(),
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12 * sss,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Container(height: 2 * sss),
+          Text(
+            'Disable all managed mods by adding "DISABLED" prefix for each mod folder names'
+                .tr(),
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              color: const Color.fromARGB(200, 255, 255, 255),
+              fontSize: 11 * sss,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );
@@ -1855,6 +1917,235 @@ class ChangeLanguageDialog extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class DisableAllModsDialog extends ConsumerStatefulWidget {
+  final String validModsPath;
+  const DisableAllModsDialog({super.key, required this.validModsPath});
+
+  @override
+  ConsumerState<DisableAllModsDialog> createState() =>
+      _DisableAllModsDialogState();
+}
+
+class _DisableAllModsDialogState extends ConsumerState<DisableAllModsDialog> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showConfirm = true;
+  bool _isLoading = false;
+  List<TextSpan> contents = [];
+
+  @override
+  void initState() {
+    super.initState();
+    showWarning();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void showWarning() {
+    setState(() {
+      contents = [
+        TextSpan(
+          text:
+              'Disable all managed mods?\nAll mod folders will be renamed to "DISABLED_".\n\n'
+                  .tr(),
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 255, 255, 255),
+            fontWeight: FontWeight.w400,
+            fontSize: 14,
+          ),
+        ),
+        TextSpan(
+          text:
+              'Usually only for troubleshooting purpose.\nAfter that you need to manually enable back one by one, by right-clicking on group icon.'
+                  .tr(),
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 255, 255, 255),
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      ];
+    });
+  }
+
+  Future<void> disableAllMods() async {
+    setState(() {
+      _showConfirm = false;
+      _isLoading = true;
+    });
+
+    final String managedPath = p.join(
+      widget.validModsPath,
+      ConstantVar.managedFolderName,
+    );
+
+    setState(() {
+      contents = [
+        TextSpan(
+          text: "Disabling all mods...".tr(),
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ];
+    });
+
+    final modGroups = await getGroupFolders(managedPath);
+
+    List<(Directory groupDir, ModData modData)> failedDisabledMod = [];
+
+    for (var group in modGroups) {
+      final mods = await getModsOnGroup(group.$1, false);
+      for (var mod in mods) {
+        if (p.basename(mod.modDir.path).toLowerCase().startsWith('disabled')) {
+          continue;
+        }
+
+        //Dummy mod, for none, returned by getModsOnGroup
+        if (mod.modName == 'None') continue;
+
+        bool success = await completeDisableMod(mod.modDir);
+        if (!success) failedDisabledMod.add((group.$1, mod));
+      }
+    }
+
+    List<TextSpan> failedDisableInfo = [];
+    for (var mod in failedDisabledMod) {
+      String groupName = '';
+      try {
+        groupName = await File(p.join(mod.$1.path, 'groupname')).readAsString();
+      } catch (e) {}
+      failedDisableInfo.add(
+        TextSpan(
+          text:
+              "$groupName - ${mod.$2.modName}\n${mod.$2.modDir.path}\n\n".tr(),
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      );
+    }
+
+    setState(() {
+      _isLoading = false;
+
+      if (failedDisabledMod.isEmpty) {
+        contents = [
+          TextSpan(
+            text: "All managed mods have been disabled".tr(),
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ];
+      } else {
+        contents = [
+          ...failedDisableInfo,
+          TextSpan(
+            text:
+                "Some mods cannot be disabled, please rename and disable these mods manually via File Explorer."
+                    .tr(),
+            style: GoogleFonts.poppins(
+              color: const Color.fromARGB(255, 189, 170, 0),
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ];
+      }
+    });
+
+    _scrollToBottom();
+  }
+
+  Future<void> _scrollToBottom() async {
+    // Wait until scrollController has a valid position
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (!_scrollController.hasClients) return;
+
+    await _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        "Disable all mods".tr(),
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
+      ),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.trackpad,
+            },
+          ),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: RichText(text: TextSpan(children: contents)),
+          ),
+        ),
+      ),
+      actions:
+          _showConfirm
+              ? [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    ref.read(alertDialogShownProvider.notifier).state = false;
+                  },
+                  child: Text(
+                    'Cancel'.tr(),
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    await disableAllMods();
+                  },
+                  child: Text(
+                    'Confirm'.tr(),
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
+              ]
+              : _isLoading
+              ? []
+              : [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    ref.read(alertDialogShownProvider.notifier).state = false;
+                    simulateKeyF10();
+                  },
+                  child: Text(
+                    'Close & Reload'.tr(),
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
+              ],
     );
   }
 }
