@@ -178,8 +178,17 @@
   "Optionally show group folder icons within File Explorer.": "Optionally show group folder icons within File Explorer",
   "Generate Group Folder Icon": "Generate Group Folder Icon",
   "Auto generate folder icon when changing group icon": "Auto generate folder icon when changing group icon",
-  "Generate ico files for all group folders?": "Generate ico files for all group folders?\nThese icons will be shown within File Explorer.\n\nIt may takes some times depending on how many groups you have.",
+  "Generate ico files for all group folders?": "Generate ico files for all group folders?\nThese icons will be shown within File Explorer.\n",
   "Generating folder icon": "Generating {} folder icon...\n",
   "Generated folder icon": "Generated {} folder icon\n",
-  "Task completed!": "\nTask completed!\n"
+  "Task completed!": "\nTask completed!\n",
+  "Disable All Mods": "Disable All Mods",
+  "It may takes some times depending on how many groups you have.": "\nIt may takes some times depending on how many groups you have.",
+  "Generate group folder icon": "Generate group folder icon",
+  "Disable all managed mods by adding \"DISABLED\" prefix for each mod folder names": "Disable all managed mods by adding \"DISABLED\" prefix for each mod folder names",
+  "Disable all managed mods?": "Disable all managed mods?\nAll mod folders will be renamed to \"DISABLED_\".\n\n",
+  "Usually only for troubleshooting purpose.": "Usually only for troubleshooting purpose.\nAfter that you need to manually enable back one by one, by right-clicking on group icon.",
+  "Disabling all mods...": "Disabling all mods...",
+  "All managed mods have been disabled": "All managed mods have been disabled",
+  "Some mods cannot be disabled, please rename and disable these mods manually via File Explorer.": "Some mods cannot be disabled, please rename and disable these mods manually via File Explorer."
 }

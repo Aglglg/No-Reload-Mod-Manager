@@ -178,8 +178,17 @@
   "Optionally show group folder icons within File Explorer.": "在文件资源管理器中可选显示分组文件夹图标",
   "Generate Group Folder Icon": "生成分组文件夹图标",
   "Auto generate folder icon when changing group icon": "更改分组图标时自动生成文件夹图标",
-  "Generate ico files for all group folders?": "是否为所有分组文件夹生成 ico 文件？\n这些图标将在文件资源管理器中显示.\n\n根据分组数量，可能需要一些时间.",
+  "Generate ico files for all group folders?": "是否为所有分组文件夹生成 ico 文件？\n这些图标将在文件资源管理器中显示.\n",
   "Generating folder icon": "正在生成 {} 文件夹图标...\n",
   "Generated folder icon": "已生成 {} 文件夹图标\n",
-  "Task completed!": "\n任务完成！\n"
+  "Task completed!": "\n任务完成！\n",
+  "Disable All Mods": "禁用所有模组",
+  "It may takes some times depending on how many groups you have.": "\n根据分组数量，可能需要一些时间.",
+  "Generate group folder icon": "生成分组文件夹图标",
+  "Disable all managed mods by adding \"DISABLED\" prefix for each mod folder names": "通过在每个模组文件夹名称前添加 “DISABLED” 前缀来禁用所有已管理的模组",
+  "Disable all managed mods?": "是否禁用所有已管理的模组？\n所有模组文件夹将被重命名为 “DISABLED_”.\n\n",
+  "Usually only for troubleshooting purpose.": "通常仅用于故障排查.\n之后需要通过右键点击分组图标，逐个手动启用.",
+  "Disabling all mods...": "正在禁用所有模组...",
+  "All managed mods have been disabled": "所有已管理的模组已被禁用",
+  "Some mods cannot be disabled, please rename and disable these mods manually via File Explorer.": "部分模组无法禁用，请使用文件资源管理器手动重命名并禁用这些模组."
 }

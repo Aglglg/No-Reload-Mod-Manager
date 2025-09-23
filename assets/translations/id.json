@@ -178,8 +178,17 @@
   "Optionally show group folder icons within File Explorer.": "Secara opsional menampilkan ikon folder untuk grup di File Explorer",
   "Generate Group Folder Icon": "Buat ikon folder grup",
   "Auto generate folder icon when changing group icon": "Buat ikon folder otomatis ketika mengubah ikon grup",
-  "Generate ico files for all group folders?": "Buat file ico untuk semua folder grup?\nIkon ini akan ditampilkan di File Explorer.\n\nMungkin membutuhkan beberapa waktu tergantung seberapa banyak grup yang kamu punya.",
+  "Generate ico files for all group folders?": "Buat file ico untuk semua folder grup?\nIkon ini akan ditampilkan di File Explorer.\n",
   "Generating folder icon": "Membuat ikon folder {}...\n",
   "Generated folder icon": "Ikon folder {} dibuat",
-  "Task completed!": "\nSelesai!\n"
+  "Task completed!": "\nSelesai!\n",
+  "Disable All Mods": "Nonaktifkan Semua Mod",
+  "It may takes some times depending on how many groups you have.": "\nMungkin membutuhkan beberapa waktu tergantung seberapa banyak grup yang kamu punya.",
+  "Generate group folder icon": "Buat ikon folder grup",
+  "Disable all managed mods by adding \"DISABLED\" prefix for each mod folder names": "Nonaktikan semua mod yang dikelola dengan cara menambahkan \"DISABLED\" untuk semua nama folder mod.",
+  "Disable all managed mods?": "Nonaktifkan semua mod?\nSemua folder mod akan diganti nama menjadi \"DISABLED_\".\n\n",
+  "Usually only for troubleshooting purpose.": "Biasanya hanya untuk keperluan troubleshooting.\nSetelah itu kamu perlu secara manual mengaktifkannya satu-persatu, dengan cara klik kanan di ikon grup.",
+  "Disabling all mods...": "Sedang menonaktifkan semua mod...",
+  "All managed mods have been disabled": "Semua mod yang dikelola telah dinonaktifkan",
+  "Some mods cannot be disabled, please rename and disable these mods manually via File Explorer.": "Beberapa mod tidak bisa dinonaktifkan, diperlukan ganti nama dan nonaktifkan mod-mod tersebut secara manual dengan File Explorer."
 }

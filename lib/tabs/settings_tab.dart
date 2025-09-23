@@ -1952,9 +1952,7 @@ class _DisableAllModsDialogState extends ConsumerState<DisableAllModsDialog> {
     setState(() {
       contents = [
         TextSpan(
-          text:
-              'Disable all managed mods?\nAll mod folders will be renamed to "DISABLED_".\n\n'
-                  .tr(),
+          text: 'Disable all managed mods?'.tr(),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 255, 255, 255),
             fontWeight: FontWeight.w400,
@@ -1962,9 +1960,7 @@ class _DisableAllModsDialogState extends ConsumerState<DisableAllModsDialog> {
           ),
         ),
         TextSpan(
-          text:
-              'Usually only for troubleshooting purpose.\nAfter that you need to manually enable back one by one, by right-clicking on group icon.'
-                  .tr(),
+          text: 'Usually only for troubleshooting purpose.'.tr(),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 255, 255, 255),
             fontWeight: FontWeight.bold,
@@ -2011,7 +2007,7 @@ class _DisableAllModsDialogState extends ConsumerState<DisableAllModsDialog> {
         }
 
         //Dummy mod, for none, returned by getModsOnGroup
-        if (mod.modName == 'None') continue;
+        if (mod.modDir.path == 'None') continue;
 
         bool success = await completeDisableMod(mod.modDir);
         if (!success) failedDisabledMod.add((group.$1, mod));
@@ -2026,8 +2022,7 @@ class _DisableAllModsDialogState extends ConsumerState<DisableAllModsDialog> {
       } catch (e) {}
       failedDisableInfo.add(
         TextSpan(
-          text:
-              "$groupName - ${mod.$2.modName}\n${mod.$2.modDir.path}\n\n".tr(),
+          text: "$groupName - ${mod.$2.modName}\n${mod.$2.modDir.path}\n\n",
           style: GoogleFonts.poppins(
             color: Colors.white,
             fontSize: 14,

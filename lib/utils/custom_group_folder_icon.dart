@@ -166,6 +166,17 @@ class _GenerateGroupIcoFileDialogState
             fontSize: 14,
           ),
         ),
+
+        TextSpan(
+          text:
+              "It may takes some times depending on how many groups you have."
+                  .tr(),
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 255, 255, 255),
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
       ];
     });
   }
@@ -252,7 +263,7 @@ class _GenerateGroupIcoFileDialogState
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-        "Generate Group Folder Icon".tr(),
+        "Generate group folder icon".tr(),
         style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
       ),
       content: ConstrainedBox(
