@@ -4,9 +4,8 @@ How? Of course, first of all you must know [How to contribute to open sourced pr
 
 ---
 ### To-do list
-- Preset & randomize system.
-- Uniquify namespaces & detect duplicated namespaces.
-- Detect duplicated known utility mods.
+- Preset system.
+- (Try) select multiple mods in the same group.
 ---
 
 # No Reload Mod Manager / Skin Selection
