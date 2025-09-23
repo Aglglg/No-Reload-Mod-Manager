@@ -843,7 +843,11 @@ Future<List<TextSpan>> updateModData(
 
           await Future.wait([
             for (var j = 0; j < modFullPaths.length; j++)
-              if (j != 0)
+              if (j != 0 &&
+                  !p
+                      .basename(modFullPaths[j].modDir.path)
+                      .toLowerCase()
+                      .startsWith('disabled'))
                 _manageMod(
                   modFullPaths[j].modDir.path,
                   'group_$groupIndex',
@@ -1105,7 +1109,7 @@ Future<void> _modifyIniFile(
     if (!hasNRMM) {
       lines.insert(
         0,
-        "; Mod managed with No Reload Mod Manager (NRMM) by Agulag, for any problems, please kindly contact @aglgl on Discord.\n; Source of No_Reload_Mod_Manager https://gamebanana.com/mods/582623\n",
+        "; Mod managed with No Reload Mod Manager (NRMM) by Agulag, for any problems, please contact/tag @aglgl on Discord.\n; Source of No_Reload_Mod_Manager https://gamebanana.com/mods/582623\n",
       );
     }
 
