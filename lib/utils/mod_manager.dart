@@ -485,7 +485,9 @@ Future<void> unsetGroupOrModIcon(
       await sourceFile.delete();
 
       //Unset folder icon in Explorer
-      unsetFolderIcon(groupDir.path);
+      if (SharedPrefUtils().isAutoGenerateFolderIcon()) {
+        unsetFolderIcon(groupDir.path);
+      }
     } catch (e) {}
   } else {
     Image imgResult = Image.file(
@@ -1104,7 +1106,7 @@ Future<void> _modifyIniFile(
 
     // Give nrmm mark
     bool hasNRMM = lines.any(
-      (line) => line.contains("contact @aglgl on Discord"),
+      (line) => line.toLowerCase().contains("@aglgl on Discord"),
     );
     if (!hasNRMM) {
       lines.insert(
