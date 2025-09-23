@@ -7,10 +7,6 @@ How? Of course, first of all you must know [How to contribute to open sourced pr
 - Preset & randomize system.
 - Uniquify namespaces & detect duplicated namespaces.
 - Detect duplicated known utility mods.
-- Button on Settings to disable all managed mods.
-- ~Give group folder icon if possible.~
-- ~Give notification that's indicating running on system tray.~
-- ~Give mark on modified ini files.~
 ---
 
 # No Reload Mod Manager / Skin Selection
