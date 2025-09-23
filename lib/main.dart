@@ -21,6 +21,7 @@ import 'package:no_reload_mod_manager/utils/mods_dropzone.dart';
 import 'package:no_reload_mod_manager/utils/refreshable_image.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
+import 'package:no_reload_mod_manager/utils/ui_dialogues.dart';
 import 'package:path/path.dart' as p;
 
 import 'package:bitsdojo_window/bitsdojo_window.dart' as bitsdojo;
@@ -1483,119 +1484,6 @@ class CustomKeyEvent extends KeyEvent {
     required super.logicalKey,
     required super.timeStamp,
   });
-}
-
-class PrefCorruptedDialog extends ConsumerStatefulWidget {
-  const PrefCorruptedDialog({super.key});
-
-  @override
-  ConsumerState<PrefCorruptedDialog> createState() =>
-      _PrefCorruptedDialogState();
-}
-
-class _PrefCorruptedDialogState extends ConsumerState<PrefCorruptedDialog> {
-  final ScrollController _scrollController = ScrollController();
-  List<TextSpan> contents = [];
-
-  @override
-  void initState() {
-    super.initState();
-    showCorruptedPrefInfo();
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  Future<void> showCorruptedPrefInfo() async {
-    setState(() {
-      contents = [];
-      contents.add(
-        TextSpan(
-          text:
-              "Settings data corrupted. Data automatically deleted to prevent error."
-                  .tr(),
-          style: GoogleFonts.poppins(color: Colors.white),
-        ),
-      );
-      contents.add(
-        TextSpan(
-          text:
-              "Make sure to re-check 'Mods Path' and anything else, on Settings tab."
-                  .tr(),
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      );
-      contents.add(
-        TextSpan(
-          text: "Don't worry, mod datas are still fine!".tr(),
-          style: GoogleFonts.poppins(
-            color: Colors.green,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      );
-    });
-
-    _scrollToBottom();
-  }
-
-  Future<void> _scrollToBottom() async {
-    // Wait until scrollController has a valid position
-    await Future.delayed(const Duration(milliseconds: 100));
-    if (!_scrollController.hasClients) return;
-
-    await _scrollController.animateTo(
-      _scrollController.position.maxScrollExtent,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        'Warning'.tr(),
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
-      ),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
-        ),
-        child: ScrollConfiguration(
-          behavior: ScrollConfiguration.of(context).copyWith(
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.mouse,
-              PointerDeviceKind.trackpad,
-            },
-          ),
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: RichText(text: TextSpan(children: contents)),
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-            ref.read(alertDialogShownProvider.notifier).state = false;
-          },
-          child: Text(
-            'Close'.tr(),
-            style: GoogleFonts.poppins(color: Colors.blue),
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 class UpdateModDataSnackbarButton extends ConsumerStatefulWidget {
