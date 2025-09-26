@@ -1101,12 +1101,12 @@ Future<void> _modifyIniFile(
 
     // Give nrmm mark
     bool hasNRMM = lines.any(
-      (line) => line.toLowerCase().contains("@aglgl on Discord"),
+      (line) => line.toLowerCase().contains("@aglgl on discord"),
     );
     if (!hasNRMM) {
       lines.insert(
         0,
-        "; Mod managed with No Reload Mod Manager (NRMM) by Agulag, for any problems, please contact/tag @aglgl on Discord.\n; Source of No_Reload_Mod_Manager https://gamebanana.com/mods/582623\n",
+        "; Mod managed with No Reload Mod Manager (NRMM) by Agulag, for any problems, just contact/tag @aglgl on Discord.\n; Source of No Reload Mod Manager https://gamebanana.com/mods/582623\n",
       );
     }
 
@@ -1154,29 +1154,45 @@ Future<void> _modifyIniFile(
     operationLogs.add(
       TextSpan(
         text:
-            '${'Error! Cannot modify .ini file'.tr(args: [iniFilePath])}.\n\n',
+            '${'Error! Cannot modify .ini file'.tr(args: [iniFilePath])}.\n${ConstantVar.defaultErrorInfo}\n\n',
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );
   }
 }
 
-Future<void> safeWriteIni(File file, String content) async {
+Future<File?> safeWriteIni(
+  File file,
+  String content, {
+  bool immediatelyRename = true,
+}) async {
   final tempFile = File('${file.path}.tmp');
 
   //Write to temp file first
   try {
     await tempFile.writeAsString(content, flush: true);
   } catch (e) {
-    throw Exception(e);
+    rethrow;
+  }
+
+  //stop here if no need rename, return the temp file
+  //currently, only used for change namespace, where if only 1 file cannot be modified, cancel every other files modification too.
+  if (!immediatelyRename) {
+    return tempFile;
   }
 
   //Replace original with temp
   try {
     await tempFile.rename(file.path);
   } catch (e) {
-    throw Exception(e);
+    //Don't forget to delete tmp if fail rename
+    try {
+      await tempFile.delete();
+    } catch (e) {}
+    rethrow;
   }
+
+  return null;
 }
 
 Future<bool> containsNrmmMark(List<String> paths) async {
@@ -1983,32 +1999,4 @@ Future<bool> enableMod(Directory modDir) async {
   } catch (e) {
     return false;
   }
-}
-
-//Called after rightclick menu, on Dialog
-Future<void> changeNamespace(String modPath) async {
-  final iniFiles = await findIniFilesRecursiveExcludeDisabled(modPath);
-
-  //to do(before writing more of this code), try make ini file, with namespace, namespace but with spaces, also try whether namespace case sensitive or not
-
-  //read all ini files, and trim line, remove all spaces(temporarily), check if it's started with 'namespace='
-
-  //get string after 'namespace=', store them as a List string, or whatever datatypes that have noduplicate
-
-  //for each namespace, show on dialog, with textfield,
-
-  //on after things changed, show save button on dialog
-
-  //on save button, replace all corresponding namespaces, also replace any lines that's referring to these namespaces
-  //(exact match may be needed, to avoid breaking things, try analyze more ini files from any sources)
-
-  //if success to save, show save and reload f10 button
-
-  //if failed because no permission/file in use by another program, show failed dialog.
-
-  //don't forget to show text info on dialog, about why change namespace, when does it needed, what considered as unique namespace, what considered as bad namespace
-  //about long namespace, techinaclly good, unique, but not really good for human readablity
-  //Ex:
-  //Change the namespace if you suspect a conflict with another mod.
-  //It should be unique and easy to read (e.g. Rover1, RoverMecha), not generic (Rover, Traveller) or overly long.
 }

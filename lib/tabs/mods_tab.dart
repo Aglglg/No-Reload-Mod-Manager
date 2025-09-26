@@ -393,6 +393,28 @@ class _ModContainerState extends ConsumerState<ModContainer>
                 scale: sss,
                 onSelected: () {
                   if (!context.mounted) return;
+                  ref.read(alertDialogShownProvider.notifier).state = true;
+                  showDialog(
+                    barrierDismissible: false,
+                    context: context,
+                    builder:
+                        (context) => ChangeNamespaceDialog(
+                          modPath:
+                              widget
+                                  .currentGroupData
+                                  .modsInGroup[widget.index]
+                                  .modDir
+                                  .path,
+                        ),
+                  );
+                },
+                label: 'Namespace'.tr(),
+              ),
+            if (widget.index != 0)
+              CustomMenuItem(
+                scale: sss,
+                onSelected: () {
+                  if (!context.mounted) return;
                   openFileExplorerToSpecifiedPath(
                     widget
                         .currentGroupData

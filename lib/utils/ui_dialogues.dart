@@ -1769,7 +1769,7 @@ class _EditModLinkDialogState extends ConsumerState<EditModLinkDialog> {
           hintStyle: GoogleFonts.poppins(
             fontWeight: FontWeight.w400,
             color: const Color.fromARGB(30, 255, 255, 255),
-            fontSize: 13,
+            fontSize: 14,
           ),
         ),
         maxLines: null,
@@ -2025,6 +2025,539 @@ class _DisableAllModsDialogState extends ConsumerState<DisableAllModsDialog> {
                   },
                   child: Text(
                     'Close & Reload'.tr(),
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
+              ],
+    );
+  }
+}
+
+class ChangeNamespaceDialog extends ConsumerStatefulWidget {
+  final String modPath;
+  const ChangeNamespaceDialog({super.key, required this.modPath});
+
+  @override
+  ConsumerState<ChangeNamespaceDialog> createState() =>
+      _ChangeNamespaceDialogState();
+}
+
+class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showSaveButton = false;
+  bool _isLoading = false;
+  bool _wasSaved = false;
+  bool _namespaceChanged = false;
+  List<TextSpan> contents = [];
+
+  List<String> iniFilesPath = [];
+  //original, modified
+  Map<String, String> namespacesMap = {};
+  Map<String, TextEditingController> textControllersMap = {};
+
+  @override
+  void initState() {
+    super.initState();
+    readNamespaces();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> readNamespaces() async {
+    setState(() {
+      _isLoading = true;
+      _showSaveButton = false;
+      contents = [
+        TextSpan(
+          text: 'Reading mod...'.tr(),
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 255, 255, 255),
+            fontWeight: FontWeight.w400,
+            fontSize: 14,
+          ),
+        ),
+      ];
+    });
+
+    //get all ini files within specified mod folder
+    iniFilesPath = await findIniFilesRecursiveExcludeDisabled(widget.modPath);
+
+    //read all ini files, as lines, get the namespaces only
+    for (var path in iniFilesPath) {
+      List<String> lines = [];
+      File iniFile = File(path);
+
+      //only read utf8, otherwise... don't care
+      try {
+        lines = await iniFile.readAsLines();
+      } catch (e) {}
+
+      for (var i = 0; i < lines.length; i++) {
+        final String trimmedLine = lines[i].trim();
+        // only line that's not comment
+        if (!trimmedLine.startsWith(';')) {
+          //if line starts with [, stop this line loop, namespace won't be located any further down
+          if (trimmedLine.startsWith('[')) break;
+          //in case found the namespace, not case sensitive, ignore spaces temporarily, check if starts with 'namespaces='
+          if (trimmedLine
+              .toLowerCase()
+              .replaceAll(' ', '')
+              .startsWith('namespace=')) {
+            //
+            String namespace =
+                trimmedLine.substring(trimmedLine.indexOf('=') + 1).trim();
+
+            //ignore case
+            bool alreadyExist = namespacesMap.keys.any(
+              (k) => k.toLowerCase() == namespace.toLowerCase(),
+            );
+            //Only add to list, if wasn't previously found.
+            //Sometimes there's a mod that separate constants and commandlist, but still using same namespace (no problem)
+            //Or sometimes there's a situation that clearly contains multiple duplicated namespaces, don't care
+            if (!alreadyExist) {
+              namespacesMap[namespace] = namespace;
+            }
+            break; //do not look for other lines, already found
+          }
+        }
+      }
+    }
+
+    //Generate controller based on namespaceMap
+    for (var entry in namespacesMap.entries) {
+      final controller = TextEditingController();
+      controller.text = entry.value;
+      textControllersMap[entry.key] = controller;
+    }
+
+    setState(() {
+      _isLoading = false;
+      _showSaveButton = true;
+      contents = [
+        TextSpan(
+          text:
+              'Change the namespace if it’s duplicated with another mod.\n'
+                  .tr(),
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 189, 170, 0),
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+        TextSpan(
+          text:
+              'To avoid duplication, it should be unique and easy to read, not generic or too long.\n\nExample:\nRoverCoolSkin (Good)\nRover (Bad)\n'
+                  .tr(),
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 255, 255, 255),
+            fontWeight: FontWeight.w400,
+            fontSize: 14,
+          ),
+        ),
+      ];
+    });
+  }
+
+  Future<void> saveNamespace() async {
+    setState(() {
+      _isLoading = true;
+      _showSaveButton = false;
+    });
+
+    //Update namespaceMap based on text controllers & its pair
+    for (var entry in textControllersMap.entries) {
+      if (namespacesMap.containsKey(entry.key)) {
+        namespacesMap[entry.key] = entry.value.text;
+      }
+    }
+
+    //detect if duplcated values
+    final values = namespacesMap.values.map((v) => v.toLowerCase()).toList();
+    var uniqueValues = values.toSet();
+    bool containsEmptyValue = uniqueValues.any(
+      (element) => element.trim().isEmpty,
+    );
+
+    //Do not save if empty
+    if (containsEmptyValue) {
+      setState(() {
+        contents = [
+          ...contents.take(
+            2,
+          ), // only take that namespace informations from previous assignment, do not take "can't save...", incase user press it multiple times
+        ];
+      });
+      await Future.delayed(
+        Duration(milliseconds: 50),
+      ); //small delay to simulate blinking text
+      setState(() {
+        contents = [
+          ...contents,
+          TextSpan(
+            text: "\nCan't save empty values.\n".tr(),
+            style: GoogleFonts.poppins(
+              color: const Color.fromARGB(255, 189, 170, 0),
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+        ];
+      });
+
+      setState(() {
+        _isLoading = false;
+        _showSaveButton = true;
+      });
+    }
+    //If Duplicated, just show warning, do not save
+    else if (uniqueValues.length != values.length) {
+      setState(() {
+        contents = [
+          ...contents.take(
+            2,
+          ), // only take that namespace informations from previous assignment, do not take "can't save...", incase user press it multiple times
+        ];
+      });
+      await Future.delayed(
+        Duration(milliseconds: 50),
+      ); //small delay to simulate blinking text
+      setState(() {
+        contents = [
+          ...contents,
+          TextSpan(
+            text: "\nCan't save duplicated values.\n".tr(),
+            style: GoogleFonts.poppins(
+              color: const Color.fromARGB(255, 189, 170, 0),
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+        ];
+      });
+
+      setState(() {
+        _isLoading = false;
+        _showSaveButton = true;
+      });
+    }
+    //IF not duplicated, try save
+    else {
+      bool success = true;
+
+      for (final entry in namespacesMap.entries) {
+        //skip if nothing changed
+        if (entry.key == entry.value) {
+          continue;
+        }
+        _namespaceChanged = true;
+        success = await replaceNamespace(entry.key, entry.value);
+      }
+
+      setState(() {
+        _isLoading = false;
+        _showSaveButton = false;
+        _wasSaved = true;
+        contents = [
+          success
+              ? TextSpan(
+                text:
+                    _namespaceChanged
+                        ? 'Namespace modified.'.tr()
+                        : 'Nothing changed.'.tr(),
+                style: GoogleFonts.poppins(
+                  color: const Color.fromARGB(255, 255, 255, 255),
+                  fontWeight: FontWeight.w400,
+                  fontSize: 14,
+                ),
+              )
+              : TextSpan(
+                text:
+                    '${'Failed to modify namespaces.'.tr()}\n\n${ConstantVar.defaultErrorInfo}',
+                style: GoogleFonts.poppins(
+                  color: const Color.fromARGB(255, 189, 170, 0),
+                  fontWeight: FontWeight.w400,
+                  fontSize: 14,
+                ),
+              ),
+        ];
+      });
+    }
+  }
+
+  Future<bool> replaceNamespace(
+    String originalNamespace,
+    String modifiedNamespace,
+  ) async {
+    List<File> backupFiles = [];
+    List<File> tmpModifiedFiles = [];
+
+    //#1, CREATE BACKUP
+    for (var path in iniFilesPath) {
+      try {
+        //do not use copy directly because it'll transfer file permission and attribute too
+        //and sometimes cause cannot delete .baknamespace file
+        backupFiles.add(await _copyIniContentOnly(path));
+      } catch (e) {
+        //in case failed, delete all previous created bak backup and return
+        await _deleteTemporaryFiles(backupFiles);
+        return false;
+      }
+    }
+
+    //2#, CREATE TMP FILE
+    for (final path in iniFilesPath) {
+      final file = File(path);
+      if (!await file.exists()) continue;
+
+      try {
+        final lines = await file.readAsLines();
+
+        final newLines = _generateModifiedLines(
+          lines,
+          originalNamespace,
+          modifiedNamespace,
+        );
+        //if new lines is changed/modified
+        if (newLines.$1) {
+          //2#, CREATE TMP FILE
+          try {
+            final tempFile = await safeWriteIni(
+              file,
+              newLines.$2.join('\n'),
+              immediatelyRename: false,
+            );
+
+            //If success, add to list tmp file
+            if (tempFile != null) {
+              tmpModifiedFiles.add(tempFile);
+            }
+          } catch (e) {
+            //if failed to write tmp file, abort everything and delete. return false
+            await _deleteTemporaryFiles(backupFiles);
+            await _deleteTemporaryFiles(tmpModifiedFiles);
+            return false;
+          }
+        }
+      } catch (e) {
+        //if failed to read ini file, abort everything and delete. return false
+        await _deleteTemporaryFiles(backupFiles);
+        await _deleteTemporaryFiles(tmpModifiedFiles);
+        return false;
+      }
+    }
+
+    //#3, Try rename TMP to ini file
+    for (var tmpFile in tmpModifiedFiles) {
+      try {
+        String tmpFilename = p.basename(tmpFile.path);
+        String iniFilename = tmpFilename.replaceFirst(
+          ".tmp",
+          "",
+          tmpFilename.length - ".tmp".length,
+        );
+        String iniFilePath = p.join(p.dirname(tmpFile.path), iniFilename);
+        await tmpFile.rename(iniFilePath);
+      } catch (e) {
+        await _revertToBakFiles(backupFiles);
+        await _deleteTemporaryFiles(backupFiles);
+        await _deleteTemporaryFiles(tmpModifiedFiles);
+        return false;
+      }
+    }
+    //Return true success if reached here, DON'T forget to delete bakFiles
+    await _deleteTemporaryFiles(backupFiles);
+    return true;
+  }
+
+  (bool, List<String>) _generateModifiedLines(
+    List<String> lines,
+    String originalNamespace,
+    String modifiedNamespace,
+  ) {
+    //add \namespace\, because usually namespace accessed like this, to prevent modifying other words that's the same as the namespace, but not actually referencing the namespace
+    final regex = RegExp(
+      RegExp.escape("\\$originalNamespace\\"),
+      caseSensitive: false,
+    );
+
+    bool changed = false;
+    final newLines =
+        lines.map((line) {
+          // skip comment
+          if (line.trim().startsWith(';')) return line;
+
+          // if starts with "namespace=", replace it manually, do not use regex, because regex, added '\' at beginning and end
+          if (line
+              .trim()
+              .toLowerCase()
+              .replaceAll(' ', '')
+              .startsWith('namespace=')) {
+            String namespace =
+                line.trim().substring(line.trim().indexOf('=') + 1).trim();
+            //only replace this namespace line, only if it's the same as original namespace, ofc
+            if (namespace.toLowerCase() == originalNamespace.toLowerCase()) {
+              changed = true;
+              return "namespace = $modifiedNamespace";
+            } else {
+              return line;
+            }
+          }
+
+          // Replace other, use regex like \originalNamespace\ to minimize wrong target replace
+          if (regex.hasMatch(line)) {
+            changed = true;
+            return line.replaceAll(regex, "\\$modifiedNamespace\\");
+          }
+
+          //return original line if not modified
+          return line;
+        }).toList();
+
+    return (changed, newLines);
+  }
+
+  Future<void> _revertToBakFiles(List<File> bakFiles) async {
+    for (var bakFile in bakFiles) {
+      try {
+        String bakFilename = p.basename(bakFile.path);
+        String iniFilename = bakFilename.replaceFirst(
+          ".baknamespace",
+          "",
+          bakFilename.length - ".baknamespace".length,
+        );
+        String iniFilePath = p.join(p.dirname(bakFile.path), iniFilename);
+        await bakFile.rename(iniFilePath);
+      } catch (e) {}
+    }
+  }
+
+  Future<void> _deleteTemporaryFiles(List<File> files) async {
+    for (var file in files) {
+      try {
+        await file.delete();
+      } catch (e) {}
+    }
+  }
+
+  Future<File> _copyIniContentOnly(String iniPath) async {
+    try {
+      String content = await File(iniPath).readAsString();
+      return await File("$iniPath.baknamespace").writeAsString(content);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        "Change Namespace".tr(),
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
+      ),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.trackpad,
+            },
+          ),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                RichText(text: TextSpan(children: contents)),
+                if (namespacesMap.isEmpty && !_isLoading)
+                  Text(
+                    'No namespaces found.'.tr(),
+                    style: GoogleFonts.poppins(
+                      color: Colors.green,
+                      fontSize: 14,
+                    ),
+                  )
+                else if (!_wasSaved)
+                  ...textControllersMap.entries.map((controller) {
+                    return TextField(
+                      readOnly: _isLoading,
+                      controller: controller.value,
+                      decoration: InputDecoration(
+                        disabledBorder: InputBorder.none,
+                        hintText: 'A-Z a-z 0-9 _ \\',
+                        hintStyle: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w400,
+                          color: const Color.fromARGB(71, 255, 255, 255),
+                          fontSize: 14,
+                        ),
+                      ),
+                      maxLines: null,
+                      keyboardType: TextInputType.none,
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w400,
+                        color: Colors.white,
+                        fontSize: 13,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'[0-9a-zA-Z\\_]'),
+                        ),
+                        FilteringTextInputFormatter.deny(
+                          RegExp(r'[\n\r\u0085\u2028\u2029]'),
+                        ),
+                      ],
+                    );
+                  }),
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions:
+          _showSaveButton
+              ? [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    ref.read(alertDialogShownProvider.notifier).state = false;
+                  },
+                  child: Text(
+                    'Cancel'.tr(),
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
+                if (namespacesMap.isNotEmpty)
+                  TextButton(
+                    onPressed: () async {
+                      await saveNamespace();
+                    },
+                    child: Text(
+                      'Confirm'.tr(),
+                      style: GoogleFonts.poppins(color: Colors.blue),
+                    ),
+                  ),
+              ]
+              : _isLoading
+              ? []
+              : [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    ref.read(alertDialogShownProvider.notifier).state = false;
+                    if (_namespaceChanged) {
+                      simulateKeyF10();
+                    }
+                  },
+                  child: Text(
+                    _namespaceChanged ? 'Close & Reload'.tr() : 'Close'.tr(),
                     style: GoogleFonts.poppins(color: Colors.blue),
                   ),
                 ),
