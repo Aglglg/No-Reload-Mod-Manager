@@ -185,9 +185,9 @@
   "Disable All Mods": "Nonaktifkan Semua Mod",
   "It may takes some times depending on how many groups you have.": "\nMungkin membutuhkan beberapa waktu tergantung seberapa banyak grup yang kamu punya.",
   "Generate group folder icon": "Buat ikon folder grup",
-  "Disable all managed mods by adding \"DISABLED\" prefix for each mod folder names": "Nonaktikan semua mod yang dikelola dengan cara menambahkan \"DISABLED\" untuk semua nama folder mod.",
-  "Disable all managed mods?": "Nonaktifkan semua mod?\nSemua folder mod akan diganti nama menjadi \"DISABLED_\".\n\n",
-  "Usually only for troubleshooting purpose.": "Biasanya hanya untuk keperluan troubleshooting.\nSetelah itu kamu perlu secara manual mengaktifkannya satu-persatu, dengan cara klik kanan di ikon grup.",
+  "Disable all managed mods by adding \"DISABLED\" prefix for each mod folder names": "Nonaktikan semua mod yang dikelola dengan menambahkan \"DISABLED\" untuk semua nama folder mod",
+  "Disable all managed mods?": "Nonaktifkan semua mod yang dikelola?\nSemua folder mod akan diganti nama menjadi \"DISABLED_\".\n\n",
+  "Usually only for troubleshooting purpose.": "Biasanya hanya untuk keperluan troubleshooting.",
   "Disabling all mods...": "Sedang menonaktifkan semua mod...",
   "All managed mods have been disabled": "Semua mod yang dikelola telah dinonaktifkan",
   "Some mods cannot be disabled, please rename and disable these mods manually via File Explorer.": "Beberapa mod tidak bisa dinonaktifkan, diperlukan ganti nama dan nonaktifkan mod-mod tersebut secara manual dengan File Explorer.",
@@ -200,5 +200,11 @@
   "Nothing changed.": "Tidak ada yang diubah.",
   "Namespace modified.": "Namespace diubah.",
   "Failed to modify namespaces.": "Gagal mengubah namespace.",
-  "No namespaces found.": "Tidak ada namespace yang ditemukan."
+  "No namespaces found.": "Tidak ada namespace yang ditemukan.",
+  "Enable All Mods": "Aktifkan Semua Mod",
+  "Enable all managed mods by removing \"DISABLED\" prefix for each mod folder names": "Aktifkan semua mod yang dikelola dengan menghilangkan \"DISABLED\" untuk semua nama folder mod",
+  "Enable all managed mods?": "Aktifkan semua mod yang dikelola?",
+  "Enabling all mods...": "Mengaktifkan semua mod...",
+  "All managed mods have been enabled": "Semua mod yang dikelola telah diaktifkan",
+  "Some mods cannot be enabled, please rename and enable these mods manually via File Explorer.": "Beberapa mod tidak bisa diaktifkan, diperlukan ganti nama dan aktifkan mod-mod tersebut secara manual dengan File Explorer."
 }

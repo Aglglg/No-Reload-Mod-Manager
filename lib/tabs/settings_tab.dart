@@ -1549,6 +1549,18 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
     );
   }
 
+  void _onEnableAllModsClicked() {
+    if (ref.read(validModsPath) == null) return;
+    ref.read(alertDialogShownProvider.notifier).state = true;
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder:
+          (context) =>
+              EnableAllModsDialog(validModsPath: ref.read(validModsPath)!),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
@@ -1828,6 +1840,11 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
           ),
 
           Container(height: 15),
+          Divider(
+            color: const Color.fromARGB(127, 33, 149, 243),
+            thickness: 1 * sss,
+          ),
+          Container(height: 15),
 
           Row(
             children: [
@@ -1859,6 +1876,46 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
           Container(height: 2 * sss),
           Text(
             'Disable all managed mods by adding "DISABLED" prefix for each mod folder names'
+                .tr(),
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              color: const Color.fromARGB(200, 255, 255, 255),
+              fontSize: 11 * sss,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Container(height: 15),
+
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    _onEnableAllModsClicked();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    overlayColor: Colors.white,
+                    backgroundColor: const Color.fromARGB(127, 255, 255, 255),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12 * sss),
+                    child: Text(
+                      'Enable All Mods'.tr(),
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12 * sss,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Container(height: 2 * sss),
+          Text(
+            'Enable all managed mods by removing "DISABLED" prefix for each mod folder names'
                 .tr(),
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(

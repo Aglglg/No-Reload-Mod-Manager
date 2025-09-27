@@ -187,7 +187,7 @@
   "Generate group folder icon": "生成分组文件夹图标",
   "Disable all managed mods by adding \"DISABLED\" prefix for each mod folder names": "通过在每个模组文件夹名称前添加 “DISABLED” 前缀来禁用所有已管理的模组",
   "Disable all managed mods?": "是否禁用所有已管理的模组？\n所有模组文件夹将被重命名为 “DISABLED_”。\n\n",
-  "Usually only for troubleshooting purpose.": "通常仅用于故障排查。\n之后需要通过右键点击分组图标，逐个手动启用。",
+  "Usually only for troubleshooting purpose.": "通常仅用于故障排查。",
   "Disabling all mods...": "正在禁用所有模组。。。",
   "All managed mods have been disabled": "所有已管理的模组已被禁用",
   "Some mods cannot be disabled, please rename and disable these mods manually via File Explorer.": "部分模组无法禁用，请使用文件资源管理器手动重命名并禁用这些模组。",
@@ -200,5 +200,11 @@
   "Nothing changed.": "没有变化。",
   "Namespace modified.": "Namespace 已修改。",
   "Failed to modify namespaces.": "修改 Namespace 失败。",
-  "No namespaces found.": "未找到 Namespace。"
+  "No namespaces found.": "未找到 Namespace。",
+  "Enable All Mods": "启用所有模组",
+  "Enable all managed mods by removing \"DISABLED\" prefix for each mod folder names": "通过从每个模组文件夹名称前移除 “DISABLED” 前缀来启用所有已管理的模组",
+  "Enable all managed mods?": "是否启用所有已管理的模组？",
+  "Enabling all mods...": "正在启用所有模组。。。",
+  "All managed mods have been enabled": "所有已管理的模组已被启用",
+  "Some mods cannot be enabled, please rename and enable these mods manually via File Explorer.": "部分模组无法启用，请使用文件资源管理器手动重命名并启用这些模组。"
 }

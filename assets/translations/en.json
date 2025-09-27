@@ -185,9 +185,9 @@
   "Disable All Mods": "Disable All Mods",
   "It may takes some times depending on how many groups you have.": "\nIt may takes some times depending on how many groups you have.",
   "Generate group folder icon": "Generate group folder icon",
-  "Disable all managed mods by adding \"DISABLED\" prefix for each mod folder names": "Disable all managed mods by adding \"DISABLED\" prefix for each mod folder names",
+  "Disable all managed mods by adding \"DISABLED\" prefix for each mod folder names": "Disable all managed mods by adding the “DISABLED” prefix for each mod folder name",
   "Disable all managed mods?": "Disable all managed mods?\nAll mod folders will be renamed to \"DISABLED_\".\n\n",
-  "Usually only for troubleshooting purpose.": "Usually only for troubleshooting purpose.\nAfter that you need to manually enable back one by one, by right-clicking on group icon.",
+  "Usually only for troubleshooting purpose.": "Usually only for troubleshooting purpose.",
   "Disabling all mods...": "Disabling all mods...",
   "All managed mods have been disabled": "All managed mods have been disabled",
   "Some mods cannot be disabled, please rename and disable these mods manually via File Explorer.": "Some mods cannot be disabled, please rename and disable these mods manually via File Explorer.",
@@ -200,5 +200,11 @@
   "Nothing changed.": "Nothing changed.",
   "Namespace modified.": "Namespace modified.",
   "Failed to modify namespaces.": "Failed to modify namespaces.",
-  "No namespaces found.": "No namespaces found."
+  "No namespaces found.": "No namespaces found.",
+  "Enable All Mods": "Enable All Mods",
+  "Enable all managed mods by removing \"DISABLED\" prefix for each mod folder names": "Enable all managed mods by removing the \"DISABLED\" prefix from each mod folder name",
+  "Enable all managed mods?": "Enable all managed mods?",
+  "Enabling all mods...": "Enabling all mods...",
+  "All managed mods have been enabled": "All managed mods have been enabled",
+  "Some mods cannot be enabled, please rename and enable these mods manually via File Explorer.": "Some mods cannot be enabled, please rename and enable these mods manually via File Explorer."
 }

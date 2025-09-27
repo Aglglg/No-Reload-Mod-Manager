@@ -2018,13 +2018,242 @@ class _DisableAllModsDialogState extends ConsumerState<DisableAllModsDialog> {
               ? []
               : [
                 TextButton(
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    ref.read(alertDialogShownProvider.notifier).state = true;
+                    await showDialog(
+                      barrierDismissible: false,
+                      context: context,
+                      builder:
+                          (context) => UpdateModDialog(
+                            modsPath: ref.read(validModsPath)!,
+                          ),
+                    );
+                  },
+                  child: Text(
+                    'Update Mod Data'.tr(),
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
+              ],
+    );
+  }
+}
+
+class EnableAllModsDialog extends ConsumerStatefulWidget {
+  final String validModsPath;
+  const EnableAllModsDialog({super.key, required this.validModsPath});
+
+  @override
+  ConsumerState<EnableAllModsDialog> createState() =>
+      _EnableAllModsDialogState();
+}
+
+class _EnableAllModsDialogState extends ConsumerState<EnableAllModsDialog> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showConfirm = true;
+  bool _isLoading = false;
+  List<TextSpan> contents = [];
+
+  @override
+  void initState() {
+    super.initState();
+    showWarning();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void showWarning() {
+    setState(() {
+      contents = [
+        TextSpan(
+          text: 'Enable all managed mods?'.tr(),
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 255, 255, 255),
+            fontWeight: FontWeight.w400,
+            fontSize: 14,
+          ),
+        ),
+      ];
+    });
+  }
+
+  Future<void> enableAllMods() async {
+    setState(() {
+      _showConfirm = false;
+      _isLoading = true;
+    });
+
+    final String managedPath = p.join(
+      widget.validModsPath,
+      ConstantVar.managedFolderName,
+    );
+
+    setState(() {
+      contents = [
+        TextSpan(
+          text: "Enabling all mods...".tr(),
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ];
+    });
+
+    final modGroups = await getGroupFolders(managedPath);
+
+    List<(Directory groupDir, ModData modData)> failedEnableMod = [];
+
+    for (var group in modGroups) {
+      final mods = await getModsOnGroup(group.$1, true);
+      for (var mod in mods) {
+        if (p.basename(mod.modDir.path).toLowerCase().startsWith('disabled')) {
+          //Dummy mod, for none, returned by getModsOnGroup
+          if (mod.modDir.path == 'None') continue;
+
+          bool success = await enableMod(mod.modDir);
+          if (!success) failedEnableMod.add((group.$1, mod));
+        }
+      }
+    }
+
+    List<TextSpan> failedEnableInfo = [];
+    for (var mod in failedEnableMod) {
+      String groupName = '';
+      try {
+        groupName = await File(p.join(mod.$1.path, 'groupname')).readAsString();
+      } catch (e) {}
+      //
+      failedEnableInfo.add(
+        TextSpan(
+          text: "$groupName - ${mod.$2.modName}\n${mod.$2.modDir.path}\n\n",
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      );
+    }
+
+    setState(() {
+      _isLoading = false;
+
+      if (failedEnableMod.isEmpty) {
+        contents = [
+          TextSpan(
+            text: "All managed mods have been enabled".tr(),
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ];
+      } else {
+        contents = [
+          ...failedEnableInfo,
+          TextSpan(
+            text:
+                "Some mods cannot be enabled, please rename and enable these mods manually via File Explorer."
+                    .tr(),
+            style: GoogleFonts.poppins(
+              color: const Color.fromARGB(255, 189, 170, 0),
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ];
+      }
+    });
+
+    _scrollToBottom();
+  }
+
+  Future<void> _scrollToBottom() async {
+    // Wait until scrollController has a valid position
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (!_scrollController.hasClients) return;
+
+    await _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        "Enable all mods".tr(),
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
+      ),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.trackpad,
+            },
+          ),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: RichText(text: TextSpan(children: contents)),
+          ),
+        ),
+      ),
+      actions:
+          _showConfirm
+              ? [
+                TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
                     ref.read(alertDialogShownProvider.notifier).state = false;
-                    simulateKeyF10();
                   },
                   child: Text(
-                    'Close & Reload'.tr(),
+                    'Cancel'.tr(),
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    await enableAllMods();
+                  },
+                  child: Text(
+                    'Confirm'.tr(),
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
+              ]
+              : _isLoading
+              ? []
+              : [
+                TextButton(
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    ref.read(alertDialogShownProvider.notifier).state = true;
+                    await showDialog(
+                      barrierDismissible: false,
+                      context: context,
+                      builder:
+                          (context) => UpdateModDialog(
+                            modsPath: ref.read(validModsPath)!,
+                          ),
+                    );
+                  },
+                  child: Text(
+                    'Update Mod Data'.tr(),
                     style: GoogleFonts.poppins(color: Colors.blue),
                   ),
                 ),
