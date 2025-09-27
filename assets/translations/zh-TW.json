@@ -190,5 +190,15 @@
   "Usually only for troubleshooting purpose.": "通常僅用於疑難排解。\n之後需要透過右鍵點擊群組圖示，一個一個手動啟用。",
   "Disabling all mods...": "正在停用所有模組。。。",
   "All managed mods have been disabled": "所有已管理的模組已被停用",
-  "Some mods cannot be disabled, please rename and disable these mods manually via File Explorer.": "部分模組無法停用，請使用檔案總管手動重新命名並停用這些模組。"
+  "Some mods cannot be disabled, please rename and disable these mods manually via File Explorer.": "部分模組無法停用，請使用檔案總管手動重新命名並停用這些模組。",
+  "Mod uses namespaces": "模組使用了namespace。\n如果出現問題，請右鍵點擊並選擇『Namespace』。\n如果一切正常，可以忽略。",
+  "Change namespace": "變更namespace",
+  "To avoid duplication, it should be unique and easy to read, not generic or too long.": "為避免重複，應保持唯一且易於閱讀，不要過於通用或過長。\n\n範例：\nPhrolovaWhiteDress（好）\nPhrolova（不好）\n",
+  "Change the namespace if it's duplicated with another mod.": "如果與其他模組重複，請變更namespace。\n",
+  "Can't save empty values.": "\n不能儲存空值。\n",
+  "Can't save duplicated values.": "\n不能儲存重複值。\n",
+  "Nothing changed.": "沒有變化。",
+  "Namespace modified.": "Namespace 已修改。",
+  "Failed to modify namespaces.": "修改 Namespace 失敗。",
+  "No namespaces found.": "未找到 Namespace。"
 }

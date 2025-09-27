@@ -2073,7 +2073,7 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
       _showSaveButton = false;
       contents = [
         TextSpan(
-          text: 'Reading mod...'.tr(),
+          text: 'Loading mods'.tr(),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 255, 255, 255),
             fontWeight: FontWeight.w400,
@@ -2140,8 +2140,7 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
       contents = [
         TextSpan(
           text:
-              'Change the namespace if it’s duplicated with another mod.\n'
-                  .tr(),
+              "Change the namespace if it's duplicated with another mod.".tr(),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
             fontWeight: FontWeight.bold,
@@ -2150,7 +2149,7 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
         ),
         TextSpan(
           text:
-              'To avoid duplication, it should be unique and easy to read, not generic or too long.\n\nExample:\nRoverCoolSkin (Good)\nRover (Bad)\n'
+              'To avoid duplication, it should be unique and easy to read, not generic or too long.'
                   .tr(),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 255, 255, 255),
@@ -2198,7 +2197,7 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
         contents = [
           ...contents,
           TextSpan(
-            text: "\nCan't save empty values.\n".tr(),
+            text: "Can't save empty values.".tr(),
             style: GoogleFonts.poppins(
               color: const Color.fromARGB(255, 189, 170, 0),
               fontWeight: FontWeight.bold,
@@ -2229,7 +2228,7 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
         contents = [
           ...contents,
           TextSpan(
-            text: "\nCan't save duplicated values.\n".tr(),
+            text: "Can't save duplicated values.".tr(),
             style: GoogleFonts.poppins(
               color: const Color.fromARGB(255, 189, 170, 0),
               fontWeight: FontWeight.bold,
@@ -2456,7 +2455,7 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-        "Change Namespace".tr(),
+        "Change namespace".tr(),
         style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
       ),
       content: ConstrainedBox(

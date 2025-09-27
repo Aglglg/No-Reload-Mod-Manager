@@ -172,6 +172,7 @@ void _addGroupToRiverpod(WidgetRef ref, Directory groupDir, int index) {
         isForced: false,
         isIncludingRabbitFx: false,
         isUnoptimized: false,
+        isNamespaced: false,
       ),
     ],
     realIndex: index + 1,
@@ -555,6 +556,7 @@ void _updateModIconProvider(
                     isForced: mod.isForced,
                     isIncludingRabbitFx: mod.isIncludingRabbitFx,
                     isUnoptimized: mod.isUnoptimized,
+                    isNamespaced: mod.isNamespaced,
                   );
                 }
                 return mod;
@@ -610,6 +612,7 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
           isForced: await checkModWasMarkedAsForced(modDir),
           isIncludingRabbitFx: await checkModContainsRabbitFx(modDir),
           isUnoptimized: await checkModWasMarkedAsUnoptimized(modDir),
+          isNamespaced: await checkModWasMarkedAsNamespaced(modDir),
         );
       }).toList(),
     );
@@ -624,6 +627,7 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
         isForced: false,
         isIncludingRabbitFx: false,
         isUnoptimized: false,
+        isNamespaced: false,
       ),
     );
 
@@ -650,6 +654,19 @@ Future<bool> checkModWasMarkedAsForced(Directory modDir) async {
 Future<bool> checkModWasMarkedAsUnoptimized(Directory modDir) async {
   try {
     final fileForcedName = File(p.join(modDir.path, 'modunoptimized'));
+    if (await fileForcedName.exists()) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (e) {
+    return false;
+  }
+}
+
+Future<bool> checkModWasMarkedAsNamespaced(Directory modDir) async {
+  try {
+    final fileForcedName = File(p.join(modDir.path, 'modnamespaced'));
     if (await fileForcedName.exists()) {
       return true;
     } else {
@@ -1076,6 +1093,7 @@ Future<void> _manageMod(
 
     await tryMarkAsForcedToBeManaged(modFolder, iniFiles);
     await tryMarkAsUnoptimized(modFolder, iniFiles);
+    await tryMarkAsNamespaced(modFolder, iniFiles);
   } catch (e) {
     operationLogs.add(
       TextSpan(
@@ -1282,6 +1300,27 @@ Future<bool> containsCheckTextureOverride(List<IniSection> parsedIni) async {
   return false;
 }
 
+Future<bool> containsNamespace(List<String> iniLines) async {
+  for (var line in iniLines) {
+    final String trimmedLine = line.trim();
+    // only line that's not comment
+    if (!trimmedLine.startsWith(';')) {
+      //if line starts with [, stop this line loop, namespace won't be located any further down
+      if (trimmedLine.startsWith('[')) break;
+      //in case found the namespace, not case sensitive, ignore spaces temporarily, check if starts with 'namespaces='
+      if (trimmedLine
+          .toLowerCase()
+          .replaceAll(' ', '')
+          .startsWith('namespace=')) {
+        //return immediately
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 Future<void> tryMarkAsUnoptimized(String modPath, List<String> iniFiles) async {
   bool found = false;
 
@@ -1306,6 +1345,31 @@ Future<void> tryMarkAsUnoptimized(String modPath, List<String> iniFiles) async {
       final fileMarkUnoptimized = File(p.join(modPath, 'modunoptimized'));
 
       await fileMarkUnoptimized.delete();
+    } catch (e) {}
+  }
+}
+
+Future<void> tryMarkAsNamespaced(String modPath, List<String> iniFiles) async {
+  bool found = false;
+
+  for (var iniFilePath in iniFiles) {
+    final file = File(iniFilePath);
+    final lines = await file.readAsLines();
+    found = await containsNamespace(lines);
+    if (found) break;
+  }
+
+  if (found) {
+    try {
+      final fileMarkNamespaced = File(p.join(modPath, 'modnamespaced'));
+
+      await fileMarkNamespaced.writeAsString('');
+    } catch (e) {}
+  } else {
+    try {
+      final fileMarkNamespaced = File(p.join(modPath, 'modnamespaced'));
+
+      await fileMarkNamespaced.delete();
     } catch (e) {}
   }
 }

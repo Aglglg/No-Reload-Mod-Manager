@@ -225,6 +225,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
       isForced: oldMod.isForced,
       isIncludingRabbitFx: oldMod.isIncludingRabbitFx,
       isUnoptimized: oldMod.isUnoptimized,
+      isNamespaced: oldMod.isNamespaced,
     );
 
     // Clone the ModGroupData with updated mod list
@@ -388,7 +389,8 @@ class _ModContainerState extends ConsumerState<ModContainer>
                 },
                 label: 'Keybinds'.tr(),
               ),
-            if (widget.index != 0)
+            if (widget.index != 0 &&
+                widget.currentGroupData.modsInGroup[widget.index].isNamespaced)
               CustomMenuItem(
                 scale: sss,
                 onSelected: () {
@@ -408,7 +410,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                         ),
                   );
                 },
-                label: 'Namespace'.tr(),
+                label: 'Namespace',
               ),
             if (widget.index != 0)
               CustomMenuItem(
@@ -705,7 +707,11 @@ class _ModContainerState extends ConsumerState<ModContainer>
                             widget
                                 .currentGroupData
                                 .modsInGroup[widget.index]
-                                .isUnoptimized)
+                                .isUnoptimized ||
+                            widget
+                                .currentGroupData
+                                .modsInGroup[widget.index]
+                                .isNamespaced)
                           Align(
                             alignment: Alignment.bottomCenter,
                             child: Container(
@@ -716,6 +722,26 @@ class _ModContainerState extends ConsumerState<ModContainer>
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 spacing: 8 * sss,
                                 children: [
+                                  if (widget
+                                      .currentGroupData
+                                      .modsInGroup[widget.index]
+                                      .isNamespaced)
+                                    Tooltip(
+                                      richMessage: TextSpan(
+                                        text: "Mod uses namespaces".tr(),
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 12 * sss,
+                                        ),
+                                      ),
+                                      child: HoverableIcon(
+                                        iconData: Icons.device_hub,
+                                        scaleFactor: sss,
+                                        idleColor: Colors.white,
+                                        activeColor: Colors.grey,
+                                      ),
+                                    ),
                                   if (widget
                                       .currentGroupData
                                       .modsInGroup[widget.index]

@@ -190,5 +190,15 @@
   "Usually only for troubleshooting purpose.": "Usually only for troubleshooting purpose.\nAfter that you need to manually enable back one by one, by right-clicking on group icon.",
   "Disabling all mods...": "Disabling all mods...",
   "All managed mods have been disabled": "All managed mods have been disabled",
-  "Some mods cannot be disabled, please rename and disable these mods manually via File Explorer.": "Some mods cannot be disabled, please rename and disable these mods manually via File Explorer."
+  "Some mods cannot be disabled, please rename and disable these mods manually via File Explorer.": "Some mods cannot be disabled, please rename and disable these mods manually via File Explorer.",
+  "Mod uses namespaces": "Mod uses namespaces.\nIf there's a problem, try to right-click and select 'Namespace'.\nOtherwise, just ignore it.",
+  "Change namespace": "Change namespace",
+  "To avoid duplication, it should be unique and easy to read, not generic or too long.": "To avoid duplication, it should be unique and easy to read, not generic or too long.\n\nExample:\nPhrolovaWhiteDress (good)\nPhrolova (bad)\n",
+  "Change the namespace if it's duplicated with another mod.": "Change the namespace if it's duplicated with another mod.\n",
+  "Can't save empty values.": "\nCan't save empty values.\n",
+  "Can't save duplicated values.": "\nCan't save duplicated values.\n",
+  "Nothing changed.": "Nothing changed.",
+  "Namespace modified.": "Namespace modified.",
+  "Failed to modify namespaces.": "Failed to modify namespaces.",
+  "No namespaces found.": "No namespaces found."
 }

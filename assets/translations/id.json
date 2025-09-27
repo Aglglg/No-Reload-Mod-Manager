@@ -190,5 +190,15 @@
   "Usually only for troubleshooting purpose.": "Biasanya hanya untuk keperluan troubleshooting.\nSetelah itu kamu perlu secara manual mengaktifkannya satu-persatu, dengan cara klik kanan di ikon grup.",
   "Disabling all mods...": "Sedang menonaktifkan semua mod...",
   "All managed mods have been disabled": "Semua mod yang dikelola telah dinonaktifkan",
-  "Some mods cannot be disabled, please rename and disable these mods manually via File Explorer.": "Beberapa mod tidak bisa dinonaktifkan, diperlukan ganti nama dan nonaktifkan mod-mod tersebut secara manual dengan File Explorer."
+  "Some mods cannot be disabled, please rename and disable these mods manually via File Explorer.": "Beberapa mod tidak bisa dinonaktifkan, diperlukan ganti nama dan nonaktifkan mod-mod tersebut secara manual dengan File Explorer.",
+  "Mod uses namespaces": "Mod memakai namespace.\nJika ada masalah, coba klik-kanan dan pilih 'Namespace'.\nJika tidak, abaikan saja.",
+  "Change namespace": "Ubah namespace",
+  "To avoid duplication, it should be unique and easy to read, not generic or too long.": "Untuk mencegah duplikat, namespace harus unik dan mudah dibaca, tidak generik ataupun terlalu panjang.\n\nContoh:\nPhrolovaWhiteDress (bagus)\nPhrolova (jelek)\n",
+  "Change the namespace if it's duplicated with another mod.": "Ubah namespace jika sama dengan mod lainnya.\n",
+  "Can't save empty values.": "\nTidak bisa disimpan karena kosong.\n",
+  "Can't save duplicated values.": "\nTidak bisa disimpan karena ada yang duplikat.\n",
+  "Nothing changed.": "Tidak ada yang diubah.",
+  "Namespace modified.": "Namespace diubah.",
+  "Failed to modify namespaces.": "Gagal mengubah namespace.",
+  "No namespaces found.": "Tidak ada namespace yang ditemukan."
 }

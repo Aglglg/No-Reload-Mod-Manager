@@ -28,6 +28,7 @@ class ModData {
   final bool isForced;
   final bool isIncludingRabbitFx;
   final bool isUnoptimized;
+  final bool isNamespaced;
 
   ModData({
     required this.modDir,
@@ -37,5 +38,6 @@ class ModData {
     required this.isForced,
     required this.isIncludingRabbitFx,
     required this.isUnoptimized,
+    required this.isNamespaced,
   });
 }
