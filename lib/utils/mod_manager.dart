@@ -813,7 +813,7 @@ Future<List<TextSpan>> revertManagedMod(List<Directory> modDirs) async {
   return operationLogs;
 }
 
-//public method called from main()
+//public method called from button
 Future<List<TextSpan>> updateModData(
   String modsPath,
   Function setBoolIfNeedAutoReload,
@@ -1060,6 +1060,13 @@ Future<void> _manageMod(
     // Find all INI files recursively
     final iniFiles = await findIniFilesRecursiveExcludeDisabled(modFolder);
 
+    Map<String, List<String>> variablesWithinModNamespace =
+        {}; //used for force fix function
+
+    for (var iniFile in iniFiles) {
+      await getNamespacedVar(iniFile, variablesWithinModNamespace);
+    }
+
     // Create a list of Future objects for each INI file's backup and modification
     final futures = <Future>[];
 
@@ -1084,6 +1091,7 @@ Future<void> _manageMod(
           modIndex,
           groupIndex,
           operationLogs,
+          variablesWithinModNamespace,
         );
       }());
     }
@@ -1111,6 +1119,7 @@ Future<void> _modifyIniFile(
   int modIndex,
   int groupIndex,
   List<TextSpan> operationLogs,
+  Map<String, List<String>> variablesWithinModNamespace,
 ) async {
   try {
     // Open the INI file and read it asynchronously
@@ -1144,7 +1153,10 @@ Future<void> _modifyIniFile(
     // Modify the INI file sections based on the given modIndex and groupIndex
     _checkAndModifySections(parsedIni, modIndex, groupIndex);
 
-    bool forcedFix = forceFixIniSections(parsedIni);
+    bool forcedFix = forceFixIniSections(
+      parsedIni,
+      variablesWithinModNamespace,
+    );
 
     //v2.6.1 problem
     cleanVariableBugFromPreviousVersion(parsedIni);
@@ -1225,10 +1237,9 @@ Future<bool> containsNrmmMark(List<String> paths) async {
         .transform(const LineSplitter());
 
     try {
-      // Read line by line to avoid loading the whole file into memory
       await for (final line in lines) {
         if (line.contains('by NRMM,')) {
-          return true; // Early exit
+          return true;
         }
       }
     } catch (e) {
@@ -1479,7 +1490,10 @@ void cleanCommentedEndifFromPreviousVersion(List<IniSection> sections) {
   }
 }
 
-bool forceFixIniSections(List<IniSection> sections) {
+bool forceFixIniSections(
+  List<IniSection> sections,
+  Map<String, List<String>> variablesWithinModNamespace,
+) {
   bool forcedFix = false;
 
   //fix syntax error on if elif else if statement
@@ -1617,8 +1631,29 @@ bool forceFixIniSections(List<IniSection> sections) {
   //add missing variable on Constants
   List<String> variablesFound = [];
   List<String> variablesShouldBeAdded = [];
+  String? namespaceLowerCase;
 
+  //First, check for namespace & var definition on constants
   for (var section in sections) {
+    if (section.name == "__global__") {
+      for (var line in section.lines) {
+        //check for namespace definition
+        if (line
+            .trim()
+            .toLowerCase()
+            .replaceAll(' ', '')
+            .startsWith("namespace=")) {
+          final parts = line.split('=');
+          if (parts.length >= 2) {
+            final afterEquals = parts.sublist(1).join('=').trim();
+            namespaceLowerCase = afterEquals.trim().toLowerCase();
+            break;
+          }
+        }
+      }
+    }
+
+    //check in constant section for already defined vars
     if (section.name.toLowerCase().trim() == "constants") {
       for (var line in section.lines) {
         if (line.trim().startsWith(';')) {
@@ -1633,12 +1668,16 @@ bool forceFixIniSections(List<IniSection> sections) {
         }
       }
     }
+    //
   }
 
+  //second, check for var that's used on other sections/commandlist sections
   for (var section in sections) {
     if (_isExcludedSection(section.name)) {
       continue;
     }
+
+    //look for var that's defined locally "local ..."
     List<String> localVariablesFound = [];
 
     for (var line in section.lines) {
@@ -1657,6 +1696,7 @@ bool forceFixIniSections(List<IniSection> sections) {
         localVariablesFound.add(result);
       }
     }
+    //
 
     for (var line in section.lines) {
       if (line.trim().startsWith(';')) {
@@ -1667,18 +1707,36 @@ bool forceFixIniSections(List<IniSection> sections) {
       final matches = regex.allMatches(line);
       final results = matches.map((m) => m.group(1)!).toList();
       for (var result in results) {
-        if (!variablesFound.contains(result.toLowerCase())) {
-          variablesFound.add(result.toLowerCase());
-          if (!variablesShouldBeAdded.contains(result.toLowerCase())) {
-            if (!localVariablesFound.contains(result.toLowerCase())) {
-              variablesShouldBeAdded.add(result.toLowerCase());
-            }
+        //add it as usual, if namespace wasn't defined inside this ini file
+        // also check inside namespaced var if any
+        List<String>? namespacedVarFound =
+            variablesWithinModNamespace[namespaceLowerCase];
+        namespacedVarFound ?? (namespacedVarFound = []);
+
+        if (!variablesFound.contains(result.toLowerCase()) &&
+            !namespacedVarFound.contains(result.toLowerCase())) {
+          //
+          if (namespaceLowerCase == null) {
+            //add variablesFound as usual if no namespace
+            variablesFound.add(result.toLowerCase());
+          } else {
+            //add to previously passed param/arg if have namespace
+            variablesWithinModNamespace[namespaceLowerCase] = [
+              ...?variablesWithinModNamespace[namespaceLowerCase],
+              result.toLowerCase(),
+            ];
+          }
+          //
+          if (!variablesShouldBeAdded.contains(result.toLowerCase()) &&
+              !localVariablesFound.contains(result.toLowerCase())) {
+            variablesShouldBeAdded.add(result.toLowerCase());
           }
         }
       }
     }
   }
 
+  //third, write undefined vars that were used
   if (variablesShouldBeAdded.isNotEmpty) {
     List<String> lines = [];
     lines.add(';Force add line by NRMM, to prevent overlapped mods.');
@@ -1812,6 +1870,66 @@ bool forceFixIniSections(List<IniSection> sections) {
   }
 
   return forcedFix;
+}
+
+Future<void> getNamespacedVar(
+  String iniFilePath,
+  Map<String, List<String>> variablesWithinModNamespace,
+) async {
+  try {
+    // Open the INI file and read it asynchronously
+    final file = File(iniFilePath);
+    final lines = await file.readAsLines();
+
+    // Parse the INI file sections
+    var parsedIni = await _parseIniSections(lines);
+
+    String? namespaceLowerCase;
+
+    //check for namespace & var definition on constants
+    for (var section in parsedIni) {
+      if (section.name == "__global__") {
+        for (var line in section.lines) {
+          //check for namespace definition
+          if (line
+              .trim()
+              .toLowerCase()
+              .replaceAll(' ', '')
+              .startsWith("namespace=")) {
+            final parts = line.split('=');
+            if (parts.length >= 2) {
+              final afterEquals = parts.sublist(1).join('=').trim();
+              namespaceLowerCase = afterEquals.trim().toLowerCase();
+              break;
+            }
+          }
+        }
+      }
+
+      //check in constant section for already defined vars
+      if (section.name.toLowerCase().trim() == "constants") {
+        for (var line in section.lines) {
+          if (line.trim().startsWith(';')) {
+            continue;
+          }
+          final regex = RegExp(r'(?<!\\)(\$[a-zA-Z_][a-zA-Z0-9_]*)');
+
+          final matches = regex.allMatches(line);
+          final results = matches.map((m) => m.group(1)!).toList();
+          for (var result in results) {
+            if (namespaceLowerCase != null) {
+              //add to variable passed from previous caller
+              variablesWithinModNamespace[namespaceLowerCase] = [
+                ...?variablesWithinModNamespace[namespaceLowerCase],
+                result.toLowerCase(),
+              ];
+            }
+          }
+        }
+      }
+      //
+    }
+  } catch (_) {}
 }
 
 void _checkAndModifySections(
