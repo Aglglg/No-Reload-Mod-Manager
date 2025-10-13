@@ -68,42 +68,43 @@ void main(List<String> args) async {
 }
 
 Future<void> initializeAndShowNotification() async {
-  if (!Platform.isWindows) return;
-  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  try {
+    if (!Platform.isWindows) return;
+    FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+        FlutterLocalNotificationsPlugin();
 
-  //Cannot use something like 'assets/images/app_icon.ico"
-  final String iconPath = p.join(
-    p.dirname(Platform.resolvedExecutable),
-    r"data\flutter_assets\assets\images\app_icon.ico",
-  );
+    //Cannot use something like 'assets/images/app_icon.ico"
+    final String iconPath = p.join(
+      p.dirname(Platform.resolvedExecutable),
+      r"data\flutter_assets\assets\images\app_icon.ico",
+    );
 
-  final WindowsInitializationSettings
-  initializationSettingsWindows = WindowsInitializationSettings(
-    appName: 'No Reload Mod Manager',
-    appUserModelId: 'com.aglg.NoReloadModManager',
-    //guid same as app id from inno setup (\windows\packaging\exe\make_config.yaml)
-    guid: 'DF5B0F87-8365-499D-B8B3-58211FBF6F2A',
-    iconPath: iconPath,
-  );
+    final WindowsInitializationSettings
+    initializationSettingsWindows = WindowsInitializationSettings(
+      appName: 'No Reload Mod Manager',
+      appUserModelId: 'com.aglg.NoReloadModManager',
+      //guid same as app id from inno setup (\windows\packaging\exe\make_config.yaml)
+      guid: 'DF5B0F87-8365-499D-B8B3-58211FBF6F2A',
+      iconPath: iconPath,
+    );
 
-  final InitializationSettings initializationSettings = InitializationSettings(
-    windows: initializationSettingsWindows,
-  );
+    final InitializationSettings initializationSettings =
+        InitializationSettings(windows: initializationSettingsWindows);
 
-  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
-  const WindowsNotificationDetails windowsNotificationDetails =
-      WindowsNotificationDetails(duration: WindowsNotificationDuration.short);
-  const NotificationDetails notificationDetails = NotificationDetails(
-    windows: windowsNotificationDetails,
-  );
-  await flutterLocalNotificationsPlugin.show(
-    0,
-    'No Reload Mod Manager is running'.tr(),
-    'Access it from Tray or Alt+W(default) while in your target game'.tr(),
-    notificationDetails,
-  );
+    const WindowsNotificationDetails windowsNotificationDetails =
+        WindowsNotificationDetails(duration: WindowsNotificationDuration.short);
+    const NotificationDetails notificationDetails = NotificationDetails(
+      windows: windowsNotificationDetails,
+    );
+    await flutterLocalNotificationsPlugin.show(
+      0,
+      'No Reload Mod Manager is running'.tr(),
+      'Access it from Tray or Alt+W(default) while in your target game'.tr(),
+      notificationDetails,
+    );
+  } catch (_) {}
 }
 
 Future<void> relaunchAsNormalUser() async {
@@ -908,11 +909,6 @@ class _MainViewState extends ConsumerState<MainView>
     hotkeyKeyboardChanged(null, ref.read(hotkeyKeyboardProvider), toggleWindow);
     registerHotkeyResetWindowPos();
 
-    initSystemTray();
-
-    //show notif only after system tray loaded successfully
-    initializeAndShowNotification();
-
     windowManager.addListener(this);
 
     _tabController = TabController(
@@ -928,8 +924,12 @@ class _MainViewState extends ConsumerState<MainView>
       }
     });
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       loadNetworkDatas();
+      await initSystemTray();
+
+      //show notif only after system tray loaded successfully
+      await initializeAndShowNotification();
     });
     ref.listenManual(targetGameProvider, checkToShowInfoMessage);
 
