@@ -1,0 +1,120 @@
+name: Flutter Windows Build Installer & Portable and Scan on VirusTotal
+
+on:
+  push:
+    tags:
+      #Trigger when tag created (eg. v2.0.0)
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build_windows:
+    name: Build Flutter Windows
+    runs-on: windows-latest
+
+    steps:
+        # get the repo
+      - name: Checkout repository
+        uses: actions/checkout@v5.0.0
+
+        #install flutter
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2.21.0
+        with:
+          flutter-version: '3.32.8'
+          channel: 'stable'
+          cache: true
+
+        #install inno setup to create installer exe by fastforge
+      - name: Install Inno Setup 6
+        run: |
+          choco install innosetup --version=6.5.4 -y
+        shell: pwsh
+
+        #install fastforge
+      - name: Install FastForge globally
+        run: dart pub global activate fastforge
+
+      - name: Add pub global bin to PATH
+        shell: bash
+        run: echo "${HOME}/.pub-cache/bin" >> $GITHUB_PATH
+
+        #build flutter project with fastforge, auto do flutter clean & flutter pub get, etc
+      - name: Build Windows EXE with FastForge
+        run: fastforge package --platform windows --target exe
+
+        #get app version by reading pubspec.yaml file in the repo
+      - name: Get app version from pubspec.yaml
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //')
+          VERSION_NO_BUILD=$(echo "$VERSION" | cut -d'+' -f1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version_no_build=$VERSION_NO_BUILD" >> $GITHUB_OUTPUT
+          echo "Detected version: $VERSION"
+
+        #get priv key from github secret, make sure already set up
+      - name: Restore private key for auto_updater
+        shell: bash
+        run: |
+          echo "$AUTO_UPDATER_PRIVATE_KEY" > dsa_priv.pem
+        env:
+          AUTO_UPDATER_PRIVATE_KEY: ${{ secrets.AUTO_UPDATER_PRIVATE_KEY }}
+
+        #sign the built exe by fastforge earlier, with auto_updater flutter package with the priv key
+      - name: Sign EXE with auto_updater
+        id: sign
+        shell: bash
+        run: |
+          dart run auto_updater:sign_update dist/${{ steps.version.outputs.version }}/no_reload_mod_manager-${{ steps.version.outputs.version }}-windows-setup.exe \
+            | tee dist/${{ steps.version.outputs.version }}/signresult.txt
+
+        #virustotal scan
+      - name: VirusTotal Scan
+        id: vt
+        uses: crazy-max/ghaction-virustotal@v4.2.0
+        with:
+          vt_api_key: ${{ secrets.VIRUSTOTAL_API_KEY }}
+          files: |
+            dist/${{ steps.version.outputs.version }}/no_reload_mod_manager-${{ steps.version.outputs.version }}-windows-setup.exe
+            build/windows/x64/runner/Release/*.dll
+          request_rate: 4
+
+      - name: Save VirusTotal Results
+        shell: bash
+        run: |
+          echo "${{ steps.vt.outputs.analysis }}" | tr ',' '\n' > dist/${{ steps.version.outputs.version }}/virustotalscans.txt
+
+        #rename release folder and create portable version zip
+      - name: Rename and Zip Portable Folder
+        shell: bash
+        run: |
+            SAFE_VERSION=$(echo "${{ steps.version.outputs.version }}" | sed 's/\+/_/g')
+            PORTABLE_NAME="No Reload Mod Manager v${SAFE_VERSION%_*}"
+            ZIP_NAME="no_reload_mod_manager-${{ steps.version.outputs.version }}-windows-portable.zip"
+
+            mv "build/windows/x64/runner/Release" "build/windows/x64/runner/${PORTABLE_NAME}"
+            powershell -Command "Compress-Archive -Path 'build/windows/x64/runner/${PORTABLE_NAME}' -DestinationPath 'dist/${{ steps.version.outputs.version }}/${ZIP_NAME}'"
+
+
+      #create github pre-release
+      - name: Create Pre-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version_no_build }}
+          name: v${{ steps.version.outputs.version_no_build }}
+          body: |
+            Automated pre-release for version ${{ steps.version.outputs.version_no_build }}.
+            Includes setup installer, portable build, signing result, and VirusTotal scan result.
+          draft: false
+          prerelease: true
+          files: |
+            dist/${{ steps.version.outputs.version }}/no_reload_mod_manager-${{ steps.version.outputs.version }}-windows-setup.exe
+            dist/${{ steps.version.outputs.version }}/no_reload_mod_manager-${{ steps.version.outputs.version }}-windows-portable.zip
+            dist/${{ steps.version.outputs.version }}/virustotalscans.txt
+            dist/${{ steps.version.outputs.version }}/signresult.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
