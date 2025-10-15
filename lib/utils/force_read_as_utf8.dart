@@ -8,7 +8,15 @@ Future<List<String>> forceReadAsLinesUtf8(File file) async {
     "utf-8",
     await file.readAsBytes(),
   );
-  return decoded.split(RegExp(r'\r?\n'));
+
+  final lines = decoded.split(RegExp(r'\r?\n'));
+
+  // Remove trailing blank lines
+  while (lines.isNotEmpty && lines.last.trim().isEmpty) {
+    lines.removeLast();
+  }
+
+  return lines;
 }
 
 Future<String> forceReadAsStringUtf8(File file) async {
