@@ -42,8 +42,11 @@ Future<bool> tryGetIcon(String rootPath, Map<String, String> iconData) async {
 
   // Step 2: Process each file and look for matching key
   for (final iniFile in iniFiles) {
-    final content = await iniFile.readAsString();
-
+    String? content;
+    try {
+      content = await iniFile.readAsString();
+    } catch (_) {}
+    if (content == null) continue;
     for (final entry in iconData.entries) {
       if (content.contains(entry.key)) {
         // Step 3: Download image and save to rootPath/icon.png
