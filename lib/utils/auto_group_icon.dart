@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_group_folder_icon.dart';
+import 'package:no_reload_mod_manager/utils/force_read_as_utf8.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:path/path.dart' as p;
 
@@ -44,7 +45,7 @@ Future<bool> tryGetIcon(String rootPath, Map<String, String> iconData) async {
   for (final iniFile in iniFiles) {
     String? content;
     try {
-      content = await iniFile.readAsString();
+      content = await forceReadAsStringUtf8(iniFile);
     } catch (_) {}
     if (content == null) continue;
     for (final entry in iconData.entries) {

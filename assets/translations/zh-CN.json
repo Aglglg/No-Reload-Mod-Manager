@@ -79,7 +79,7 @@
   "Change language": "更改语言",
   "Restart": "重新启动",
   "Language changed, please Restart.": "语言已更改，请重新启动。",
-  "defaultErrorInfo": "请确认目录/文件可正常访问并使用 UTF-8 编码。\n请关闭可能正在占用该文件的其他程序或文件资源管理器。",
+  "defaultErrorInfo": "请确认目录/文件可正常访问。\n关闭其他可能占用此文件的程序或文件资源管理器。",
   "Select an image file": "选择图片文件",
   "Error reverting": "还原模组 {} 时出错",
   "No backup found": "未找到 {} 的备份文件。\n已跳过此文件夹。\n\n",

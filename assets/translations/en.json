@@ -79,7 +79,7 @@
   "Change language": "Change language",
   "Restart": "Restart",
   "Language changed, please Restart.": "Language changed, please Restart.",
-  "defaultErrorInfo": "Make sure the directory/file is accessible and in UTF-8 encoding.\nTry to close any other programs/File Explorer that's accessing it.",
+  "defaultErrorInfo": "Make sure the directory/file is accessible.\nTry to close any other programs/File Explorer that's accessing it.",
   "Select an image file": "Select an image file",
   "Error reverting": "Error reverting {}",
   "No backup found": "No backup found in {}.\nFolder skipped.\n\n",

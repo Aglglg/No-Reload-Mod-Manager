@@ -8,6 +8,7 @@
 
 #include <auto_updater_windows/auto_updater_windows_plugin_c_api.h>
 #include <bitsdojo_window_windows/bitsdojo_window_plugin.h>
+#include <charset_converter/charset_converter_plugin.h>
 #include <desktop_drop/desktop_drop_plugin.h>
 #include <hotkey_manager_windows/hotkey_manager_windows_plugin_c_api.h>
 #include <pasteboard/pasteboard_plugin.h>
@@ -22,6 +23,8 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("AutoUpdaterWindowsPluginCApi"));
   BitsdojoWindowPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("BitsdojoWindowPlugin"));
+  CharsetConverterPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("CharsetConverterPlugin"));
   DesktopDropPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("DesktopDropPlugin"));
   HotkeyManagerWindowsPluginCApiRegisterWithRegistrar(

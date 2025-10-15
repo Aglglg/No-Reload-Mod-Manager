@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_group_folder_icon.dart';
+import 'package:no_reload_mod_manager/utils/force_read_as_utf8.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
@@ -195,7 +196,7 @@ Future<String> getGroupName(Directory groupDir) async {
     final fileGroupName = File(p.join(groupDir.path, 'groupname'));
 
     if (await fileGroupName.exists()) {
-      return await fileGroupName.readAsString();
+      return await forceReadAsStringUtf8(fileGroupName);
     } else {
       final folderName = p.basename(groupDir.path);
       String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
@@ -220,7 +221,9 @@ Future<int> getSelectedModInGroup(
     final fileSelectedIndex = File(p.join(groupDir.path, 'selectedindex'));
 
     if (await fileSelectedIndex.exists()) {
-      int? result = int.tryParse(await fileSelectedIndex.readAsString());
+      int? result = int.tryParse(
+        await forceReadAsStringUtf8(fileSelectedIndex),
+      );
       if (result != null) {
         if (_hasIndex(result, modsInGroupLength)) {
           return result;
@@ -249,7 +252,9 @@ Future<int> getSelectedGroupIndex(String managedPath, int groupLength) async {
     final fileSelectedIndex = File(p.join(managedPath, 'selectedindex'));
 
     if (await fileSelectedIndex.exists()) {
-      int? result = int.tryParse(await fileSelectedIndex.readAsString());
+      int? result = int.tryParse(
+        await forceReadAsStringUtf8(fileSelectedIndex),
+      );
       if (result != null) {
         if (_hasIndex(result, groupLength)) {
           return result;
@@ -694,7 +699,7 @@ Future<String> getModName(Directory modDir) async {
     final fileGroupName = File(p.join(modDir.path, 'modname'));
 
     if (await fileGroupName.exists()) {
-      return await fileGroupName.readAsString();
+      return await forceReadAsStringUtf8(fileGroupName);
     } else {
       final folderName = p.basename(modDir.path);
       await fileGroupName.writeAsString(folderName);
@@ -1124,7 +1129,7 @@ Future<void> _modifyIniFile(
   try {
     // Open the INI file and read it asynchronously
     final file = File(iniFilePath);
-    final lines = await file.readAsLines();
+    final lines = await forceReadAsLinesUtf8(file);
 
     // Give nrmm mark
     bool hasNRMM = lines.any(
@@ -1337,7 +1342,7 @@ Future<void> tryMarkAsUnoptimized(String modPath, List<String> iniFiles) async {
 
   for (var iniFilePath in iniFiles) {
     final file = File(iniFilePath);
-    final lines = await file.readAsLines();
+    final lines = await forceReadAsLinesUtf8(file);
 
     var parsedIni = await _parseIniSections(lines);
 
@@ -1365,7 +1370,7 @@ Future<void> tryMarkAsNamespaced(String modPath, List<String> iniFiles) async {
 
   for (var iniFilePath in iniFiles) {
     final file = File(iniFilePath);
-    final lines = await file.readAsLines();
+    final lines = await forceReadAsLinesUtf8(file);
     found = await containsNamespace(lines);
     if (found) break;
   }
@@ -1879,7 +1884,7 @@ Future<void> getNamespacedVar(
   try {
     // Open the INI file and read it asynchronously
     final file = File(iniFilePath);
-    final lines = await file.readAsLines();
+    final lines = await forceReadAsLinesUtf8(file);
 
     // Parse the INI file sections
     var parsedIni = await _parseIniSections(lines);

@@ -5,6 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   auto_updater_windows
   bitsdojo_window_windows
+  charset_converter
   desktop_drop
   hotkey_manager_windows
   pasteboard

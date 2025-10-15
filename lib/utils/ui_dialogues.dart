@@ -11,6 +11,7 @@ import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/utils/auto_group_icon.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_group_folder_icon.dart';
+import 'package:no_reload_mod_manager/utils/force_read_as_utf8.dart';
 import 'package:no_reload_mod_manager/utils/keypress_simulator_manager.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
@@ -1742,7 +1743,7 @@ class _EditModLinkDialogState extends ConsumerState<EditModLinkDialog> {
 
   Future<void> loadModLink() async {
     try {
-      String url = await widget.modLinkFile.readAsString();
+      String url = await forceReadAsStringUtf8(widget.modLinkFile);
       textController.text = url;
     } catch (e) {}
   }
@@ -1906,7 +1907,9 @@ class _DisableAllModsDialogState extends ConsumerState<DisableAllModsDialog> {
     for (var mod in failedDisabledMod) {
       String groupName = '';
       try {
-        groupName = await File(p.join(mod.$1.path, 'groupname')).readAsString();
+        groupName = await forceReadAsStringUtf8(
+          File(p.join(mod.$1.path, 'groupname')),
+        );
       } catch (e) {}
       failedDisableInfo.add(
         TextSpan(
@@ -2127,7 +2130,9 @@ class _EnableAllModsDialogState extends ConsumerState<EnableAllModsDialog> {
     for (var mod in failedEnableMod) {
       String groupName = '';
       try {
-        groupName = await File(p.join(mod.$1.path, 'groupname')).readAsString();
+        groupName = await forceReadAsStringUtf8(
+          File(p.join(mod.$1.path, 'groupname')),
+        );
       } catch (e) {}
       //
       failedEnableInfo.add(
@@ -2320,9 +2325,8 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
       List<String> lines = [];
       File iniFile = File(path);
 
-      //only read utf8, otherwise... don't care
       try {
-        lines = await iniFile.readAsLines();
+        lines = await forceReadAsLinesUtf8(iniFile);
       } catch (e) {}
 
       for (var i = 0; i < lines.length; i++) {
@@ -2542,7 +2546,7 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
       if (!await file.exists()) continue;
 
       try {
-        final lines = await file.readAsLines();
+        final lines = await forceReadAsLinesUtf8(file);
 
         final newLines = _generateModifiedLines(
           lines,
@@ -2673,7 +2677,7 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
 
   Future<File> _copyIniContentOnly(String iniPath) async {
     try {
-      String content = await File(iniPath).readAsString();
+      String content = await forceReadAsStringUtf8(File(iniPath));
       return await File("$iniPath.baknamespace").writeAsString(content);
     } catch (e) {
       rethrow;

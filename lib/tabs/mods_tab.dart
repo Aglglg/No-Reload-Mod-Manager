@@ -10,6 +10,7 @@ import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/tabs/mods_tab_carousel.dart';
 import 'package:no_reload_mod_manager/tabs/mods_tab_grid.dart';
 import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
+import 'package:no_reload_mod_manager/utils/force_read_as_utf8.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/mod_navigator.dart';
 import 'package:no_reload_mod_manager/utils/refreshable_image.dart';
@@ -548,7 +549,9 @@ class _ModContainerState extends ConsumerState<ModContainer>
                                 .path,
                             'modlink',
                           );
-                          String url = await File(urlPath).readAsString();
+                          String url = await forceReadAsStringUtf8(
+                            File(urlPath),
+                          );
                           if (!await launchUrl(Uri.parse(url))) {}
                         } catch (e) {}
                       },
