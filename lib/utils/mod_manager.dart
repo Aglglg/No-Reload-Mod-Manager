@@ -1167,7 +1167,6 @@ Future<void> cleanDuplicatedVarManagedSlotIdInNamespacedMod(
               // if we already encountered this namespace before, delete it
               if (namespaceThatHaveSlotId.contains(namespaceLowerCase)) {
                 fileWasModified = true;
-                print(iniFilePath);
                 return true; // remove this line
               }
               // first occurrence, keep it but record the namespace
