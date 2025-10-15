@@ -1104,6 +1104,8 @@ Future<void> _manageMod(
     // Wait for all the tasks to complete concurrently
     await Future.wait(futures);
 
+    await cleanDuplicatedVarManagedSlotIdInNamespacedMod(iniFiles);
+
     await tryMarkAsForcedToBeManaged(modFolder, iniFiles);
     await tryMarkAsUnoptimized(modFolder, iniFiles);
     await tryMarkAsNamespaced(modFolder, iniFiles);
@@ -1115,6 +1117,74 @@ Future<void> _manageMod(
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );
+  }
+}
+
+Future<void> cleanDuplicatedVarManagedSlotIdInNamespacedMod(
+  List<String> iniFiles,
+) async {
+  List<String> namespaceThatHaveSlotId = [];
+
+  for (var iniFilePath in iniFiles) {
+    bool fileWasModified = false;
+    try {
+      //read ini files as lines
+      final file = File(iniFilePath);
+      final lines = await forceReadAsLinesUtf8(file);
+      //parse it per section
+      final parsedIni = await _parseIniSections(lines);
+
+      String? namespaceLowerCase;
+
+      for (var i = 0; i < parsedIni.length; i++) {
+        if (parsedIni[i].name == "__global__") {
+          for (var line in parsedIni[i].lines) {
+            //check for namespace definition
+            if (line
+                .trim()
+                .toLowerCase()
+                .replaceAll(' ', '')
+                .startsWith("namespace=")) {
+              final parts = line.split('=');
+              if (parts.length >= 2) {
+                final afterEquals = parts.sublist(1).join('=').trim();
+                namespaceLowerCase = afterEquals.trim().toLowerCase();
+                break;
+              }
+            }
+          }
+        }
+
+        if (namespaceLowerCase != null &&
+            parsedIni[i].name.trim().toLowerCase() == "constants") {
+          parsedIni[i].lines.removeWhere((line) {
+            final normalized = line.trim().toLowerCase().replaceAll(' ', '');
+            final isManagedSlot = normalized.startsWith(
+              "global\$managed_slot_id",
+            );
+
+            if (isManagedSlot) {
+              // if we already encountered this namespace before, delete it
+              if (namespaceThatHaveSlotId.contains(namespaceLowerCase)) {
+                fileWasModified = true;
+                print(iniFilePath);
+                return true; // remove this line
+              }
+              // first occurrence, keep it but record the namespace
+              namespaceThatHaveSlotId.add(namespaceLowerCase!);
+            }
+
+            return false; // keep this line
+          });
+        }
+      }
+
+      // Write the modified content back to the INI file
+      if (fileWasModified) {
+        String modifiedIni = _getLiteralIni(parsedIni);
+        await safeWriteIni(file, modifiedIni);
+      }
+    } catch (_) {}
   }
 }
 
