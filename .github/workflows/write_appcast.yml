@@ -1,0 +1,128 @@
+name: Generate Appcast XML for auto update
+
+on:
+  release:
+    types: [released]
+
+permissions:
+  contents: write
+
+jobs:
+  generate-appcast:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5.0.0
+        with:
+            ref: main
+            fetch-depth: 0  
+
+      - name: Fetch release details
+        id: release_details
+        run: |
+          TAG_WITH_V=${GITHUB_REF#refs/tags/}
+          TAG_NO_V=${TAG_WITH_V#v}
+          echo "RELEASE_TAG=$TAG_WITH_V" >> $GITHUB_ENV
+          echo "RELEASE_TAG_NO_V=$TAG_NO_V" >> $GITHUB_ENV
+          echo "RELEASE_DATE=$(date -R)" >> $GITHUB_ENV
+
+      - name: Authenticate GitHub CLI
+        run: gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Download signresult.txt
+        run: |
+            # Get the release ID
+            RELEASE_ID=$(gh release view ${GITHUB_REF#refs/tags/} --json id -q .id)
+            
+            # Get the asset ID
+            ASSET_ID=$(gh release view ${GITHUB_REF#refs/tags/} --json assets -q '.assets[] | select(.name=="signresult.txt") | .id')
+            
+            # Download the asset
+            gh release download ${GITHUB_REF#refs/tags/} --pattern signresult.txt
+
+      - name: Read signresult.txt
+        id: read_signresult
+        run: |
+          SIGNATURE=$(cat signresult.txt | grep -oP 'sparkle:dsaSignature="\K[^"]+')
+          LENGTH=$(cat signresult.txt | grep -oP 'length="\K[^"]+')
+          echo "SIGNATURE=$SIGNATURE" >> $GITHUB_ENV
+          echo "LENGTH=$LENGTH" >> $GITHUB_ENV
+
+      - name: Generate appcast.xml
+        run: |
+          cat <<EOF > appcast.xml
+          <?xml version="1.0" encoding="UTF-8"?>
+          <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+              <channel>
+                  <title>No Reload Mod Manager</title>
+                  <description>Mod Manager for games that support XXMI</description>
+                  <language>en</language>
+                  <item>
+                      <title>Version ${RELEASE_TAG_NO_V}</title>
+                      <sparkle:releaseNotesLink>
+                          https://github.com/Aglglg/No-Reload-Mod-Manager/releases
+                      </sparkle:releaseNotesLink>
+                      <pubDate>${RELEASE_DATE}</pubDate>
+                      <enclosure url="https://github.com/Aglglg/No-Reload-Mod-Manager/releases/download/${RELEASE_TAG}/no_reload_mod_manager-${RELEASE_TAG_NO_V}+1-windows-setup.exe"
+                                 sparkle:dsaSignature="${SIGNATURE}"
+                                 sparkle:version="${RELEASE_TAG_NO_V}+1"
+                                 sparkle:os="windows"
+                                 length="${LENGTH}"
+                                 type="application/octet-stream" />
+                  </item>
+              </channel>
+          </rss>
+          EOF
+
+      - name: Commit changes on appcast.xml
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add appcast.xml
+          git commit -m "Add appcast.xml for ${RELEASE_TAG}"
+          git push origin main   # push to the branch you checked out
+
+
+
+        #delete unused files from release
+      - name: Delete signresult.txt from release
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          FILE=signresult.txt
+          echo "Looking for $FILE in release $TAG"
+
+          # Get the numeric asset ID using REST API
+          ASSET_ID=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" \
+            --jq ".assets[] | select(.name==\"$FILE\") | .id")
+
+          if [ -z "$ASSET_ID" ]; then
+            echo "$FILE not found — skipping delete"
+          else
+            echo "Found numeric asset ID: $ASSET_ID — deleting..."
+            gh api \
+              --method DELETE \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/assets/${ASSET_ID}"
+          fi
+
+
+
+      - name: Delete virustotalscans.txt from release
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          FILE=virustotalscans.txt
+          echo "Looking for $FILE in release $TAG"
+
+          # Get the numeric asset ID using REST API
+          ASSET_ID=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" \
+            --jq ".assets[] | select(.name==\"$FILE\") | .id")
+
+          if [ -z "$ASSET_ID" ]; then
+            echo "$FILE not found — skipping delete"
+          else
+            echo "Found numeric asset ID: $ASSET_ID — deleting..."
+            gh api \
+              --method DELETE \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/assets/${ASSET_ID}"
+          fi
+
+
