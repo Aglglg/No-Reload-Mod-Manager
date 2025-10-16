@@ -58,6 +58,7 @@ void main(List<String> args) async {
           Locale('zh', 'CN'),
           Locale('zh', 'TW'),
           Locale('id'),
+          Locale('ru'),
         ],
         path: 'assets/translations',
         fallbackLocale: Locale('en'),
