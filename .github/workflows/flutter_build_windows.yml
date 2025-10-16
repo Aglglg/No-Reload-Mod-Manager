@@ -81,6 +81,7 @@ jobs:
           files: |
             dist/${{ steps.version.outputs.version }}/no_reload_mod_manager-${{ steps.version.outputs.version }}-windows-setup.exe
             build/windows/x64/runner/Release/*.dll
+            build/windows/x64/runner/Release/*.exe
           request_rate: 4
 
       - name: Save VirusTotal Results
