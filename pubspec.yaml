@@ -66,6 +66,7 @@ dependencies:
   top_snackbar_flutter: ^3.3.0
   flutter_local_notifications: ^19.4.2
   charset_converter: ^2.3.0
+  archive: ^4.0.7
   
 dev_dependencies:
   flutter_test:

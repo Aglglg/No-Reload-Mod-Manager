@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:archive/archive_io.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -380,6 +381,7 @@ class _PrefCorruptedDialogState extends ConsumerState<PrefCorruptedDialog> {
 class OnDropModFolderDialog extends ConsumerStatefulWidget {
   final String dialogTitleText;
   final List<Directory> droppedFolders;
+  final List<File> droppedArchives;
   final String? copyDestination;
   final Function onConfirmFunction;
   final TextSpan? additionalContent;
@@ -391,6 +393,7 @@ class OnDropModFolderDialog extends ConsumerStatefulWidget {
     required this.copyDestination,
     required this.onConfirmFunction,
     required this.additionalContent,
+    required this.droppedArchives,
   });
 
   @override
@@ -402,6 +405,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
   final ScrollController _scrollController = ScrollController();
   bool _showClose = false;
   List<Directory> validFolders = [];
+  List<File> validArchives = [];
   List<Directory> foldersOnManagedPath = [];
   List<Directory> foldersOnThisToolPath = [];
   List<Directory> parentFolderOfManagedPath = [];
@@ -535,7 +539,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
   @override
   void initState() {
     super.initState();
-    checkFolders();
+    checkFoldersAndArchives();
   }
 
   @override
@@ -544,7 +548,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
     super.dispose();
   }
 
-  Future<void> checkFolders() async {
+  Future<void> checkFoldersAndArchives() async {
     final mValidFolders = await getValidFolders(widget.droppedFolders);
     ////////////////////
     final mFoldersOnManagedPath =
@@ -561,9 +565,10 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
         widget.droppedFolders.where((f) => isParentOfThisToolPath(f)).toList();
     final mParentFolderOfDestPath =
         widget.droppedFolders.where((f) => isParentOfDestFolder(f)).toList();
-
+    /////////////////////
     setState(() {
       validFolders = mValidFolders;
+      validArchives = widget.droppedArchives;
       foldersOnManagedPath = mFoldersOnManagedPath;
       foldersOnThisToolPath = mFoldersOnThisToolPath;
       parentFolderOfManagedPath = mParentFolderOfManagedPath;
@@ -586,6 +591,18 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
         ),
       ),
     );
+    for (File archive in validArchives) {
+      resultLogs.add(
+        TextSpan(
+          text: "${p.basename(archive.path)}\n",
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
     for (Directory folder in validFolders) {
       resultLogs.add(
         TextSpan(
@@ -594,7 +611,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
         ),
       );
     }
-    if (validFolders.isEmpty) {
+    if (validFolders.isEmpty && validArchives.isEmpty) {
       resultLogs.add(
         TextSpan(
           text: "${'None'.tr()}\n",
@@ -603,7 +620,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
       );
     }
 
-    //ON _MANAGED_ PATH
+    //IN _MANAGED_ PATH
     if (foldersOnManagedPath.isNotEmpty) {
       resultLogs.add(
         TextSpan(
@@ -637,7 +654,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
       );
     }
 
-    //ON TOOL PATH
+    //IN TOOL PATH
     if (foldersOnThisToolPath.isNotEmpty) {
       resultLogs.add(
         TextSpan(
@@ -845,12 +862,12 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
                     style: GoogleFonts.poppins(color: Colors.blue),
                   ),
                 ),
-                if (validFolders.isNotEmpty)
+                if (validFolders.isNotEmpty || validArchives.isNotEmpty)
                   TextButton(
                     onPressed: () {
                       Navigator.of(context).pop();
                       ref.read(alertDialogShownProvider.notifier).state = false;
-                      widget.onConfirmFunction(validFolders);
+                      widget.onConfirmFunction(validFolders, validArchives);
                     },
                     child: Text(
                       'Confirm'.tr(),
@@ -865,11 +882,13 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
 
 class CopyModDialog extends ConsumerStatefulWidget {
   final List<Directory> modDirs;
+  final List<File> modArchives;
   final String modsPath;
   final String targetGroupPath;
   const CopyModDialog({
     super.key,
     required this.modDirs,
+    required this.modArchives,
     required this.modsPath,
     required this.targetGroupPath,
   });
@@ -895,6 +914,25 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
     super.dispose();
   }
 
+  Future<bool> directoryHasZeroSize(Directory dir) async {
+    if (!await dir.exists()) return false;
+
+    await for (final entity in dir.list(recursive: true, followLinks: false)) {
+      if (entity is File) {
+        try {
+          final length = await entity.length();
+          if (length > 0) {
+            return false; // stop immediately if bytes already not 0
+          }
+        } catch (_) {
+          // ignore inaccessible files
+        }
+      }
+    }
+
+    return true; // no files or all empty
+  }
+
   Future<void> copyMods() async {
     setState(() {
       contents = [];
@@ -907,6 +945,8 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
     });
 
     List<TextSpan> operationLogs = [];
+
+    //MOD FOLDERs
     for (var folder in widget.modDirs) {
       Directory? disabledFolder = await renameSourceFolderToBeDisabledPrefix(
         folder,
@@ -915,9 +955,11 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
         String destFolderName = removeAllDisabledPrefixes(
           p.basename(disabledFolder.path),
         );
-        String destDirPath = p.join(widget.targetGroupPath, destFolderName);
-        destDirPath = await checkForDuplicateFolderName(destDirPath);
+
         try {
+          String destDirPath = p.join(widget.targetGroupPath, destFolderName);
+          destDirPath = await checkForDuplicateFolderName(destDirPath);
+
           await copyDirectory(disabledFolder, Directory(destDirPath));
           //Even though source folder already disabled, after successfully copied, just delete it. Actually just simulating cut/move.
           //Rename source folder is also the same as testing whether that folder is used by other programs or not.
@@ -945,6 +987,73 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
             style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
           ),
         );
+      }
+    }
+
+    //MOD ARCHIVEs
+    for (var archive in widget.modArchives) {
+      String destFolderName = removeAllDisabledPrefixes(
+        p.basenameWithoutExtension(archive.path),
+      );
+      try {
+        String destDirPath = p.join(widget.targetGroupPath, destFolderName);
+        destDirPath = await checkForDuplicateFolderName(destDirPath);
+
+        //extract
+        await extractFileToDisk(archive.path, destDirPath);
+
+        //check extract result, if folder not there after extraction, throw error, invalid archive
+        try {
+          if (!await Directory(destDirPath).exists()) {
+            throw Exception("Failed to extract");
+          }
+        } catch (e) {
+          if (e.toString().contains("Failed to extract")) {
+            rethrow;
+          }
+          //if not that error that means error when doing Directory().exists(), skip
+        }
+
+        //check bytes size, if all 0, that means archive may be having password, failed
+        if (await directoryHasZeroSize(Directory(destDirPath))) {
+          await deleteUnusedFolder(Directory(destDirPath));
+          throw Exception("Passworded archive");
+        }
+
+        operationLogs.add(
+          TextSpan(
+            text: 'Archive extracted'.tr(args: [p.basename(archive.path)]),
+            style: GoogleFonts.poppins(color: Colors.green, fontSize: 14),
+          ),
+        );
+      } catch (e) {
+        if (e.toString().contains("Passworded archive")) {
+          operationLogs.add(
+            TextSpan(
+              text: 'Error! Archive may have password, not supported'.tr(
+                args: [p.basename(archive.path)],
+              ),
+              style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
+            ),
+          );
+        } else if (e.toString().contains("Failed to extract")) {
+          operationLogs.add(
+            TextSpan(
+              text: 'Error! Archive not supported'.tr(
+                args: [p.basename(archive.path)],
+              ),
+              style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
+            ),
+          );
+        } else {
+          operationLogs.add(
+            TextSpan(
+              text:
+                  '${'Error! Cannot extract mod archive'.tr(args: [p.basename(archive.path)])}.\n${ConstantVar.defaultErrorInfo}\n\n',
+              style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
+            ),
+          );
+        }
       }
     }
 

@@ -26,7 +26,7 @@
   "Save Keybinds": "Simpan tombol mod",
   "Right-click a mod and select Keybind.": "Klik kanan di mod dan pilih Keybind.\nAtau cukup tekan [R (keyboard)] / [X (gamepad)] di sebuah mod. ",
   "Right-click and add group, then you can add mods.": "Klik kanan kemudian tambah grup, lalu bisa tambah mod.",
-  "Drag & Drop mod folders here to add mods to this group (1 folder = 1 mod).": "Drag & Drop folder-folder mod ke sini untuk menambahkan mod ke group ini (1 folder = 1 mod).",
+  "Drag & Drop mod folders here to add mods to this group (1 folder = 1 mod).": "Drag & drop folder-folder mod atau ZIP/TAR arsip ke sini untuk menambahkan mod ke group ini (1 folder = 1 mod, 1 arsip = 1 mod).",
   "Max group reached (500 Groups). Unable to add more group.": "Grup sudah maksimal (500 Groups). Tidak bisa nambah grup lagi.",
   "Rename": "Ganti nama",
   "Try auto icon": "Ikon otomatis",
@@ -206,5 +206,9 @@
   "Enable all managed mods?": "Aktifkan semua mod yang dikelola?",
   "Enabling all mods...": "Mengaktifkan semua mod...",
   "All managed mods have been enabled": "Semua mod yang dikelola telah diaktifkan",
-  "Some mods cannot be enabled, please rename and enable these mods manually via File Explorer.": "Beberapa mod tidak bisa diaktifkan, diperlukan ganti nama dan aktifkan mod-mod tersebut secara manual dengan File Explorer."
+  "Some mods cannot be enabled, please rename and enable these mods manually via File Explorer.": "Beberapa mod tidak bisa diaktifkan, diperlukan ganti nama dan aktifkan mod-mod tersebut secara manual dengan File Explorer.",
+  "Archive extracted": "{} diekstrak.\n\n",
+  "Error! Archive may have password, not supported": "Error! Arsip {} mungkin ber-password, tidak didukung.\n\n",
+  "Error! Archive not supported": "Error! Arsip {} tidak didukung.\n\n",
+  "Error! Cannot extract mod archive": "Error! Gagal ekstrak: {}"
 }

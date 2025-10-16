@@ -54,7 +54,8 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
         : '${'Drag & Drop mod folders here, to revert any modifications caused by this tool.'.tr()}\n${'Right-click and pin this window to use this.'.tr()}';
   }
 
-  void _onModRevertConfirm(List<Directory> modDirs) {
+  void _onModRevertConfirm(List<Directory> modDirs, List<File> modArchives) {
+    //modArchives is empty for revert function
     ref.read(alertDialogShownProvider.notifier).state = true;
     showDialog(
       barrierDismissible: false,

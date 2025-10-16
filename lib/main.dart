@@ -298,7 +298,7 @@ class _BackgroundState extends ConsumerState<Background> {
     }
   }
 
-  void _onModAddConfirm(List<Directory> modDirs) {
+  void _onModAddConfirm(List<Directory> modDirs, List<File> modArchives) {
     String? modsPath = ref.read(validModsPath);
     if (modsPath != null) {
       ref.read(alertDialogShownProvider.notifier).state = true;
@@ -308,6 +308,7 @@ class _BackgroundState extends ConsumerState<Background> {
         builder:
             (context) => CopyModDialog(
               modDirs: modDirs,
+              modArchives: modArchives,
               modsPath: modsPath,
               targetGroupPath:
                   ref
@@ -346,6 +347,7 @@ class _BackgroundState extends ConsumerState<Background> {
                     ref.watch(validModsPath) != null &&
                     ref.watch(modGroupDataProvider).isNotEmpty)
                   ModsDropZone(
+                    acceptArchived: true,
                     checkForMaxMods: true,
                     currentModsCountInGroup:
                         ref

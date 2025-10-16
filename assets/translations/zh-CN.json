@@ -26,7 +26,7 @@
   "Save Keybinds": "保存快速切换",
   "Right-click a mod and select Keybind.": "右键点击模组并选择『快速切换』，  \n或直接对模组按下 [R (键盘)] / [X (手柄)]。",
   "Right-click and add group, then you can add mods.": "右键点击添加分组，即可加入模组。",
-  "Drag & Drop mod folders here to add mods to this group (1 folder = 1 mod).": "将模组文件夹拖拽至此，即可加入此分组（1 个文件夹 = 1 个模组）。",
+  "Drag & Drop mod folders here to add mods to this group (1 folder = 1 mod).": "将模组文件夹或 ZIP/TAR 压缩包拖拽至此，即可加入此分组（1 个文件夹 = 1 个模组，1 个压缩包 = 1 个模组）。",
   "Max group reached (500 Groups). Unable to add more group.": "已达最大分组数量（500 组），无法添加更多分组。",
   "Rename": "重命名",
   "Try auto icon": "自动图标",
@@ -206,5 +206,9 @@
   "Enable all managed mods?": "是否启用所有已管理的模组？",
   "Enabling all mods...": "正在启用所有模组。。。",
   "All managed mods have been enabled": "所有已管理的模组已被启用",
-  "Some mods cannot be enabled, please rename and enable these mods manually via File Explorer.": "部分模组无法启用，请使用文件资源管理器手动重命名并启用这些模组。"
+  "Some mods cannot be enabled, please rename and enable these mods manually via File Explorer.": "部分模组无法启用，请使用文件资源管理器手动重命名并启用这些模组。",
+  "Archive extracted": "{} 已解压。\n\n",
+  "Error! Archive may have password, not supported": "错误！压缩包 {} 可能已加密，不受支持。\n\n",
+  "Error! Archive not supported": "错误！不支持的压缩包：{}\n\n",
+  "Error! Cannot extract mod archive": "错误！无法解压：{}"
 }

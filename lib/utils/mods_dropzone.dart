@@ -13,9 +13,10 @@ class ModsDropZone extends ConsumerStatefulWidget {
   final TextSpan? additionalContent;
   final bool? checkForMaxMods;
   final int? currentModsCountInGroup;
-  final bool? acceptArchived;
+  final bool acceptArchived;
   final String dialogTitleText;
-  final void Function(List<Directory> validFolders) onConfirmFunction;
+  final void Function(List<Directory> validFolders, List<File>)
+  onConfirmFunction;
   const ModsDropZone({
     super.key,
     required this.dialogTitleText,
@@ -77,16 +78,26 @@ class _ModsDropZoneState extends ConsumerState<ModsDropZone> {
                 .map((f) => Directory(f.path))
                 .toList();
 
+        List<File> droppedArchives = [];
+        //modArchives is empty for revert function
+        if (widget.acceptArchived) {
+          droppedArchives =
+              droppedFiles.where((f) => isArchive(f.path)).toList();
+        }
+
         if (widget.checkForMaxMods != null &&
             widget.currentModsCountInGroup != null) {
           if (widget.checkForMaxMods == true) {
             //Max actually 500, but 501, because index 0 is None mod
-            if (widget.currentModsCountInGroup! + droppedFolders.length > 501) {
+            if (widget.currentModsCountInGroup! +
+                    droppedFolders.length +
+                    droppedArchives.length >
+                501) {
               showMaxMessage(
                 'Max mod info'.tr(
                   args: [
                     (widget.currentModsCountInGroup! - 1).toString(),
-                    droppedFolders.length.toString(),
+                    (droppedFolders.length + droppedArchives.length).toString(),
                   ],
                 ),
               );
@@ -95,7 +106,7 @@ class _ModsDropZoneState extends ConsumerState<ModsDropZone> {
           }
         }
 
-        if (droppedFolders.isNotEmpty) {
+        if (droppedFolders.isNotEmpty || droppedArchives.isNotEmpty) {
           ref.read(alertDialogShownProvider.notifier).state = true;
           showDialog(
             barrierDismissible: false,
@@ -103,6 +114,7 @@ class _ModsDropZoneState extends ConsumerState<ModsDropZone> {
             builder:
                 (context) => OnDropModFolderDialog(
                   droppedFolders: droppedFolders,
+                  droppedArchives: droppedArchives,
                   copyDestination: widget.copyDestination,
                   dialogTitleText: widget.dialogTitleText,
                   onConfirmFunction: widget.onConfirmFunction,
@@ -131,4 +143,16 @@ class _ModsDropZoneState extends ConsumerState<ModsDropZone> {
       ),
     );
   }
+}
+
+bool isArchive(String path) {
+  final lower = path.toLowerCase();
+  return lower.endsWith('.tar.gz') ||
+      lower.endsWith('.tgz') ||
+      lower.endsWith('.tar.bz2') ||
+      lower.endsWith('tbz') ||
+      lower.endsWith('tar.xz') ||
+      lower.endsWith('txz') ||
+      lower.endsWith('tar') ||
+      lower.endsWith('zip');
 }
