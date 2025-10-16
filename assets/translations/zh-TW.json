@@ -78,7 +78,7 @@
   "Languages": "語言",
   "Change language": "變更語言",
   "Restart": "重新啟動",
-  "Language changed, please Restart.": "語言已變更，請重新啟動。",
+  "Language changed, please Restart.": "語言已變更，請重新啟動。\n由於翻譯由 AI 產生，可能不夠準確。",
   "defaultErrorInfo": "請確認目錄/檔案可正常存取。\n關閉其他可能佔用此檔案的程式或檔案總管。",
   "Select an image file": "選擇圖片檔案",
   "Error reverting": "還原模組 {} 時發生錯誤",

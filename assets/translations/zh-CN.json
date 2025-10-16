@@ -78,7 +78,7 @@
   "Languages": "语言",
   "Change language": "更改语言",
   "Restart": "重新启动",
-  "Language changed, please Restart.": "语言已更改，请重新启动。",
+  "Language changed, please Restart.": "语言已更改，请重新启动。\n由于翻译由 AI 生成，可能不够准确。",
   "defaultErrorInfo": "请确认目录/文件可正常访问。\n关闭其他可能占用此文件的程序或文件资源管理器。",
   "Select an image file": "选择图片文件",
   "Error reverting": "还原模组 {} 时出错",
