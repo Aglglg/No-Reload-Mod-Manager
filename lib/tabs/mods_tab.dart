@@ -209,7 +209,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
     try {
       _modNameTextFieldController.text =
           widget.currentGroupData.modsInGroup[widget.index].modName;
-    } catch (e) {}
+    } catch (_) {}
   }
 
   Future<void> setCurrentModName() async {
@@ -553,7 +553,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                             File(urlPath),
                           );
                           if (!await launchUrl(Uri.parse(url))) {}
-                        } catch (e) {}
+                        } catch (_) {}
                       },
                       label: 'Open in browser'.tr(),
                     ),

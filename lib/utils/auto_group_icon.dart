@@ -17,7 +17,7 @@ Future<Map<String, String>> fetchGroupIconData() async {
         (key, value) => MapEntry(key.toString(), value.toString()),
       );
     }
-  } catch (e) {}
+  } catch (_) {}
   return {};
 }
 
@@ -62,7 +62,7 @@ Future<bool> tryGetIcon(String rootPath, Map<String, String> iconData) async {
               await setFolderIcon(p.dirname(savePath), savePath);
             }
           }
-        } catch (e) {}
+        } catch (_) {}
 
         // Stop processing after first successful match
         return true;

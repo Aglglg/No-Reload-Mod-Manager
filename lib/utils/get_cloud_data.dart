@@ -9,7 +9,7 @@ class CloudData {
       } else {
         return textOnError;
       }
-    } catch (e) {
+    } catch (_) {
       return textOnError;
     }
   }

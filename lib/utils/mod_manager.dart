@@ -25,7 +25,7 @@ void triggerRefresh(WidgetRef ref) {
     TargetGame currentTargetGame = ref.read(targetGameProvider);
     ref.read(targetGameProvider.notifier).state = TargetGame.none;
     ref.read(targetGameProvider.notifier).state = currentTargetGame;
-  } catch (e) {}
+  } catch (_) {}
 }
 
 Future<List<ModGroupData>> refreshModData(Directory managedDir) async {
@@ -60,7 +60,7 @@ Future<List<String>> checkForRabbitFxCount(Directory modsDir) async {
         rabbitFxPath.add(file);
       }
     }
-  } catch (e) {}
+  } catch (_) {}
 
   return rabbitFxPath;
 }
@@ -77,7 +77,7 @@ Future<bool> coreOrfixFound(Directory modsDir) async {
         coreOrfixFound = true;
       }
     }
-  } catch (e) {}
+  } catch (_) {}
 
   return coreOrfixFound;
 }
@@ -92,7 +92,7 @@ Future<List<String>> checkForOrfixCount(Directory modsDir) async {
         orfixPath.add(file);
       }
     }
-  } catch (e) {}
+  } catch (_) {}
 
   return orfixPath;
 }
@@ -124,11 +124,9 @@ Future<List<(Directory, int)>> getGroupFolders(
 
       matchingFolders.sort((a, b) => a.$2.compareTo(b.$2));
     }
-  } catch (e) {
+  } catch (_) {
     if (shouldThrowOnError) {
       throw Exception("Error");
-    } else {
-      print('Error reading directory: $e');
     }
   }
 
@@ -207,7 +205,7 @@ Future<String> getGroupName(Directory groupDir) async {
       }
       return folderName;
     }
-  } catch (e) {
+  } catch (_) {
     final folderName = p.basename(groupDir.path);
     return folderName;
   }
@@ -242,7 +240,7 @@ Future<int> getSelectedModInGroup(
       }
       return 0;
     }
-  } catch (e) {
+  } catch (_) {
     return 0;
   }
 }
@@ -273,7 +271,7 @@ Future<int> getSelectedGroupIndex(String managedPath, int groupLength) async {
       }
       return 0;
     }
-  } catch (e) {
+  } catch (_) {
     return 0;
   }
 }
@@ -285,7 +283,7 @@ Future<void> setSelectedGroupIndex(int index, String managedPath) async {
   try {
     final fileSelectedIndex = File(p.join(managedPath, 'selectedindex'));
     await fileSelectedIndex.writeAsString(index.toString());
-  } catch (e) {}
+  } catch (_) {}
 
   if (watchedPath != null) {
     DynamicDirectoryWatcher.watch(watchedPath);
@@ -299,7 +297,7 @@ Future<void> setGroupNameOnDisk(Directory groupDir, String groupName) async {
     final fileGroupName = File(p.join(groupDir.path, 'groupname'));
 
     await fileGroupName.writeAsString(groupName);
-  } catch (e) {}
+  } catch (_) {}
   if (watchedPath != null) {
     DynamicDirectoryWatcher.watch(watchedPath);
   }
@@ -312,7 +310,7 @@ Future<void> setModNameOnDisk(Directory modDir, String modName) async {
     final fileGroupName = File(p.join(modDir.path, 'modname'));
 
     await fileGroupName.writeAsString(modName);
-  } catch (e) {}
+  } catch (_) {}
   if (watchedPath != null) {
     DynamicDirectoryWatcher.watch(watchedPath);
   }
@@ -335,7 +333,7 @@ Image? getModOrGroupIcon(Directory dir) {
           );
         },
       );
-    } catch (e) {
+    } catch (_) {
       // fallback in case FileImage fails
       return null;
     }
@@ -386,7 +384,7 @@ Future<void> setGroupOrModIcon(
           if (SharedPrefUtils().isAutoGenerateFolderIcon()) {
             setFolderIcon(groupDir.path, targetDest);
           }
-        } catch (e) {}
+        } catch (_) {}
       } else if (modDir != null) {
         Image imgResult = Image.file(
           File(pickResult.files[0].path!),
@@ -404,7 +402,7 @@ Future<void> setGroupOrModIcon(
           File sourceFile = File(pickResult.files[0].path!);
           String targetDest = p.join(modDir.path, "icon.png");
           await sourceFile.copy(targetDest);
-        } catch (e) {}
+        } catch (_) {}
       }
     }
     ref.read(windowIsPinnedProvider.notifier).state = windowWasPinned;
@@ -451,7 +449,7 @@ Future<void> setGroupOrModIcon(
           ).writeAsBytes(imgBytes.toList());
         }
       }
-    } catch (e) {}
+    } catch (_) {}
   }
 
   if (watchedPath != null) {
@@ -489,7 +487,7 @@ Future<void> unsetGroupOrModIcon(
       if (SharedPrefUtils().isAutoGenerateFolderIcon()) {
         unsetFolderIcon(groupDir.path);
       }
-    } catch (e) {}
+    } catch (_) {}
   } else {
     Image imgResult = Image.file(
       File(''),
@@ -506,7 +504,7 @@ Future<void> unsetGroupOrModIcon(
     try {
       File sourceFile = File(p.join(modDir.path, "icon.png"));
       await sourceFile.delete();
-    } catch (e) {}
+    } catch (_) {}
   }
 
   if (watchedPath != null) {
@@ -637,8 +635,7 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
     );
 
     return modDatas;
-  } catch (e) {
-    print('Error reading directory: $e');
+  } catch (_) {
     return [];
   }
 }
@@ -651,7 +648,7 @@ Future<bool> checkModWasMarkedAsForced(Directory modDir) async {
     } else {
       return false;
     }
-  } catch (e) {
+  } catch (_) {
     return false;
   }
 }
@@ -664,7 +661,7 @@ Future<bool> checkModWasMarkedAsUnoptimized(Directory modDir) async {
     } else {
       return false;
     }
-  } catch (e) {
+  } catch (_) {
     return false;
   }
 }
@@ -677,7 +674,7 @@ Future<bool> checkModWasMarkedAsNamespaced(Directory modDir) async {
     } else {
       return false;
     }
-  } catch (e) {
+  } catch (_) {
     return false;
   }
 }
@@ -690,7 +687,7 @@ Future<bool> checkModContainsRabbitFx(Directory modDir) async {
         return true;
       }
     }
-  } catch (e) {}
+  } catch (_) {}
   return false;
 }
 
@@ -706,7 +703,7 @@ Future<String> getModName(Directory modDir) async {
 
       return folderName;
     }
-  } catch (e) {
+  } catch (_) {
     final folderName = p.basename(modDir.path);
     return folderName;
   }
@@ -741,7 +738,7 @@ Future<void> setSelectedModIndex(
   try {
     final fileSelectedIndex = File(p.join(groupDir.path, 'selectedindex'));
     await fileSelectedIndex.writeAsString(index.toString());
-  } catch (e) {}
+  } catch (_) {}
   if (watchedPath != null) {
     DynamicDirectoryWatcher.watch(watchedPath);
   }
@@ -767,7 +764,7 @@ Future<List<TextSpan>> revertManagedMod(List<Directory> modDirs) async {
           await backupFile.copy(originalFile.path);
           await backupFile.delete();
         }
-      } catch (e) {
+      } catch (_) {
         containsError = true;
         operationLogs.add(
           TextSpan(
@@ -908,7 +905,7 @@ Future<List<TextSpan>> updateModData(
         ),
       );
     }
-  } catch (e) {
+  } catch (_) {
     operationLogs.add(
       TextSpan(
         text: "${'Unexpected error!'.tr()} ${ConstantVar.defaultErrorInfo}",
@@ -954,7 +951,7 @@ Future<void> _createBackgroundKeypressIni(
   // Step 2: Write content into the .ini file
   try {
     await iniFile.writeAsString(template);
-  } catch (e) {
+  } catch (_) {
     operationLogs.add(
       TextSpan(
         text:
@@ -981,7 +978,7 @@ Future<void> _createManagerGroupIni(
   // Step 2: Write content into the .ini file
   try {
     await iniFile.writeAsString(template);
-  } catch (e) {
+  } catch (_) {
     operationLogs.add(
       TextSpan(
         text:
@@ -1006,7 +1003,7 @@ Future<void> _deleteGroupIniFiles(
         if (regex.hasMatch(fileName)) {
           try {
             await entity.delete();
-          } catch (e) {
+          } catch (_) {
             operationLogs.add(
               TextSpan(
                 text:
@@ -1043,7 +1040,7 @@ Future<void> _createGroupIni(
   // Step 4: Write content into the .ini file
   try {
     await iniFile.writeAsString(modifiedTemplate);
-  } catch (e) {
+  } catch (_) {
     operationLogs.add(
       TextSpan(
         text:
@@ -1109,7 +1106,7 @@ Future<void> _manageMod(
     await tryMarkAsForcedToBeManaged(modFolder, iniFiles);
     await tryMarkAsUnoptimized(modFolder, iniFiles);
     await tryMarkAsNamespaced(modFolder, iniFiles);
-  } catch (e) {
+  } catch (_) {
     operationLogs.add(
       TextSpan(
         text:
@@ -1254,7 +1251,7 @@ Future<void> _modifyIniFile(
     // Write the modified content back to the INI file
     String modifiedIni = _getLiteralIni(parsedIni);
     await safeWriteIni(file, modifiedIni);
-  } catch (e) {
+  } catch (_) {
     operationLogs.add(
       TextSpan(
         text:
@@ -1275,7 +1272,7 @@ Future<File?> safeWriteIni(
   //Write to temp file first
   try {
     await tempFile.writeAsString(content, flush: true);
-  } catch (e) {
+  } catch (_) {
     rethrow;
   }
 
@@ -1288,11 +1285,11 @@ Future<File?> safeWriteIni(
   //Replace original with temp
   try {
     await tempFile.rename(file.path);
-  } catch (e) {
+  } catch (_) {
     //Don't forget to delete tmp if fail rename
     try {
       await tempFile.delete();
-    } catch (e) {}
+    } catch (_) {}
     rethrow;
   }
 
@@ -1316,7 +1313,7 @@ Future<bool> containsNrmmMark(List<String> paths) async {
           return true;
         }
       }
-    } catch (e) {
+    } catch (_) {
       // Skip unreadable files
       continue;
     }
@@ -1335,13 +1332,13 @@ Future<void> tryMarkAsForcedToBeManaged(
       final fileMarkForced = File(p.join(modPath, 'modforced'));
 
       await fileMarkForced.writeAsString('');
-    } catch (e) {}
+    } catch (_) {}
   } else {
     try {
       final fileMarkForced = File(p.join(modPath, 'modforced'));
 
       await fileMarkForced.delete();
-    } catch (e) {}
+    } catch (_) {}
   }
 }
 
@@ -1424,13 +1421,13 @@ Future<void> tryMarkAsUnoptimized(String modPath, List<String> iniFiles) async {
       final fileMarkUnoptimized = File(p.join(modPath, 'modunoptimized'));
 
       await fileMarkUnoptimized.writeAsString('');
-    } catch (e) {}
+    } catch (_) {}
   } else {
     try {
       final fileMarkUnoptimized = File(p.join(modPath, 'modunoptimized'));
 
       await fileMarkUnoptimized.delete();
-    } catch (e) {}
+    } catch (_) {}
   }
 }
 
@@ -1449,13 +1446,13 @@ Future<void> tryMarkAsNamespaced(String modPath, List<String> iniFiles) async {
       final fileMarkNamespaced = File(p.join(modPath, 'modnamespaced'));
 
       await fileMarkNamespaced.writeAsString('');
-    } catch (e) {}
+    } catch (_) {}
   } else {
     try {
       final fileMarkNamespaced = File(p.join(modPath, 'modnamespaced'));
 
       await fileMarkNamespaced.delete();
-    } catch (e) {}
+    } catch (_) {}
   }
 }
 
@@ -2221,7 +2218,7 @@ Future<void> openFileExplorerToSpecifiedPath(String path) async {
     if (await Directory(path).exists()) {
       try {
         Process.run('explorer', [path]);
-      } catch (e) {}
+      } catch (_) {}
     }
   }
 }
@@ -2237,7 +2234,7 @@ Future<bool> completeDisableMod(Directory modDir) async {
     );
     await modDir.rename(renamedPath);
     return true;
-  } catch (e) {
+  } catch (_) {
     return false;
   }
 }
@@ -2252,7 +2249,7 @@ Future<bool> enableMod(Directory modDir) async {
     );
     await modDir.rename(renamedPath);
     return true;
-  } catch (e) {
+  } catch (_) {
     return false;
   }
 }

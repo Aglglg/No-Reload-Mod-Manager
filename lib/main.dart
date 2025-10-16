@@ -128,11 +128,11 @@ Future<void> checkToRelaunch({bool forcedRelaunch = false}) async {
       await File(relaunchFlagPath).writeAsString('1');
       await relaunchAsNormalUser();
       exit(0);
-    } catch (e) {}
+    } catch (_) {}
   } else if (wasRelaunched) {
     try {
       await File(relaunchFlagPath).delete();
-    } catch (e) {}
+    } catch (_) {}
   }
 }
 
@@ -479,7 +479,7 @@ class _BackgroundState extends ConsumerState<Background> {
                             if (!await launchUrl(
                               Uri.parse(ConstantVar.urlValidKeysExample),
                             )) {}
-                          } catch (e) {}
+                          } catch (_) {}
                         },
                         label: 'Valid keys'.tr(),
                       ),
@@ -490,7 +490,7 @@ class _BackgroundState extends ConsumerState<Background> {
                           if (!await launchUrl(
                             Uri.parse(ref.read(tutorialLinkProvider)),
                           )) {}
-                        } catch (e) {}
+                        } catch (_) {}
                       },
                       label: 'Tutorial'.tr(),
                     ),
@@ -960,10 +960,10 @@ class _MainViewState extends ConsumerState<MainView>
           for (var controller in listAnimController) {
             try {
               controller.reverse();
-            } catch (e) {}
+            } catch (_) {}
           }
-        } catch (e) {}
-      } catch (e) {}
+        } catch (_) {}
+      } catch (_) {}
     }
 
     String rawMessage = "";
@@ -1065,7 +1065,7 @@ class _MainViewState extends ConsumerState<MainView>
                         onPressed: () async {
                           try {
                             if (!await launchUrl(Uri.parse(urlDetails))) {}
-                          } catch (e) {}
+                          } catch (_) {}
                         },
                       )
                       : null,
@@ -1230,7 +1230,7 @@ class _MainViewState extends ConsumerState<MainView>
         existAndValid = false;
         notReadyReason = "Mods path invalid.".tr();
       }
-    } catch (e) {
+    } catch (_) {
       existAndValid = false;
       notReadyReason = "Mods path invalid.".tr();
     }
@@ -1535,9 +1535,9 @@ class _UpdateModDataSnackbarButtonState
                   for (var controller in listAnimController) {
                     try {
                       controller.reverse();
-                    } catch (e) {}
+                    } catch (_) {}
                   }
-                } catch (e) {}
+                } catch (_) {}
                 ref.read(alertDialogShownProvider.notifier).state = true;
                 await showDialog(
                   barrierDismissible: false,

@@ -864,7 +864,7 @@ class _ModAreaState extends ConsumerState<ModAreaCarousel>
             duration: Duration(milliseconds: 250),
             curve: Curves.easeOut,
           );
-        } catch (e) {}
+        } catch (_) {}
       });
     });
   }

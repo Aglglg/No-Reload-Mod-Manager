@@ -34,7 +34,7 @@ class IniFileAsLines {
           DynamicDirectoryWatcher.watch(watchedPath);
         }
       }
-    } catch (e) {}
+    } catch (_) {}
   }
 }
 
@@ -137,7 +137,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
         List<String> lines = [];
         try {
           lines = await forceReadAsLinesUtf8(File(filePath));
-        } catch (e) {}
+        } catch (_) {}
         return IniFileAsLines(lines: lines, iniFile: File(filePath));
       }).toList(),
     );
@@ -368,7 +368,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                           if (!await launchUrl(
                             Uri.parse(ConstantVar.urlValidKeysExample),
                           )) {}
-                        } catch (e) {}
+                        } catch (_) {}
                       },
                       label: 'Valid keys'.tr(),
                     ),
@@ -379,7 +379,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                           if (!await launchUrl(
                             Uri.parse(ref.read(tutorialLinkProvider)),
                           )) {}
-                        } catch (e) {}
+                        } catch (_) {}
                       },
                       label: 'Tutorial'.tr(),
                     ),

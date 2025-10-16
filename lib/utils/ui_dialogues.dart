@@ -970,7 +970,7 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
               style: GoogleFonts.poppins(color: Colors.green, fontSize: 14),
             ),
           );
-        } catch (e) {
+        } catch (_) {
           operationLogs.add(
             TextSpan(
               text:
@@ -1078,7 +1078,7 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
     } else {
       try {
         return await folder.rename(newPath);
-      } catch (e) {
+      } catch (_) {
         return null;
       }
     }
@@ -1087,7 +1087,7 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
   Future<void> deleteUnusedFolder(Directory folder) async {
     try {
       await folder.delete(recursive: true);
-    } catch (e) {}
+    } catch (_) {}
   }
 
   String removeAllDisabledPrefixes(String input) {
@@ -1119,7 +1119,7 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
           await copyDirectory(entity, Directory(newPath));
         }
       }
-    } catch (e) {
+    } catch (_) {
       throw Exception("Error");
     }
   }
@@ -1297,7 +1297,7 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
           ];
         });
       }
-    } catch (e) {
+    } catch (_) {
       setState(() {
         _showClose = true;
         contents = [
@@ -1542,7 +1542,7 @@ class _DuplicatedUtilitiesDialogState
       String newPath = p.join(p.dirname(path), "DISABLED${p.basename(path)}");
       try {
         await File(path).rename(newPath);
-      } catch (e) {}
+      } catch (_) {}
     }
   }
 
@@ -1714,7 +1714,7 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
       setState(() {
         contents = operationLogs;
       });
-    } catch (e) {
+    } catch (_) {
       setState(() {
         contents = [
           TextSpan(
@@ -1854,7 +1854,7 @@ class _EditModLinkDialogState extends ConsumerState<EditModLinkDialog> {
     try {
       String url = await forceReadAsStringUtf8(widget.modLinkFile);
       textController.text = url;
-    } catch (e) {}
+    } catch (_) {}
   }
 
   @override
@@ -2019,7 +2019,7 @@ class _DisableAllModsDialogState extends ConsumerState<DisableAllModsDialog> {
         groupName = await forceReadAsStringUtf8(
           File(p.join(mod.$1.path, 'groupname')),
         );
-      } catch (e) {}
+      } catch (_) {}
       failedDisableInfo.add(
         TextSpan(
           text: "$groupName - ${mod.$2.modName}\n${mod.$2.modDir.path}\n\n",
@@ -2242,7 +2242,7 @@ class _EnableAllModsDialogState extends ConsumerState<EnableAllModsDialog> {
         groupName = await forceReadAsStringUtf8(
           File(p.join(mod.$1.path, 'groupname')),
         );
-      } catch (e) {}
+      } catch (_) {}
       //
       failedEnableInfo.add(
         TextSpan(
@@ -2436,7 +2436,7 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
 
       try {
         lines = await forceReadAsLinesUtf8(iniFile);
-      } catch (e) {}
+      } catch (_) {}
 
       for (var i = 0; i < lines.length; i++) {
         final String trimmedLine = lines[i].trim();
@@ -2642,7 +2642,7 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
         //do not use copy directly because it'll transfer file permission and attribute too
         //and sometimes cause cannot delete .baknamespace file
         backupFiles.add(await _copyIniContentOnly(path));
-      } catch (e) {
+      } catch (_) {
         //in case failed, delete all previous created bak backup and return
         await _deleteTemporaryFiles(backupFiles);
         return false;
@@ -2676,14 +2676,14 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
             if (tempFile != null) {
               tmpModifiedFiles.add(tempFile);
             }
-          } catch (e) {
+          } catch (_) {
             //if failed to write tmp file, abort everything and delete. return false
             await _deleteTemporaryFiles(backupFiles);
             await _deleteTemporaryFiles(tmpModifiedFiles);
             return false;
           }
         }
-      } catch (e) {
+      } catch (_) {
         //if failed to read ini file, abort everything and delete. return false
         await _deleteTemporaryFiles(backupFiles);
         await _deleteTemporaryFiles(tmpModifiedFiles);
@@ -2702,7 +2702,7 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
         );
         String iniFilePath = p.join(p.dirname(tmpFile.path), iniFilename);
         await tmpFile.rename(iniFilePath);
-      } catch (e) {
+      } catch (_) {
         await _revertToBakFiles(backupFiles);
         await _deleteTemporaryFiles(backupFiles);
         await _deleteTemporaryFiles(tmpModifiedFiles);
@@ -2772,7 +2772,7 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
         );
         String iniFilePath = p.join(p.dirname(bakFile.path), iniFilename);
         await bakFile.rename(iniFilePath);
-      } catch (e) {}
+      } catch (_) {}
     }
   }
 
@@ -2780,7 +2780,7 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
     for (var file in files) {
       try {
         await file.delete();
-      } catch (e) {}
+      } catch (_) {}
     }
   }
 
@@ -2788,7 +2788,7 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
     try {
       String content = await forceReadAsStringUtf8(File(iniPath));
       return await File("$iniPath.baknamespace").writeAsString(content);
-    } catch (e) {
+    } catch (_) {
       rethrow;
     }
   }

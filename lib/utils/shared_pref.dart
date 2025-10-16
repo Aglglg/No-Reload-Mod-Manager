@@ -25,7 +25,7 @@ class SharedPrefUtils {
     try {
       _prefs ??= await SharedPreferences.getInstance();
       return true;
-    } catch (e) {
+    } catch (_) {
       await File(getSharedPrefPath()).delete();
       _prefs ??= await SharedPreferences.getInstance();
       return false;

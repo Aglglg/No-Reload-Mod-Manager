@@ -124,7 +124,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                         if (!await launchUrl(
                           Uri.parse(ref.read(tutorialLinkProvider)),
                         )) {}
-                      } catch (e) {}
+                      } catch (_) {}
                     },
                     label: 'Tutorial'.tr(),
                   ),
@@ -1277,7 +1277,7 @@ class _CustomImageButtonLinkState extends State<CustomImageButtonLink> {
   Future<void> _launchUrl() async {
     try {
       if (!await launchUrl(Uri.parse(widget.link))) {}
-    } catch (e) {}
+    } catch (_) {}
   }
 
   @override
@@ -1479,7 +1479,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
           modsPathText = "Mods Path (Invalid)".tr();
         });
       }
-    } catch (e) {
+    } catch (_) {
       valid = false;
       setState(() {
         modsPathText = "Mods Path (Invalid)".tr();
