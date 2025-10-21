@@ -105,24 +105,3 @@ jobs:
           fi
 
 
-
-      - name: Delete virustotalscans.txt from release
-        run: |
-          TAG=${GITHUB_REF#refs/tags/}
-          FILE=virustotalscans.txt
-          echo "Looking for $FILE in release $TAG"
-
-          # Get the numeric asset ID using REST API
-          ASSET_ID=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" \
-            --jq ".assets[] | select(.name==\"$FILE\") | .id")
-
-          if [ -z "$ASSET_ID" ]; then
-            echo "$FILE not found — skipping delete"
-          else
-            echo "Found numeric asset ID: $ASSET_ID — deleting..."
-            gh api \
-              --method DELETE \
-              "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/assets/${ASSET_ID}"
-          fi
-
-
