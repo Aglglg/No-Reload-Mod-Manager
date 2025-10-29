@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:auto_updater/auto_updater.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -1419,6 +1420,19 @@ class _MainViewState extends ConsumerState<MainView>
     final sss = ref.watch(zoomScaleProvider);
     return Stack(
       children: [
+        if (kDebugMode)
+          Align(
+            alignment: Alignment.topCenter,
+            child: Text(
+              'Experimental Version',
+              style: GoogleFonts.poppins(
+                color: Colors.amber,
+                fontSize: 10 * sss,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+
         ///Tab views
         IndexedStack(index: ref.watch(tabIndexProvider), children: _views),
 

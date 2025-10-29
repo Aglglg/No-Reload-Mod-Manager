@@ -210,5 +210,6 @@
   "Archive extracted": "{} 已解压。\n\n",
   "Error! Archive may have password, not supported": "错误！压缩包 {} 可能已加密，不受支持。\n\n",
   "Error! Archive not supported": "错误！不支持的压缩包：{}\n\n",
-  "Error! Cannot extract mod archive": "错误！无法解压：{}"
+  "Error! Cannot extract mod archive": "错误！无法解压：{}",
+  "Invalid keys": "无效按键"
 }

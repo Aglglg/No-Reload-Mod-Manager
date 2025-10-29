@@ -210,5 +210,6 @@
   "Archive extracted": "{} extracted.\n\n",
   "Error! Archive may have password, not supported": "Error! Archive {} may have password, not supported.\n\n",
   "Error! Archive not supported": "Error! Archive {} not supported.\n\n",
-  "Error! Cannot extract mod archive": "Error! Cannot extract: {}"
+  "Error! Cannot extract mod archive": "Error! Cannot extract: {}",
+  "Invalid keys": "Invalid keys"
 }

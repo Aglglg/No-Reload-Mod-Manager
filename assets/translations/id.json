@@ -210,5 +210,6 @@
   "Archive extracted": "{} diekstrak.\n\n",
   "Error! Archive may have password, not supported": "Error! Arsip {} mungkin ber-password, tidak didukung.\n\n",
   "Error! Archive not supported": "Error! Arsip {} tidak didukung.\n\n",
-  "Error! Cannot extract mod archive": "Error! Gagal ekstrak: {}"
+  "Error! Cannot extract mod archive": "Error! Gagal ekstrak: {}",
+  "Invalid keys": "Tombol tidak valid"
 }

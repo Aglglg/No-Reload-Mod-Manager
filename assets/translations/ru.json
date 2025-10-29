@@ -210,5 +210,6 @@
   "Archive extracted": "{} извлечён.\n\n",
   "Error! Archive may have password, not supported": "Ошибка! Архив {} может быть защищён паролем, не поддерживается.\n\n",
   "Error! Archive not supported": "Ошибка! Архив {} не поддерживается.\n\n",
-  "Error! Cannot extract mod archive": "Ошибка! Не удалось извлечь: {}"
+  "Error! Cannot extract mod archive": "Ошибка! Не удалось извлечь: {}",
+  "Invalid keys": "Неверные клавиши"
 }

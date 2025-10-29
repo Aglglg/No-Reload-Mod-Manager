@@ -519,81 +519,191 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
     return textSectionController.text.toLowerCase();
   }
 
+  Future<void> _simulateKey(int index, double sss) async {
+    bool success = false;
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      success = await simulateKeysFromKeySections(controllers[index].text);
+    } catch (_) {}
+
+    if (!success) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          backgroundColor: const Color(0xFF2B2930),
+          margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
+          duration: Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          closeIconColor: Colors.blue,
+          showCloseIcon: true,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          content: Text(
+            'Invalid keys'.tr(),
+            style: GoogleFonts.poppins(
+              color: Colors.yellow,
+              fontSize: 13 * sss,
+            ),
+          ),
+          dismissDirection: DismissDirection.down,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
-    return Container(
-      constraints: BoxConstraints(minHeight: 66 * sss),
-      padding: EdgeInsets.symmetric(horizontal: 16 * sss, vertical: 7 * sss),
-      decoration: BoxDecoration(
-        color: const Color.fromARGB(100, 0, 0, 0),
-        borderRadius: BorderRadius.circular(15 * sss),
-        border: Border.all(
-          color: const Color.fromARGB(127, 255, 255, 255),
-          width: 3 * sss,
-          strokeAlign: BorderSide.strokeAlignInside,
+    return ElevatedButton(
+      onPressed:
+          widget.isEditing
+              ? null
+              : () async {
+                if (controllers.length <= 1) {
+                  await _simulateKey(0, sss);
+                }
+              },
+      style: ButtonStyle(
+        backgroundColor: WidgetStatePropertyAll(
+          const Color.fromARGB(100, 0, 0, 0),
         ),
+        overlayColor: WidgetStatePropertyAll(
+          controllers.length > 1
+              ? Colors.transparent
+              : const Color.fromARGB(30, 33, 149, 243),
+        ),
+        shadowColor: WidgetStatePropertyAll(Colors.transparent),
+        padding: WidgetStatePropertyAll(EdgeInsetsGeometry.zero),
+        shape: WidgetStateOutlinedBorder.resolveWith((state) {
+          return RoundedRectangleBorder(
+            side: BorderSide(
+              color:
+                  state.contains(WidgetState.hovered)
+                      ? const Color.fromARGB(255, 33, 149, 243)
+                      : const Color.fromARGB(127, 255, 255, 255),
+              width: 3 * sss,
+              strokeAlign: BorderSide.strokeAlignInside,
+            ),
+            borderRadius: BorderRadiusGeometry.all(Radius.circular(15 * sss)),
+          );
+        }),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IntrinsicWidth(
-            child: IntrinsicHeight(
-              child: TextField(
-                controller: textSectionController,
-                enabled: widget.isEditing,
-                decoration: InputDecoration(
-                  isDense: true,
-                  disabledBorder: InputBorder.none,
-                ),
-                maxLines: null,
-                keyboardType: TextInputType.none,
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  fontSize: 13 * sss,
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.deny(
-                    RegExp(r'[\n\r\u0085\u2028\u2029]'),
+      child: Container(
+        constraints: BoxConstraints(minHeight: 66 * sss),
+        padding: EdgeInsets.symmetric(horizontal: 16 * sss, vertical: 7 * sss),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(15 * sss),
+          border: Border.all(
+            color: Colors.transparent,
+            width: 3 * sss,
+            strokeAlign: BorderSide.strokeAlignInside,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IntrinsicWidth(
+              child: IntrinsicHeight(
+                child: TextField(
+                  controller: textSectionController,
+                  enabled: widget.isEditing,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    disabledBorder: InputBorder.none,
                   ),
-                ],
+                  maxLines: null,
+                  keyboardType: TextInputType.none,
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontSize: 13 * sss,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.deny(
+                      RegExp(r'[\n\r\u0085\u2028\u2029]'),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
 
-          SizedBox(height: 4 * sss),
+            SizedBox(height: 4 * sss),
 
-          SizedBox(height: 4 * sss),
-          Column(
-            children: List.generate(controllers.length, (index) {
-              return IntrinsicWidth(
-                child: IntrinsicHeight(
-                  child: TextField(
-                    controller: controllers[index],
-                    enabled: widget.isEditing,
-                    decoration: InputDecoration(
-                      isDense: true,
-                      disabledBorder: InputBorder.none,
-                    ),
-                    maxLines: null,
-                    keyboardType: TextInputType.none,
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w400,
-                      color: Colors.white,
-                      fontSize: 13 * sss,
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.deny(
-                        RegExp(r'[\n\r\u0085\u2028\u2029]'),
-                      ),
-                    ],
+            SizedBox(height: 4 * sss),
+            Column(
+              children: List.generate(controllers.length, (index) {
+                return IntrinsicWidth(
+                  child: IntrinsicHeight(
+                    child:
+                        controllers.length > 1
+                            ? TextButton(
+                              onPressed:
+                                  widget.isEditing
+                                      ? null
+                                      : () async {
+                                        await _simulateKey(index, sss);
+                                      },
+                              style: ButtonStyle(
+                                backgroundColor: WidgetStatePropertyAll(
+                                  Colors.transparent,
+                                ),
+                                overlayColor: WidgetStatePropertyAll(
+                                  const Color.fromARGB(30, 33, 149, 243),
+                                ),
+                                shadowColor: WidgetStatePropertyAll(
+                                  Colors.transparent,
+                                ),
+                              ),
+                              child: TextField(
+                                controller: controllers[index],
+                                enabled: widget.isEditing,
+                                decoration: InputDecoration(
+                                  isDense: false,
+                                  disabledBorder: InputBorder.none,
+                                ),
+                                maxLines: null,
+                                keyboardType: TextInputType.none,
+                                style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.white,
+                                  fontSize: 13 * sss,
+                                ),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.deny(
+                                    RegExp(r'[\n\r\u0085\u2028\u2029]'),
+                                  ),
+                                ],
+                              ),
+                            )
+                            : TextField(
+                              controller: controllers[index],
+                              enabled: widget.isEditing,
+                              decoration: InputDecoration(
+                                isDense: true,
+                                disabledBorder: InputBorder.none,
+                              ),
+                              maxLines: null,
+                              keyboardType: TextInputType.none,
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w400,
+                                color: Colors.white,
+                                fontSize: 13 * sss,
+                              ),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.deny(
+                                  RegExp(r'[\n\r\u0085\u2028\u2029]'),
+                                ),
+                              ],
+                            ),
                   ),
-                ),
-              );
-            }),
-          ),
-        ],
+                );
+              }),
+            ),
+          ],
+        ),
       ),
     );
   }
