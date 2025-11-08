@@ -572,7 +572,7 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
         overlayColor: WidgetStatePropertyAll(
           controllers.length > 1
               ? Colors.transparent
-              : const Color.fromARGB(30, 33, 149, 243),
+              : const Color.fromARGB(50, 33, 149, 243),
         ),
         shadowColor: WidgetStatePropertyAll(Colors.transparent),
         padding: WidgetStatePropertyAll(EdgeInsetsGeometry.zero),
@@ -651,7 +651,7 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
                                   Colors.transparent,
                                 ),
                                 overlayColor: WidgetStatePropertyAll(
-                                  const Color.fromARGB(30, 33, 149, 243),
+                                  const Color.fromARGB(50, 33, 149, 243),
                                 ),
                                 shadowColor: WidgetStatePropertyAll(
                                   Colors.transparent,
