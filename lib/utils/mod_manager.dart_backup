@@ -1,3 +1,6 @@
+//backup after trying multiple selection of mod in a group
+//maybe useful later for reference if need to change namespace or if statement
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
@@ -12,7 +15,6 @@ import 'package:no_reload_mod_manager/utils/custom_group_folder_icon.dart';
 import 'package:no_reload_mod_manager/utils/force_read_as_utf8.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
-import 'package:no_reload_mod_manager/utils/stack_collection.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:path/path.dart' as p;
@@ -1024,21 +1026,21 @@ Future<void> _createGroupIni(
   int groupIndex,
   List<TextSpan> operationLogs,
 ) async {
-  // Step 1: Load the .txt template from assets
+  //load the .txt template from assets
   final template = await rootBundle.loadString(
     'assets/template_txt/template_group.txt',
   );
 
-  // Step 2: Replace placeholders
+  //replace placeholders
   final modifiedTemplate = template
       .replaceAll("{x}", "$groupIndex")
       .replaceAll("{group_x}", p.basename(groupFullPath));
 
-  // Step 3: Create the .ini file
+  //create the .ini file
   final filePath = p.join(groupFullPath, 'group_$groupIndex.ini');
   final iniFile = File(filePath);
 
-  // Step 4: Write content into the .ini file
+  //write content into the .ini file
   try {
     await iniFile.writeAsString(modifiedTemplate);
   } catch (_) {
@@ -1248,9 +1250,6 @@ Future<void> _modifyIniFile(
         ),
       );
     }
-
-    //move endif for mod manager to bottom, make sure any lines is inside if-endif mod manager scope
-    _moveEndifToCorrectPlace(parsedIni);
 
     // Write the modified content back to the INI file
     String modifiedIni = _getLiteralIni(parsedIni);
@@ -1510,19 +1509,7 @@ Future<List<IniSection>> _parseIniSections(List<String> allLines) async {
       }
 
       if (!matchPriorityIsPresent) {
-        //find the "bottom content" position:
-        //skip any trailing blank lines or comments
-        int insertIndex = section.lines.length; //default: end
-        for (int j = section.lines.length - 1; j >= 0; j--) {
-          final trimmed = section.lines[j].trim();
-          if (trimmed.isNotEmpty && !trimmed.startsWith(';')) {
-            insertIndex = j + 1;
-            break;
-          }
-        }
-
-        //insert 'endif' right before trailing comments/blanks
-        section.lines.insert(insertIndex, 'match_priority = 0');
+        section.lines.add('match_priority = 0');
       }
     }
   }
@@ -1610,7 +1597,7 @@ bool forceFixIniSections(
     for (int i = 0; i < section.lines.length; i++) {
       var line = section.lines[i];
       if (line.toLowerCase().trim().startsWith('if ') &&
-          !line.toLowerCase().trim().contains(r'$\modmanageragl')) {
+          !line.toLowerCase().trim().contains(r'$\nrmm')) {
         ifStatementWasOpened = true;
       }
 
@@ -1949,20 +1936,7 @@ bool forceFixIniSections(
     }
     totalEndifShouldBeAdded = totalIfFound - totalEndifFound;
     for (var i = 0; i < totalEndifShouldBeAdded; i++) {
-      //find the "bottom content" position:
-      //skip any trailing blank lines or comments
-      int insertIndex = section.lines.length; //default: end
-      for (int j = section.lines.length - 1; j >= 0; j--) {
-        final trimmed = section.lines[j].trim();
-        if (trimmed.isNotEmpty && !trimmed.startsWith(';')) {
-          insertIndex = j + 1;
-          break;
-        }
-      }
-
-      //insert 'endif' right before trailing comments/blanks
-      section.lines.insert(
-        insertIndex,
+      section.lines.add(
         ';Force add line by NRMM, to prevent overlapped mods.\nendif',
       );
       forcedFix = true;
@@ -2037,10 +2011,14 @@ void _checkAndModifySections(
   int modIndex,
   int groupIndex,
 ) {
-  final managedPattern = RegExp(
-    r'(\\modmanageragl\\group_)([1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)(\\active_slot)',
+  //match group_0 until 999, even though the manager only supports 1-500, just incase it's manually changed
+  final oldManagedPattern = RegExp(
+    r'\$managed_slot_id\s*==\s*\$\\nrmm\\group_([0-9][0-9]{0,2})(?!\d)\\active_slot',
   );
-  bool managedIdVarAdded = false;
+
+  final managedPattern = RegExp(
+    r'(\$\\nrmm\\group_)([0-9][0-9]{0,2})(\\slot_)([0-9][0-9]{0,2})(?!\d)',
+  );
 
   for (var section in sections) {
     final name = section.name;
@@ -2051,181 +2029,60 @@ void _checkAndModifySections(
     for (int i = 0; i < lines.length; i++) {
       final line = lines[i];
 
-      // Modify group line
-      if (managedPattern.hasMatch(line) &&
-          !line.trim().startsWith(';') &&
-          !_isExcludedSection(name)) {
-        lines[i] = line.replaceAllMapped(managedPattern, (match) {
-          return '${match.group(1)}$groupIndex${match.group(3)}';
-        });
-
-        if (!_isKeySection(name)) {
-          //put if statement of mod manager to top line of the section
-
-          final movedLine = lines.removeAt(i);
-          lines.insert(0, movedLine);
-
-          //the endif for this mod manager if statement will also be fixed later after forcefix function.
-          //make sure the corresponding endif is on bottom
-          //on this _moveEndifToCorrectPlace() function
-        }
-        found = true;
-      }
-
       // Detect existing condition in key section
       if (_isKeySection(name) &&
           line.trim().toLowerCase().startsWith('condition')) {
         keyConditionIndex = i;
       }
+
+      // Modify line, update index
+      if (!line.trim().startsWith(';') && !_isExcludedSection(name)) {
+        bool didReplace = false;
+
+        if (oldManagedPattern.hasMatch(line)) {
+          // Convert old pattern to new format
+          lines[i] = line.replaceAllMapped(oldManagedPattern, (match) {
+            return "\$\\nrmm\\group_$groupIndex\\slot_$modIndex";
+          });
+          didReplace = true;
+        } else if (managedPattern.hasMatch(line)) {
+          // Update indices in existing new pattern
+          lines[i] = line.replaceAllMapped(managedPattern, (match) {
+            return "\$\\nrmm\\group_$groupIndex\\slot_$modIndex";
+          });
+          didReplace = true;
+        }
+
+        // Move this 'if' line to top of section if not a key section
+        if (didReplace) {
+          if (!_isKeySection(name)) {
+            final movedLine = lines.removeAt(i);
+            lines.insert(0, movedLine);
+          }
+
+          found = true;
+        }
+      }
     }
 
     // If no managed line was found, insert
     if (!found && name != "__global__" && !_isExcludedSection(name)) {
+      //for key sections
       if (_isKeySection(name)) {
         if (keyConditionIndex != null) {
           lines[keyConditionIndex] =
-              "${lines[keyConditionIndex]} && \$managed_slot_id == \$\\modmanageragl\\group_$groupIndex\\active_slot";
+              "${lines[keyConditionIndex]} && \$\\nrmm\\group_$groupIndex\\slot_$modIndex";
         } else {
           lines.insert(
             0,
-            'condition = \$managed_slot_id == \$\\modmanageragl\\group_$groupIndex\\active_slot',
+            'condition = \$\\nrmm\\group_$groupIndex\\slot_$modIndex',
           );
         }
-      } else {
-        lines.insert(
-          0,
-          r'if $managed_slot_id == $\modmanageragl\group_' +
-              groupIndex.toString() +
-              r'\active_slot',
-        );
-
-        //find the "bottom content" position:
-        //skip any trailing blank lines or comments
-        int insertIndex = lines.length; //default: end
-        for (int j = lines.length - 1; j >= 0; j--) {
-          final trimmed = lines[j].trim();
-          if (trimmed.isNotEmpty && !trimmed.startsWith(';')) {
-            insertIndex = j + 1;
-            break;
-          }
-        }
-
-        //insert 'endif' right before trailing comments/blanks
-        lines.insert(insertIndex, 'endif');
       }
-    }
-
-    // Special handling for "Constants" section
-    if (name.toLowerCase() == "constants") {
-      bool managedVarFound = false;
-      List<int> indexesWhereManagedVarFound = [];
-
-      for (int i = 0; i < lines.length; i++) {
-        if (lines[i].trim().toLowerCase().startsWith(
-          'global \$managed_slot_id',
-        )) {
-          indexesWhereManagedVarFound.add(i);
-          if (managedIdVarAdded) {
-            lines.removeAt(i);
-          } else {
-            lines[i] = 'global \$managed_slot_id = $modIndex';
-            managedVarFound = true;
-          }
-        }
-      }
-
-      for (var i = 0; i < indexesWhereManagedVarFound.length; i++) {
-        if (i == 0) continue;
-        lines.removeAt(indexesWhereManagedVarFound[i]);
-      }
-
-      if (!managedVarFound && !managedIdVarAdded) {
-        lines.insert(0, 'global \$managed_slot_id = $modIndex');
-      }
-
-      managedIdVarAdded = true;
-    }
-  }
-}
-
-//Move endif for mod manager if to bottom
-void _moveEndifToCorrectPlace(List<IniSection> sections) {
-  //will only detect line that starts with 'if ' as valid conditional statement
-  //if somehow if statement using invalid condition like 'if $\undeclared_namespace\undeclared_var', this function is useless
-  //to properly parse the condition, it needs to check for all ini files, from the root, which is d3dx.ini, look for include and exclude keyword
-  //which is currently not implemented
-
-  for (var section in sections) {
-    final lines = section.lines;
-    StackCollection<String> ifStatementStack = StackCollection<String>();
-
-    for (var i = 0; i < lines.length; i++) {
-      final line = lines[i];
-
-      //if 'if ' line, push it to the stack
-      if (line.trim().toLowerCase().startsWith('if ')) {
-        ifStatementStack.push(line);
-      }
-      //if 'endif' line, try to pop the stack for the matching 'if ' line
-      else if (line.trim().toLowerCase() == 'endif') {
-        String? popIfStatement = ifStatementStack.pop();
-
-        //if the popped result is not null, means there's still a 'if ' line for this 'endif' line
-        //if null means this endif is errored, not used, leave it
-        if (popIfStatement != null) {
-          //check whether the 'if ' line is 'if ' line from mod manager, if yes, that means this 'endif' line is correspond to that mod manager if statement
-          if (popIfStatement.toLowerCase().trim().startsWith('if ') &&
-              popIfStatement.toLowerCase().trim().contains(
-                r'$\modmanageragl',
-              )) {
-            //move this endif line to bottom of the section
-            //but not bottom in this list, bottom before any blank lines/comments
-
-            //remove it first
-            lines.removeAt(i);
-
-            //match priority line or force fix mark that was previous added by mod manager, and make some things look ugly because blindly placed at the bottom
-            bool previousLineIsMatchPriority = false;
-            bool previousLineIsForceAddEndifMark = false;
-            if (lines[i - 1].trim() == "match_priority = 0") {
-              lines.removeAt(i - 1);
-              previousLineIsMatchPriority = true;
-            } else if (lines[i - 1].trim() ==
-                ";Force add line by NRMM, to prevent overlapped mods.") {
-              lines.removeAt(i - 1);
-
-              previousLineIsForceAddEndifMark = true;
-            }
-
-            //find the "bottom content" position:
-            //skip any trailing blank lines or comments
-            int insertIndex = lines.length; //default: end
-            for (int j = lines.length - 1; j >= 0; j--) {
-              final trimmed = lines[j].trim();
-              if (trimmed.isNotEmpty && !trimmed.startsWith(';')) {
-                insertIndex = j + 1;
-                break;
-              }
-            }
-
-            //insert 'endif' right before trailing comments/blanks
-            lines.insert(insertIndex, 'endif');
-
-            if (previousLineIsMatchPriority) {
-              //still using insertIndex, previous added 'endif' will auto shift to next index
-              lines.insert(insertIndex, 'match_priority = 0');
-            } else if (previousLineIsForceAddEndifMark) {
-              //still using insertIndex, previous added 'endif' will auto shift to next index
-              lines.insert(
-                insertIndex,
-                ';Force add line by NRMM, to prevent overlapped mods.',
-              );
-            }
-
-            //break this lines loop, already found the endif
-            break;
-          }
-        }
+      //for other sections
+      else {
+        lines.insert(0, 'if \$\\nrmm\\group_$groupIndex\\slot_$modIndex');
+        lines.add('endif');
       }
     }
   }
