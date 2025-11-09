@@ -1931,6 +1931,53 @@ bool forceFixIniSections(
     }
   }
 
+  //look for accidental "elif/else if/else" from "mod manager's if"
+  //example:
+  //if $managed_slot_id == $\modmanageragl\active_slot
+  //something
+  //if $anyvar == 1
+  //something
+  //endif <-- this one must not be written
+  //elif $anyvar == 0 <-- this one become elif for 'mod manager if' line because wrong syntax was written in the mod
+  for (var section in sections) {
+    if (_isExcludedSection(section.name) || _isKeySection(section.name)) {
+      continue;
+    }
+    final lines = section.lines;
+    StackCollection<String> ifStatementStack = StackCollection<String>();
+
+    for (var i = 0; i < lines.length; i++) {
+      final line = lines[i];
+
+      if (line.trim().toLowerCase().startsWith('if ')) {
+        ifStatementStack.push(line);
+        continue;
+      }
+
+      if (line.trim().toLowerCase().startsWith('elif ') ||
+          line.trim().toLowerCase().startsWith('else if ') ||
+          line.trim().toLowerCase() == 'else') {
+        String? popIfStatement = ifStatementStack.peek;
+        if (popIfStatement != null) {
+          if (popIfStatement.toLowerCase().trim().startsWith('if ') &&
+              popIfStatement.toLowerCase().trim().contains(
+                r'$\modmanageragl',
+              )) {
+            lines[i] =
+                ';Force fix syntax by NRMM, to prevent overlapped mods. Please fix the "if-elif-else-endif" statement manually.\n;$line';
+            forcedFix = true;
+            continue;
+          }
+        }
+      }
+
+      if (line.trim().toLowerCase() == "endif") {
+        ifStatementStack.pop();
+        continue;
+      }
+    }
+  }
+
   //add missing endif
   for (var section in sections) {
     if (_isExcludedSection(section.name) || _isKeySection(section.name)) {
@@ -2156,6 +2203,10 @@ void _moveEndifToCorrectPlace(List<IniSection> sections) {
   //which is currently not implemented
 
   for (var section in sections) {
+    if (_isExcludedSection(section.name) || _isKeySection(section.name)) {
+      continue;
+    }
+
     final lines = section.lines;
     StackCollection<String> ifStatementStack = StackCollection<String>();
 
