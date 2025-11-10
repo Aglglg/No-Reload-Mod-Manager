@@ -1432,6 +1432,18 @@ class _MainViewState extends ConsumerState<MainView>
               ),
             ),
           ),
+        if (SharedPrefUtils().useCustomXXMILib())
+          Align(
+            alignment: Alignment.topCenter,
+            child: Text(
+              'Intended to be used with Custom XXMI Lib by @Aglglg on Github',
+              style: GoogleFonts.poppins(
+                color: Colors.amber,
+                fontSize: 10 * sss,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
 
         ///Tab views
         IndexedStack(index: ref.watch(tabIndexProvider), children: _views),

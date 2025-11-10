@@ -1,0 +1,2 @@
+[Loader]
+manager = No_Reload_Mod_Manager.exe

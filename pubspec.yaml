@@ -96,6 +96,7 @@ flutter:
     - assets/images/app_icon.ico
     - assets/images/app_icon.png
     - assets/template_txt/listen_keypress_even_on_background.txt
+    - assets/template_txt/listen_keypress_manager.txt
     - assets/template_txt/template_group.txt
     - assets/template_txt/template_manager_group.txt
     - assets/keys_icon/

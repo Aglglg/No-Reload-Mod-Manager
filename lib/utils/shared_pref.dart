@@ -370,6 +370,13 @@ class SharedPrefUtils {
     return result ??= true;
   }
 
+  bool useCustomXXMILib() {
+    bool? result = _prefs?.getBool(keyUseCustomXXMILib);
+    return result ??= false;
+  }
+
+  static const String keyUseCustomXXMILib = 'customXXMILib';
+
   static const String keyTargetProcessWuwa = 'targetProcessWuwa';
   static const String keyTargetProcessGenshin = 'targetProcessGenshin';
   static const String keyTargetProcessHsr = 'targetProcessHsr';

@@ -942,7 +942,9 @@ Future<void> _createBackgroundKeypressIni(
 ) async {
   // Step 1: Load the .txt template from assets
   final template = await rootBundle.loadString(
-    'assets/template_txt/listen_keypress_even_on_background.txt',
+    SharedPrefUtils().useCustomXXMILib()
+        ? 'assets/template_txt/listen_keypress_manager.txt'
+        : 'assets/template_txt/listen_keypress_even_on_background.txt',
   );
 
   // Step 2: Create the .ini file
