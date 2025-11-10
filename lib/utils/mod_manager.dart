@@ -858,6 +858,12 @@ Future<List<TextSpan>> updateModData(
 
           final modFullPaths = await getModsOnGroup(groupDir, false);
 
+          for (var mod in modFullPaths) {
+            if (mod.modIcon == null) {
+              _tryAutoGetModIcon(mod.modDir);
+            }
+          }
+
           await Future.wait([
             for (var j = 0; j < modFullPaths.length; j++)
               if (j != 0 &&
@@ -916,6 +922,51 @@ Future<List<TextSpan>> updateModData(
   }
 
   return operationLogs;
+}
+
+//Mod Icon system is only looking at modPath/icon.png
+//if any icon.png or image file but not located at exactly that path, it will assume there's no mod icon
+//with this, it will recursive look for image file inside the mod folder, then copy that file to that exact location that will be written by mod icon system
+Future<void> _tryAutoGetModIcon(Directory modDir) async {
+  try {
+    final imagePaths =
+        await modDir
+            .list(recursive: true)
+            .where((file) => file is File)
+            .map((file) => file.path)
+            .where(
+              (path) =>
+                  path.toLowerCase().endsWith('.png') ||
+                  path.toLowerCase().endsWith('.jpg') ||
+                  path.toLowerCase().endsWith('.jpeg'),
+            )
+            .toList();
+
+    if (imagePaths.isNotEmpty) {
+      //make sure icon.png prioritized first, icon from jasm second, then other images
+      imagePaths.sort((a, b) {
+        final aName = p.basename(a).toLowerCase();
+        final bName = p.basename(b).toLowerCase();
+
+        int priority(String name) {
+          if (name == 'icon.png') return 0;
+          if (name == '.jasm_cover.jpg') return 1;
+          return 2; // all other images
+        }
+
+        final aPriority = priority(aName);
+        final bPriority = priority(bName);
+
+        if (aPriority != bPriority) return aPriority - bPriority;
+
+        // optional: secondary sort alphabetically for same priority
+        return aName.compareTo(bName);
+      });
+
+      //copy the index 0 to root mod dir
+      File(imagePaths[0]).copy(p.join(modDir.path, 'icon.png'));
+    }
+  } catch (_) {}
 }
 
 Future<void> _tryRenameOldManagedFolder(String modsPath) async {
