@@ -111,3 +111,8 @@ final isAutoGenerateFolderIconProvider = StateProvider<bool>((ref) {
   SharedPrefUtils().tryInit();
   return SharedPrefUtils().isAutoGenerateFolderIcon();
 });
+
+final isAutoPinWindowProvider = StateProvider<bool>((ref) {
+  SharedPrefUtils().tryInit();
+  return SharedPrefUtils().isAutoPinWindow();
+});

@@ -1345,12 +1345,13 @@ class _MainViewState extends ConsumerState<MainView>
       DynamicDirectoryWatcher.stop();
     } else {
       String foregroundProcessName = getForegroundWindowProcessName();
+      bool autoPinWindow = ref.read(isAutoPinWindowProvider);
       if (foregroundProcessName == SharedPrefUtils().getWuwaTargetProcess()) {
         if (!ref.read(alertDialogShownProvider)) {
           ref.read(targetGameProvider.notifier).state =
               TargetGame.Wuthering_Waves;
         }
-        ref.read(windowIsPinnedProvider.notifier).state = false;
+        ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
         await windowManager.focus();
       } else if (foregroundProcessName ==
@@ -1359,7 +1360,7 @@ class _MainViewState extends ConsumerState<MainView>
           ref.read(targetGameProvider.notifier).state =
               TargetGame.Genshin_Impact;
         }
-        ref.read(windowIsPinnedProvider.notifier).state = false;
+        ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
         await windowManager.focus();
       } else if (foregroundProcessName ==
@@ -1368,7 +1369,7 @@ class _MainViewState extends ConsumerState<MainView>
           ref.read(targetGameProvider.notifier).state =
               TargetGame.Honkai_Star_Rail;
         }
-        ref.read(windowIsPinnedProvider.notifier).state = false;
+        ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
         await windowManager.focus();
       } else if (foregroundProcessName ==
@@ -1377,7 +1378,7 @@ class _MainViewState extends ConsumerState<MainView>
           ref.read(targetGameProvider.notifier).state =
               TargetGame.Zenless_Zone_Zero;
         }
-        ref.read(windowIsPinnedProvider.notifier).state = false;
+        ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
         await windowManager.focus();
       }

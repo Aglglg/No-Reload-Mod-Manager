@@ -704,6 +704,43 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                         ],
                       ),
 
+                      Container(height: 10 * sss),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            height: 25 * sss,
+                            width: 35 * sss,
+                            child: FittedBox(
+                              fit: BoxFit.fill,
+                              child: Switch(
+                                value: ref.watch(isAutoPinWindowProvider),
+                                onChanged: (value) {
+                                  SharedPrefUtils().setAutoPinWindow(value);
+                                  ref
+                                      .read(isAutoPinWindowProvider.notifier)
+                                      .state = value;
+                                },
+                                activeColor: Colors.blue,
+                                trackOutlineWidth: WidgetStatePropertyAll(0),
+                                trackOutlineColor: WidgetStatePropertyAll(
+                                  Colors.transparent,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Container(width: 15 * sss),
+                          Text(
+                            'Auto pin window'.tr(),
+                            style: GoogleFonts.poppins(
+                              color: const Color.fromARGB(255, 255, 255, 255),
+                              fontSize: 12 * sss,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+
                       Container(height: 15 * sss),
                       Divider(
                         color: const Color.fromARGB(127, 33, 149, 243),

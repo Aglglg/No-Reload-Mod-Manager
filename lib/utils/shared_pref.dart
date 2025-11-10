@@ -370,6 +370,15 @@ class SharedPrefUtils {
     return result ??= true;
   }
 
+  Future<void> setAutoPinWindow(bool value) async {
+    await _prefs?.setBool(keyAutoPinWindow, value);
+  }
+
+  bool isAutoPinWindow() {
+    bool? result = _prefs?.getBool(keyAutoPinWindow);
+    return result ??= false;
+  }
+
   bool useCustomXXMILib() {
     bool? result = _prefs?.getBool(keyUseCustomXXMILib);
     return result ??= false;
@@ -416,6 +425,8 @@ class SharedPrefUtils {
   static const String keyHsrUpdateMod = "hsrUpdateMod";
 
   static const String keyAutoGenerateFolderIcon = "autoFolderIco";
+
+  static const String keyAutoPinWindow = "autoPinWindow";
 
   String getUserProfilePath() {
     if (Platform.isWindows) {
