@@ -261,12 +261,26 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
   Future<void> saveKeys() async {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       List<String> lowerCasedSections = [];
+      Map<String, String> pathToNamespaceMap = {};
       for (var childKey in childKeys.entries) {
         final keyCard = childKey.value;
         final keybindData = childKey.key;
         if (keyCard.currentState != null) {
+          //
+          if (!pathToNamespaceMap.containsKey(
+            keybindData.iniFileAsLines.iniFile.path,
+          )) {
+            pathToNamespaceMap[keybindData
+                .iniFileAsLines
+                .iniFile
+                .path] = _getNamespaceLowercase(
+              keybindData.iniFileAsLines.lines,
+              keybindData.iniFileAsLines.iniFile.path,
+            );
+          }
+
           lowerCasedSections.add(
-            "${keyCard.currentState!.updateKeybindAndGetSectionNameLowerCased()}${_getNamespaceLowercase(keybindData.iniFileAsLines.lines, keybindData.iniFileAsLines.iniFile.path)}",
+            "${keyCard.currentState!.updateKeybindAndGetSectionNameLowerCased()}${pathToNamespaceMap[keybindData.iniFileAsLines.iniFile.path]}",
           );
         }
       }
