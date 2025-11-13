@@ -212,5 +212,6 @@
   "Error! Archive not supported": "错误！不支持的压缩包：{}\n\n",
   "Error! Cannot extract mod archive": "错误！无法解压：{}",
   "Invalid keys": "无效按键",
-  "Auto pin window": "自动固定窗口"
+  "Auto pin window": "自动固定窗口",
+  "Click keybind to simulate keypress": "点击按键切换以模拟按键操作"
 }

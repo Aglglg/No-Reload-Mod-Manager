@@ -1354,11 +1354,11 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
               ? [
                 _needReload
                     ? TextButton(
-                      onPressed: () {
+                      onPressed: () async {
                         Navigator.of(context).pop();
                         ref.read(alertDialogShownProvider.notifier).state =
                             false;
-                        simulateKeyF10();
+                        await simulateKeyF10();
                         triggerRefresh(ref);
                       },
                       child: Text(
@@ -2890,11 +2890,11 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
               ? []
               : [
                 TextButton(
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.of(context).pop();
                     ref.read(alertDialogShownProvider.notifier).state = false;
                     if (_namespaceChanged) {
-                      simulateKeyF10();
+                      await simulateKeyF10();
                     }
                   },
                   child: Text(

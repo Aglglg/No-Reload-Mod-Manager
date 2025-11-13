@@ -3,8 +3,8 @@ import 'package:ffi/ffi.dart';
 import 'package:no_reload_mod_manager/utils/keypress_simulate.dart';
 import 'package:win32/win32.dart';
 
-void simulateKeyF10() {
-  _simulateKeypressOnly(VK_F10);
+Future<void> simulateKeyF10() async {
+  await _simulateKeypressOnly(VK_F10);
 }
 
 Future<void> simulateKeySelectMod(int realGroupIndex, int realModIndex) async {

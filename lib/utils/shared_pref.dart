@@ -379,6 +379,15 @@ class SharedPrefUtils {
     return result ??= false;
   }
 
+  Future<void> setKeybindSimulateKeypress(bool value) async {
+    await _prefs?.setBool(keyKeybindSimulateKeypress, value);
+  }
+
+  bool keybindSimulateKeypress() {
+    bool? result = _prefs?.getBool(keyKeybindSimulateKeypress);
+    return result ??= false;
+  }
+
   bool useCustomXXMILib() {
     bool? result = _prefs?.getBool(keyUseCustomXXMILib);
     return result ??= false;
@@ -427,6 +436,8 @@ class SharedPrefUtils {
   static const String keyAutoGenerateFolderIcon = "autoFolderIco";
 
   static const String keyAutoPinWindow = "autoPinWindow";
+
+  static const String keyKeybindSimulateKeypress = "keybindSimulateKeypress";
 
   String getUserProfilePath() {
     if (Platform.isWindows) {

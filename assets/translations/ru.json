@@ -212,5 +212,6 @@
   "Error! Archive not supported": "Ошибка! Архив {} не поддерживается.\n\n",
   "Error! Cannot extract mod archive": "Ошибка! Не удалось извлечь: {}",
   "Invalid keys": "Неверные клавиши",
-  "Auto pin window": "Автоматически закрепить окно"
+  "Auto pin window": "Автоматически закрепить окно",
+  "Click keybind to simulate keypress": "Нажмите привязку, чтобы имитировать нажатие клавиши"
 }

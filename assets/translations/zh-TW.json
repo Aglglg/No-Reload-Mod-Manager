@@ -212,5 +212,6 @@
   "Error! Archive not supported": "錯誤！不支援的壓縮檔：{}\n\n",
   "Error! Cannot extract mod archive": "錯誤！無法解壓：{}",
   "Invalid keys": "無效按鍵",
-  "Auto pin window": "自動釘選視窗"
+  "Auto pin window": "自動釘選視窗",
+  "Click keybind to simulate keypress": "點擊按鍵切換以模擬按鍵操作"
 }

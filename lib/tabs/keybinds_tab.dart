@@ -14,6 +14,7 @@ import 'package:no_reload_mod_manager/utils/keypress_simulator_manager.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
+import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
@@ -252,7 +253,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
         for (var iniFileAsline in iniFilesAsLines) {
           await iniFileAsline.saveKeybind();
         }
-        simulateKeyF10();
+        await simulateKeyF10();
         setState(() {
           isEditing = false;
         });
@@ -296,20 +297,64 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
               padding: EdgeInsets.only(top: 85 * sss),
               child: Align(
                 alignment: Alignment.topCenter,
-                child: Text(
-                  "$groupName - ${modData!.modName}",
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14 * sss,
-                  ),
+                child: Column(
+                  children: [
+                    Text(
+                      "$groupName - ${modData!.modName}",
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14 * sss,
+                      ),
+                    ),
+                    SizedBox(height: 5 * sss),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          height: 25 * sss,
+                          width: 35 * sss,
+                          child: FittedBox(
+                            fit: BoxFit.fill,
+                            child: Switch(
+                              value: ref.watch(keybindSimulateKeypressProvider),
+                              onChanged: (value) {
+                                SharedPrefUtils().setKeybindSimulateKeypress(
+                                  value,
+                                );
+                                ref
+                                    .read(
+                                      keybindSimulateKeypressProvider.notifier,
+                                    )
+                                    .state = value;
+                              },
+                              activeColor: Colors.blue,
+                              trackOutlineWidth: WidgetStatePropertyAll(0),
+                              trackOutlineColor: WidgetStatePropertyAll(
+                                Colors.transparent,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Container(width: 15 * sss),
+                        Text(
+                          'Click keybind to simulate keypress'.tr(),
+                          style: GoogleFonts.poppins(
+                            color: const Color.fromARGB(255, 255, 255, 255),
+                            fontSize: 12 * sss,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ),
 
             Padding(
               padding: EdgeInsets.only(
-                top: 115 * sss,
+                top: 150 * sss,
                 right: 45 * sss,
                 left: 45 * sss,
                 bottom: 40 * sss,
@@ -411,9 +456,9 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                 child: Transform.scale(
                   scale: sss,
                   child: TextButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (isEditing) {
-                        saveKeys();
+                        await saveKeys();
                       } else {
                         setState(() {
                           isEditing = true;
@@ -558,7 +603,7 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
     final sss = ref.watch(zoomScaleProvider);
     return ElevatedButton(
       onPressed:
-          widget.isEditing
+          widget.isEditing || !ref.watch(keybindSimulateKeypressProvider)
               ? null
               : () async {
                 if (controllers.length <= 1) {
@@ -641,7 +686,10 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
                         controllers.length > 1
                             ? TextButton(
                               onPressed:
-                                  widget.isEditing
+                                  widget.isEditing ||
+                                          !ref.watch(
+                                            keybindSimulateKeypressProvider,
+                                          )
                                       ? null
                                       : () async {
                                         await _simulateKey(index, sss);

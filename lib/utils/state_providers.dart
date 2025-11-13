@@ -116,3 +116,8 @@ final isAutoPinWindowProvider = StateProvider<bool>((ref) {
   SharedPrefUtils().tryInit();
   return SharedPrefUtils().isAutoPinWindow();
 });
+
+final keybindSimulateKeypressProvider = StateProvider<bool>((ref) {
+  SharedPrefUtils().tryInit();
+  return SharedPrefUtils().keybindSimulateKeypress();
+});

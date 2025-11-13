@@ -212,5 +212,6 @@
   "Error! Archive not supported": "Error! Archive {} not supported.\n\n",
   "Error! Cannot extract mod archive": "Error! Cannot extract: {}",
   "Invalid keys": "Invalid keys",
-  "Auto pin window": "Auto pin window"
+  "Auto pin window": "Auto pin window",
+  "Click keybind to simulate keypress": "Click keybind to simulate keypress"
 }

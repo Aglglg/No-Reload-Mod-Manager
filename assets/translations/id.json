@@ -212,5 +212,6 @@
   "Error! Archive not supported": "Error! Arsip {} tidak didukung.\n\n",
   "Error! Cannot extract mod archive": "Error! Gagal ekstrak: {}",
   "Invalid keys": "Tombol tidak valid",
-  "Auto pin window": "Otomatis pin window"
+  "Auto pin window": "Otomatis pin window",
+  "Click keybind to simulate keypress": "Simulasikan tombol saat diklik"
 }
