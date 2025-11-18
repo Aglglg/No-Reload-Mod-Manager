@@ -4,8 +4,7 @@ How? Of course, first of all you must know [How to contribute to open sourced pr
 
 ---
 ### To-do list
-- Preset system.
-- (Try) select multiple mods in the same group.
+- A system that warns or removes mods with broken `conditional statement` so they don’t interfere with other mods in the manager.
 ---
 
 # No Reload Mod Manager / Skin Selection
@@ -26,6 +25,7 @@ This tool supports **mouse**, **keyboard**, and **gamepad (XInput only)** inputs
 ## 🚀 Features
 - **Mod Selection**: Choose and apply mods on the fly.
 - **Keybinding Editor**: Modify mod keybindings conveniently.
+- UI Buttons to trigger Keybinds/Toggles without pressing the keyboard.
 
 ---
 
@@ -103,9 +103,10 @@ Even though this is not main mod loader or mod tool, and only tool to organize m
 - The mods that you added also being modified, you can revert the changes by dragging it to Reverter area on Settings.
 - **XXMI DLL/3dmigoto (WWMI/GIMI/SRMI/ZZMI) will receives keypresses in the background**, automatically add background_keypress.ini to your Mods folder.
 
-## 🔑 Keybindings Simulated
+## Keybindings Simulated
 - **Clear Key (VK_CLEAR), Space Key (VK_SPACE), Enter Key (VK_RETURN)**
 - **Mouse position x, y coordinate** - determine group index & mod index
+- **Any keys listed from your mods** - if you enable click to simulate mod keybinds
 
 > 🛑 **Note:** If your PC/system uses these keys for other shortcuts, you'll need to **change your system settings** if you can/if you want.
 
@@ -113,13 +114,12 @@ Even though this is not main mod loader or mod tool, and only tool to organize m
 
 ## 🛡️ Security Concerns
 - Runs in the **background**, app icon can be seen on Tray.
-- **VirusTotal Reports**: Some antivirus programs may flag this tool's **installer** file. If you scan the installed app it's actually fine, but if you scan the installer, it might be flagged.
+- **VirusTotal Reports**: Some antivirus programs may flag this tool's files.
 - **If unsure, check the GitHub source code before use.** Or build it yourself if you understand flutter(for personal use only). Or just don't use it.
 
 ---
 
-## 🙏 Credits
+## Credits
 Special thanks to:
-- **All bug reporters, testers, users, and supporters!** ❤️
-- Everyone who cares, with their own unique way.
+- **All bug reporters, contributors, testers, users, and especially _supporters_!** ❤️
 ---
