@@ -936,9 +936,18 @@ Future<void> _tryAutoGetModIcon(Directory modDir) async {
             .map((file) => file.path)
             .where(
               (path) =>
-                  path.toLowerCase().endsWith('.png') ||
-                  path.toLowerCase().endsWith('.jpg') ||
-                  path.toLowerCase().endsWith('.jpeg'),
+                  //format
+                  (path.toLowerCase().endsWith('.png') ||
+                      path.toLowerCase().endsWith('.jpg') ||
+                      path.toLowerCase().endsWith('.jpeg')) &&
+                  //exception
+                  (!p.basename(path).toLowerCase().contains('normal') &&
+                      !p.basename(path).toLowerCase().contains('material') &&
+                      !p.basename(path).toLowerCase().contains('light') &&
+                      !p.basename(path).toLowerCase().contains('diffuse') &&
+                      !p.basename(path).toLowerCase().contains('glow') &&
+                      !p.basename(path).toLowerCase().contains('t=') &&
+                      !p.basename(path).toLowerCase().contains('ps=')),
             )
             .toList();
 
@@ -1554,15 +1563,21 @@ Future<List<IniSection>> _parseIniSections(List<String> allLines) async {
 
   for (var section in sections) {
     if (section.name.toLowerCase().startsWith('texture')) {
-      bool matchPriorityIsPresent = false;
+      bool matchKeywordIsPresent = false;
       for (var line in section.lines) {
-        if (line.trim().toLowerCase().startsWith('match_priority')) {
-          matchPriorityIsPresent = true;
+        if (line.trim().toLowerCase().startsWith('match_priority') ||
+            line.trim().toLowerCase().startsWith('match_first_vertex') ||
+            line.trim().toLowerCase().startsWith('match_first_index') ||
+            line.trim().toLowerCase().startsWith('match_first_instance') ||
+            line.trim().toLowerCase().startsWith('match_vertex_count') ||
+            line.trim().toLowerCase().startsWith('match_index_count') ||
+            line.trim().toLowerCase().startsWith('match_instance_count')) {
+          matchKeywordIsPresent = true;
           break;
         }
       }
 
-      if (!matchPriorityIsPresent) {
+      if (!matchKeywordIsPresent) {
         //find the "bottom content" position:
         //skip any trailing blank lines or comments
         int insertIndex = section.lines.length; //default: end
