@@ -4,7 +4,7 @@ How? Of course, first of all you must know [How to contribute to open sourced pr
 
 ---
 ### To-do list
-- A system that warns or removes mods with broken `conditional statement` so they don’t interfere with other mods in the manager.
+-
 ---
 
 # No Reload Mod Manager / Skin Selection
