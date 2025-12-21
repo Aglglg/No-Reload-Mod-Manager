@@ -1,10 +1,12 @@
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:math';
 import 'dart:ui';
 import 'package:auto_updater/auto_updater.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/services.dart';
+import 'package:no_reload_mod_manager/ini_handler_bridge.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
 import 'package:no_reload_mod_manager/utils/languages_name.dart';
@@ -1564,7 +1566,36 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
     }
   }
 
-  void _onUpdateModDataClicked() {
+  Future<void> _onUpdateModDataClicked() async {
+    //TODO: GET ERRORED LINES BEFORE MODIFYING INI FILES
+    // final result = await Isolate.run(() {
+    //   return getErroredLines(r"d3dx.ini path", r"base path");
+    // });
+
+    // if (result == null) {
+    //   print("No errored lines found or failed to load.");
+    //   return;
+    // }
+
+    // try {
+    //   print("Found ${result.count} errors:");
+
+    //   for (var i = 0; i < result.count; i++) {
+    //     final errorData = result[i];
+
+    //     print("--- Error #$i ---");
+    //     print("Line Index: ${errorData['lineIndex']}");
+    //     print("File:       ${errorData['filePath']}");
+    //     print("Line text:  ${errorData['trimmedLine']}");
+    //     print("Reason:     ${errorData['reason']}");
+    //   }
+    // } catch (e) {
+    //   print("Error reading data: $e");
+    // } finally {
+    //   result.dispose();
+    //   print("Memory released.");
+    // }
+
     ref.read(alertDialogShownProvider.notifier).state = true;
     showDialog(
       barrierDismissible: false,
@@ -1842,8 +1873,8 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
             children: [
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () {
-                    _onUpdateModDataClicked();
+                  onPressed: () async {
+                    await _onUpdateModDataClicked();
                   },
                   style: ElevatedButton.styleFrom(
                     overlayColor: Colors.white,
