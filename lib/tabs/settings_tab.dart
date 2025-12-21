@@ -6,7 +6,7 @@ import 'package:auto_updater/auto_updater.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/services.dart';
-import 'package:no_reload_mod_manager/ini_handler_bridge.dart';
+import 'package:no_reload_mod_manager/utils/ini_handler_bridge.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
 import 'package:no_reload_mod_manager/utils/languages_name.dart';

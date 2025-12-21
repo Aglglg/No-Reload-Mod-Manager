@@ -50,7 +50,9 @@ typedef _FreeErroredLinesNDart =
     Void Function(Pointer<ErroredLineFFI> ptr, Int32 count);
 
 final DynamicLibrary _lib = () {
-  if (Platform.isWindows) return DynamicLibrary.open('XXMILib-Ini-Handler.dll');
+  if (Platform.isWindows) {
+    return DynamicLibrary.open('xxmi_lib_ini_handler.dll');
+  }
   throw UnsupportedError('Platform not supported');
 }();
 
