@@ -106,7 +106,7 @@
   "Validating Mods Path...": "Validating Mods Path...\n",
   "Mods path doesn't exist": "Mods path doesn't exist",
   "Modifying mods...": "Modifying mods...",
-  "Mods path is invalid. Make sure you're targetting \"Mods\" folder.": "Mods path is invalid. Make sure you're targetting \"Mods\" folder.",
+  "Mods path is invalid. Make sure you're targetting \"Mods\" folder.": "Invalid Mods path.\nMake sure you’re targeting the Mods folder, and that it is located in the same directory as d3dx.ini.",
   "Manage mods": "Manage mods",
   "Close & Reload": "Close & Reload",
   "Close": "Close",

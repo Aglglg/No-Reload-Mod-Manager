@@ -43,6 +43,8 @@ class ConstantVar {
 
   static const String urlValidKeysExample =
       "https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes";
+
+  static List<String> knownModdingLibraries = ["RabbitFx", "global/orfix"];
 }
 
 enum TargetGame {

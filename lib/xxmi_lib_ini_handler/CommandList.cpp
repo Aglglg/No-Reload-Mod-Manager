@@ -358,7 +358,7 @@ static void tokenise(Globals& G, const std::wstring* expression, CommandListSynt
 
 		if (remain[0] < '0' || remain[0] > '9') {
 			pos = remain.find_first_not_of(L"abcdefghijklmnopqrstuvwxyz_0123456789$.");
-			if (remain[pos] == L'\\') {
+			if (pos != remain.npos && remain[pos] == L'\\') {
 				end_pos = remain.find_first_of(L"=&|+-/*><%!", pos + 1);
 				start_pos = remain.rfind(L'\\', end_pos) + 1;
 				pos = remain.find_first_not_of(L"abcdefghijklmnopqrstuvwxyz_0123456789.", start_pos);

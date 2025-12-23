@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_group_folder_icon.dart';
 import 'package:no_reload_mod_manager/utils/force_read_as_utf8.dart';
+import 'package:no_reload_mod_manager/utils/ini_handler_bridge.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:no_reload_mod_manager/utils/stack_collection.dart';
@@ -824,6 +826,44 @@ Future<List<TextSpan>> updateModData(
   List<TextSpan> operationLogs = [];
   setBoolIfNeedAutoReload(true);
   bool needReloadManual = false;
+
+  //TODO: REWRITE MOD MANAGER TO USE ERRORED LINES RESULT
+  final basePath = p.dirname(modsPath);
+
+  final d3dxIni = p.join(basePath, "d3dx.ini");
+
+  final result = await Isolate.run(() {
+    return getErroredLines(
+      d3dxIni,
+      basePath,
+      ConstantVar.knownModdingLibraries,
+    );
+  });
+
+  if (result == null) {
+    print("No errored lines found or failed to load.");
+    return operationLogs;
+  }
+
+  try {
+    print("Found ${result.count} errors:");
+
+    for (var i = 0; i < result.count; i++) {
+      final errorData = result[i];
+
+      print("--- Error #$i ---");
+      print("File:       ${errorData['filePath']}");
+      print("Line Index: ${errorData['lineIndex']}");
+      print("Line text:  ${errorData['trimmedLine']}");
+      print("Reason:     ${errorData['reason']}\n");
+    }
+  } catch (e) {
+    print("Error reading data: $e");
+  } finally {
+    result.dispose();
+    print("Memory released.");
+  }
+  return operationLogs;
   final managedPath = p.join(modsPath, ConstantVar.managedFolderName);
   try {
     //Try to rename old managed folder if managed folder not exist yet

@@ -106,7 +106,7 @@
   "Validating Mods Path...": "正在验证模组路径。。。\n",
   "Mods path doesn't exist": "模组路径不存在",
   "Modifying mods...": "正在修改模组。。。",
-  "Mods path is invalid. Make sure you're targetting \"Mods\" folder.": "模组路径无效，请确保路径指向'Mods'文件夹。",
+  "Mods path is invalid. Make sure you're targetting \"Mods\" folder.": "模组路径无效。\n请确保路径指向 Mods 文件夹，并且该文件夹与 d3dx.ini 位于同一目录。",
   "Manage mods": "管理模组",
   "Close & Reload": "关闭并重新加载",
   "Close": "关闭",

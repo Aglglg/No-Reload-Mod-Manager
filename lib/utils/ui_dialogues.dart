@@ -1215,6 +1215,18 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
     super.dispose();
   }
 
+  Future<bool> modsPathIsLocatedInTheSameDirectoryAsDllAndMainIniFile(
+    String path,
+  ) async {
+    final basePath = p.dirname(path);
+    final d3dxIni = p.join(basePath, "d3dx.ini");
+    final d3d11Dll = p.join(basePath, "d3d11.dll");
+    if (await File(d3dxIni).exists() && await File(d3d11Dll).exists()) {
+      return true;
+    }
+    return false;
+  }
+
   Future<void> validatingModsPath() async {
     setState(() {
       contents = [];
@@ -1226,8 +1238,12 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
       );
     });
 
+    bool validModsPath = false;
+
     try {
-      if (!await Directory(widget.modsPath).exists()) {
+      final modsPath = p.normalize(widget.modsPath);
+
+      if (!await Directory(modsPath).exists()) {
         setState(() {
           _showClose = true;
           contents = [
@@ -1237,8 +1253,11 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
             ),
           ];
         });
-      } else if (widget.modsPath.toLowerCase().endsWith('mods') ||
-          widget.modsPath.toLowerCase().endsWith('mods\\')) {
+      } else if ((modsPath.toLowerCase().endsWith('mods') ||
+              modsPath.toLowerCase().endsWith('mods\\')) &&
+          await modsPathIsLocatedInTheSameDirectoryAsDllAndMainIniFile(
+            modsPath,
+          )) {
         setState(() {
           contents = [
             TextSpan(
@@ -1247,42 +1266,8 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
             ),
           ];
         });
-        final operationResults = await updateModData(widget.modsPath, (
-          needReload,
-        ) {
-          setState(() {
-            _needReload = needReload;
-          });
-        });
-        setState(() {
-          _showClose = true;
-          contents = operationResults;
-        });
-        _scrollToBottom();
-        final groupFolders = await getGroupFolders(
-          p.join(widget.modsPath, ConstantVar.managedFolderName),
-        );
-
-        //No need to update mod data
-        SharedPrefUtils().setCurrentTargetGameNeedUpdateMod(
-          ref.read(targetGameProvider),
-          false,
-        );
-
-        //Auto group Icon
-        final futures = <Future>[];
-
-        for (var group in groupFolders) {
-          final iconPath = p.join(group.$1.path, 'icon.png');
-          final iconFile = File(iconPath);
-
-          if (!await iconFile.exists()) {
-            if (!context.mounted) return;
-            futures.add(tryGetIcon(group.$1.path, ref.read(autoIconProvider)));
-          }
-        }
-
-        await Future.wait(futures);
+        //
+        validModsPath = true;
         //
       } else {
         setState(() {
@@ -1310,6 +1295,47 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
         ];
       });
     }
+
+    if (validModsPath) {
+      await manageMods(p.normalize(widget.modsPath));
+    }
+  }
+
+  Future<void> manageMods(String modsPath) async {
+    final operationResults = await updateModData(modsPath, (needReload) {
+      setState(() {
+        _needReload = needReload;
+      });
+    });
+    setState(() {
+      _showClose = true;
+      contents = operationResults;
+    });
+    _scrollToBottom();
+    final groupFolders = await getGroupFolders(
+      p.join(modsPath, ConstantVar.managedFolderName),
+    );
+
+    //No need to update mod data
+    SharedPrefUtils().setCurrentTargetGameNeedUpdateMod(
+      ref.read(targetGameProvider),
+      false,
+    );
+
+    //Auto group Icon
+    final futures = <Future>[];
+
+    for (var group in groupFolders) {
+      final iconPath = p.join(group.$1.path, 'icon.png');
+      final iconFile = File(iconPath);
+
+      if (!await iconFile.exists()) {
+        if (!context.mounted) return;
+        futures.add(tryGetIcon(group.$1.path, ref.read(autoIconProvider)));
+      }
+    }
+
+    await Future.wait(futures);
   }
 
   Future<void> _scrollToBottom() async {

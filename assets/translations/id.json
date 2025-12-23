@@ -106,7 +106,7 @@
   "Validating Mods Path...": "Memvalidasi Mods Path...\n",
   "Mods path doesn't exist": "Mods path tidak ada",
   "Modifying mods...": "Memodifikasi mod...",
-  "Mods path is invalid. Make sure you're targetting \"Mods\" folder.": "Mods path tidak valid. Pastikan untuk menargetkan folder \"Mods\".",
+  "Mods path is invalid. Make sure you're targetting \"Mods\" folder.": "Mods path tidak valid.\nPastikan untuk menargetkan folder \"Mods\", dan harus berada di lokasi yang sama dengan d3dx.ini.",
   "Manage mods": "Manage/kelola mod",
   "Close & Reload": "Tutup & Reload",
   "Close": "Tutup",
