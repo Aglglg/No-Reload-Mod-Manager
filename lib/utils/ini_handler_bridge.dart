@@ -39,10 +39,21 @@ final class ErroredLineFFI extends Struct {
   external Pointer<Utf16> reason;
 }
 
-typedef _GetErroredLinesNDart =
+typedef _GetErroredLinesNative =
     Pointer<ErroredLineFFI> Function(
       Pointer<Utf8> path,
       Pointer<Utf8> basePath,
+      Pointer<Pointer<Utf8>> knownLibNamespaces,
+      Int32 knownLibNamespacesCount,
+      Pointer<Int32> outCount,
+    );
+
+typedef _GetErroredLinesDart =
+    Pointer<ErroredLineFFI> Function(
+      Pointer<Utf8> path,
+      Pointer<Utf8> basePath,
+      Pointer<Pointer<Utf8>> knownLibNamespaces,
+      int knownLibNamespacesCount,
       Pointer<Int32> outCount,
     );
 
@@ -57,7 +68,7 @@ final DynamicLibrary _lib = () {
 }();
 
 final _getErroredFlowControlLines = _lib
-    .lookupFunction<_GetErroredLinesNDart, _GetErroredLinesNDart>(
+    .lookupFunction<_GetErroredLinesNative, _GetErroredLinesDart>(
       'GetErroredFlowControlLines',
     );
 
@@ -70,19 +81,41 @@ final _freeErroredFlowControlLinesSnapshot = _lib.lookupFunction<
 //////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////
 
-ErroredLinesResult? getErroredLines(String path, String basePath) {
+ErroredLinesResult? getErroredLines(
+  String path,
+  String basePath,
+  List<String> knownLibNamespaces,
+) {
   final pathPtr = path.toNativeUtf8();
   final basePtr = basePath.toNativeUtf8();
   final countPtr = calloc<Int32>();
 
+  final knownLibNamespacesPtrs = calloc<Pointer<Utf8>>(
+    knownLibNamespaces.length,
+  );
+
+  for (int i = 0; i < knownLibNamespaces.length; i++) {
+    knownLibNamespacesPtrs[i] = knownLibNamespaces[i].toNativeUtf8();
+  }
+
   try {
-    final resultPtr = _getErroredFlowControlLines(pathPtr, basePtr, countPtr);
+    final resultPtr = _getErroredFlowControlLines(
+      pathPtr,
+      basePtr,
+      knownLibNamespacesPtrs,
+      knownLibNamespaces.length,
+      countPtr,
+    );
     final count = countPtr.value;
 
     if (resultPtr == nullptr || count <= 0) return null;
 
     return ErroredLinesResult(resultPtr, count);
   } finally {
+    for (int i = 0; i < knownLibNamespaces.length; i++) {
+      malloc.free(knownLibNamespacesPtrs[i]);
+    }
+    malloc.free(knownLibNamespacesPtrs);
     malloc.free(pathPtr);
     malloc.free(basePtr);
     malloc.free(countPtr);

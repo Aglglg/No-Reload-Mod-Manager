@@ -99,6 +99,9 @@ struct IniSection {
 
 	std::wstring ini_namespace;
 	std::wstring ini_path;
+
+
+	std::wstring full_path;
 };
 
 typedef std::map<std::wstring, IniSection, WStringInsensitiveLess> IniSections;

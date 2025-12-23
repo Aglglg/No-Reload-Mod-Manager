@@ -17,6 +17,8 @@ extern "C" {
     API ErroredLine_FFI* GetErroredFlowControlLines(
         const char* path,
         const char* base_path,
+        const char** known_lib_namespaces,
+        int32_t known_lib_namespaces_count,
         int32_t* out_count
     );
 

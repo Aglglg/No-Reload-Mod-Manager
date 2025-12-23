@@ -509,6 +509,8 @@ public:
 };
 typedef std::map<std::wstring, ShaderRegexGroup> ShaderRegexGroups;
 
+bool ParseCommandListGeneralCommands(Globals& G, const wchar_t* key, std::wstring* val, const std::wstring* ini_namespace,
+	const std::wstring& full_path, int line_index, const std::wstring line);
 bool ParseCommandListVariableAssignment(Globals& G, const wchar_t* section,
 	const wchar_t* key, std::wstring* val, const std::wstring* raw_line,
 	CommandList* command_list, CommandList* pre_command_list, CommandList* post_command_list,

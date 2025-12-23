@@ -83,6 +83,138 @@ bool declare_local_variable(Globals& G, const wchar_t* section, std::wstring& na
 	return true;
 }
 
+static bool ParseRunShader(Globals& G, std::wstring* val, const std::wstring* ini_namespace)
+{
+	//Only to determine if specified customshader section is exist somewhere
+	ExplicitCommandListSections::iterator shader;
+	std::wstring namespaced_section;
+
+	std::wstring shader_section(val->c_str());
+
+	shader = G.customShaderSections.end();
+	if (get_namespaced_section_name_lower(&shader_section, ini_namespace, &namespaced_section))
+		shader = G.customShaderSections.find(namespaced_section);
+	if (shader == G.customShaderSections.end())
+		shader = G.customShaderSections.find(shader_section);
+	if (shader == G.customShaderSections.end())
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool ParseRunExplicitCommandList(Globals& G, std::wstring* val, const std::wstring* ini_namespace)
+{
+	//Only to determine if specified CommandList section is exist somewhere
+	ExplicitCommandListSections::iterator command_list;
+	std::wstring namespaced_section;
+
+	std::wstring commandlist_section(val->c_str());
+
+	command_list = G.explicitCommandListSections.end();
+	if (get_namespaced_section_name_lower(&commandlist_section, ini_namespace, &namespaced_section))
+		command_list = G.explicitCommandListSections.find(namespaced_section);
+	if (command_list == G.explicitCommandListSections.end())
+		command_list = G.explicitCommandListSections.find(commandlist_section);
+	if (command_list == G.explicitCommandListSections.end())
+	{
+		return false;
+	}
+
+	return true;
+}
+
+static std::wstring get_between_first_and_last_backslash(const std::wstring& input)
+{
+	const size_t first = input.find(L'\\');
+	const size_t last = input.rfind(L'\\');
+
+	if (first == std::wstring::npos ||
+		last == std::wstring::npos ||
+		first >= last)
+	{
+		return std::wstring();
+	}
+
+	return input.substr(first + 1, last - first - 1);
+}
+
+bool ParseCommandListGeneralCommands(Globals& G, const wchar_t* key, std::wstring* val, const std::wstring* ini_namespace,
+	const std::wstring& full_path, int line_index, const std::wstring line)
+{
+	//only check for "run" key
+	if (!wcscmp(key, L"run")) {
+		if (!wcsncmp(val->c_str(), L"customshader", 12) || !wcsncmp(val->c_str(), L"builtincustomshader", 19))
+		{
+			bool success = ParseRunShader(G, val, ini_namespace);
+
+			//If a mod is trying to run known lib, but that known lib is not present
+			if (!success && val != nullptr)
+			{
+				//Keep in mind that the known lib namespace is on the value of "run = " and not ini_namespace in this function param
+				std::wstring called_namespace = get_between_first_and_last_backslash(val->c_str());
+
+				if (!called_namespace.empty())
+				{
+					auto item = G.known_lib_namespaces.find(called_namespace);
+					if (item != G.known_lib_namespaces.end()) {
+						//Only if haven't tracked yet
+						auto non_exist = G.already_known_nonexist_lib.find(called_namespace);
+						if (non_exist == G.already_known_nonexist_lib.end())
+						{
+							G.already_known_nonexist_lib.insert(called_namespace);
+							G.errored_lines.insert(ErroredLine{
+							full_path,
+							line_index,
+							line,
+							L"A mod trying to run non existent library: " + called_namespace
+								});
+						}
+					}
+				}
+			}
+
+			return success;
+		}
+
+		if (!wcsncmp(val->c_str(), L"commandlist", 11) || !wcsncmp(val->c_str(), L"builtincommandlist", 18))
+		{
+			bool success = ParseRunExplicitCommandList(G, val, ini_namespace);
+
+			//If a mod is trying to run known lib, but that known lib is not present
+			if (!success && val != nullptr)
+			{
+				//Keep in mind that the known lib namespace is on the value of "run = " and not ini_namespace in this function param
+				std::wstring called_namespace = get_between_first_and_last_backslash(val->c_str());
+
+				if (!called_namespace.empty())
+				{
+					auto item = G.known_lib_namespaces.find(called_namespace);
+					if (item != G.known_lib_namespaces.end()) {
+						//Only if haven't tracked yet
+						auto non_exist = G.already_known_nonexist_lib.find(called_namespace);
+						if (non_exist == G.already_known_nonexist_lib.end())
+						{
+							G.already_known_nonexist_lib.insert(called_namespace);
+							G.errored_lines.insert(ErroredLine{
+							full_path,
+							line_index,
+							line,
+							L"A mod trying to run non existent library: " + called_namespace
+								});
+						}
+					}
+				}
+			}
+
+			return success;
+		}
+	}
+
+	return false;
+}
+
 void CommandList::clear()
 {
 	commands.clear();

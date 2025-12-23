@@ -275,12 +275,48 @@ static void ParseIniSectionLine(Globals& G, std::wstring* wline, std::wstring* s
 	if (!inserted && !allow_duplicate_sections) {
 		//wprintf(L"[WARNING] Duplicate section found - [%ls]\n", section->c_str());
 
+		//If duplicate section on known lib namespaces, that means user having multiple known libraries
+		if (ini_namespace != nullptr)
+		{
+			auto item = G.known_lib_namespaces.find(*ini_namespace);
+			if (item != G.known_lib_namespaces.end()) {
+
+				//The current file that have same namespace and same section name & only if not added yet to avoid multiple warnings for same file
+				auto dup_path1 = G.already_known_duplicate_lib_path.find(full_path);
+				if (dup_path1 == G.already_known_duplicate_lib_path.end())
+				{
+					G.already_known_duplicate_lib_path.insert(full_path);
+					G.errored_lines.insert(ErroredLine{
+					full_path,
+					line_index,
+					wline->c_str(),
+					L"Duplicate library detected: " + *ini_namespace
+						});
+				}
+				
+
+				//The already registered section & only if not added yet to avoid multiple warnings for same file
+				auto dup_path2 = G.already_known_duplicate_lib_path.find(G.ini_sections[*section].full_path);
+				if (dup_path2 == G.already_known_duplicate_lib_path.end())
+				{
+					G.already_known_duplicate_lib_path.insert(G.ini_sections[*section].full_path);
+					G.errored_lines.insert(ErroredLine{
+					G.ini_sections[*section].full_path,
+					line_index,
+					wline->c_str(),
+					L"Duplicate library detected: " + *ini_namespace
+						});
+				}
+			}
+		}
+
 		section->clear();
 		*section_vector = NULL;
 		return;
 	}
 
 	*section_vector = &G.ini_sections[*section].kv_vec;
+	G.ini_sections[*section].full_path = full_path;
 
 	if (namespaced_section) {
 		G.ini_sections[*section].ini_namespace = *ini_namespace;
@@ -869,9 +905,10 @@ static bool ParseCommandListLine(Globals& G, const wchar_t* ini_section,
 	const std::wstring* ini_namespace, const std::wstring& full_path, int line_index)
 {
 	// We only care about FlowControl & VariableAssignment
+	// and GeneralCommand to check "run" commandlist
 
-	/*if (ParseCommandListGeneralCommands(ini_section, lhs, rhs, explicit_command_list, pre_command_list, post_command_list, ini_namespace))
-		return true;*/
+	if (ParseCommandListGeneralCommands(G, lhs, rhs, ini_namespace, full_path, line_index, raw_line->c_str()))
+		return true;
 
 	/*if (ParseCommandListIniParamOverride(ini_section, lhs, rhs, command_list, ini_namespace))
 		return true;*/
