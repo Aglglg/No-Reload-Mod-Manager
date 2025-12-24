@@ -633,7 +633,7 @@ bool CommandListExpression::parse(Globals& G, const std::wstring* expression, co
 		////log_syntax_tree(evaluatable, "Final syntax tree:\n");
 		return true;
 	}
-	catch (const CommandListSyntaxError& e) {
+	catch (const CommandListSyntaxError&) {
 		/*printf(
 			"Syntax Error: %S\n"
 			"              %*s: %S\n",

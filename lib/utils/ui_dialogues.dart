@@ -2455,42 +2455,19 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
     //get all ini files within specified mod folder
     iniFilesPath = await findIniFilesRecursiveExcludeDisabled(widget.modPath);
 
-    //read all ini files, as lines, get the namespaces only
+    //get the namespaces
     for (var path in iniFilesPath) {
-      List<String> lines = [];
-      File iniFile = File(path);
-
-      try {
-        lines = await forceReadAsLinesUtf8(iniFile);
-      } catch (_) {}
-
-      for (var i = 0; i < lines.length; i++) {
-        final String trimmedLine = lines[i].trim();
-        // only line that's not comment
-        if (!trimmedLine.startsWith(';')) {
-          //if line starts with [, stop this line loop, namespace won't be located any further down
-          if (trimmedLine.startsWith('[')) break;
-          //in case found the namespace, not case sensitive, ignore spaces temporarily, check if starts with 'namespaces='
-          if (trimmedLine
-              .toLowerCase()
-              .replaceAll(' ', '')
-              .startsWith('namespace=')) {
-            //
-            String namespace =
-                trimmedLine.substring(trimmedLine.indexOf('=') + 1).trim();
-
-            //ignore case
-            bool alreadyExist = namespacesMap.keys.any(
-              (k) => k.toLowerCase() == namespace.toLowerCase(),
-            );
-            //Only add to list, if wasn't previously found.
-            //Sometimes there's a mod that separate constants and commandlist, but still using same namespace (no problem)
-            //Or sometimes there's a situation that clearly contains multiple duplicated namespaces, don't care
-            if (!alreadyExist) {
-              namespacesMap[namespace] = namespace;
-            }
-            break; //do not look for other lines, already found
-          }
+      final namespace = await getNamespace(File(path));
+      if (namespace.isNotEmpty) {
+        //ignore case
+        bool alreadyExist = namespacesMap.keys.any(
+          (k) => k.toLowerCase() == namespace.toLowerCase(),
+        );
+        //Only add to list, if wasn't previously found.
+        //Sometimes there's a mod that separate constants and commandlist, but still using same namespace (no problem)
+        //Or sometimes there's a situation that clearly contains multiple duplicated namespaces, don't care
+        if (!alreadyExist) {
+          namespacesMap[namespace] = namespace;
         }
       }
     }
@@ -2548,6 +2525,16 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
     bool containsEmptyValue = uniqueValues.any(
       (element) => element.trim().isEmpty,
     );
+
+    //Check if current namespace contains previously used namespace but on another file/slot.
+    bool valueWasUsedPreviously = false;
+    for (var entry in textControllersMap.entries) {
+      if (namespacesMap.containsKey(entry.value.text) &&
+          entry.key != entry.value.text) {
+        valueWasUsedPreviously = true;
+        break;
+      }
+    }
 
     //Do not save if empty
     if (containsEmptyValue) {
@@ -2610,6 +2597,43 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
         _isLoading = false;
         _showSaveButton = true;
       });
+    } else if (valueWasUsedPreviously) {
+      //Check if current namespace contains previously used namespace but on another file/slot.
+      for (var entry in textControllersMap.entries) {
+        if (namespacesMap.containsKey(entry.value.text) &&
+            entry.key != entry.value.text) {
+          setState(() {
+            contents = [
+              ...contents.take(
+                2,
+              ), // only take that namespace informations from previous assignment, do not take "can't save...", incase user press it multiple times
+            ];
+          });
+          await Future.delayed(
+            Duration(milliseconds: 50),
+          ); //small delay to simulate blinking text
+          setState(() {
+            contents = [
+              ...contents,
+              TextSpan(
+                text:
+                    "Namespace in a slot was previously used on another slot."
+                        .tr(),
+                style: GoogleFonts.poppins(
+                  color: const Color.fromARGB(255, 189, 170, 0),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ];
+          });
+
+          setState(() {
+            _isLoading = false;
+            _showSaveButton = true;
+          });
+        }
+      }
     }
     //IF not duplicated, try save
     else {
@@ -2621,7 +2645,10 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
           continue;
         }
         _namespaceChanged = true;
-        success = await replaceNamespace(entry.key, entry.value);
+        success = await replaceNamespace(entry.key, entry.value, iniFilesPath);
+        if (!success) {
+          break;
+        }
       }
 
       setState(() {
@@ -2652,170 +2679,6 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
               ),
         ];
       });
-    }
-  }
-
-  Future<bool> replaceNamespace(
-    String originalNamespace,
-    String modifiedNamespace,
-  ) async {
-    List<File> backupFiles = [];
-    List<File> tmpModifiedFiles = [];
-
-    //#1, CREATE BACKUP
-    for (var path in iniFilesPath) {
-      try {
-        //do not use copy directly because it'll transfer file permission and attribute too
-        //and sometimes cause cannot delete .baknamespace file
-        backupFiles.add(await _copyIniContentOnly(path));
-      } catch (_) {
-        //in case failed, delete all previous created bak backup and return
-        await _deleteTemporaryFiles(backupFiles);
-        return false;
-      }
-    }
-
-    //2#, CREATE TMP FILE
-    for (final path in iniFilesPath) {
-      final file = File(path);
-      if (!await file.exists()) continue;
-
-      try {
-        final lines = await forceReadAsLinesUtf8(file);
-
-        final newLines = _generateModifiedLines(
-          lines,
-          originalNamespace,
-          modifiedNamespace,
-        );
-        //if new lines is changed/modified
-        if (newLines.$1) {
-          //2#, CREATE TMP FILE
-          try {
-            final tempFile = await safeWriteIni(
-              file,
-              newLines.$2.join('\n'),
-              immediatelyRename: false,
-            );
-
-            //If success, add to list tmp file
-            if (tempFile != null) {
-              tmpModifiedFiles.add(tempFile);
-            }
-          } catch (_) {
-            //if failed to write tmp file, abort everything and delete. return false
-            await _deleteTemporaryFiles(backupFiles);
-            await _deleteTemporaryFiles(tmpModifiedFiles);
-            return false;
-          }
-        }
-      } catch (_) {
-        //if failed to read ini file, abort everything and delete. return false
-        await _deleteTemporaryFiles(backupFiles);
-        await _deleteTemporaryFiles(tmpModifiedFiles);
-        return false;
-      }
-    }
-
-    //#3, Try rename TMP to ini file
-    for (var tmpFile in tmpModifiedFiles) {
-      try {
-        String tmpFilename = p.basename(tmpFile.path);
-        String iniFilename = tmpFilename.replaceFirst(
-          ".tmp",
-          "",
-          tmpFilename.length - ".tmp".length,
-        );
-        String iniFilePath = p.join(p.dirname(tmpFile.path), iniFilename);
-        await tmpFile.rename(iniFilePath);
-      } catch (_) {
-        await _revertToBakFiles(backupFiles);
-        await _deleteTemporaryFiles(backupFiles);
-        await _deleteTemporaryFiles(tmpModifiedFiles);
-        return false;
-      }
-    }
-    //Return true success if reached here, DON'T forget to delete bakFiles
-    await _deleteTemporaryFiles(backupFiles);
-    return true;
-  }
-
-  (bool, List<String>) _generateModifiedLines(
-    List<String> lines,
-    String originalNamespace,
-    String modifiedNamespace,
-  ) {
-    //add \namespace\, because usually namespace accessed like this, to prevent modifying other words that's the same as the namespace, but not actually referencing the namespace
-    final regex = RegExp(
-      RegExp.escape("\\$originalNamespace\\"),
-      caseSensitive: false,
-    );
-
-    bool changed = false;
-    final newLines =
-        lines.map((line) {
-          // skip comment
-          if (line.trim().startsWith(';')) return line;
-
-          // if starts with "namespace=", replace it manually, do not use regex, because regex, added '\' at beginning and end
-          if (line
-              .trim()
-              .toLowerCase()
-              .replaceAll(' ', '')
-              .startsWith('namespace=')) {
-            String namespace =
-                line.trim().substring(line.trim().indexOf('=') + 1).trim();
-            //only replace this namespace line, only if it's the same as original namespace, ofc
-            if (namespace.toLowerCase() == originalNamespace.toLowerCase()) {
-              changed = true;
-              return "namespace = $modifiedNamespace";
-            } else {
-              return line;
-            }
-          }
-
-          // Replace other, use regex like \originalNamespace\ to minimize wrong target replace
-          if (regex.hasMatch(line)) {
-            changed = true;
-            return line.replaceAll(regex, "\\$modifiedNamespace\\");
-          }
-
-          //return original line if not modified
-          return line;
-        }).toList();
-
-    return (changed, newLines);
-  }
-
-  Future<void> _revertToBakFiles(List<File> bakFiles) async {
-    for (var bakFile in bakFiles) {
-      try {
-        String bakFilename = p.basename(bakFile.path);
-        String iniFilename = bakFilename.replaceFirst(
-          ".baknamespace",
-          "",
-          bakFilename.length - ".baknamespace".length,
-        );
-        String iniFilePath = p.join(p.dirname(bakFile.path), iniFilename);
-        await bakFile.rename(iniFilePath);
-      } catch (_) {}
-    }
-  }
-
-  Future<void> _deleteTemporaryFiles(List<File> files) async {
-    for (var file in files) {
-      try {
-        await file.delete();
-      } catch (_) {}
-    }
-  }
-
-  Future<File> _copyIniContentOnly(String iniPath) async {
-    try {
-      String content = await forceReadAsStringUtf8(File(iniPath));
-      return await File("$iniPath.baknamespace").writeAsString(content);
-    } catch (_) {
-      rethrow;
     }
   }
 

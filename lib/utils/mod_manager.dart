@@ -107,16 +107,17 @@ Future<List<(Directory, int)>> getGroupFolders(
 }) async {
   final directory = Directory(modsPath);
   final List<(Directory, int)> matchingFolders = [];
+  final regexp = RegExp(
+    r'^group_([1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)$',
+    caseSensitive: true,
+  );
 
   try {
     if (await directory.exists()) {
       await for (final entity in directory.list()) {
         if (entity is Directory) {
           final folderName = p.basename(entity.path);
-          final match = RegExp(
-            r'^group_([1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)$',
-            caseSensitive: true,
-          ).firstMatch(folderName);
+          final match = regexp.firstMatch(folderName);
 
           if (match != null) {
             final index = int.parse(match.group(1)!);
@@ -124,7 +125,6 @@ Future<List<(Directory, int)>> getGroupFolders(
           }
         }
       }
-
       matchingFolders.sort((a, b) => a.$2.compareTo(b.$2));
     }
   } catch (_) {
@@ -827,63 +827,14 @@ Future<List<TextSpan>> updateModData(
   setBoolIfNeedAutoReload(true);
   bool needReloadManual = false;
 
-  //TODO: REWRITE MOD MANAGER TO USE ERRORED LINES RESULT
-  final basePath = p.dirname(modsPath);
-
-  final d3dxIni = p.join(basePath, "d3dx.ini");
-
-  final result = await Isolate.run(() {
-    return getErroredLines(
-      d3dxIni,
-      basePath,
-      ConstantVar.knownModdingLibraries,
+  try {
+    final (String, bool) preparing = await _prepareManagedFolder(
+      modsPath,
+      operationLogs,
     );
-  });
 
-  if (result == null) {
-    print("No errored lines found or failed to load.");
-    return operationLogs;
-  }
-
-  try {
-    print("Found ${result.count} errors:");
-
-    for (var i = 0; i < result.count; i++) {
-      final errorData = result[i];
-
-      print("--- Error #$i ---");
-      print("File:       ${errorData['filePath']}");
-      print("Line Index: ${errorData['lineIndex']}");
-      print("Line text:  ${errorData['trimmedLine']}");
-      print("Reason:     ${errorData['reason']}\n");
-    }
-  } catch (e) {
-    print("Error reading data: $e");
-  } finally {
-    result.dispose();
-    print("Memory released.");
-  }
-  return operationLogs;
-  final managedPath = p.join(modsPath, ConstantVar.managedFolderName);
-  try {
-    //Try to rename old managed folder if managed folder not exist yet
-    if (!await Directory(managedPath).exists()) {
-      await _tryRenameOldManagedFolder(modsPath);
-    }
-    //if still not exist, create managed folder
-    if (!await Directory(managedPath).exists()) {
-      await Directory(managedPath).create();
-    }
-
-    //if background keypress not exist, ask user to reload manually
-    if (!await File(
-      p.join(managedPath, ConstantVar.backgroundKeypressFileName),
-    ).exists()) {
-      needReloadManual = true;
-    }
-
-    _createBackgroundKeypressIni(managedPath, operationLogs);
-    _createManagerGroupIni(managedPath, operationLogs);
+    final managedPath = preparing.$1;
+    needReloadManual = preparing.$2;
 
     final groupFullPathsAndIndexes = await getGroupFolders(
       managedPath,
@@ -897,10 +848,11 @@ Future<List<TextSpan>> updateModData(
           await _createGroupIni(groupDir.path, groupIndex, operationLogs);
 
           final modFullPaths = await getModsOnGroup(groupDir, false);
+          await _autoModifyDuplicateNamespaceInManagedMod(modFullPaths);
 
           for (var mod in modFullPaths) {
             if (mod.modIcon == null) {
-              _tryAutoGetModIcon(mod.modDir);
+              await _tryAutoGetModIcon(mod.modDir);
             }
           }
 
@@ -962,6 +914,235 @@ Future<List<TextSpan>> updateModData(
   }
 
   return operationLogs;
+}
+
+Future<(String, bool)> _prepareManagedFolder(
+  String modsPath,
+  List<TextSpan> operationLogs,
+) async {
+  final managedPath = p.join(modsPath, ConstantVar.managedFolderName);
+  bool needReloadManual = false;
+
+  //Try to rename old managed folder if managed folder not exist yet (V1 Legacy)
+  if (!await Directory(managedPath).exists()) {
+    await _tryRenameOldManagedFolder(modsPath);
+  }
+  //if still not exist, create managed folder
+  if (!await Directory(managedPath).exists()) {
+    await Directory(managedPath).create();
+  }
+
+  //if background keypress not exist, ask user to reload manually
+  if (!await File(
+    p.join(managedPath, ConstantVar.backgroundKeypressFileName),
+  ).exists()) {
+    needReloadManual = true;
+  }
+
+  _createBackgroundKeypressIni(managedPath, operationLogs);
+  _createManagerGroupIni(managedPath, operationLogs);
+
+  return (managedPath, needReloadManual);
+}
+
+Future<String> getNamespace(File iniFile) async {
+  String namespace = '';
+  List<String> lines = [];
+
+  try {
+    lines = await forceReadAsLinesUtf8(iniFile);
+  } catch (_) {}
+
+  for (var i = 0; i < lines.length; i++) {
+    final String trimmedLine = lines[i].trim();
+    // only line that's not comment
+    if (!trimmedLine.startsWith(';')) {
+      //if line starts with [, stop this line loop, namespace won't be located any further down
+      if (trimmedLine.startsWith('[')) break;
+      //in case found the namespace, not case sensitive, ignore spaces temporarily, check if starts with 'namespaces='
+      if (trimmedLine
+          .toLowerCase()
+          .replaceAll(' ', '')
+          .startsWith('namespace=')) {
+        //
+        namespace = trimmedLine.substring(trimmedLine.indexOf('=') + 1).trim();
+
+        break; //do not look for other lines, already found
+      }
+    }
+  }
+  return namespace;
+}
+
+Future<bool> replaceNamespace(
+  String originalNamespace,
+  String modifiedNamespace,
+  List<String> iniFilesPath,
+) async {
+  List<File> backupFiles = [];
+  List<File> tmpModifiedFiles = [];
+
+  //#1, CREATE BACKUP
+  for (var path in iniFilesPath) {
+    try {
+      //do not use copy directly because it'll transfer file permission and attribute too
+      //and sometimes cause cannot delete .baknamespace file
+      backupFiles.add(await _copyIniContentOnlyNamespace(path));
+    } catch (_) {
+      //in case failed, delete all previous created bak backup and return
+      await _deleteTemporaryFiles(backupFiles);
+      return false;
+    }
+  }
+
+  //2#, CREATE TMP FILE
+  for (final path in iniFilesPath) {
+    final file = File(path);
+    if (!await file.exists()) continue;
+
+    try {
+      final lines = await forceReadAsLinesUtf8(file);
+
+      final newLines = _generateModifiedLinesNamespace(
+        lines,
+        originalNamespace,
+        modifiedNamespace,
+      );
+      //if new lines is changed/modified
+      if (newLines.$1) {
+        //2#, CREATE TMP FILE
+        try {
+          final tempFile = await safeWriteIni(
+            file,
+            newLines.$2.join('\n'),
+            immediatelyRename: false,
+          );
+
+          //If success, add to list tmp file
+          if (tempFile != null) {
+            tmpModifiedFiles.add(tempFile);
+          }
+        } catch (_) {
+          //if failed to write tmp file, abort everything and delete. return false
+          await _deleteTemporaryFiles(backupFiles);
+          await _deleteTemporaryFiles(tmpModifiedFiles);
+          return false;
+        }
+      }
+    } catch (_) {
+      //if failed to read ini file, abort everything and delete. return false
+      await _deleteTemporaryFiles(backupFiles);
+      await _deleteTemporaryFiles(tmpModifiedFiles);
+      return false;
+    }
+  }
+
+  //#3, Try rename TMP to ini file
+  for (var tmpFile in tmpModifiedFiles) {
+    try {
+      String tmpFilename = p.basename(tmpFile.path);
+      String iniFilename = tmpFilename.replaceFirst(
+        ".tmp",
+        "",
+        tmpFilename.length - ".tmp".length,
+      );
+      String iniFilePath = p.join(p.dirname(tmpFile.path), iniFilename);
+      await tmpFile.rename(iniFilePath);
+    } catch (_) {
+      await _revertToBakFilesNamespace(backupFiles);
+      await _deleteTemporaryFiles(backupFiles);
+      await _deleteTemporaryFiles(tmpModifiedFiles);
+      return false;
+    }
+  }
+  //Return true success if reached here, DON'T forget to delete bakFiles
+  await _deleteTemporaryFiles(backupFiles);
+  return true;
+}
+
+(bool, List<String>) _generateModifiedLinesNamespace(
+  List<String> lines,
+  String originalNamespace,
+  String modifiedNamespace,
+) {
+  //add \namespace\, because usually namespace accessed like this, to prevent modifying other words that's the same as the namespace, but not actually referencing the namespace
+  final regex = RegExp(
+    RegExp.escape("\\$originalNamespace\\"),
+    caseSensitive: false,
+  );
+
+  bool changed = false;
+  final newLines =
+      lines.map((line) {
+        // skip comment
+        if (line.trim().startsWith(';')) return line;
+
+        // if starts with "namespace=", replace it manually, do not use regex, because regex, added '\' at beginning and end
+        if (line
+            .trim()
+            .toLowerCase()
+            .replaceAll(' ', '')
+            .startsWith('namespace=')) {
+          String namespace =
+              line.trim().substring(line.trim().indexOf('=') + 1).trim();
+          //only replace this namespace line, only if it's the same as original namespace, ofc
+          if (namespace.toLowerCase() == originalNamespace.toLowerCase()) {
+            changed = true;
+            return "namespace = $modifiedNamespace";
+          } else {
+            return line;
+          }
+        }
+
+        // Replace other, use regex like \originalNamespace\ to minimize wrong target replace
+        if (regex.hasMatch(line)) {
+          changed = true;
+          return line.replaceAll(regex, "\\$modifiedNamespace\\");
+        }
+
+        //return original line if not modified
+        return line;
+      }).toList();
+
+  return (changed, newLines);
+}
+
+Future<void> _revertToBakFilesNamespace(List<File> bakFiles) async {
+  for (var bakFile in bakFiles) {
+    try {
+      String bakFilename = p.basename(bakFile.path);
+      String iniFilename = bakFilename.replaceFirst(
+        ".baknamespace",
+        "",
+        bakFilename.length - ".baknamespace".length,
+      );
+      String iniFilePath = p.join(p.dirname(bakFile.path), iniFilename);
+      await bakFile.rename(iniFilePath);
+    } catch (_) {}
+  }
+}
+
+Future<void> _deleteTemporaryFiles(List<File> files) async {
+  for (var file in files) {
+    try {
+      await file.delete();
+    } catch (_) {}
+  }
+}
+
+Future<File> _copyIniContentOnlyNamespace(String iniPath) async {
+  try {
+    String content = await forceReadAsStringUtf8(File(iniPath));
+    return await File("$iniPath.baknamespace").writeAsString(content);
+  } catch (_) {
+    rethrow;
+  }
+}
+
+Future<void> _autoModifyDuplicateNamespaceInManagedMod(
+  List<ModData> modDatas,
+) async {
+  for (var mod in modDatas) {}
 }
 
 //Mod Icon system is only looking at modPath/icon.png
@@ -1040,18 +1221,18 @@ Future<void> _createBackgroundKeypressIni(
   String managedPath,
   List<TextSpan> operationLogs,
 ) async {
-  // Step 1: Load the .txt template from assets
+  // Load the .txt template from assets
   final template = await rootBundle.loadString(
     SharedPrefUtils().useCustomXXMILib()
         ? 'assets/template_txt/listen_keypress_manager.txt'
         : 'assets/template_txt/listen_keypress_even_on_background.txt',
   );
 
-  // Step 2: Create the .ini file
+  // Create the .ini file
   final filePath = p.join(managedPath, ConstantVar.backgroundKeypressFileName);
   final iniFile = File(filePath);
 
-  // Step 2: Write content into the .ini file
+  // Write content into the .ini file
   try {
     await iniFile.writeAsString(template);
   } catch (_) {
@@ -1069,16 +1250,16 @@ Future<void> _createManagerGroupIni(
   String managedPath,
   List<TextSpan> operationLogs,
 ) async {
-  // Step 1: Load the .txt template from assets
+  // Load the .txt template from assets
   final template = await rootBundle.loadString(
     'assets/template_txt/template_manager_group.txt',
   );
 
-  // Step 2: Create the .ini file
+  // Create the .ini file
   final filePath = p.join(managedPath, ConstantVar.managerGroupFileName);
   final iniFile = File(filePath);
 
-  // Step 2: Write content into the .ini file
+  // Write content into the .ini file
   try {
     await iniFile.writeAsString(template);
   } catch (_) {
@@ -1126,21 +1307,21 @@ Future<void> _createGroupIni(
   int groupIndex,
   List<TextSpan> operationLogs,
 ) async {
-  // Step 1: Load the .txt template from assets
+  //Load the .txt template from assets
   final template = await rootBundle.loadString(
     'assets/template_txt/template_group.txt',
   );
 
-  // Step 2: Replace placeholders
+  // Replace placeholders
   final modifiedTemplate = template
       .replaceAll("{x}", "$groupIndex")
       .replaceAll("{group_x}", p.basename(groupFullPath));
 
-  // Step 3: Create the .ini file
+  // Create the .ini file
   final filePath = p.join(groupFullPath, 'group_$groupIndex.ini');
   final iniFile = File(filePath);
 
-  // Step 4: Write content into the .ini file
+  // Write content into the .ini file
   try {
     await iniFile.writeAsString(modifiedTemplate);
   } catch (_) {
