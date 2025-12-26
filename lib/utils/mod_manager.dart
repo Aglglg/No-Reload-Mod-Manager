@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +10,6 @@ import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_group_folder_icon.dart';
 import 'package:no_reload_mod_manager/utils/force_read_as_utf8.dart';
-import 'package:no_reload_mod_manager/utils/ini_handler_bridge.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:no_reload_mod_manager/utils/stack_collection.dart';
@@ -828,6 +826,8 @@ Future<List<TextSpan>> updateModData(
   bool needReloadManual = false;
 
   try {
+    //Prepare _MANAGED_ folder first, make sure it's there or old managed folder to be new _MANAGED_ folder
+    //And also create some ini files from template
     final (String, bool) preparing = await _prepareManagedFolder(
       modsPath,
       operationLogs,
@@ -841,6 +841,9 @@ Future<List<TextSpan>> updateModData(
       shouldThrowOnError: true,
     );
 
+    //Fix duplicated namespaces first, if any
+    await _autoModifyDuplicateNamespaceInManagedMod(groupFullPathsAndIndexes);
+
     await Future.wait([
       for (final (groupDir, groupIndex) in groupFullPathsAndIndexes)
         () async {
@@ -848,7 +851,6 @@ Future<List<TextSpan>> updateModData(
           await _createGroupIni(groupDir.path, groupIndex, operationLogs);
 
           final modFullPaths = await getModsOnGroup(groupDir, false);
-          await _autoModifyDuplicateNamespaceInManagedMod(modFullPaths);
 
           for (var mod in modFullPaths) {
             if (mod.modIcon == null) {
@@ -939,8 +941,8 @@ Future<(String, bool)> _prepareManagedFolder(
     needReloadManual = true;
   }
 
-  _createBackgroundKeypressIni(managedPath, operationLogs);
-  _createManagerGroupIni(managedPath, operationLogs);
+  await _createBackgroundKeypressIni(managedPath, operationLogs);
+  await _createManagerGroupIni(managedPath, operationLogs);
 
   return (managedPath, needReloadManual);
 }
@@ -1140,9 +1142,97 @@ Future<File> _copyIniContentOnlyNamespace(String iniPath) async {
 }
 
 Future<void> _autoModifyDuplicateNamespaceInManagedMod(
-  List<ModData> modDatas,
+  List<(Directory, int)> groups,
 ) async {
-  for (var mod in modDatas) {}
+  final namespacesInManaged = <String>{};
+
+  for (final (groupDir, _) in groups) {
+    final namespacesInGroup = <String>{};
+    final mods = await getModsOnGroup(groupDir, false);
+
+    for (final mod in mods) {
+      final iniFiles = await findIniFilesRecursiveExcludeDisabled(
+        mod.modDir.path,
+      );
+
+      // Scan namespaces in this mod
+      final namespacesInMod = <String>{};
+
+      for (final path in iniFiles) {
+        final ns = await getNamespace(File(path));
+        if (ns.isNotEmpty) {
+          namespacesInMod.add(ns.toLowerCase());
+        }
+      }
+
+      // Plan namespace changes
+      final plannedChanges = <String, String>{};
+      final futureNamespaces = {...namespacesInMod};
+
+      for (final namespace in namespacesInMod) {
+        if ((namespacesInGroup.contains(namespace) ||
+                namespacesInManaged.contains(namespace)) &&
+            //if it's namespace from known modding lib, let xxmi ini handler handle it later
+            !ConstantVar.knownModdingLibraries.contains(namespace)) {
+          final newNamespace = _getNewNamespace(
+            namespace,
+            futureNamespaces,
+            namespacesInGroup,
+            namespacesInManaged,
+          );
+
+          plannedChanges[namespace] = newNamespace;
+          futureNamespaces
+            ..remove(namespace)
+            ..add(newNamespace);
+        }
+      }
+
+      // Apply changes
+      for (final entry in plannedChanges.entries) {
+        final ok = await replaceNamespace(entry.key, entry.value, iniFiles);
+
+        if (!ok) {
+          throw Exception(
+            'Namespace rewrite failed in mod: ${mod.modDir.path}\n'
+            'Namespace: ${entry.key} → ${entry.value}',
+          );
+        }
+      }
+
+      // Commit mod namespaces into group state
+      namespacesInGroup.addAll(futureNamespaces);
+    }
+
+    // Commit group namespaces into global state
+    namespacesInManaged.addAll(namespacesInGroup);
+  }
+}
+
+String _getNewNamespace(
+  String base,
+  Set<String> namespacesInMod,
+  Set<String> namespacesInGroup,
+  Set<String> namespacesInManaged,
+) {
+  final occupied = <String>{
+    ...namespacesInMod,
+    ...namespacesInGroup,
+    ...namespacesInManaged,
+  };
+
+  if (!occupied.contains(base)) {
+    return base;
+  }
+
+  var suffix = 1;
+  while (true) {
+    final candidate = '${base}_$suffix';
+    if (!occupied.contains(candidate)) {
+      return candidate;
+    }
+    suffix++;
+  }
 }
 
 //Mod Icon system is only looking at modPath/icon.png
