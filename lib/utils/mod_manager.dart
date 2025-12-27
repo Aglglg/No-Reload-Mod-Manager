@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_group_folder_icon.dart';
 import 'package:no_reload_mod_manager/utils/force_read_as_utf8.dart';
+import 'package:no_reload_mod_manager/utils/ini_handler_bridge.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:no_reload_mod_manager/utils/stack_collection.dart';
@@ -844,6 +846,43 @@ Future<List<TextSpan>> updateModData(
     //Fix duplicated namespaces first, if any
     await _autoModifyDuplicateNamespaceInManagedMod(groupFullPathsAndIndexes);
 
+    // //TODO: REWRITE MOD MANAGER TO USE ERRORED LINES RESULT
+    // final basePath = p.dirname(modsPath);
+
+    // final d3dxIni = p.join(basePath, "d3dx.ini");
+
+    // final result = await Isolate.run(() {
+    //   return getErroredLines(
+    //     d3dxIni,
+    //     basePath,
+    //     ConstantVar.knownModdingLibraries,
+    //   );
+    // });
+
+    // if (result == null) {
+    //   print("No errored lines found or failed to load.");
+    //   return operationLogs;
+    // }
+
+    // try {
+    //   print("Found ${result.count} errors:");
+
+    //   for (var i = 0; i < result.count; i++) {
+    //     final errorData = result[i];
+
+    //     print("--- Error #$i ---");
+    //     print("File:       ${errorData['filePath']}");
+    //     print("Line Index: ${errorData['lineIndex']}");
+    //     print("Line text:  ${errorData['trimmedLine']}");
+    //     print("Reason:     ${errorData['reason']}\n");
+    //   }
+    // } catch (e) {
+    //   print("Error reading data: $e");
+    // } finally {
+    //   result.dispose();
+    //   print("Memory released.");
+    // }
+
     await Future.wait([
       for (final (groupDir, groupIndex) in groupFullPathsAndIndexes)
         () async {
@@ -906,6 +945,14 @@ Future<List<TextSpan>> updateModData(
         ),
       );
     }
+  } on NamespaceRewriteException catch (e) {
+    operationLogs.add(
+      TextSpan(
+        text:
+            "${'Duplicate namespace that cannot be automatically fixed'.tr(args: [e.groupIndex.toString(), e.modName])}${ConstantVar.defaultErrorInfo}",
+        style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
+      ),
+    );
   } catch (_) {
     operationLogs.add(
       TextSpan(
@@ -1141,12 +1188,29 @@ Future<File> _copyIniContentOnlyNamespace(String iniPath) async {
   }
 }
 
+class NamespaceRewriteException implements Exception {
+  final int groupIndex;
+  final String modName;
+
+  const NamespaceRewriteException({
+    required this.groupIndex,
+    required this.modName,
+  });
+
+  @override
+  String toString() {
+    return 'NamespaceRewriteException: '
+        'group=$groupIndex, '
+        'mod="$modName"';
+  }
+}
+
 Future<void> _autoModifyDuplicateNamespaceInManagedMod(
   List<(Directory, int)> groups,
 ) async {
   final namespacesInManaged = <String>{};
 
-  for (final (groupDir, _) in groups) {
+  for (final (groupDir, groupIndex) in groups) {
     final namespacesInGroup = <String>{};
     final mods = await getModsOnGroup(groupDir, false);
 
@@ -1193,15 +1257,18 @@ Future<void> _autoModifyDuplicateNamespaceInManagedMod(
         final ok = await replaceNamespace(entry.key, entry.value, iniFiles);
 
         if (!ok) {
-          throw Exception(
-            'Namespace rewrite failed in mod: ${mod.modDir.path}\n'
-            'Namespace: ${entry.key} → ${entry.value}',
+          await _markAsNamespaced(mod.modDir.path, true);
+          throw NamespaceRewriteException(
+            groupIndex: groupIndex,
+            modName: mod.modName,
           );
         }
       }
 
       // Commit mod namespaces into group state
       namespacesInGroup.addAll(futureNamespaces);
+
+      await _markAsNamespaced(mod.modDir.path, futureNamespaces.isNotEmpty);
     }
 
     // Commit group namespaces into global state
@@ -1479,7 +1546,6 @@ Future<void> _manageMod(
 
     await tryMarkAsForcedToBeManaged(modFolder, iniFiles);
     await tryMarkAsUnoptimized(modFolder, iniFiles);
-    await tryMarkAsNamespaced(modFolder, iniFiles);
   } catch (_) {
     operationLogs.add(
       TextSpan(
@@ -1759,27 +1825,6 @@ Future<bool> containsCheckTextureOverride(List<IniSection> parsedIni) async {
   return false;
 }
 
-Future<bool> containsNamespace(List<String> iniLines) async {
-  for (var line in iniLines) {
-    final String trimmedLine = line.trim();
-    // only line that's not comment
-    if (!trimmedLine.startsWith(';')) {
-      //if line starts with [, stop this line loop, namespace won't be located any further down
-      if (trimmedLine.startsWith('[')) break;
-      //in case found the namespace, not case sensitive, ignore spaces temporarily, check if starts with 'namespaces='
-      if (trimmedLine
-          .toLowerCase()
-          .replaceAll(' ', '')
-          .startsWith('namespace=')) {
-        //return immediately
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
-
 Future<void> tryMarkAsUnoptimized(String modPath, List<String> iniFiles) async {
   bool found = false;
 
@@ -1808,17 +1853,8 @@ Future<void> tryMarkAsUnoptimized(String modPath, List<String> iniFiles) async {
   }
 }
 
-Future<void> tryMarkAsNamespaced(String modPath, List<String> iniFiles) async {
-  bool found = false;
-
-  for (var iniFilePath in iniFiles) {
-    final file = File(iniFilePath);
-    final lines = await forceReadAsLinesUtf8(file);
-    found = await containsNamespace(lines);
-    if (found) break;
-  }
-
-  if (found) {
+Future<void> _markAsNamespaced(String modPath, bool mark) async {
+  if (mark) {
     try {
       final fileMarkNamespaced = File(p.join(modPath, 'modnamespaced'));
 

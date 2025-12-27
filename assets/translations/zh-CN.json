@@ -213,5 +213,7 @@
   "Error! Cannot extract mod archive": "错误！无法解压：{}",
   "Invalid keys": "无效按键",
   "Auto pin window": "自动固定窗口",
-  "Click keybind to simulate keypress": "点击按键切换以模拟按键操作"
+  "Click keybind to simulate keypress": "点击按键切换以模拟按键操作",
+  "Duplicate namespace that cannot be automatically fixed": "错误！在 group_{} — {} 中发现无法自动修复的重复 namespace。\n",
+  "Namespace is already used by another slot in this mod.": "\n该 namespace 已被此模组中的其他槽位使用。\n"
 }

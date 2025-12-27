@@ -213,5 +213,7 @@
   "Error! Cannot extract mod archive": "Ошибка! Не удалось извлечь: {}",
   "Invalid keys": "Неверные клавиши",
   "Auto pin window": "Автоматически закрепить окно",
-  "Click keybind to simulate keypress": "Нажмите привязку, чтобы имитировать нажатие клавиши"
+  "Click keybind to simulate keypress": "Нажмите привязку, чтобы имитировать нажатие клавиши",
+  "Duplicate namespace that cannot be automatically fixed": "Ошибка! Дублирующееся пространство имён, которое не может быть автоматически исправлено, в group_{} — {}.\n",
+  "Namespace is already used by another slot in this mod.": "\nПространство имён уже используется другим слотом в этом моде.\n"
 }

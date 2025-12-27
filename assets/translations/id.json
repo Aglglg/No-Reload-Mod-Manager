@@ -213,5 +213,7 @@
   "Error! Cannot extract mod archive": "Error! Gagal ekstrak: {}",
   "Invalid keys": "Tombol tidak valid",
   "Auto pin window": "Otomatis pin window",
-  "Click keybind to simulate keypress": "Simulasikan tombol saat diklik"
+  "Click keybind to simulate keypress": "Simulasikan tombol saat diklik",
+  "Duplicate namespace that cannot be automatically fixed": "Error! Namespace duplikat yang tidak bisa diperbaiki otomatis di group_{} — {}.\n",
+  "Namespace is already used by another slot in this mod.": "\nNamespace sudah digunakan di slot lain di mod ini.\n"
 }

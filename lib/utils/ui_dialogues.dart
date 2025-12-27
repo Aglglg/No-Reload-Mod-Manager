@@ -2617,7 +2617,7 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
               ...contents,
               TextSpan(
                 text:
-                    "Namespace in a slot was previously used on another slot."
+                    "Namespace is already used by another slot in this mod."
                         .tr(),
                 style: GoogleFonts.poppins(
                   color: const Color.fromARGB(255, 189, 170, 0),

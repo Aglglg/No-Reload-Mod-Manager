@@ -213,5 +213,7 @@
   "Error! Cannot extract mod archive": "Error! Cannot extract: {}",
   "Invalid keys": "Invalid keys",
   "Auto pin window": "Auto pin window",
-  "Click keybind to simulate keypress": "Click keybind to simulate keypress"
+  "Click keybind to simulate keypress": "Click keybind to simulate keypress",
+  "Duplicate namespace that cannot be automatically fixed": "Error! Duplicate namespace that cannot be automatically fixed in group_{} — {}.\n",
+  "Namespace is already used by another slot in this mod.": "\nNamespace is already used by another slot in this mod.\n"
 }
