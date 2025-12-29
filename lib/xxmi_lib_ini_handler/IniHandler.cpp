@@ -476,8 +476,39 @@ static void ParseIniStream(Globals& G, std::wistream* stream, const std::wstring
 
 		wline = wline.substr(first, last - first + 1);
 
-		if (wline[0] == L';')
-			continue;
+		// Treat ";" as comment, treat ";-;" as not a comment
+		// Any errored lines from this ini handler result expected to be modified from the caller to have prefix ";-;", so it's a comment in the real xxmi parser
+		// but in this xxmi ini handler, we will still parse it, because:
+		// An errored line like "if $\later_added_lib\x == 0" might be errored right now because user have not added the corresponding mod lib right now.
+		// But user might have added the mod lib later
+		if (wline[0] == L';') {
+			if (wline.size() >= 3 &&
+				wline[0] == L';' &&
+				wline[1] == L'-' &&
+				wline[2] == L';')
+			{
+				// Strip ";-;"
+				size_t pos = 3;
+
+				// Strip spaces/tabs after ";-;"
+				while (pos < wline.size() &&
+					(wline[pos] == L' ' || wline[pos] == L'\t'))
+				{
+					++pos;
+				}
+
+				wline.erase(0, pos);
+
+				// if line after ";-;" is empty, skip
+				if (wline.find_first_not_of(L" \t") == std::wstring::npos)
+					continue;
+
+			}
+			else {
+				continue;
+			}
+		}
+
 
 		if (wline[0] == L'[') {
 			preamble = false;
