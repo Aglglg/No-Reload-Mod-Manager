@@ -254,7 +254,7 @@ static void ParseIniSectionLine(Globals& G, std::wstring* wline, std::wstring* s
 
 	if (first == wline->npos)
 	{
-		G.errored_lines.insert(ErroredLine{ full_path, line_index, wline->c_str(), L"A line that could crash xxmi"});
+		G.errored_lines.insert(ErroredLine{ full_path, line_index, wline->c_str(), L"CRASH LINE"});
 		first = 0;
 	}
 
@@ -290,7 +290,7 @@ static void ParseIniSectionLine(Globals& G, std::wstring* wline, std::wstring* s
 					full_path,
 					line_index,
 					wline->c_str(),
-					L"Duplicate library detected: " + *ini_namespace
+					L"DUPLICATE LIB:" + *ini_namespace
 						});
 				}
 				
@@ -304,7 +304,7 @@ static void ParseIniSectionLine(Globals& G, std::wstring* wline, std::wstring* s
 					G.ini_sections[*section].full_path,
 					line_index,
 					wline->c_str(),
-					L"Duplicate library detected: " + *ini_namespace
+					L"DUPLICATE LIB:" + *ini_namespace
 						});
 				}
 			}
@@ -348,8 +348,8 @@ bool check_include_condition(Globals& G, std::wstring* val, const std::wstring* 
 
 	if (sbuf.empty())
 	{
-		G.errored_lines.insert(ErroredLine{ full_path, line_index, ini_line, L"A line that could crash xxmi" });
-		return false;
+		G.errored_lines.insert(ErroredLine{ full_path, line_index, ini_line, L"CRASH LINE" });
+		return true;
 	}
 
 	if (!condition.parse(G, &sbuf, ini_namespace, NULL)) {
@@ -460,7 +460,7 @@ static void ParseIniStream(Globals& G, std::wistream* stream, const std::wstring
 		ini_namespace = L"";
 	ini_path = ini_namespace;
 
-	int line_index = 1;
+	int line_index = 0;
 
 	while (std::getline(*stream, wline)) {
 		struct LineIndexGuard {

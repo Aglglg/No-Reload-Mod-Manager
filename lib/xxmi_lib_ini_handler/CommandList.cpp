@@ -168,7 +168,7 @@ bool ParseCommandListGeneralCommands(Globals& G, const wchar_t* key, std::wstrin
 							full_path,
 							line_index,
 							line,
-							L"A mod trying to run non existent library: " + called_namespace
+							L"NON EXISTENT LIB:" + called_namespace
 								});
 						}
 					}
@@ -201,7 +201,7 @@ bool ParseCommandListGeneralCommands(Globals& G, const wchar_t* key, std::wstrin
 							full_path,
 							line_index,
 							line,
-							L"A mod trying to run non existent library: " + called_namespace
+							L"NON EXISTENT LIB:" + called_namespace
 								});
 						}
 					}
