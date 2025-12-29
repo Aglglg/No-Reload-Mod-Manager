@@ -2043,7 +2043,7 @@ bool _isKeySection(String sectionName) {
 
 bool _isConstantsSection(String sectionName) {
   final lowerSectionName = sectionName.toLowerCase();
-  return lowerSectionName.startsWith("key");
+  return lowerSectionName == "constants";
 }
 
 String _getLiteralIni(List<IniSection> sections) {
