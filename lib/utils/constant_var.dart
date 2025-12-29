@@ -45,7 +45,14 @@ class ConstantVar {
       "https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes";
 
   //LOWER CASED
-  static List<String> knownModdingLibraries = ["rabbitfx", "global/orfix"];
+  static final List<String> knownModdingLibraries = [
+    "rabbitfx",
+    "global/orfix",
+  ];
+
+  static final managedPattern = RegExp(
+    r'(\\modmanageragl\\group_)([1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)(\\active_slot)',
+  );
 }
 
 enum TargetGame {

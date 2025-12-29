@@ -2,32 +2,44 @@ import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 import 'dart:io';
 
-class ErroredLinesResult {
-  final Pointer<ErroredLineFFI> _ptr;
-  final int count;
-  bool _isFreed = false;
+class ErroredLinesReport {
+  final Map<String, List<String>> duplicateLibs = {}; //libName, filePaths
+  final Map<String, String> nonExistentLibs = {}; //libName, mod
 
-  ErroredLinesResult(this._ptr, this.count);
+  final Map<String, List<ErroredLine>> crashLines = {}; //filePath, errorLines
+  //invalid flow control lines (if-elif-else-endif) and condition line in key section
+  final Map<String, List<ErroredLine>> otherError = {}; //filePath,errorLines
 
-  Map<String, dynamic> operator [](int index) {
-    if (_isFreed) throw StateError("Memory already released");
-    if (index < 0 || index >= count) throw IndexError.withLength(index, count);
+  ErroredLinesReport.fromPointer(Pointer<ErroredLineFFI> ptr, int count) {
+    for (var i = 0; i < count; i++) {
+      final item = ptr[i];
+      final String filePath = item.filePath.toDartString();
+      final int lineIndex = item.lineIndex;
+      final String trimmedLine = item.trimmedLine.toDartString();
+      final String reason = item.reason.toDartString();
 
-    final item = _ptr[index];
-    return {
-      'lineIndex': item.lineIndex,
-      'filePath': item.filePath.toDartString(),
-      'trimmedLine': item.trimmedLine.toDartString(),
-      'reason': item.reason.toDartString(),
-    };
-  }
-
-  void dispose() {
-    if (!_isFreed && _ptr != nullptr) {
-      _freeErroredFlowControlLinesSnapshot(_ptr, count);
-      _isFreed = true;
+      if (reason.startsWith("CRASH LINE")) {
+        (crashLines[filePath] ??= []).add(ErroredLine(lineIndex, trimmedLine));
+      } else if (reason.startsWith("DUPLICATE LIB:")) {
+        final libName =
+            reason.replaceFirst("DUPLICATE LIB:", "").trim().toLowerCase();
+        (duplicateLibs[libName] ??= []).add(filePath);
+      } else if (reason.startsWith("NON EXISTENT LIB:")) {
+        final libName =
+            reason.replaceFirst("NON EXISTENT LIB:", "").trim().toLowerCase();
+        nonExistentLibs[libName] = filePath;
+      } else {
+        (otherError[filePath] ??= []).add(ErroredLine(lineIndex, trimmedLine));
+      }
     }
   }
+}
+
+class ErroredLine {
+  final int lineIndex;
+  final String trimmedLine;
+
+  ErroredLine(this.lineIndex, this.trimmedLine);
 }
 
 final class ErroredLineFFI extends Struct {
@@ -67,7 +79,7 @@ final DynamicLibrary _lib = () {
   throw UnsupportedError('Platform not supported');
 }();
 
-final _getErroredFlowControlLines = _lib
+final _getErroredLines = _lib
     .lookupFunction<_GetErroredLinesNative, _GetErroredLinesDart>(
       'GetErroredFlowControlLines',
     );
@@ -77,11 +89,14 @@ final _freeErroredFlowControlLinesSnapshot = _lib.lookupFunction<
   void Function(Pointer<ErroredLineFFI>, int)
 >('FreeErroredFlowControlLinesSnapshot');
 
+class IniHandlerException implements Exception {
+  const IniHandlerException();
+}
 //////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////
 
-ErroredLinesResult? getErroredLines(
+ErroredLinesReport getErroredLines(
   String path,
   String basePath,
   List<String> knownLibNamespaces,
@@ -98,20 +113,29 @@ ErroredLinesResult? getErroredLines(
     knownLibNamespacesPtrs[i] = knownLibNamespaces[i].toNativeUtf8();
   }
 
+  Pointer<ErroredLineFFI> resultPtr = nullptr;
+  int count = 0;
+
   try {
-    final resultPtr = _getErroredFlowControlLines(
+    resultPtr = _getErroredLines(
       pathPtr,
       basePtr,
       knownLibNamespacesPtrs,
       knownLibNamespaces.length,
       countPtr,
     );
-    final count = countPtr.value;
+    count = countPtr.value;
 
-    if (resultPtr == nullptr || count <= 0) return null;
+    if (resultPtr == nullptr) {
+      throw IniHandlerException();
+    }
 
-    return ErroredLinesResult(resultPtr, count);
+    return ErroredLinesReport.fromPointer(resultPtr, count);
   } finally {
+    if (resultPtr != nullptr) {
+      _freeErroredFlowControlLinesSnapshot(resultPtr, count);
+    }
+
     for (int i = 0; i < knownLibNamespaces.length; i++) {
       malloc.free(knownLibNamespacesPtrs[i]);
     }

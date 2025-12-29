@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 import 'package:easy_localization/easy_localization.dart';
@@ -827,6 +826,11 @@ Future<List<TextSpan>> updateModData(
   setBoolIfNeedAutoReload(true);
   bool needReloadManual = false;
 
+  final basePath = p.dirname(modsPath);
+  final d3dxIni = p.join(basePath, "d3dx.ini");
+
+  ErroredLinesReport errorReport;
+
   try {
     //Prepare _MANAGED_ folder first, make sure it's there or old managed folder to be new _MANAGED_ folder
     //And also create some ini files from template
@@ -846,42 +850,14 @@ Future<List<TextSpan>> updateModData(
     //Fix duplicated namespaces first, if any
     await _autoModifyDuplicateNamespaceInManagedMod(groupFullPathsAndIndexes);
 
-    // //TODO: REWRITE MOD MANAGER TO USE ERRORED LINES RESULT
-    // final basePath = p.dirname(modsPath);
-
-    // final d3dxIni = p.join(basePath, "d3dx.ini");
-
-    // final result = await Isolate.run(() {
-    //   return getErroredLines(
-    //     d3dxIni,
-    //     basePath,
-    //     ConstantVar.knownModdingLibraries,
-    //   );
-    // });
-
-    // if (result == null) {
-    //   print("No errored lines found or failed to load.");
-    //   return operationLogs;
-    // }
-
-    // try {
-    //   print("Found ${result.count} errors:");
-
-    //   for (var i = 0; i < result.count; i++) {
-    //     final errorData = result[i];
-
-    //     print("--- Error #$i ---");
-    //     print("File:       ${errorData['filePath']}");
-    //     print("Line Index: ${errorData['lineIndex']}");
-    //     print("Line text:  ${errorData['trimmedLine']}");
-    //     print("Reason:     ${errorData['reason']}\n");
-    //   }
-    // } catch (e) {
-    //   print("Error reading data: $e");
-    // } finally {
-    //   result.dispose();
-    //   print("Memory released.");
-    // }
+    //Get errored lines from xxmi ini handler
+    errorReport = await Isolate.run(() {
+      return getErroredLines(
+        d3dxIni,
+        basePath,
+        ConstantVar.knownModdingLibraries,
+      );
+    });
 
     await Future.wait([
       for (final (groupDir, groupIndex) in groupFullPathsAndIndexes)
@@ -910,10 +886,12 @@ Future<List<TextSpan>> updateModData(
                   j,
                   groupIndex,
                   operationLogs,
+                  errorReport,
                 ),
           ]);
         }(),
     ]);
+
     operationLogs.add(
       operationLogs.isEmpty
           ? TextSpan(
@@ -950,6 +928,15 @@ Future<List<TextSpan>> updateModData(
       TextSpan(
         text:
             "${'Duplicate namespace that cannot be automatically fixed'.tr(args: [e.groupIndex.toString(), e.modName])}${ConstantVar.defaultErrorInfo}",
+        style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
+      ),
+    );
+  } on IniHandlerException catch (_) {
+    operationLogs.add(
+      TextSpan(
+        text:
+            'Failed to call function to detect errored lines, if issue persist please contact NRMM creator.'
+                .tr(),
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );
@@ -1498,17 +1485,11 @@ Future<void> _manageMod(
   int modIndex,
   int groupIndex,
   List<TextSpan> operationLogs,
+  ErroredLinesReport errorReport,
 ) async {
   try {
     // Find all INI files recursively
     final iniFiles = await findIniFilesRecursiveExcludeDisabled(modFolder);
-
-    Map<String, List<String>> variablesWithinModNamespace =
-        {}; //used for force fix function
-
-    for (var iniFile in iniFiles) {
-      await getNamespacedVar(iniFile, variablesWithinModNamespace);
-    }
 
     // Create a list of Future objects for each INI file's backup and modification
     final futures = <Future>[];
@@ -1534,7 +1515,7 @@ Future<void> _manageMod(
           modIndex,
           groupIndex,
           operationLogs,
-          variablesWithinModNamespace,
+          errorReport,
         );
       }());
     }
@@ -1542,10 +1523,8 @@ Future<void> _manageMod(
     // Wait for all the tasks to complete concurrently
     await Future.wait(futures);
 
-    await cleanDuplicatedVarManagedSlotIdInNamespacedMod(iniFiles);
-
-    await tryMarkAsForcedToBeManaged(modFolder, iniFiles);
-    await tryMarkAsUnoptimized(modFolder, iniFiles);
+    //TODO: perhaps do it in xxmi ini handler dll
+    // await tryMarkAsUnoptimized(modFolder, iniFiles);
   } catch (_) {
     operationLogs.add(
       TextSpan(
@@ -1557,85 +1536,21 @@ Future<void> _manageMod(
   }
 }
 
-Future<void> cleanDuplicatedVarManagedSlotIdInNamespacedMod(
-  List<String> iniFiles,
-) async {
-  List<String> namespaceThatHaveSlotId = [];
-
-  for (var iniFilePath in iniFiles) {
-    bool fileWasModified = false;
-    try {
-      //read ini files as lines
-      final file = File(iniFilePath);
-      final lines = await forceReadAsLinesUtf8(file);
-      //parse it per section
-      final parsedIni = await _parseIniSections(lines);
-
-      String? namespaceLowerCase;
-
-      for (var i = 0; i < parsedIni.length; i++) {
-        if (parsedIni[i].name == "__global__") {
-          for (var line in parsedIni[i].lines) {
-            //check for namespace definition
-            if (line
-                .trim()
-                .toLowerCase()
-                .replaceAll(' ', '')
-                .startsWith("namespace=")) {
-              final parts = line.split('=');
-              if (parts.length >= 2) {
-                final afterEquals = parts.sublist(1).join('=').trim();
-                namespaceLowerCase = afterEquals.trim().toLowerCase();
-                break;
-              }
-            }
-          }
-        }
-
-        if (namespaceLowerCase != null &&
-            parsedIni[i].name.trim().toLowerCase() == "constants") {
-          parsedIni[i].lines.removeWhere((line) {
-            final normalized = line.trim().toLowerCase().replaceAll(' ', '');
-            final isManagedSlot = normalized.startsWith(
-              "global\$managed_slot_id",
-            );
-
-            if (isManagedSlot) {
-              // if we already encountered this namespace before, delete it
-              if (namespaceThatHaveSlotId.contains(namespaceLowerCase)) {
-                fileWasModified = true;
-                return true; // remove this line
-              }
-              // first occurrence, keep it but record the namespace
-              namespaceThatHaveSlotId.add(namespaceLowerCase!);
-            }
-
-            return false; // keep this line
-          });
-        }
-      }
-
-      // Write the modified content back to the INI file
-      if (fileWasModified) {
-        String modifiedIni = _getLiteralIni(parsedIni);
-        await safeWriteIni(file, modifiedIni);
-      }
-    } catch (_) {}
-  }
-}
-
 Future<void> _modifyIniFile(
   String iniFilePath,
   String groupFolderName,
   int modIndex,
   int groupIndex,
   List<TextSpan> operationLogs,
-  Map<String, List<String>> variablesWithinModNamespace,
+  ErroredLinesReport errorReport,
 ) async {
   try {
     // Open the INI file and read it asynchronously
     final file = File(iniFilePath);
     final lines = await forceReadAsLinesUtf8(file);
+
+    //Modify lines based on error report first before adding or modifying anything
+    _modifyLinesBasedOnError(lines, iniFilePath, errorReport);
 
     // Give nrmm mark
     bool hasNRMM = lines.any(
@@ -1648,45 +1563,11 @@ Future<void> _modifyIniFile(
       );
     }
 
-    //Rewrite old/previous info
-    for (var i = 0; i < lines.length; i++) {
-      if (lines[i].trim().startsWith(';')) {
-        lines[i] = lines[i].replaceFirst(
-          'tell mod creator to fix their broken mod. Mod creator, not mod manager creator.',
-          'to prevent overlapped mods.',
-        );
-      }
-    }
-
     // Parse the INI file sections
     var parsedIni = await _parseIniSections(lines);
 
     // Modify the INI file sections based on the given modIndex and groupIndex
     _checkAndModifySections(parsedIni, modIndex, groupIndex);
-
-    bool forcedFix = forceFixIniSections(
-      parsedIni,
-      variablesWithinModNamespace,
-    );
-
-    //v2.6.1 problem
-    cleanVariableBugFromPreviousVersion(parsedIni);
-    cleanCommentedEndifFromPreviousVersion(parsedIni);
-
-    if (forcedFix) {
-      operationLogs.add(
-        TextSpan(
-          text: 'Mod forced to be fixed & might not working properly'.tr(
-            args: [iniFilePath],
-          ),
-          style: GoogleFonts.poppins(
-            color: const Color.fromARGB(255, 189, 170, 0),
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-          ),
-        ),
-      );
-    }
 
     //move endif for mod manager to bottom, make sure any lines is inside if-endif mod manager scope
     _moveEndifToCorrectPlace(parsedIni);
@@ -1702,6 +1583,52 @@ Future<void> _modifyIniFile(
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );
+  }
+}
+
+void _modifyLinesBasedOnError(
+  List<String> lines,
+  String path,
+  ErroredLinesReport errorReport,
+) {
+  //Create a Map of index to trimmedLine for quick lookup
+  //index, trimmedLine
+  final Map<int, String> expectedErrors = {};
+
+  final fileCrashErrors = errorReport.crashLines[path] ?? [];
+  final fileOtherErrors = errorReport.otherError[path] ?? [];
+
+  for (var e in [...fileCrashErrors, ...fileOtherErrors]) {
+    expectedErrors[e.lineIndex] = e.trimmedLine;
+  }
+
+  // We need to continue even if expectedErrors is empty to remove old marks.
+
+  //Iterate through every line in the file to sync state
+  for (int i = 0; i < lines.length; i++) {
+    final currentLine = lines[i];
+    final bool isMarked = currentLine.trimLeft().startsWith(';-;');
+    final bool shouldBeMarked = expectedErrors.containsKey(i);
+
+    if (shouldBeMarked) {
+      //Get the version without the mark to compare content
+      String cleanLine =
+          isMarked ? currentLine.replaceFirst(';-;', '') : currentLine;
+
+      //Make sure the trimmed content matches the report
+      if (cleanLine.trim() == expectedErrors[i]) {
+        //If it's on report, but not marked yet, add mark
+        if (!isMarked) {
+          lines[i] = ';-;$currentLine';
+        }
+      }
+    } else {
+      //If a line is marked but NOT in the error report, remove the mark
+      if (isMarked) {
+        //replaceFirst only takes out the first occurrence of the tag
+        lines[i] = currentLine.replaceFirst(';-;', '');
+      }
+    }
   }
 }
 
@@ -1737,52 +1664,6 @@ Future<File?> safeWriteIni(
   }
 
   return null;
-}
-
-Future<bool> containsNrmmMark(List<String> paths) async {
-  for (final path in paths) {
-    final file = File(path);
-
-    if (!file.existsSync()) continue;
-
-    final lines = file
-        .openRead()
-        .transform(SystemEncoding().decoder)
-        .transform(const LineSplitter());
-
-    try {
-      await for (final line in lines) {
-        if (line.contains('by NRMM,')) {
-          return true;
-        }
-      }
-    } catch (_) {
-      // Skip unreadable files
-      continue;
-    }
-  }
-  return false;
-}
-
-Future<void> tryMarkAsForcedToBeManaged(
-  String modPath,
-  List<String> iniFiles,
-) async {
-  bool found = await containsNrmmMark(iniFiles);
-
-  if (found) {
-    try {
-      final fileMarkForced = File(p.join(modPath, 'modforced'));
-
-      await fileMarkForced.writeAsString('');
-    } catch (_) {}
-  } else {
-    try {
-      final fileMarkForced = File(p.join(modPath, 'modforced'));
-
-      await fileMarkForced.delete();
-    } catch (_) {}
-  }
 }
 
 Future<bool> containsCheckTextureOverride(List<IniSection> parsedIni) async {
@@ -1825,34 +1706,6 @@ Future<bool> containsCheckTextureOverride(List<IniSection> parsedIni) async {
   return false;
 }
 
-Future<void> tryMarkAsUnoptimized(String modPath, List<String> iniFiles) async {
-  bool found = false;
-
-  for (var iniFilePath in iniFiles) {
-    final file = File(iniFilePath);
-    final lines = await forceReadAsLinesUtf8(file);
-
-    var parsedIni = await _parseIniSections(lines);
-
-    found = await containsCheckTextureOverride(parsedIni);
-    if (found) break;
-  }
-
-  if (found) {
-    try {
-      final fileMarkUnoptimized = File(p.join(modPath, 'modunoptimized'));
-
-      await fileMarkUnoptimized.writeAsString('');
-    } catch (_) {}
-  } else {
-    try {
-      final fileMarkUnoptimized = File(p.join(modPath, 'modunoptimized'));
-
-      await fileMarkUnoptimized.delete();
-    } catch (_) {}
-  }
-}
-
 Future<void> _markAsNamespaced(String modPath, bool mark) async {
   if (mark) {
     try {
@@ -1876,9 +1729,19 @@ class IniSection {
   IniSection(this.name, this.lines);
 }
 
+String _getSectionName(String trimmedLine) {
+  if (trimmedLine.length == 1) return '';
+
+  final close = trimmedLine.indexOf(']', 1);
+  final raw =
+      close == -1 ? trimmedLine.substring(1) : trimmedLine.substring(1, close);
+
+  return raw.trim();
+}
+
 Future<List<IniSection>> _parseIniSections(List<String> allLines) async {
   final List<IniSection> sections = [];
-  IniSection currentSection = IniSection('__global__', []);
+  IniSection currentSection = IniSection('__preamble__', []);
   sections.add(currentSection);
 
   for (var rawLine in allLines) {
@@ -1886,20 +1749,29 @@ Future<List<IniSection>> _parseIniSections(List<String> allLines) async {
 
     if (line.startsWith('[')) {
       // New section
-      String sectionName =
-          line.endsWith(']')
-              ? line.substring(1, line.length - 1).trim()
-              : line.substring(1, line.length).trim();
+      String sectionName = _getSectionName(line);
       currentSection = IniSection(sectionName, []);
       sections.add(currentSection);
     } else {
-      currentSection.lines.add(
-        rawLine,
-      ); // keep original line (with comments, etc.)
+      //Add lines to current section
+      if (line
+          .replaceAll(' ', '')
+          .contains(r"if$managed_slot_id==$\modmanageragl\group_")) {
+        //but, do not add manager if line (if$managed_slot_id==$\modmanageragl\group_)
+      } else if (_isConstantsSection(currentSection.name) &&
+          line.toLowerCase().contains("\$managed_slot_id")) {
+        //also do not add $managed_slot_id on constants
+      } else if (line.startsWith(';') && line.contains('by NRMM')) {
+        //also do not add this old force fix by NRMM mark
+      }
+      // keep original line (with comments, etc.)
+      else {
+        currentSection.lines.add(rawLine);
+      }
     }
   }
 
-  // Always add a "Constants" section if needed
+  // Always add a "Constants" section if needed, for $managed_slot_id var
   bool constantsSectionIsPresent = sections.any(
     (section) => section.name.toLowerCase() == "constants",
   );
@@ -1908,8 +1780,11 @@ Future<List<IniSection>> _parseIniSections(List<String> allLines) async {
     sections.add(IniSection('Constants', []));
   }
 
+  //Its only purpose is to remove warning overlay,
+  //Keep in mind that NOT all lines in this section is a commandlist line
   for (var section in sections) {
-    if (section.name.toLowerCase().startsWith('texture')) {
+    //TEXTUREOVERRIDE
+    if (section.name.toLowerCase().startsWith('textureoverride')) {
       bool matchKeywordIsPresent = false;
       for (var line in section.lines) {
         if (line.trim().toLowerCase().startsWith('match_priority') ||
@@ -1940,632 +1815,22 @@ Future<List<IniSection>> _parseIniSections(List<String> allLines) async {
         section.lines.insert(insertIndex, 'match_priority = 0');
       }
     }
-  }
-
-  return sections;
-}
-
-//On v2.6.1 it tried to fix missing variables on ini files,
-//but instead of writing the variable (global $myvar = 1),
-//it's checking the variable instead (global $myvar == 1), which does nothing and cause another error on ini files
-void cleanVariableBugFromPreviousVersion(List<IniSection> sections) {
-  for (var section in sections) {
-    if (section.name.toLowerCase().trim() == "constants") {
-      bool nrmmMarkFound = false;
-      for (int i = 0; i < section.lines.length; i++) {
-        var line = section.lines[i];
-        if (line.contains('NRMM')) {
-          nrmmMarkFound = true;
-        }
-        if (nrmmMarkFound) {
-          section.lines[i] = line.replaceAll('==', '=');
-        }
-      }
-    }
-  }
-}
-
-//On v2.6.1 it tried to fix too much endif on ini files,
-//but then there are mods that don't use 'if' from beginning of conditional statement and only using 'elif' WTF,
-//then this tool accidentally remove endif needed for if $managed_slot_id ;-;
-//AND EVEN WITH TOO MANY ENDIF 3dmigoto don't care, because it just ignore wrong/errored lines
-void cleanCommentedEndifFromPreviousVersion(List<IniSection> sections) {
-  for (var section in sections) {
-    if (_isExcludedSection(section.name) || _isKeySection(section.name)) {
-      continue;
-    }
-    bool nrmmMarkFound = false;
-    for (int i = 0; i < section.lines.length; i++) {
-      var line = section.lines[i];
-      if (line.contains('Force remove line by NRMM')) {
-        nrmmMarkFound = true;
-        section.lines[i] = '';
-      } else {
-        if (nrmmMarkFound) {
-          if (line.trim() == ';endif') {
-            section.lines[i] = section.lines[i].replaceAll(';', '');
-          }
-        }
-        nrmmMarkFound = false;
-      }
-    }
-  }
-}
-
-bool forceFixIniSections(
-  List<IniSection> sections,
-  Map<String, List<String>> variablesWithinModNamespace,
-) {
-  bool forcedFix = false;
-
-  //fix syntax error on if elif else if statement
-  //replace elseif to be else if
-  //replace else or elif or else if to be 'if' because it wasn't even started with 'if'
-  //use = instead of ==, use =< and => instead of <= and >=, use =! instead of !=
-  for (var section in sections) {
-    if (_isExcludedSection(section.name) || _isKeySection(section.name)) {
-      continue;
-    }
-
-    //replace elseif to be else if
-    for (int i = 0; i < section.lines.length; i++) {
-      var line = section.lines[i];
-      if (line.toLowerCase().trim().startsWith('elseif ')) {
-        String modifiedLine = line.replaceFirst('elseif', 'else if');
-        if (modifiedLine != line) {
-          section.lines[i] =
-              ';Force fix syntax by NRMM, to prevent overlapped mods.\n;$line\n$modifiedLine';
-          forcedFix = true;
-        }
-      }
-    }
-
-    //Replace else if and elif to be if, in-case if statement was not opened
-    bool ifStatementWasOpened = false;
-    for (int i = 0; i < section.lines.length; i++) {
-      var line = section.lines[i];
-      if (line.toLowerCase().trim().startsWith('if ') &&
-          !line.toLowerCase().trim().contains(r'$\modmanageragl')) {
-        ifStatementWasOpened = true;
-      }
-
-      if (line.toLowerCase().trim().startsWith('else if ')) {
-        if (!ifStatementWasOpened) {
-          String modifiedLine = line.replaceFirst('else if', 'if');
-          section.lines[i] =
-              ';Force fix syntax by NRMM, to prevent overlapped mods.\n;$line\n$modifiedLine';
-          forcedFix = true;
-          ifStatementWasOpened = true;
-        }
-      }
-
-      if (line.toLowerCase().trim().startsWith('elif ')) {
-        if (!ifStatementWasOpened) {
-          String modifiedLine = line.replaceFirst('elif', 'if');
-          section.lines[i] =
-              ';Force fix syntax by NRMM, to prevent overlapped mods.\n;$line\n$modifiedLine';
-          forcedFix = true;
-          ifStatementWasOpened = true;
-        }
-      }
-    }
-
-    //Fix 'if' to be 'elif' or just give endif here
-
-    //Example:
-    //if something == 0
-    //DoSomething0
-    //if something == 1
-    //DoSomething1
-    //endif
-
-    //To Be:
-    //if something == 0
-    //DoSomething0
-    //elif something == 1
-    //DoSomething1
-    //endif
-
-    //NEVERMIND IT'S REALLY DIFFICULT TO HANDLE SOMETHING LIKE THAT
-
-    //Replace =! with !=
-    for (int i = 0; i < section.lines.length; i++) {
-      var line = section.lines[i];
-      if (line.toLowerCase().trim().startsWith('if ') ||
-          line.toLowerCase().trim().startsWith('elif ') ||
-          line.toLowerCase().trim().startsWith('else if ')) {
-        String modifiedLine = line.replaceAll('=!', '!=');
-        if (modifiedLine != line) {
-          section.lines[i] =
-              ';Force fix syntax by NRMM, to prevent overlapped mods.\n;$line\n$modifiedLine';
-          forcedFix = true;
-        }
-      }
-    }
-
-    //Replace => with >=
-    for (int i = 0; i < section.lines.length; i++) {
-      var line = section.lines[i];
-      if (line.toLowerCase().trim().startsWith('if ') ||
-          line.toLowerCase().trim().startsWith('elif ') ||
-          line.toLowerCase().trim().startsWith('else if ')) {
-        String modifiedLine = line.replaceAll('=>', '>=');
-        if (modifiedLine != line) {
-          section.lines[i] =
-              ';Force fix syntax by NRMM, to prevent overlapped mods.\n;$line\n$modifiedLine';
-          forcedFix = true;
-        }
-      }
-    }
-
-    //Replace =< with <=
-    for (int i = 0; i < section.lines.length; i++) {
-      var line = section.lines[i];
-      if (line.toLowerCase().trim().startsWith('if ') ||
-          line.toLowerCase().trim().startsWith('elif ') ||
-          line.toLowerCase().trim().startsWith('else if ')) {
-        String modifiedLine = line.replaceAll('=<', '<=');
-        if (modifiedLine != line) {
-          section.lines[i] =
-              ';Force fix syntax by NRMM, to prevent overlapped mods.\n;$line\n$modifiedLine';
-          forcedFix = true;
-        }
-      }
-    }
-
-    //Replace = with ==
-    for (int i = 0; i < section.lines.length; i++) {
-      var line = section.lines[i];
-      if (line.toLowerCase().trim().startsWith('if ') ||
-          line.toLowerCase().trim().startsWith('elif ') ||
-          line.toLowerCase().trim().startsWith('else if ')) {
-        final regex = RegExp(r'(?<![=!<>])=(?![=])');
-        String modifiedLine = line.replaceAllMapped(regex, (m) => '==');
-        if (modifiedLine != line) {
-          section.lines[i] =
-              ';Force fix syntax by NRMM, to prevent overlapped mods.\n;$line\n$modifiedLine';
-          forcedFix = true;
-        }
-      }
-    }
-  }
-
-  //add missing variable on Constants
-  List<String> variablesFound = [];
-  List<String> variablesShouldBeAdded = [];
-  String? namespaceLowerCase;
-
-  //First, check for namespace & var definition on constants
-  for (var section in sections) {
-    if (section.name == "__global__") {
+    //SHADER OVERRIDE
+    else if (section.name.toLowerCase().startsWith('shaderoverride')) {
+      bool allowDuplicateKeywordIsPresent = false;
       for (var line in section.lines) {
-        //check for namespace definition
-        if (line
-            .trim()
-            .toLowerCase()
-            .replaceAll(' ', '')
-            .startsWith("namespace=")) {
-          final parts = line.split('=');
-          if (parts.length >= 2) {
-            final afterEquals = parts.sublist(1).join('=').trim();
-            namespaceLowerCase = afterEquals.trim().toLowerCase();
-            break;
-          }
-        }
-      }
-    }
-
-    //check in constant section for already defined vars
-    if (section.name.toLowerCase().trim() == "constants") {
-      for (var line in section.lines) {
-        if (line.trim().startsWith(';')) {
-          continue;
-        }
-        final regex = RegExp(r'(?<!\\)(\$[a-zA-Z_][a-zA-Z0-9_]*)');
-
-        final matches = regex.allMatches(line);
-        final results = matches.map((m) => m.group(1)!).toList();
-        for (var result in results) {
-          variablesFound.add(result.toLowerCase());
-        }
-      }
-    }
-    //
-  }
-
-  //second, check for var that's used on other sections/commandlist sections
-  for (var section in sections) {
-    if (_isExcludedSection(section.name)) {
-      continue;
-    }
-
-    //look for var that's defined locally "local ..."
-    List<String> localVariablesFound = [];
-
-    for (var line in section.lines) {
-      if (line.trim().startsWith(';')) {
-        continue;
-      }
-      final regex = RegExp(
-        r'local\s+(?<!\\)(\$[a-zA-Z_][a-zA-Z0-9_]*)',
-        caseSensitive: false,
-      );
-
-      final matches = regex.allMatches(line);
-      final results = matches.map((m) => m.group(1)!.toLowerCase()).toList();
-
-      for (var result in results) {
-        localVariablesFound.add(result);
-      }
-    }
-    //
-
-    for (var line in section.lines) {
-      if (line.trim().startsWith(';')) {
-        continue;
-      }
-      final regex = RegExp(r'(?<!\\)(\$[a-zA-Z_][a-zA-Z0-9_]*)');
-
-      final matches = regex.allMatches(line);
-      final results = matches.map((m) => m.group(1)!).toList();
-      for (var result in results) {
-        //add it as usual, if namespace wasn't defined inside this ini file
-        // also check inside namespaced var if any
-        List<String>? namespacedVarFound =
-            variablesWithinModNamespace[namespaceLowerCase];
-        namespacedVarFound ?? (namespacedVarFound = []);
-
-        if (!variablesFound.contains(result.toLowerCase()) &&
-            !namespacedVarFound.contains(result.toLowerCase())) {
-          //
-          if (namespaceLowerCase == null) {
-            //add variablesFound as usual if no namespace
-            variablesFound.add(result.toLowerCase());
-          } else {
-            //add to previously passed param/arg if have namespace
-            variablesWithinModNamespace[namespaceLowerCase] = [
-              ...?variablesWithinModNamespace[namespaceLowerCase],
-              result.toLowerCase(),
-            ];
-          }
-          //
-          if (!variablesShouldBeAdded.contains(result.toLowerCase()) &&
-              !localVariablesFound.contains(result.toLowerCase())) {
-            variablesShouldBeAdded.add(result.toLowerCase());
-          }
-        }
-      }
-    }
-  }
-
-  //third, write undefined vars that were used
-  if (variablesShouldBeAdded.isNotEmpty) {
-    List<String> lines = [];
-    lines.add(';Force add line by NRMM, to prevent overlapped mods.');
-    for (var variable in variablesShouldBeAdded) {
-      lines.add('global $variable = 1');
-    }
-    sections.add(IniSection('Constants', lines));
-    forcedFix = true;
-  }
-
-  //Fix missing variable that was used in [Key]
-  //and was already added on [Constants] by NRMM
-  //but always disabled (value 0) in [Present]
-  //and never being enabled (value 1) in [TextureOverride]
-  for (var section in sections) {
-    //Only for [Key] section
-    if (_isKeySection(section.name)) {
-      for (var line in section.lines) {
-        if (line.toLowerCase().trim().startsWith('condition')) {
-          final regex = RegExp(r'(?<!\\)(\$[a-zA-Z_][a-zA-Z0-9_]*)');
-
-          final matches = regex.allMatches(line);
-          final results = matches.map((m) => m.group(1)!).toList();
-          for (var result in results) {
-            bool wasUsedInPresent = false;
-            bool wasAddedByNRMM = false;
-
-            //Check if it was used in Present and always disabled (value 0)
-            for (var section in sections) {
-              if (section.name.toLowerCase() == "present") {
-                for (var line in section.lines) {
-                  if (line.trim().toLowerCase().replaceAll(' ', '') ==
-                      'post${result.toLowerCase()}=0') {
-                    wasUsedInPresent = true;
-                    break;
-                  }
-                }
-              }
-            }
-
-            //Check if the variable was added by NRMM in Constants
-            for (var section in sections) {
-              if (section.name.toLowerCase() == "constants") {
-                bool nrmmMarkFound = false;
-                for (var line in section.lines) {
-                  if (line.contains('NRMM')) {
-                    nrmmMarkFound = true;
-                    break;
-                  }
-                }
-
-                //If constants section is not by NRMM, continue to next iteration or skip current iteration
-                if (!nrmmMarkFound) {
-                  continue;
-                }
-
-                //Check if the variable was found in Constants section and was added by NRMM
-                for (var line in section.lines) {
-                  // == because on older version of NRMM it was wrongly written like that,
-                  // and be fixed on newer version of NRMM, but the fixing process is later
-                  // after this forceFix function
-                  if (line.trim().toLowerCase().replaceAll(' ', '') ==
-                          'global${result.toLowerCase()}=1' ||
-                      line.trim().toLowerCase().replaceAll(' ', '') ==
-                          'global${result.toLowerCase()}==1') {
-                    wasAddedByNRMM = true;
-                    break;
-                  }
-                }
-              }
-            }
-
-            //If the variable was used in Present and was added by NRMM, check if it was already specified on TextureOverride
-            if (wasAddedByNRMM && wasUsedInPresent) {
-              for (var section in sections) {
-                if (section.name.toLowerCase().startsWith('textureoverride')) {
-                  bool varAlreadyWritten = false;
-                  //Check on every lines if it's already written
-                  for (var line in section.lines) {
-                    if (line.trim().startsWith(';') &&
-                        !line.trim().contains('\n')) {
-                      continue;
-                    }
-                    if (line
-                        .trim()
-                        .toLowerCase()
-                        .replaceAll(' ', '')
-                        .contains("${result.toLowerCase()}=1")) {
-                      varAlreadyWritten = true;
-                      break;
-                    }
-                  }
-                  if (varAlreadyWritten == false) {
-                    section.lines.add(
-                      ';Force add line by NRMM, to prevent overlapped mods.\n$result = 1',
-                    );
-                    forcedFix = true;
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  //look for accidental "elif/else if/else" from "mod manager's if"
-  //example:
-  //if $managed_slot_id == $\modmanageragl\active_slot
-  //something
-  //if $anyvar == 1
-  //something
-  //endif <-- this one must not be written
-  //elif $anyvar == 0 <-- this one become elif for 'mod manager if' line because wrong syntax was written in the mod
-  for (var section in sections) {
-    if (_isExcludedSection(section.name) || _isKeySection(section.name)) {
-      continue;
-    }
-    final lines = section.lines;
-    StackCollection<String> ifStatementStack = StackCollection<String>();
-
-    for (var i = 0; i < lines.length; i++) {
-      final line = lines[i];
-
-      if (line.trim().toLowerCase().startsWith('if ')) {
-        ifStatementStack.push(line);
-        continue;
-      }
-
-      if (line.trim().toLowerCase().startsWith('elif ') ||
-          line.trim().toLowerCase().startsWith('else if ') ||
-          line.trim().toLowerCase() == 'else') {
-        String? popIfStatement = ifStatementStack.peek;
-        if (popIfStatement != null) {
-          if (popIfStatement.toLowerCase().trim().startsWith('if ') &&
-              popIfStatement.toLowerCase().trim().contains(
-                r'$\modmanageragl',
-              )) {
-            lines[i] =
-                ';Force fix syntax by NRMM, to prevent overlapped mods. Please fix the "if-elif-else-endif" statement manually.\n;$line';
-            forcedFix = true;
-            continue;
-          }
-        }
-      }
-
-      if (line.trim().toLowerCase() == "endif") {
-        ifStatementStack.pop();
-        continue;
-      }
-    }
-  }
-
-  //add missing endif
-  for (var section in sections) {
-    if (_isExcludedSection(section.name) || _isKeySection(section.name)) {
-      continue;
-    }
-    int totalIfFound = 0;
-    int totalEndifFound = 0;
-    int totalEndifShouldBeAdded = 0;
-    for (var line in section.lines) {
-      if (line.toLowerCase().trim().startsWith('if ')) {
-        totalIfFound = totalIfFound + 1;
-      }
-      if (line.toLowerCase().trim() == 'endif') {
-        totalEndifFound = totalEndifFound + 1;
-      }
-    }
-    totalEndifShouldBeAdded = totalIfFound - totalEndifFound;
-    for (var i = 0; i < totalEndifShouldBeAdded; i++) {
-      //find the "bottom content" position:
-      //skip any trailing blank lines or comments
-      int insertIndex = section.lines.length; //default: end
-      for (int j = section.lines.length - 1; j >= 0; j--) {
-        final trimmed = section.lines[j].trim();
-        if (trimmed.isNotEmpty && !trimmed.startsWith(';')) {
-          insertIndex = j + 1;
+        if (line.trim().toLowerCase().startsWith('allow_duplicate_hash')) {
+          allowDuplicateKeywordIsPresent = true;
           break;
         }
       }
 
-      //insert 'endif' right before trailing comments/blanks
-      section.lines.insert(
-        insertIndex,
-        ';Force add line by NRMM, to prevent overlapped mods.\nendif',
-      );
-      forcedFix = true;
-    }
-  }
-
-  return forcedFix;
-}
-
-Future<void> getNamespacedVar(
-  String iniFilePath,
-  Map<String, List<String>> variablesWithinModNamespace,
-) async {
-  try {
-    // Open the INI file and read it asynchronously
-    final file = File(iniFilePath);
-    final lines = await forceReadAsLinesUtf8(file);
-
-    // Parse the INI file sections
-    var parsedIni = await _parseIniSections(lines);
-
-    String? namespaceLowerCase;
-
-    //check for namespace & var definition on constants
-    for (var section in parsedIni) {
-      if (section.name == "__global__") {
-        for (var line in section.lines) {
-          //check for namespace definition
-          if (line
-              .trim()
-              .toLowerCase()
-              .replaceAll(' ', '')
-              .startsWith("namespace=")) {
-            final parts = line.split('=');
-            if (parts.length >= 2) {
-              final afterEquals = parts.sublist(1).join('=').trim();
-              namespaceLowerCase = afterEquals.trim().toLowerCase();
-              break;
-            }
-          }
-        }
-      }
-
-      //check in constant section for already defined vars
-      if (section.name.toLowerCase().trim() == "constants") {
-        for (var line in section.lines) {
-          if (line.trim().startsWith(';')) {
-            continue;
-          }
-          final regex = RegExp(r'(?<!\\)(\$[a-zA-Z_][a-zA-Z0-9_]*)');
-
-          final matches = regex.allMatches(line);
-          final results = matches.map((m) => m.group(1)!).toList();
-          for (var result in results) {
-            if (namespaceLowerCase != null) {
-              //add to variable passed from previous caller
-              variablesWithinModNamespace[namespaceLowerCase] = [
-                ...?variablesWithinModNamespace[namespaceLowerCase],
-                result.toLowerCase(),
-              ];
-            }
-          }
-        }
-      }
-      //
-    }
-  } catch (_) {}
-}
-
-void _checkAndModifySections(
-  List<IniSection> sections,
-  int modIndex,
-  int groupIndex,
-) {
-  final managedPattern = RegExp(
-    r'(\\modmanageragl\\group_)([1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)(\\active_slot)',
-  );
-  bool managedIdVarAdded = false;
-
-  for (var section in sections) {
-    final name = section.name;
-    final lines = section.lines;
-    bool found = false;
-    int? keyConditionIndex;
-
-    for (int i = 0; i < lines.length; i++) {
-      final line = lines[i];
-
-      // Modify group line
-      if (managedPattern.hasMatch(line) &&
-          !line.trim().startsWith(';') &&
-          !_isExcludedSection(name)) {
-        lines[i] = line.replaceAllMapped(managedPattern, (match) {
-          return '${match.group(1)}$groupIndex${match.group(3)}';
-        });
-
-        if (!_isKeySection(name)) {
-          //put if statement of mod manager to top line of the section
-
-          final movedLine = lines.removeAt(i);
-          lines.insert(0, movedLine);
-
-          //the endif for this mod manager if statement will also be fixed later after forcefix function.
-          //make sure the corresponding endif is on bottom
-          //on this _moveEndifToCorrectPlace() function
-        }
-        found = true;
-      }
-
-      // Detect existing condition in key section
-      if (_isKeySection(name) &&
-          line.trim().toLowerCase().startsWith('condition')) {
-        keyConditionIndex = i;
-      }
-    }
-
-    // If no managed line was found, insert
-    if (!found && name != "__global__" && !_isExcludedSection(name)) {
-      if (_isKeySection(name)) {
-        if (keyConditionIndex != null) {
-          lines[keyConditionIndex] =
-              "${lines[keyConditionIndex]} && \$managed_slot_id == \$\\modmanageragl\\group_$groupIndex\\active_slot";
-        } else {
-          lines.insert(
-            0,
-            'condition = \$managed_slot_id == \$\\modmanageragl\\group_$groupIndex\\active_slot',
-          );
-        }
-      } else {
-        lines.insert(
-          0,
-          r'if $managed_slot_id == $\modmanageragl\group_' +
-              groupIndex.toString() +
-              r'\active_slot',
-        );
-
+      if (!allowDuplicateKeywordIsPresent) {
         //find the "bottom content" position:
         //skip any trailing blank lines or comments
-        int insertIndex = lines.length; //default: end
-        for (int j = lines.length - 1; j >= 0; j--) {
-          final trimmed = lines[j].trim();
+        int insertIndex = section.lines.length; //default: end
+        for (int j = section.lines.length - 1; j >= 0; j--) {
+          final trimmed = section.lines[j].trim();
           if (trimmed.isNotEmpty && !trimmed.startsWith(';')) {
             insertIndex = j + 1;
             break;
@@ -2573,39 +1838,76 @@ void _checkAndModifySections(
         }
 
         //insert 'endif' right before trailing comments/blanks
-        lines.insert(insertIndex, 'endif');
+        section.lines.insert(insertIndex, 'allow_duplicate_hash = true');
       }
     }
+  }
 
-    // Special handling for "Constants" section
-    if (name.toLowerCase() == "constants") {
-      bool managedVarFound = false;
-      List<int> indexesWhereManagedVarFound = [];
+  return sections;
+}
 
-      for (int i = 0; i < lines.length; i++) {
-        if (lines[i].trim().toLowerCase().startsWith(
-          'global \$managed_slot_id',
-        )) {
-          indexesWhereManagedVarFound.add(i);
-          if (managedIdVarAdded) {
-            lines.removeAt(i);
-          } else {
-            lines[i] = 'global \$managed_slot_id = $modIndex';
-            managedVarFound = true;
-          }
+void _checkAndModifySections(
+  List<IniSection> sections,
+  int modIndex,
+  int groupIndex,
+) {
+  for (var section in sections) {
+    final name = section.name;
+    final lines = section.lines;
+
+    //Whitelisted or commandlist section
+    if (_isWhitelistedSection(name)) {
+      //simply insert manager if line on index 0. Because, at parsing logic, the old manager if line guaranteed to be removed
+      lines.insert(
+        0,
+        r'if $managed_slot_id == $\modmanageragl\group_' +
+            groupIndex.toString() +
+            r'\active_slot',
+      );
+      //TODO: HANDLE ENDIF LATER
+    }
+    //Constants section
+    else if (_isConstantsSection(name)) {
+      //simply insert $managed_slot_id. Because, at parsing logic, the old $managed_slot_id guaranteed to be removed
+      lines.insert(0, 'global \$managed_slot_id = $modIndex');
+    }
+    //Key section
+    else if (_isKeySection(name)) {
+      //look for condition line
+      final conditionLineIndex = lines.indexWhere(
+        (line) => line
+            .trim()
+            .toLowerCase()
+            .replaceAll(' ', '')
+            .startsWith('condition='),
+      );
+
+      //if condition line not found, add one
+      if (conditionLineIndex != -1) {
+        lines.insert(
+          0,
+          'condition = \$managed_slot_id == \$\\modmanageragl\\group_$groupIndex\\active_slot',
+        );
+      }
+      //if condition line is found, add managed line or modify managed line
+      else {
+        final conditionLine = lines[conditionLineIndex];
+
+        //if already have managed line, update groupIndex
+        if (ConstantVar.managedPattern.hasMatch(conditionLine)) {
+          lines[conditionLineIndex] = conditionLine.replaceAllMapped(
+            ConstantVar.managedPattern,
+            (match) {
+              return '${match.group(1)}$groupIndex${match.group(3)}';
+            },
+          );
+        }
+        //if not have managed line in condition, add it
+        else {
+          lines[conditionLineIndex] =
+              "$conditionLine && \$managed_slot_id == \$\\modmanageragl\\group_$groupIndex\\active_slot";
         }
       }
-
-      for (var i = 0; i < indexesWhereManagedVarFound.length; i++) {
-        if (i == 0) continue;
-        lines.removeAt(indexesWhereManagedVarFound[i]);
-      }
-
-      if (!managedVarFound && !managedIdVarAdded) {
-        lines.insert(0, 'global \$managed_slot_id = $modIndex');
-      }
-
-      managedIdVarAdded = true;
     }
   }
 }
@@ -2618,7 +1920,7 @@ void _moveEndifToCorrectPlace(List<IniSection> sections) {
   //which is currently not implemented
 
   for (var section in sections) {
-    if (_isExcludedSection(section.name) || _isKeySection(section.name)) {
+    if (!_isWhitelistedSection(section.name)) {
       continue;
     }
 
@@ -2697,22 +1999,38 @@ void _moveEndifToCorrectPlace(List<IniSection> sections) {
   }
 }
 
-bool _isExcludedSection(String section) {
-  // Ensure section is not empty or null to avoid errors
-  if (section.isEmpty) {
+bool _isWhitelistedSection(String sectionName) {
+  final lower = sectionName.toLowerCase();
+
+  const exact = {
+    'present',
+    'clearrendertargetview',
+    'cleardepthstencilview',
+    'clearunorderedaccessviewuint',
+    'clearunorderedaccessviewfloat',
+  };
+
+  if (exact.contains(lower)) {
     return true;
   }
 
-  final lowerSection = section.toLowerCase();
+  const prefixes = [
+    'builtincustomshader',
+    'customshader',
+    'builtincommandlist',
+    'commandlist',
+    'shaderoverride',
+    'textureoverride',
+  ];
 
-  if (lowerSection == "constants" || lowerSection.startsWith("resource")) {
-    return true;
+  for (final p in prefixes) {
+    if (lower.startsWith(p)) {
+      return true;
+    }
   }
 
-  if (lowerSection.startsWith("shader")) {
-    return lowerSection.endsWith(".insertdeclarations") ||
-        lowerSection.endsWith(".pattern") ||
-        lowerSection.endsWith(".replace");
+  if (lower.startsWith('shaderregex') && !lower.contains('.')) {
+    return true;
   }
 
   return false;
@@ -2723,11 +2041,16 @@ bool _isKeySection(String sectionName) {
   return lowerSectionName.startsWith("key");
 }
 
+bool _isConstantsSection(String sectionName) {
+  final lowerSectionName = sectionName.toLowerCase();
+  return lowerSectionName.startsWith("key");
+}
+
 String _getLiteralIni(List<IniSection> sections) {
   final StringBuffer result = StringBuffer();
 
   for (var section in sections) {
-    if (section.name != '__global__') {
+    if (section.name != '__preamble__') {
       result.writeln('[${section.name}]');
     }
 
