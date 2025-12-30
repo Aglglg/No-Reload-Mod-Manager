@@ -42,66 +42,78 @@ ErroredLine_FFI* GetErroredFlowControlLines(
     int32_t* out_count
 )
 {
-    //PREPARATION
+    if (!out_count) return nullptr;
+    *out_count = 0;
 
-    std::wstring wpath = utf8_to_wstring(path); //full path d3dx.ini e.g: D:\WWMI\d3dx.ini
-    std::wstring wbase_path = utf8_to_wstring(base_path); //base path of d3dx.ini e.g: "D:\WWMI\"
-    //must end with "\"
-    if (!wbase_path.empty())
-    {
-        wchar_t last = wbase_path.back();
-        if (last != L'\\' && last != L'/')
-        {
-            wbase_path.push_back(L'\\');
+    try {
+        // PREPARATION
+        std::wstring wpath = utf8_to_wstring(path);
+        std::wstring wbase_path = utf8_to_wstring(base_path);
+
+        if (!wbase_path.empty()) {
+            wchar_t last = wbase_path.back();
+            if (last != L'\\' && last != L'/') {
+                wbase_path.push_back(L'\\');
+            }
         }
+
+        Globals G;
+
+        for (int i = 0; i < known_lib_namespaces_count; ++i) {
+            G.known_lib_namespaces.insert(
+                utf8_to_wstring(known_lib_namespaces[i])
+            );
+        }
+
+        // PROCESS (may throw)
+        LoadConfigFile(G, wpath, wbase_path);
+
+        // OUTPUT
+        const int32_t count =
+            static_cast<int32_t>(G.errored_lines.size());
+        *out_count = count;
+
+        // Always return a valid pointer on success
+        const int32_t alloc_count = (count > 0) ? count : 1;
+
+        auto* arr = static_cast<ErroredLine_FFI*>(
+            calloc(alloc_count, sizeof(ErroredLine_FFI))
+            );
+
+        if (!arr) {
+            *out_count = 0;
+            return nullptr; // allocation failure is fatal
+        }
+
+        int i = 0;
+        for (const auto& e : G.errored_lines) {
+            if (i >= *out_count) break;
+
+            arr[i].line_index = e.line_index;
+            arr[i].file_path = _wcsdup(e.file_path.c_str());
+            arr[i].trimmed_line = _wcsdup(e.trimmed_line.c_str());
+            arr[i].reason = _wcsdup(e.reason.c_str());
+            ++i;
+        }
+
+
+        //Supposed to return:
+        // - Lines that could crash XXMI
+        // - Errored FlowControl lines
+        //      (in sections: CustomShader, CommandList, ShaderOverride, ShaderRegex main, TextureOverride,
+        //       Present, ClearRenderTargetView, ClearDepthStencilView, ClearUnorderedAccessViewUint, ClearUnorderedAccessViewFloat)
+        // - Invalid condition expression in [Key] sections
+        // - Duplicate sections informations in known lib namespaces such as RabbitFx or Orfix in GIMI, which mean user having multiple same libraries
+        // - Missing known lib that was referenced in a mod
+        return arr;
     }
-    //Global variables as local variable, because real global variable would allocate so much memory that can never be freed when it's called from Dart FFI
-    Globals G;
-
-    for (int i = 0; i < known_lib_namespaces_count; ++i) {
-        G.known_lib_namespaces.insert(utf8_to_wstring(known_lib_namespaces[i]));
-    }
-    
-    
-    //PROCESS
-    
-    LoadConfigFile(G, wpath, wbase_path);
-
-
-    //OUTPUT
-
-    *out_count = static_cast<int32_t>(G.errored_lines.size());
-    if (*out_count == 0)
-        return nullptr;
-
-    auto* arr = static_cast<ErroredLine_FFI*>(
-        calloc(*out_count, sizeof(ErroredLine_FFI))
-        );
-
-    if (arr == nullptr) {
+    catch (...) {
+        // Hard failure
         *out_count = 0;
         return nullptr;
     }
-
-    int i = 0;
-    for (const auto& e : G.errored_lines) {
-        arr[i].line_index = e.line_index;
-        arr[i].file_path = _wcsdup(e.file_path.c_str());
-        arr[i].trimmed_line = _wcsdup(e.trimmed_line.c_str());
-        arr[i].reason = _wcsdup(e.reason.c_str());
-        ++i;
-    }
-
-    //Supposed to return:
-    // - Lines that could crash XXMI
-    // - Errored FlowControl lines
-    //      (in sections: CustomShader, CommandList, ShaderOverride, ShaderRegex main, TextureOverride,
-    //       Present, ClearRenderTargetView, ClearDepthStencilView, ClearUnorderedAccessViewUint, ClearUnorderedAccessViewFloat)
-    // - Invalid condition expression in [Key] sections
-    // - Duplicate sections informations in known lib namespaces such as RabbitFx or Orfix in GIMI, which mean user having multiple same libraries
-    // - Missing known lib that was referenced in a mod
-    return arr;
 }
+
 
 // FREE
 void FreeErroredFlowControlLinesSnapshot(
