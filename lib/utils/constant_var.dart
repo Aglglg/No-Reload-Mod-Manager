@@ -52,6 +52,7 @@ class ConstantVar {
 
   static final managedPattern = RegExp(
     r'(\\modmanageragl\\group_)([1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)(\\active_slot)',
+    caseSensitive: false,
   );
 }
 

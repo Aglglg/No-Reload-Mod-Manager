@@ -1559,7 +1559,7 @@ Future<void> _modifyIniFile(
     if (!hasNRMM) {
       lines.insert(
         0,
-        "; Mod managed with No Reload Mod Manager (NRMM) by Agulag, for any problems, just contact/tag @aglgl on Discord.\n; Source of No Reload Mod Manager https://gamebanana.com/mods/582623\n",
+        "; Mod managed with No Reload Mod Manager (NRMM) by Agulag, for any problems, just contact/tag @aglgl on Discord.\n; \";-;\" are errored lines\n; Source of No Reload Mod Manager https://gamebanana.com/mods/582623\n",
       );
     }
 
@@ -1568,9 +1568,6 @@ Future<void> _modifyIniFile(
 
     // Modify the INI file sections based on the given modIndex and groupIndex
     _checkAndModifySections(parsedIni, modIndex, groupIndex);
-
-    //move endif for mod manager to bottom, make sure any lines is inside if-endif mod manager scope
-    _moveEndifToCorrectPlace(parsedIni);
 
     // Write the modified content back to the INI file
     String modifiedIni = _getLiteralIni(parsedIni);
@@ -1602,7 +1599,13 @@ void _modifyLinesBasedOnError(
     expectedErrors[e.lineIndex] = e.trimmedLine;
   }
 
+  for (var entry in errorReport.otherError.entries) {
+    print(entry.key);
+    print(entry.value[0].trimmedLine);
+  }
+
   // We need to continue even if expectedErrors is empty to remove old marks.
+  //TODO: remove mark as forced fix
 
   //Iterate through every line in the file to sync state
   for (int i = 0; i < lines.length; i++) {
@@ -1617,6 +1620,7 @@ void _modifyLinesBasedOnError(
 
       //Make sure the trimmed content matches the report
       if (cleanLine.trim() == expectedErrors[i]) {
+        //TODO: Mark as forced fix
         //If it's on report, but not marked yet, add mark
         if (!isMarked) {
           lines[i] = ';-;$currentLine';
@@ -1729,6 +1733,44 @@ class IniSection {
   IniSection(this.name, this.lines);
 }
 
+//Get last index in section, but not literal last index, because lines can be empty lines or comment lines
+int _getLastIndexInSection(List<String> lines) {
+  for (int j = lines.length - 1; j >= 0; j--) {
+    final line = lines[j];
+    final len = line.length;
+
+    int i = 0;
+    // Skip leading whitespace without allocating
+    while (i < len) {
+      final c = line.codeUnitAt(i);
+      if (c != 32 && c != 9) break; // space or tab
+      i++;
+    }
+
+    // Empty line
+    if (i >= len) continue;
+
+    // Comment line: starts with ';' BUT NOT ';-;'
+    if (line.codeUnitAt(i) == 59) {
+      // ';'
+      if (i + 2 < len &&
+          line.codeUnitAt(i + 1) == 45 && // '-'
+          line.codeUnitAt(i + 2) == 59) {
+        // ';'
+        // ";-;" → treated as content
+        return j + 1;
+      }
+      // Regular comment → skip
+      continue;
+    }
+
+    // Real content
+    return j + 1;
+  }
+
+  return lines.length;
+}
+
 String _getSectionName(String trimmedLine) {
   if (trimmedLine.length == 1) return '';
 
@@ -1756,6 +1798,7 @@ Future<List<IniSection>> _parseIniSections(List<String> allLines) async {
       //Add lines to current section
       if (line
           .replaceAll(' ', '')
+          .toLowerCase()
           .contains(r"if$managed_slot_id==$\modmanageragl\group_")) {
         //but, do not add manager if line (if$managed_slot_id==$\modmanageragl\group_)
       } else if (_isConstantsSection(currentSection.name) &&
@@ -1800,19 +1843,11 @@ Future<List<IniSection>> _parseIniSections(List<String> allLines) async {
       }
 
       if (!matchKeywordIsPresent) {
-        //find the "bottom content" position:
-        //skip any trailing blank lines or comments
-        int insertIndex = section.lines.length; //default: end
-        for (int j = section.lines.length - 1; j >= 0; j--) {
-          final trimmed = section.lines[j].trim();
-          if (trimmed.isNotEmpty && !trimmed.startsWith(';')) {
-            insertIndex = j + 1;
-            break;
-          }
-        }
-
-        //insert 'endif' right before trailing comments/blanks
-        section.lines.insert(insertIndex, 'match_priority = 0');
+        //insert right before trailing comments/blanks
+        section.lines.insert(
+          _getLastIndexInSection(section.lines),
+          'match_priority = 0',
+        );
       }
     }
     //SHADER OVERRIDE
@@ -1826,19 +1861,11 @@ Future<List<IniSection>> _parseIniSections(List<String> allLines) async {
       }
 
       if (!allowDuplicateKeywordIsPresent) {
-        //find the "bottom content" position:
-        //skip any trailing blank lines or comments
-        int insertIndex = section.lines.length; //default: end
-        for (int j = section.lines.length - 1; j >= 0; j--) {
-          final trimmed = section.lines[j].trim();
-          if (trimmed.isNotEmpty && !trimmed.startsWith(';')) {
-            insertIndex = j + 1;
-            break;
-          }
-        }
-
-        //insert 'endif' right before trailing comments/blanks
-        section.lines.insert(insertIndex, 'allow_duplicate_hash = true');
+        //insert right before trailing comments/blanks
+        section.lines.insert(
+          _getLastIndexInSection(section.lines),
+          'allow_duplicate_hash = true',
+        );
       }
     }
   }
@@ -1851,6 +1878,7 @@ void _checkAndModifySections(
   int modIndex,
   int groupIndex,
 ) {
+  bool managedSlotIdVarAdded = false;
   for (var section in sections) {
     final name = section.name;
     final lines = section.lines;
@@ -1864,12 +1892,14 @@ void _checkAndModifySections(
             groupIndex.toString() +
             r'\active_slot',
       );
-      //TODO: HANDLE ENDIF LATER
+
+      _fixEndifLineAndTrailingFlowControlLine(section);
     }
     //Constants section
-    else if (_isConstantsSection(name)) {
+    else if (_isConstantsSection(name) && !managedSlotIdVarAdded) {
       //simply insert $managed_slot_id. Because, at parsing logic, the old $managed_slot_id guaranteed to be removed
       lines.insert(0, 'global \$managed_slot_id = $modIndex');
+      managedSlotIdVarAdded = true;
     }
     //Key section
     else if (_isKeySection(name)) {
@@ -1883,7 +1913,7 @@ void _checkAndModifySections(
       );
 
       //if condition line not found, add one
-      if (conditionLineIndex != -1) {
+      if (conditionLineIndex == -1) {
         lines.insert(
           0,
           'condition = \$managed_slot_id == \$\\modmanageragl\\group_$groupIndex\\active_slot',
@@ -1904,97 +1934,108 @@ void _checkAndModifySections(
         }
         //if not have managed line in condition, add it
         else {
-          lines[conditionLineIndex] =
-              "$conditionLine && \$managed_slot_id == \$\\modmanageragl\\group_$groupIndex\\active_slot";
+          // Split only once, safe even if RHS is empty
+          final parts = conditionLine.split('=');
+          final lhs = parts.first.trimRight();
+          final rhs = parts.length > 1 ? parts.sublist(1).join('=').trim() : '';
+
+          final managedExpr =
+              '\$managed_slot_id == \$\\modmanageragl\\group_$groupIndex\\active_slot';
+
+          if (rhs.isEmpty) {
+            // condition =    replace RHS entirely
+            lines[conditionLineIndex] = '$lhs = $managedExpr';
+          } else {
+            // condition = something && managed line
+            lines[conditionLineIndex] = '$lhs = $rhs && $managedExpr';
+          }
         }
       }
     }
   }
 }
 
-//Move endif for mod manager if to bottom
-void _moveEndifToCorrectPlace(List<IniSection> sections) {
-  //will only detect line that starts with 'if ' as valid conditional statement
-  //if somehow if statement using invalid condition like 'if $\undeclared_namespace\undeclared_var', this function is useless
-  //to properly parse the condition, it needs to check for all ini files, from the root, which is d3dx.ini, look for include and exclude keyword
-  //which is currently not implemented
+///Make sure no "else-elif-else if" for manager if line, because this still could be treated as valid in ini handler
+///Make sure "endif" is on bottom
+///Modify based on error report can only remove/mark invalid line
+///We still need to make sure that the manager if scope is correct here (endif placed on bottom)
+void _fixEndifLineAndTrailingFlowControlLine(IniSection section) {
+  int lastIndexForInsertion = _getLastIndexInSection(section.lines);
+  int lastContentIndex = lastIndexForInsertion - 1;
+  int? indexOfEndifForManagerIf;
 
-  for (var section in sections) {
-    if (!_isWhitelistedSection(section.name)) {
-      continue;
-    }
+  final lines = section.lines;
 
-    final lines = section.lines;
-    StackCollection<String> ifStatementStack = StackCollection<String>();
+  StackCollection<String> ifLines = StackCollection();
 
-    for (var i = 0; i < lines.length; i++) {
-      final line = lines[i];
+  //note: "if " and "else if" lines guaranted to have valid expression, error report already handles it
+  //it also guaranted to have valid flow control lines
+  //but does not guarantee that manager if line scope is covering from top to bottom (endif placed on bottom)
+  //also does not guarantee that manager if line does not contain accidental else-elif-else if, if the mod section was previously managed with old version of this mod manager
+  //so we fix that here
 
-      //if 'if ' line, push it to the stack
-      if (line.trim().toLowerCase().startsWith('if ')) {
-        ifStatementStack.push(line);
+  for (var i = 0; i < lines.length; i++) {
+    final trimmedLowerCaseLine = lines[i].trim().toLowerCase();
+
+    final bool isIfLine =
+        trimmedLowerCaseLine.startsWith('if ') &&
+        !trimmedLowerCaseLine.startsWith(
+          r'if $managed_slot_id == $\modmanageragl\group_',
+        );
+
+    final bool isElseOrElifLine =
+        trimmedLowerCaseLine.startsWith('else if ') ||
+        trimmedLowerCaseLine.startsWith('elif ') ||
+        trimmedLowerCaseLine == "else";
+
+    final bool isEndifLine = trimmedLowerCaseLine == "endif";
+
+    //add if line, that's NOT manager if line to stack
+    if (isIfLine) {
+      ifLines.push(trimmedLowerCaseLine);
+    } else if (isElseOrElifLine) {
+      final peekIf = ifLines.peek;
+
+      //if the line is "else" or "elif" but no if line, that means this could be accidental else/elif for manager if line
+      //remove/comment it out
+      //usually happens if mod was managed with old version
+      //newly added mod to this version won't have this, handled by error report
+      if (peekIf == null) {
+        lines[i] = ";-;${lines[i]}";
       }
-      //if 'endif' line, try to pop the stack for the matching 'if ' line
-      else if (line.trim().toLowerCase() == 'endif') {
-        String? popIfStatement = ifStatementStack.pop();
+    }
+    //Remove if line from stack if is endif line, close if
+    else if (isEndifLine) {
+      final poppedIf = ifLines.pop();
 
-        //if the popped result is not null, means there's still a 'if ' line for this 'endif' line
-        //if null means this endif is errored, not used, leave it
-        if (popIfStatement != null) {
-          //check whether the 'if ' line is 'if ' line from mod manager, if yes, that means this 'endif' line is correspond to that mod manager if statement
-          if (popIfStatement.toLowerCase().trim().startsWith('if ') &&
-              popIfStatement.toLowerCase().trim().contains(
-                r'$\modmanageragl',
-              )) {
-            //move this endif line to bottom of the section
-            //but not bottom in this list, bottom before any blank lines/comments
-
-            //remove it first
-            lines.removeAt(i);
-
-            //match priority line or force fix mark that was previous added by mod manager, and make some things look ugly because blindly placed at the bottom
-            bool previousLineIsMatchPriority = false;
-            bool previousLineIsForceAddEndifMark = false;
-            if (lines[i - 1].trim() == "match_priority = 0") {
-              lines.removeAt(i - 1);
-              previousLineIsMatchPriority = true;
-            } else if (lines[i - 1].trim() ==
-                ";Force add line by NRMM, to prevent overlapped mods.") {
-              lines.removeAt(i - 1);
-
-              previousLineIsForceAddEndifMark = true;
-            }
-
-            //find the "bottom content" position:
-            //skip any trailing blank lines or comments
-            int insertIndex = lines.length; //default: end
-            for (int j = lines.length - 1; j >= 0; j--) {
-              final trimmed = lines[j].trim();
-              if (trimmed.isNotEmpty && !trimmed.startsWith(';')) {
-                insertIndex = j + 1;
-                break;
-              }
-            }
-
-            //insert 'endif' right before trailing comments/blanks
-            lines.insert(insertIndex, 'endif');
-
-            if (previousLineIsMatchPriority) {
-              //still using insertIndex, previous added 'endif' will auto shift to next index
-              lines.insert(insertIndex, 'match_priority = 0');
-            } else if (previousLineIsForceAddEndifMark) {
-              //still using insertIndex, previous added 'endif' will auto shift to next index
-              lines.insert(
-                insertIndex,
-                ';Force add line by NRMM, to prevent overlapped mods.',
-              );
-            }
-
-            //break this lines loop, already found the endif
-            break;
-          }
+      //if poppedIf is null, that means this endif line is missing if line
+      //error report should already handled it, but if there's still any,
+      //that means this endif line is for manager if line, because we didn't add manager if line to the stack
+      if (poppedIf == null) {
+        //that means this endif line for manager if line
+        if (i == lastContentIndex) {
+          indexOfEndifForManagerIf = i;
+        }
+        //but make sure it's located in the bottom, if not, comment it out
+        else {
+          lines[i] = ";-;${lines[i]}";
         }
       }
+    }
+  }
+
+  //if no endif for manager if found, add it
+  if (indexOfEndifForManagerIf == null) {
+    //but first make sure to check if lastcontentindex is ";-;endif"
+    bool lastContentIndexIsCommentedEndif =
+        lines[lastContentIndex].trim().startsWith(";-;") &&
+        lines[lastContentIndex].replaceFirst(";-;", '').trim().toLowerCase() ==
+            "endif";
+
+    if (lastContentIndexIsCommentedEndif) {
+      lines[lastContentIndex] = "endif";
+    } else {
+      lines.insert(lastIndexForInsertion, "endif");
     }
   }
 }
