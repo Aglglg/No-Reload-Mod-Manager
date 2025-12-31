@@ -6,6 +6,7 @@ add_library(xxmi_lib_ini_handler SHARED
     CommandList.cpp
     IniHandler.cpp
     XXMILib-Ini-Handler.cpp
+    ResourceHash.cpp
 )
 
 # Standard and Properties

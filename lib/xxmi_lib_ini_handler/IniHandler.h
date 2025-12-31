@@ -106,6 +106,7 @@ struct IniSection {
 
 typedef std::map<std::wstring, IniSection, WStringInsensitiveLess> IniSections;
 
+int GetIniInt(Globals& G, const wchar_t* section, const wchar_t* key, int def, bool* found, bool warn = true);
 
 bool get_namespaced_section_name_lower(const std::wstring* section, const std::wstring* ini_namespace, std::wstring* ret);
 std::wstring get_namespaced_var_name_lower(const std::wstring var, const std::wstring* ini_namespace);

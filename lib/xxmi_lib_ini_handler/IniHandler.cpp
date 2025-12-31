@@ -2,6 +2,7 @@
 
 #include "IniHandler.h"
 #include "CommandList.h"
+#include "ResourceHash.h"
 #include <algorithm>
 #include <fstream>
 #include <sstream>
@@ -670,6 +671,16 @@ static void ParseIniFilesRecursive(Globals& G, wchar_t* migoto_path, const std::
 	}
 }
 
+static bool IniHasKey(Globals& G, const wchar_t* section, const wchar_t* key)
+{
+	try {
+		return !!G.ini_sections.at(section).kv_map.count(key);
+	}
+	catch (std::out_of_range) {
+		return false;
+	}
+}
+
 static void _GetIniSection(IniSections* custom_ini_sections, IniSectionVector** key_vals, const wchar_t* section)
 {
 	static IniSectionVector empty_section_vector;
@@ -792,6 +803,36 @@ static bool GetIniStringAndLog(Globals& G, const wchar_t* section, const wchar_t
 		//LogInfo("  %S=%s\n", key, ret->c_str());
 
 	return rc;
+}
+
+int GetIniInt(Globals& G, const wchar_t* section, const wchar_t* key, int def, bool* found, bool warn)
+{
+	wchar_t val[32];
+	int ret = def;
+	int len;
+
+	if (found)
+		*found = false;
+
+	if (GetIniString(G, section, key, 0, val, 32)) {
+		if (swscanf_s(val, L"%d%n", &ret, &len) != 1 || len != wcslen(val)) {
+			if (warn) {
+				std::wstring ini_namespace = G.ini_sections[section].ini_namespace;
+				if (ini_namespace.empty()) {
+					ini_namespace = L"d3dx.ini";
+				}
+				//wprintf(L"WARNING: Integer parse error: %ls=%ls\n - [%ls] @ [%ls]\n", key, val, section, ini_namespace.c_str());
+			}
+			ret = def;
+		}
+		else {
+			if (found)
+				*found = true;
+			//LogInfo("  %S=%d\n", key, ret);
+		}
+	}
+
+	return ret;
 }
 
 static UINT64 GetIniHash(Globals& G, const wchar_t* section, const wchar_t* key, UINT64 def, bool* found)
@@ -1147,41 +1188,36 @@ wchar_t* ShaderOverrideIniKeys[] = {
 	L"filter_index",
 	NULL
 };
-static void _EnumerateShaderOverrideSections(Globals& G, IniSections::iterator lower, IniSections::iterator upper)
+
+static void ParseShaderOverrideSections(Globals& G)
 {
-	IniSections::iterator i;
-	std::wstring section_id;
+	IniSections::iterator lower, upper, i;
+	const wchar_t* id;
+	ShaderOverride* shader_override;
+	UINT64 hash;
+	bool duplicate, found;
 
-	for (i = lower; i != upper; i++) {
-		section_id = i->first;
-		std::transform(section_id.begin(), section_id.end(), section_id.begin(), ::towlower);
-
-		G.shaderOverrideSections[section_id];
-	}
-}
-static void EnumerateShaderOverrideSections(Globals& G)
-{
-	IniSections::iterator lower, upper;
-
-	G.shaderOverrideSections.clear();
+	G.mShaderOverrideMap.clear();
 
 	lower = G.ini_sections.lower_bound(std::wstring(L"ShaderOverride"));
 	upper = prefix_upper_bound(G.ini_sections, std::wstring(L"ShaderOverride"));
-	_EnumerateShaderOverrideSections(G, lower, upper);
-}
-static void ParseShaderOverrideSections(Globals& G)
-{
-	// We only care about command list, so just use explicit command list section
-	ExplicitCommandListSections::iterator i;
-	ExplicitCommandListSection* shader_override_section;
-	const std::wstring* section_id;
+	for (i = lower; i != upper; i++) {
+		id = i->first.c_str();
 
 
-	for (i = G.shaderOverrideSections.begin(); i != G.shaderOverrideSections.end(); i++) {
-		section_id = &i->first;
-		shader_override_section = &i->second;
+		hash = GetIniHash(G, id, L"Hash", 0, &found);
+		if (!found) {
+			//wprintf(L"WARNING: Section missing Hash=\n - [%ls]\n", id);
+			continue;
+		}
 
-		ParseCommandList(G, section_id->c_str(), &shader_override_section->command_list, &shader_override_section->post_command_list, ShaderOverrideIniKeys);
+		duplicate = !!G.mShaderOverrideMap.count(hash);
+		shader_override = &G.mShaderOverrideMap[hash];
+		if (!duplicate)
+			shader_override->first_ini_section = id;
+
+		// We only care about command list, so just use explicit command list section
+		ParseCommandList(G, id, &shader_override->command_list, &shader_override->post_command_list, ShaderOverrideIniKeys);
 	}
 }
 
@@ -1343,43 +1379,94 @@ wchar_t* TextureOverrideIniKeys[] = {
 	NULL
 };
 
-static void _EnumerateTextureOverrideSections(Globals& G, IniSections::iterator lower, IniSections::iterator upper)
+wchar_t* TextureOverrideFuzzyMatchesIniKeys[] = {
+	TEXTURE_OVERRIDE_FUZZY_MATCHES,
+	NULL
+};
+
+static void parse_texture_override_common(Globals& G, const wchar_t* id, TextureOverride* override, bool register_command_lists)
 {
-	IniSections::iterator i;
-	std::wstring section_id;
-
-	for (i = lower; i != upper; i++) {
-		section_id = i->first;
-		std::transform(section_id.begin(), section_id.end(), section_id.begin(), ::towlower);
-
-		G.textureOverrideSections[section_id];
-	}
+	bool found;
+	override->priority = GetIniInt(G, id, L"match_priority", 0, &found);
+	ParseCommandList(G, id, &override->command_list, &override->post_command_list, TextureOverrideIniKeys, register_command_lists);
 }
 
-static void EnumerateTextureOverrideSections(Globals& G)
+static bool texture_override_section_has_fuzzy_match_keys(Globals& G, const wchar_t* section)
 {
-	IniSections::iterator lower, upper;
+	int i;
 
-	G.textureOverrideSections.clear();
+	for (i = 0; TextureOverrideFuzzyMatchesIniKeys[i]; i++) {
+		if (IniHasKey(G, section, TextureOverrideFuzzyMatchesIniKeys[i]))
+			return true;
+	}
 
-	lower = G.ini_sections.lower_bound(std::wstring(L"TextureOverride"));
-	upper = prefix_upper_bound(G.ini_sections, std::wstring(L"TextureOverride"));
-	_EnumerateTextureOverrideSections(G, lower, upper);
+	return false;
+}
+
+static void parse_texture_override_fuzzy_match(Globals& G, const wchar_t* section)
+{
+	FuzzyMatchResourceDesc* fuzzy;
+
+	fuzzy = new FuzzyMatchResourceDesc(section);
+
+	parse_texture_override_common(G, section, fuzzy->texture_override, true);
+
+	if (!G.mFuzzyTextureOverrides.insert(std::shared_ptr<FuzzyMatchResourceDesc>(fuzzy)).second) {
+		//printf("BUG: Unexpected error inserting fuzzy texture override\n");
+		//DoubleBeepExit();
+	}
 }
 
 static void ParseTextureOverrideSections(Globals& G)
 {
 	// We only care about command list, so just use explicit command list section
-	ExplicitCommandListSections::iterator i;
-	ExplicitCommandListSection* texture_override_sections;
-	const std::wstring* section_id;
+	IniSections::iterator lower, upper, i;
+	const wchar_t* id;
+	TextureOverride* override;
+	uint32_t hash;
+	bool found;
+	std::map<uint32_t, int> max_byte_width_map;
 
 
-	for (i = G.textureOverrideSections.begin(); i != G.textureOverrideSections.end(); i++) {
-		section_id = &i->first;
-		texture_override_sections = &i->second;
+	G.mTextureOverrideMap.clear();
+	G.mFuzzyTextureOverrides.clear();
 
-		ParseCommandList(G, section_id->c_str(), &texture_override_sections->command_list, &texture_override_sections->post_command_list, TextureOverrideIniKeys);
+	lower = G.ini_sections.lower_bound(std::wstring(L"TextureOverride"));
+	upper = prefix_upper_bound(G.ini_sections, std::wstring(L"TextureOverride"));
+
+	for (i = lower; i != upper; i++) {
+		id = i->first.c_str();
+
+		hash = (uint32_t)GetIniHash(G, id, L"Hash", 0, &found);
+		if (!found) {
+			if (texture_override_section_has_fuzzy_match_keys(G, id)) {
+				parse_texture_override_fuzzy_match(G, id);
+				continue;
+			}
+
+			//wprintf(L"WARNING: Section missing Hash= or valid match options - [%ls]\n", id);
+			continue;
+		}
+
+		if (texture_override_section_has_fuzzy_match_keys(G, id))
+		{
+			//wprintf(L"WARNING: Cannot use hash= and match options together!\n - [%ls]\n", id);
+		}
+
+		G.mTextureOverrideMap[hash].emplace_back();
+		override = &G.mTextureOverrideMap[hash].back();
+		override->ini_section = id;
+
+		parse_texture_override_common(G, id, override, false);
+	}
+
+	for (auto& tolkv : G.mTextureOverrideMap) {
+		std::sort(tolkv.second.begin(), tolkv.second.end(), TextureOverrideLess);
+
+		for (TextureOverride& to : tolkv.second) {
+			G.registered_command_lists.push_back(&to.command_list);
+			G.registered_command_lists.push_back(&to.post_command_list);
+		}
 	}
 }
 
@@ -1561,12 +1648,11 @@ void LoadConfigFile(Globals& G, const std::wstring& ini_file, const std::wstring
 
 	G.registered_command_lists.clear();
 
+	//This enumerate function cause problem on ini_sections map cannot find the specified section if the namespace(or file path) is non utf8 english
+	//But leave it as is, because the original XXMI Lib also have this problem
+
 	EnumerateCustomShaderSections(G);
 	EnumerateExplicitCommandListSections(G);
-	//Also enumerate shader & texture override section because the logic is almost the same as explicit command list section
-	EnumerateShaderOverrideSections(G);
-	EnumerateTextureOverrideSections(G);
-
 	//EnumeratePresetOverrideSections();
 
 	//Used for parsing expression, so parse resource and constants first
@@ -1575,17 +1661,15 @@ void LoadConfigFile(Globals& G, const std::wstring& ini_file, const std::wstring
 
 	//Only care about condition line in [Key] sections
 	RegisterPresetKeyBindings(G);
-	//ParsePresetOverrideSections();
 
-	//Unified to be the same logic as explicit command list sections
+	//ParsePresetOverrideSections();
 	ParseCustomShaderSections(G);
 	ParseExplicitCommandListSections(G);
+
 	ParseShaderOverrideSections(G);
 
-	//But for shader regex code still taken from original xxmi-lib
 	ParseShaderRegexSections(G);
 
-	//Unified to be the same logic as explicit command list sections
 	ParseTextureOverrideSections(G);
 
 	G.present_command_list.clear();

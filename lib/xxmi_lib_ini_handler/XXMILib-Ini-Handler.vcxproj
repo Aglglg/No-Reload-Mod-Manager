@@ -130,12 +130,14 @@
   <ItemGroup>
     <ClCompile Include="CommandList.cpp" />
     <ClCompile Include="IniHandler.cpp" />
+    <ClCompile Include="ResourceHash.cpp" />
     <ClCompile Include="XXMILib-Ini-Handler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CommandList.h" />
     <ClInclude Include="Globals.h" />
     <ClInclude Include="IniHandler.h" />
+    <ClInclude Include="ResourceHash.h" />
     <ClInclude Include="util.h" />
     <ClInclude Include="util_min.h" />
     <ClInclude Include="XXMILib-Ini-Handler.h" />

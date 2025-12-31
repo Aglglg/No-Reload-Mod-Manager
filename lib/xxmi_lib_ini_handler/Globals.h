@@ -1,7 +1,32 @@
 #pragma once
 #include "CommandList.h"
 #include "IniHandler.h"
+#include "ResourceHash.h"
 #include <string>
+
+struct ShaderOverride {
+	std::wstring first_ini_section;
+
+	CommandList command_list;
+	CommandList post_command_list;
+};
+typedef std::unordered_map<UINT64, struct ShaderOverride> ShaderOverrideMap;
+
+struct TextureOverride {
+	std::wstring ini_section;
+	int priority;
+
+	CommandList command_list;
+	CommandList post_command_list;
+
+	TextureOverride() :
+		priority(0)
+	{
+	}
+};
+
+typedef std::vector<struct TextureOverride> TextureOverrideList;
+typedef std::unordered_map<uint32_t, TextureOverrideList> TextureOverrideMap;
 
 struct Globals
 {
@@ -28,6 +53,9 @@ struct Globals
 	CommandList constants_command_list;
 	CommandList post_constants_command_list;
 
+	ShaderOverrideMap mShaderOverrideMap;
+	TextureOverrideMap mTextureOverrideMap;
+	FuzzyTextureOverrides mFuzzyTextureOverrides;
 
 	///////////
 
@@ -36,8 +64,6 @@ struct Globals
 	std::vector<CommandList*> registered_command_lists;
 	ExplicitCommandListSections explicitCommandListSections;
 	ExplicitCommandListSections customShaderSections;
-	ExplicitCommandListSections shaderOverrideSections;
-	ExplicitCommandListSections textureOverrideSections;
 	CustomResources customResources;
 	ShaderRegexGroups shader_regex_groups;
 	std::vector<std::shared_ptr<CommandList>> dynamically_allocated_command_lists;
