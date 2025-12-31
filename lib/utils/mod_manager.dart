@@ -842,13 +842,25 @@ Future<List<TextSpan>> updateModData(
     final managedPath = preparing.$1;
     needReloadManual = preparing.$2;
 
+    //Get all mods for each group directly and once
     final groupFullPathsAndIndexes = await getGroupFolders(
       managedPath,
       shouldThrowOnError: true,
     );
 
+    final Map<(Directory, int), List<ModData>> groupAndModsPair = {};
+
+    for (final (groupDir, groupIndex) in groupFullPathsAndIndexes) {
+      final normalizedDir = Directory(p.normalize(groupDir.path));
+      final key = (normalizedDir, groupIndex);
+
+      final mods = await getModsOnGroup(normalizedDir, false);
+
+      groupAndModsPair[key] = mods;
+    }
+
     //Fix duplicated namespaces first, if any
-    await _autoModifyDuplicateNamespaceInManagedMod(groupFullPathsAndIndexes);
+    await _autoModifyDuplicateNamespaceInManagedMod(groupAndModsPair);
 
     //Get errored lines from xxmi ini handler
     errorReport = await Isolate.run(() {
@@ -860,28 +872,29 @@ Future<List<TextSpan>> updateModData(
     });
 
     await Future.wait([
-      for (final (groupDir, groupIndex) in groupFullPathsAndIndexes)
+      for (final entry in groupAndModsPair.entries)
         () async {
+          final (groupDir, groupIndex) = entry.key;
+          final modDatas = entry.value;
+
           await _deleteGroupIniFiles(groupDir.path, operationLogs);
           await _createGroupIni(groupDir.path, groupIndex, operationLogs);
 
-          final modFullPaths = await getModsOnGroup(groupDir, false);
-
-          for (var mod in modFullPaths) {
+          for (var mod in modDatas) {
             if (mod.modIcon == null) {
               await _tryAutoGetModIcon(mod.modDir);
             }
           }
 
           await Future.wait([
-            for (var j = 0; j < modFullPaths.length; j++)
+            for (var j = 0; j < modDatas.length; j++)
               if (j != 0 &&
                   !p
-                      .basename(modFullPaths[j].modDir.path)
+                      .basename(modDatas[j].modDir.path)
                       .toLowerCase()
                       .startsWith('disabled'))
                 _manageMod(
-                  modFullPaths[j].modDir.path,
+                  modDatas[j].modDir.path,
                   'group_$groupIndex',
                   j,
                   groupIndex,
@@ -1193,13 +1206,14 @@ class NamespaceRewriteException implements Exception {
 }
 
 Future<void> _autoModifyDuplicateNamespaceInManagedMod(
-  List<(Directory, int)> groups,
+  Map<(Directory, int), List<ModData>> groupAndModsPair,
 ) async {
   final namespacesInManaged = <String>{};
 
-  for (final (groupDir, groupIndex) in groups) {
+  for (final entry in groupAndModsPair.entries) {
     final namespacesInGroup = <String>{};
-    final mods = await getModsOnGroup(groupDir, false);
+    final mods = entry.value;
+    final key = entry.key;
 
     for (final mod in mods) {
       final iniFiles = await findIniFilesRecursiveExcludeDisabled(
@@ -1246,7 +1260,7 @@ Future<void> _autoModifyDuplicateNamespaceInManagedMod(
         if (!ok) {
           await _markAsNamespaced(mod.modDir.path, true);
           throw NamespaceRewriteException(
-            groupIndex: groupIndex,
+            groupIndex: key.$2,
             modName: mod.modName,
           );
         }
