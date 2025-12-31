@@ -1100,101 +1100,6 @@ class _MainViewState extends ConsumerState<MainView>
     }
   }
 
-  Future<void> _checkDuplicateUtilitiesMod(String modsPath) async {
-    //Check for duplicate RabbitFx.ini
-    final rabbitFxPaths = await checkForRabbitFxCount(Directory(modsPath));
-
-    if (rabbitFxPaths.length > 1) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: const Color(0xFF2B2930),
-          margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
-          duration: Duration(days: 1),
-          behavior: SnackBarBehavior.floating,
-          closeIconColor: Colors.blue,
-          showCloseIcon: false,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          content: Text(
-            'Found more than 1 RabbitFx.ini on your "Mods" folder, please use only 1.'
-                .tr(),
-            style: GoogleFonts.poppins(
-              color: Colors.yellow,
-              fontSize: 13 * ref.read(zoomScaleProvider),
-            ),
-          ),
-          action: SnackBarAction(
-            textColor: Colors.blue,
-            label: "Details".tr(),
-            onPressed: () {
-              _onUtilitiesDuplicatedDetails(rabbitFxPaths);
-            },
-          ),
-          dismissDirection: DismissDirection.none,
-        ),
-      );
-    }
-
-    //Check for duplicate ORFix.ini on Genshin Impact
-    if (ref.read(targetGameProvider) == TargetGame.Genshin_Impact) {
-      final isCoreOrfixFound = await coreOrfixFound(Directory(modsPath));
-      final orfixPaths = await checkForOrfixCount(Directory(modsPath));
-
-      if ((orfixPaths.isNotEmpty && isCoreOrfixFound) ||
-          (orfixPaths.length > 1 && !isCoreOrfixFound)) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: const Color(0xFF2B2930),
-            margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
-            duration: Duration(days: 1),
-            behavior: SnackBarBehavior.floating,
-            closeIconColor: Colors.blue,
-            showCloseIcon: false,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            content: Text(
-              isCoreOrfixFound
-                  ? 'Found ORFix.ini on your "Mods" folder, please delete it. Latest GIMI already have it.'
-                      .tr()
-                  : 'Found more than 1 ORFix.ini on your "Mods" folder, please use only 1.'
-                      .tr(),
-              style: GoogleFonts.poppins(
-                color: Colors.yellow,
-                fontSize: 13 * ref.read(zoomScaleProvider),
-              ),
-            ),
-            action: SnackBarAction(
-              textColor: Colors.blue,
-              label: "Details".tr(),
-              onPressed: () {
-                _onUtilitiesDuplicatedDetails(orfixPaths);
-              },
-            ),
-            dismissDirection: DismissDirection.none,
-          ),
-        );
-      }
-    }
-  }
-
-  void _onUtilitiesDuplicatedDetails(List<String> rabbitFxPaths) {
-    ref.read(alertDialogShownProvider.notifier).state = true;
-    showDialog(
-      barrierDismissible: false,
-      context: context,
-      builder:
-          (context) => DuplicatedUtilitiesDialog(utilityPaths: rabbitFxPaths),
-    );
-  }
-
   Future<void> checkIsModsPathValidAndReady() async {
     String? previousModsPath = ref.read(validModsPath);
     if (previousModsPath != null) {
@@ -1287,9 +1192,6 @@ class _MainViewState extends ConsumerState<MainView>
       if (existAndValid) {
         //Load mod & group datas
         final datas = await refreshModData(Directory(managedPath));
-
-        //Check for duplicate utilities
-        await _checkDuplicateUtilitiesMod(modsPath);
 
         ref.read(sortGroupMethod.notifier).state =
             SharedPrefUtils().getGroupSort();
