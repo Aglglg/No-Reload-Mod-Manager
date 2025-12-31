@@ -1619,7 +1619,7 @@ void _modifyLinesBasedOnError(
           isMarked ? currentLine.replaceFirst(';-;', '') : currentLine;
 
       //Make sure the trimmed content matches the report
-      if (cleanLine.trim() == expectedErrors[i]) {
+      if (cleanLine.trim().toLowerCase() == expectedErrors[i]!.toLowerCase()) {
         //TODO: Mark as forced fix
         //If it's on report, but not marked yet, add mark
         if (!isMarked) {
