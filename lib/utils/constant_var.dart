@@ -47,7 +47,7 @@ class ConstantVar {
   //LOWER CASED
   static final List<String> knownModdingLibraries = [
     "rabbitfx",
-    "global/orfix",
+    "global\\orfix",
   ];
 
   static final managedPattern = RegExp(

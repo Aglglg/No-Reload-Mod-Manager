@@ -831,12 +831,15 @@ Future<List<TextSpan>> updateModData(
 
   ErroredLinesReport errorReport;
 
+  Ref<bool> errorShouldTryAgain = Ref(false);
+
   try {
     //Prepare _MANAGED_ folder first, make sure it's there or old managed folder to be new _MANAGED_ folder
     //And also create some ini files from template
     final (String, bool) preparing = await _prepareManagedFolder(
       modsPath,
       operationLogs,
+      errorShouldTryAgain,
     );
 
     final managedPath = preparing.$1;
@@ -871,6 +874,58 @@ Future<List<TextSpan>> updateModData(
       );
     });
 
+    //Show duplicate known libs, libName <> files of the lib
+    for (var entry in errorReport.duplicateLibs.entries) {
+      final libName = entry.key.toUpperCase();
+      final filePaths = entry.value
+          .map((e) {
+            return p.relative(e, from: p.dirname(basePath));
+          })
+          .toList()
+          .join('\n');
+
+      operationLogs.add(
+        TextSpan(
+          text: "Multiple copies of $libName were found:\n$filePaths\n",
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 189, 170, 0),
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      );
+      operationLogs.add(
+        TextSpan(
+          text: "Keep only one copy of $libName.\n\n",
+          style: GoogleFonts.poppins(
+            color: Colors.red,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      );
+    }
+
+    //Show non existent lib, libName <> first mod that use it
+    for (var entry in errorReport.nonExistentLibs.entries) {
+      final libName = entry.key.toUpperCase();
+      final filePath = entry.value;
+
+      if (!p.isWithin(managedPath, filePath)) continue;
+
+      operationLogs.add(
+        TextSpan(
+          text:
+              "Missing dependency: $libName\nRequired by: ${p.relative(filePath, from: managedPath)}.\nThe library may be missing or referenced incorrectly.\nYou may ignore this warning.\n\n",
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 189, 170, 0),
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      );
+    }
+
     //Fix any crash line that's not in _MANAGED_ folder, if any
     await _fixNonManagedModsCrashLine(errorReport, managedPath);
 
@@ -880,8 +935,17 @@ Future<List<TextSpan>> updateModData(
           final (groupDir, groupIndex) = entry.key;
           final modDatas = entry.value;
 
-          await _deleteGroupIniFiles(groupDir.path, operationLogs);
-          await _createGroupIni(groupDir.path, groupIndex, operationLogs);
+          await _deleteGroupIniFiles(
+            groupDir.path,
+            operationLogs,
+            errorShouldTryAgain,
+          );
+          await _createGroupIni(
+            groupDir.path,
+            groupIndex,
+            operationLogs,
+            errorShouldTryAgain,
+          );
 
           for (var mod in modDatas) {
             if (mod.modIcon == null) {
@@ -903,13 +967,14 @@ Future<List<TextSpan>> updateModData(
                   groupIndex,
                   operationLogs,
                   errorReport,
+                  errorShouldTryAgain,
                 ),
           ]);
         }(),
     ]);
 
     operationLogs.add(
-      operationLogs.isEmpty
+      !errorShouldTryAgain.value
           ? TextSpan(
             text: 'Mods successfully managed!'.tr(),
             style: GoogleFonts.poppins(color: Colors.green, fontSize: 14),
@@ -940,6 +1005,7 @@ Future<List<TextSpan>> updateModData(
       );
     }
   } on NamespaceRewriteException catch (e) {
+    operationLogs.clear();
     operationLogs.add(
       TextSpan(
         text:
@@ -948,6 +1014,7 @@ Future<List<TextSpan>> updateModData(
       ),
     );
   } on IniHandlerException catch (_) {
+    operationLogs.clear();
     operationLogs.add(
       TextSpan(
         text:
@@ -957,6 +1024,7 @@ Future<List<TextSpan>> updateModData(
       ),
     );
   } catch (_) {
+    operationLogs.clear();
     operationLogs.add(
       TextSpan(
         text: "${'Unexpected error!'.tr()} ${ConstantVar.defaultErrorInfo}",
@@ -989,7 +1057,6 @@ Future<void> _fixNonManagedModsCrashLine(
             lines[idx] = ";-;${lines[idx]}";
           }
         }
-        print("FIX NON MANAGED CRASH LINE");
         await safeWriteIni(File(filePath), lines.join('\n'));
       } catch (_) {}
     }
@@ -999,6 +1066,7 @@ Future<void> _fixNonManagedModsCrashLine(
 Future<(String, bool)> _prepareManagedFolder(
   String modsPath,
   List<TextSpan> operationLogs,
+  Ref<bool> errorShouldTryAgain,
 ) async {
   final managedPath = p.join(modsPath, ConstantVar.managedFolderName);
   bool needReloadManual = false;
@@ -1019,8 +1087,12 @@ Future<(String, bool)> _prepareManagedFolder(
     needReloadManual = true;
   }
 
-  await _createBackgroundKeypressIni(managedPath, operationLogs);
-  await _createManagerGroupIni(managedPath, operationLogs);
+  await _createBackgroundKeypressIni(
+    managedPath,
+    operationLogs,
+    errorShouldTryAgain,
+  );
+  await _createManagerGroupIni(managedPath, operationLogs, errorShouldTryAgain);
 
   return (managedPath, needReloadManual);
 }
@@ -1409,6 +1481,7 @@ Future<void> _tryRenameOldManagedFolder(String modsPath) async {
 Future<void> _createBackgroundKeypressIni(
   String managedPath,
   List<TextSpan> operationLogs,
+  Ref<bool> errorShouldTryAgain,
 ) async {
   // Load the .txt template from assets
   final template = await rootBundle.loadString(
@@ -1425,6 +1498,7 @@ Future<void> _createBackgroundKeypressIni(
   try {
     await iniFile.writeAsString(template);
   } catch (_) {
+    errorShouldTryAgain.value = true;
     operationLogs.add(
       TextSpan(
         text:
@@ -1438,6 +1512,7 @@ Future<void> _createBackgroundKeypressIni(
 Future<void> _createManagerGroupIni(
   String managedPath,
   List<TextSpan> operationLogs,
+  Ref<bool> errorShouldTryAgain,
 ) async {
   // Load the .txt template from assets
   final template = await rootBundle.loadString(
@@ -1452,6 +1527,7 @@ Future<void> _createManagerGroupIni(
   try {
     await iniFile.writeAsString(template);
   } catch (_) {
+    errorShouldTryAgain.value = true;
     operationLogs.add(
       TextSpan(
         text:
@@ -1465,6 +1541,7 @@ Future<void> _createManagerGroupIni(
 Future<void> _deleteGroupIniFiles(
   String folderPath,
   List<TextSpan> operationLogs,
+  Ref<bool> errorShouldTryAgain,
 ) async {
   final dir = Directory(folderPath);
   final regex = RegExp(r'^group_(?:[1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)\.ini$');
@@ -1477,6 +1554,8 @@ Future<void> _deleteGroupIniFiles(
           try {
             await entity.delete();
           } catch (_) {
+            errorShouldTryAgain.value = true;
+
             operationLogs.add(
               TextSpan(
                 text:
@@ -1495,6 +1574,7 @@ Future<void> _createGroupIni(
   String groupFullPath,
   int groupIndex,
   List<TextSpan> operationLogs,
+  Ref<bool> errorShouldTryAgain,
 ) async {
   //Load the .txt template from assets
   final template = await rootBundle.loadString(
@@ -1514,6 +1594,7 @@ Future<void> _createGroupIni(
   try {
     await iniFile.writeAsString(modifiedTemplate);
   } catch (_) {
+    errorShouldTryAgain.value = true;
     operationLogs.add(
       TextSpan(
         text:
@@ -1531,6 +1612,7 @@ Future<void> _manageMod(
   int groupIndex,
   List<TextSpan> operationLogs,
   ErroredLinesReport errorReport,
+  Ref<bool> errorShouldTryAgain,
 ) async {
   try {
     // Find all INI files recursively
@@ -1561,6 +1643,7 @@ Future<void> _manageMod(
           groupIndex,
           operationLogs,
           errorReport,
+          errorShouldTryAgain,
         );
       }());
     }
@@ -1571,6 +1654,7 @@ Future<void> _manageMod(
     //TODO: perhaps do it in xxmi ini handler dll
     // await tryMarkAsUnoptimized(modFolder, iniFiles);
   } catch (_) {
+    errorShouldTryAgain.value = true;
     operationLogs.add(
       TextSpan(
         text:
@@ -1588,6 +1672,7 @@ Future<void> _modifyIniFile(
   int groupIndex,
   List<TextSpan> operationLogs,
   ErroredLinesReport errorReport,
+  Ref<bool> errorShouldTryAgain,
 ) async {
   try {
     // Open the INI file and read it asynchronously
@@ -1607,6 +1692,7 @@ Future<void> _modifyIniFile(
     String modifiedIni = _getLiteralIni(parsedIni);
     await safeWriteIni(file, modifiedIni);
   } catch (_) {
+    errorShouldTryAgain.value = true;
     operationLogs.add(
       TextSpan(
         text:
@@ -2258,4 +2344,9 @@ Future<bool> enableMod(Directory modDir) async {
   } catch (_) {
     return false;
   }
+}
+
+class Ref<T> {
+  T value;
+  Ref(this.value);
 }
