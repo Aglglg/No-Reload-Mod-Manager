@@ -12,6 +12,7 @@
 #include <pcre2.h>
 #include <vector>
 #include <set>
+#include <string>
 
 struct Section {
 	wchar_t* section;
@@ -444,79 +445,64 @@ static void ParseIniKeyValLine(Globals& G, std::wstring* wline, std::wstring* se
 	section_vector->emplace_back(key, val, *wline, *ini_namespace, *full_path, line_index);
 }
 
-static void ParseIniStream(Globals& G, std::wistream* stream, const std::wstring* _ini_namespace, std::wstring& full_path)
+static void ParseIniBuffer(Globals& G, const char* data, size_t size, const std::wstring* _ini_namespace, std::wstring& full_path)
 {
-	std::string aline;
+	// Use a stringstream to iterate lines without disk I/O
+	std::string content(data, size);
+	std::istringstream stream(content);
+	std::string line;
+
+	// Converter for UTF8 to UTF16
+	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+
 	std::wstring wline, section, ini_path;
-	size_t first, last;
 	IniSectionVector* section_vector = NULL;
 	int warn_duplicates = 1;
 	bool warn_lines_without_equals = true;
-	std::wstring ini_namespace;
-	bool preamble = true;
-
-	if (_ini_namespace)
-		ini_namespace = *_ini_namespace;
-	else
-		ini_namespace = L"";
+	std::wstring ini_namespace = _ini_namespace ? *_ini_namespace : L"";
 	ini_path = ini_namespace;
-
+	bool preamble = true;
 	int line_index = 0;
 
-	while (std::getline(*stream, wline)) {
+	while (std::getline(stream, line)) {
 		struct LineIndexGuard {
 			int& i;
 			~LineIndexGuard() { ++i; }
 		} guard{ line_index };
 
-		first = wline.find_first_not_of(L" \t");
-		last = wline.find_last_not_of(L" \t");
-
-		if (first == wline.npos)
+		// Convert only the current line to wstring
+		try {
+			wline = converter.from_bytes(line);
+		}
+		catch (...) {
+			// Fallback for malformed UTF8 characters to prevent crash
 			continue;
+		}
 
+		size_t first = wline.find_first_not_of(L" \t\r\n"); // Added \r\n for safety
+		size_t last = wline.find_last_not_of(L" \t\r\n");
+
+		if (first == wline.npos) continue;
 		wline = wline.substr(first, last - first + 1);
 
-		// Treat ";" as comment, treat ";-;" as not a comment
-		// Any errored lines from this ini handler result expected to be modified from the caller to have prefix ";-;", so it's a comment in the real xxmi parser
-		// but in this xxmi ini handler, we will still parse it, because:
-		// An errored line like "if $\later_added_lib\x == 0" might be errored right now because user have not added the corresponding mod lib right now.
-		// But user might have added the mod lib later
 		if (wline[0] == L';') {
-			if (wline.size() >= 3 &&
-				wline[0] == L';' &&
-				wline[1] == L'-' &&
-				wline[2] == L';')
-			{
-				// Strip ";-;"
+			if (wline.size() >= 3 && wline[0] == L';' && wline[1] == L'-' && wline[2] == L';') {
 				size_t pos = 3;
-
-				// Strip spaces/tabs after ";-;"
-				while (pos < wline.size() &&
-					(wline[pos] == L' ' || wline[pos] == L'\t'))
-				{
+				while (pos < wline.size() && (wline[pos] == L' ' || wline[pos] == L'\t')) {
 					++pos;
 				}
-
 				wline.erase(0, pos);
-
-				// if line after ";-;" is empty, skip
-				if (wline.find_first_not_of(L" \t") == std::wstring::npos)
-					continue;
-
+				if (wline.find_first_not_of(L" \t") == std::wstring::npos) continue;
 			}
 			else {
 				continue;
 			}
 		}
 
-
 		if (wline[0] == L'[') {
 			preamble = false;
-			ParseIniSectionLine(G, &wline, &section, &warn_duplicates,
-				&warn_lines_without_equals,
-				&section_vector, &ini_namespace,
-				&ini_path, full_path, line_index);
+			ParseIniSectionLine(G, &wline, &section, &warn_duplicates, &warn_lines_without_equals,
+				&section_vector, &ini_namespace, &ini_path, full_path, line_index);
 			continue;
 		}
 
@@ -526,24 +512,34 @@ static void ParseIniStream(Globals& G, std::wistream* stream, const std::wstring
 			continue;
 		}
 
-		ParseIniKeyValLine(G, &wline, &section, warn_duplicates,
-			warn_lines_without_equals, section_vector,
-			&ini_namespace, &full_path, line_index);
+		ParseIniKeyValLine(G, &wline, &section, warn_duplicates, warn_lines_without_equals,
+			section_vector, &ini_namespace, &full_path, line_index);
 	}
 }
 
 static void ParseNamespacedIniFile(Globals& G, const wchar_t* ini, const std::wstring* ini_namespace)
 {
-	std::wifstream f(ini, std::ios::in, _SH_DENYNO);
-	if (!f) {
-		//wprintf(L"[WARNING]  Error opening %s\n", ini);
-		return;
+	// Open in binary mode to prevent CRLF to LF translation
+	std::ifstream f(ini, std::ios::binary | std::ios::ate);
+	if (!f) return;
+
+	std::streamsize size = f.tellg();
+	f.seekg(0, std::ios::beg);
+
+	std::string buffer;
+	buffer.resize(static_cast<size_t>(size));
+	if (!f.read(&buffer[0], size)) return;
+
+	// Remove UTF-8 BOM if present
+	size_t offset = 0;
+	if (size >= 3 && (unsigned char)buffer[0] == 0xEF &&
+		(unsigned char)buffer[1] == 0xBB &&
+		(unsigned char)buffer[2] == 0xBF) {
+		offset = 3;
 	}
-	f.imbue(std::locale(f.getloc(), new std::codecvt_utf8<wchar_t, 0x10ffff, std::consume_header>));
 
 	std::wstring full_path(ini);
-
-	ParseIniStream(G, &f, ini_namespace, full_path);
+	ParseIniBuffer(G, buffer.data() + offset, size - offset, ini_namespace, full_path);
 }
 
 static void ParseIniFile(Globals& G, const wchar_t* ini)
