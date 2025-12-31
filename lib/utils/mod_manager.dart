@@ -871,6 +871,9 @@ Future<List<TextSpan>> updateModData(
       );
     });
 
+    //Fix any crash line that's not in _MANAGED_ folder, if any
+    await _fixNonManagedModsCrashLine(errorReport, managedPath);
+
     await Future.wait([
       for (final entry in groupAndModsPair.entries)
         () async {
@@ -963,6 +966,34 @@ Future<List<TextSpan>> updateModData(
   }
 
   return operationLogs;
+}
+
+Future<void> _fixNonManagedModsCrashLine(
+  ErroredLinesReport errorReport,
+  String managedPath,
+) async {
+  for (var entry in errorReport.crashLines.entries) {
+    final filePath = entry.key;
+    final erroredLines = entry.value;
+    if (!p.isWithin(managedPath, filePath)) {
+      try {
+        final lines = await forceReadAsLinesUtf8(File(filePath));
+
+        for (var erroredLine in erroredLines) {
+          final idx = erroredLine.lineIndex;
+          if (idx < 0 || idx >= lines.length) continue;
+
+          if (lines[idx].trim().toLowerCase() ==
+                  erroredLine.trimmedLine.toLowerCase() &&
+              !lines[idx].trim().startsWith(";-;")) {
+            lines[idx] = ";-;${lines[idx]}";
+          }
+        }
+        print("FIX NON MANAGED CRASH LINE");
+        await safeWriteIni(File(filePath), lines.join('\n'));
+      } catch (_) {}
+    }
+  }
 }
 
 Future<(String, bool)> _prepareManagedFolder(
