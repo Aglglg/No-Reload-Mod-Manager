@@ -1552,17 +1552,6 @@ Future<void> _modifyIniFile(
     //Modify lines based on error report first before adding or modifying anything
     _modifyLinesBasedOnError(lines, iniFilePath, errorReport);
 
-    // Give nrmm mark
-    bool hasNRMM = lines.any(
-      (line) => line.toLowerCase().contains("@aglgl on discord"),
-    );
-    if (!hasNRMM) {
-      lines.insert(
-        0,
-        "; Mod managed with No Reload Mod Manager (NRMM) by Agulag, for any problems, just contact/tag @aglgl on Discord.\n; \";-;\" are errored lines\n; Source of No Reload Mod Manager https://gamebanana.com/mods/582623\n",
-      );
-    }
-
     // Parse the INI file sections
     var parsedIni = await _parseIniSections(lines);
 
@@ -1592,16 +1581,11 @@ void _modifyLinesBasedOnError(
   //index, trimmedLine
   final Map<int, String> expectedErrors = {};
 
-  final fileCrashErrors = errorReport.crashLines[path] ?? [];
-  final fileOtherErrors = errorReport.otherError[path] ?? [];
+  final fileCrashErrors = errorReport.crashLines[p.normalize(path)] ?? [];
+  final fileOtherErrors = errorReport.otherError[p.normalize(path)] ?? [];
 
   for (var e in [...fileCrashErrors, ...fileOtherErrors]) {
     expectedErrors[e.lineIndex] = e.trimmedLine;
-  }
-
-  for (var entry in errorReport.otherError.entries) {
-    print(entry.key);
-    print(entry.value[0].trimmedLine);
   }
 
   // We need to continue even if expectedErrors is empty to remove old marks.
@@ -1715,13 +1699,17 @@ Future<void> _markAsNamespaced(String modPath, bool mark) async {
     try {
       final fileMarkNamespaced = File(p.join(modPath, 'modnamespaced'));
 
-      await fileMarkNamespaced.writeAsString('');
+      if (!await fileMarkNamespaced.exists()) {
+        await fileMarkNamespaced.writeAsString('');
+      }
     } catch (_) {}
   } else {
     try {
       final fileMarkNamespaced = File(p.join(modPath, 'modnamespaced'));
 
-      await fileMarkNamespaced.delete();
+      if (await fileMarkNamespaced.exists()) {
+        await fileMarkNamespaced.delete();
+      }
     } catch (_) {}
   }
 }
@@ -1806,6 +1794,11 @@ Future<List<IniSection>> _parseIniSections(List<String> allLines) async {
         //also do not add $managed_slot_id on constants
       } else if (line.startsWith(';') && line.contains('by NRMM')) {
         //also do not add this old force fix by NRMM mark
+      } else if (currentSection.name == '__preamble__' &&
+          line.startsWith(';') &&
+          (line.contains('No Reload Mod Manager') ||
+              line.contains('";-;" are errored lines'))) {
+        //also do not NRMM mark, we'll add it back later
       }
       // keep original line (with comments, etc.)
       else {
@@ -1870,6 +1863,13 @@ Future<List<IniSection>> _parseIniSections(List<String> allLines) async {
     }
   }
 
+  if (sections[0].name == "__preamble__") {
+    // Give nrmm mark
+    sections[0].lines.insert(
+      0,
+      "; Mod managed with No Reload Mod Manager (NRMM) by Agulag, for any problems, just contact/tag @aglgl on Discord.\n; \";-;\" are errored lines\n; Source of No Reload Mod Manager https://gamebanana.com/mods/582623",
+    );
+  }
   return sections;
 }
 

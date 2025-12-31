@@ -2,6 +2,8 @@ import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
+
 class ErroredLinesReport {
   final Map<String, List<String>> duplicateLibs = {}; //libName, filePaths
   final Map<String, String> nonExistentLibs = {}; //libName, mod
@@ -13,7 +15,7 @@ class ErroredLinesReport {
   ErroredLinesReport.fromPointer(Pointer<ErroredLineFFI> ptr, int count) {
     for (var i = 0; i < count; i++) {
       final item = ptr[i];
-      final String filePath = item.filePath.toDartString();
+      final String filePath = p.normalize(item.filePath.toDartString());
       final int lineIndex = item.lineIndex;
       final String trimmedLine = item.trimmedLine.toDartString();
       final String reason = item.reason.toDartString();
