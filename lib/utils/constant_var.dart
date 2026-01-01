@@ -40,6 +40,8 @@ class ConstantVar {
       "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/message_zzz.txt";
   static const String urlJsonAutoIcon =
       "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/auto_icon/auto_icon.json";
+  static const String urlJsonUpdatedKnownModdingLib =
+      "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/common_modding_lib/common_modding_lib.json";
 
   static const String urlValidKeysExample =
       "https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes";
@@ -48,7 +50,25 @@ class ConstantVar {
   //namespace <> display name
   static final Map<String, String> knownModdingLibraries = {
     "rabbitfx": "RabbitFx",
+
+    "gimiv8": "GIMIv8",
+    "gimi": "GIMI",
+    "global\\healthbar": "GIMI HealthBar Library",
+    "global\\offset": "GIMI Offset Library",
     "global\\orfix": "ORFix",
+    "global\\region": "GIMI Region Library",
+    "global\\tracking": "GIMI Tracking Library",
+    "texfx": "TexFx",
+
+    "srmi": "SRMI",
+    "srmiv1": "SRMIv1",
+
+    "wwmiv1": "WWMIv1",
+
+    "zzmiv1": "ZZMIv1",
+    "zzmi": "ZZMI",
+    "slotfix": "SlotFix",
+    "healthbar": "HealthBar",
   };
 
   static final managedPattern = RegExp(

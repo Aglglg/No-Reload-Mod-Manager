@@ -823,6 +823,7 @@ Future<List<TextSpan>> updateModData(
   String modsPath,
   Function setBoolIfNeedAutoReload,
   String targetGame,
+  Map<String, String> knownModdingLibraries,
 ) async {
   List<TextSpan> operationLogs = [];
   setBoolIfNeedAutoReload(true);
@@ -873,11 +874,7 @@ Future<List<TextSpan>> updateModData(
 
     //Get errored lines from xxmi ini handler
     errorReport = await Isolate.run(() {
-      return getErroredLines(
-        d3dxIni,
-        basePath,
-        ConstantVar.knownModdingLibraries.keys.toList(),
-      );
+      return getErroredLines(d3dxIni, basePath, knownModdingLibraries);
     });
 
     //Show duplicate known libs, libDisplayName <> files of the lib
@@ -1782,6 +1779,8 @@ Future<void> _modifyIniFile(
       removedSyntaxError,
     );
 
+    _prettyIndentation(parsedIni);
+
     // Write the modified content back to the INI file
     String modifiedIni = _getLiteralIni(parsedIni);
     await safeWriteIni(file, modifiedIni);
@@ -2104,6 +2103,37 @@ Future<List<IniSection>> _parseIniSections(
     );
   }
   return sections;
+}
+
+String indent(String trimmedText, int currentIndentation) {
+  if (currentIndentation <= 0) return trimmedText;
+  return ' ' * currentIndentation + trimmedText;
+}
+
+void _prettyIndentation(List<IniSection> sections) {
+  for (var section in sections) {
+    final lines = section.lines;
+    int lastIndexForInsertion = _getLastIndexInSection(section.lines);
+    final int spacesPerIndent = 4;
+    int currentIndentation = 0;
+
+    for (var i = 0; i < lastIndexForInsertion; i++) {
+      final trimmed = lines[i].trim();
+
+      if (trimmed == 'endif') {
+        currentIndentation = (currentIndentation - spacesPerIndent).clamp(
+          0,
+          currentIndentation,
+        );
+      }
+
+      lines[i] = indent(trimmed, currentIndentation);
+
+      if (trimmed.startsWith('if ')) {
+        currentIndentation += spacesPerIndent;
+      }
+    }
+  }
 }
 
 void _checkAndModifySections(

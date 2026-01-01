@@ -1302,11 +1302,16 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
   }
 
   Future<void> manageMods(String modsPath) async {
-    final operationResults = await updateModData(modsPath, (needReload) {
-      setState(() {
-        _needReload = needReload;
-      });
-    }, ref.read(targetGameProvider).name);
+    final operationResults = await updateModData(
+      modsPath,
+      (needReload) {
+        setState(() {
+          _needReload = needReload;
+        });
+      },
+      ref.read(targetGameProvider).name,
+      ref.read(updatedKnownModdingLibsProvider),
+    );
     setState(() {
       _showClose = true;
       contents = operationResults;

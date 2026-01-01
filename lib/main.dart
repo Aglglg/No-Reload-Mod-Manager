@@ -13,6 +13,7 @@ import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
 import 'package:no_reload_mod_manager/utils/get_cloud_data.dart';
 import 'package:no_reload_mod_manager/utils/hotkey_handler.dart';
+import 'package:no_reload_mod_manager/utils/ini_handler_bridge.dart';
 import 'package:no_reload_mod_manager/utils/keypress_simulate.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
@@ -795,6 +796,9 @@ class _MainViewState extends ConsumerState<MainView>
           );
     }
     ref.read(autoIconProvider.notifier).state = await fetchGroupIconData();
+
+    ref.read(updatedKnownModdingLibsProvider.notifier).state =
+        await fetchKnownModdingLib();
   }
 
   Future<void> initSystemTray() async {

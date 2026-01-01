@@ -1,5 +1,7 @@
 import 'dart:ffi';
 import 'package:ffi/ffi.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'dart:io';
 
@@ -13,7 +15,11 @@ class ErroredLinesReport {
   //invalid flow control lines (if-elif-else-endif) and condition line in key section
   final Map<String, List<ErroredLine>> otherError = {}; //filePath,errorLines
 
-  ErroredLinesReport.fromPointer(Pointer<ErroredLineFFI> ptr, int count) {
+  ErroredLinesReport.fromPointer(
+    Pointer<ErroredLineFFI> ptr,
+    int count,
+    Map<String, String> knownModdingLibs,
+  ) {
     for (var i = 0; i < count; i++) {
       final item = ptr[i];
       final String filePath = p.normalize(item.filePath.toDartString());
@@ -26,14 +32,12 @@ class ErroredLinesReport {
       } else if (reason.startsWith("DUPLICATE LIB:")) {
         final rawLibName =
             reason.replaceFirst("DUPLICATE LIB:", "").trim().toLowerCase();
-        final libName =
-            ConstantVar.knownModdingLibraries[rawLibName] ?? rawLibName;
+        final libName = knownModdingLibs[rawLibName] ?? rawLibName;
         (duplicateLibs[libName] ??= []).add(filePath);
       } else if (reason.startsWith("NON EXISTENT LIB:")) {
         final rawLibName =
             reason.replaceFirst("NON EXISTENT LIB:", "").trim().toLowerCase();
-        final libName =
-            ConstantVar.knownModdingLibraries[rawLibName] ?? rawLibName;
+        final libName = knownModdingLibs[rawLibName] ?? rawLibName;
         nonExistentLibs[libName] = filePath;
       } else {
         (otherError[filePath] ??= []).add(ErroredLine(lineIndex, trimmedLine));
@@ -106,8 +110,9 @@ class IniHandlerException implements Exception {
 ErroredLinesReport getErroredLines(
   String path,
   String basePath,
-  List<String> knownLibNamespaces,
+  Map<String, String> knownModdingLibs,
 ) {
+  final List<String> knownLibNamespaces = knownModdingLibs.keys.toList();
   final pathPtr = path.toNativeUtf8();
   final basePtr = basePath.toNativeUtf8();
   final countPtr = calloc<Int32>();
@@ -137,7 +142,7 @@ ErroredLinesReport getErroredLines(
       throw IniHandlerException();
     }
 
-    return ErroredLinesReport.fromPointer(resultPtr, count);
+    return ErroredLinesReport.fromPointer(resultPtr, count, knownModdingLibs);
   } catch (_) {
     throw IniHandlerException();
   } finally {
@@ -153,4 +158,20 @@ ErroredLinesReport getErroredLines(
     malloc.free(basePtr);
     malloc.free(countPtr);
   }
+}
+
+Future<Map<String, String>> fetchKnownModdingLib() async {
+  try {
+    final response = await http.get(
+      Uri.parse(ConstantVar.urlJsonUpdatedKnownModdingLib),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> raw = json.decode(response.body);
+      return raw.map(
+        (key, value) => MapEntry(key.toString(), value.toString()),
+      );
+    }
+  } catch (_) {}
+  return ConstantVar.knownModdingLibraries;
 }

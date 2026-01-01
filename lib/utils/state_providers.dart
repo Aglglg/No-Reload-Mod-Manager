@@ -35,6 +35,11 @@ final StateProvider<String> contactLinkProvider = StateProvider<String>(
 final StateProvider<Map<String, String>> autoIconProvider =
     StateProvider<Map<String, String>>((ref) => {});
 
+final StateProvider<Map<String, String>> updatedKnownModdingLibsProvider =
+    StateProvider<Map<String, String>>(
+      (ref) => ConstantVar.knownModdingLibraries,
+    );
+
 final StateProvider<bool> messageWuwaDismissedProvider = StateProvider<bool>(
   (ref) => false,
 );
