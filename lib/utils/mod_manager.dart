@@ -887,17 +887,7 @@ Future<List<TextSpan>> updateModData(
 
       operationLogs.add(
         TextSpan(
-          text: "Multiple copies of $libName were found:\n",
-          style: GoogleFonts.poppins(
-            color: const Color.fromARGB(255, 189, 170, 0),
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-        ),
-      );
-      operationLogs.add(
-        TextSpan(
-          text: "$filePaths\n",
+          text: "Duplicate modding library".tr(args: [libName, filePaths]),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
             fontSize: 14,
@@ -906,7 +896,7 @@ Future<List<TextSpan>> updateModData(
       );
       operationLogs.add(
         TextSpan(
-          text: "Keep only one copy of $libName.\n\n",
+          text: "Keep only one copy of modding library".tr(args: [libName]),
           style: GoogleFonts.poppins(
             color: Colors.red,
             fontWeight: FontWeight.bold,
@@ -930,70 +920,16 @@ Future<List<TextSpan>> updateModData(
 
       operationLogs.add(
         TextSpan(
-          text: "Missing ",
-          style: GoogleFonts.poppins(
-            color: const Color.fromARGB(255, 189, 170, 0),
-            fontSize: 14,
-          ),
-        ),
-      );
-      operationLogs.add(
-        TextSpan(
-          text: "$libName\n",
-          style: GoogleFonts.poppins(
-            color: const Color.fromARGB(255, 189, 170, 0),
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-        ),
-      );
-      operationLogs.add(
-        TextSpan(
-          text: "Required by ",
-          style: GoogleFonts.poppins(
-            color: const Color.fromARGB(255, 189, 170, 0),
-            fontSize: 14,
-          ),
-        ),
-      );
-      operationLogs.add(
-        TextSpan(
-          text:
+          text: "Missing modding library".tr(
+            args: [
+              libName,
               groupName != null && modName != null
-                  ? "$groupName - $modName\n"
-                  : "${p.relative(filePath, from: managedPath)}\n",
-          style: GoogleFonts.poppins(
-            color: const Color.fromARGB(255, 189, 170, 0),
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
+                  ? "$groupName - $modName"
+                  : p.relative(filePath, from: managedPath),
+            ],
           ),
-        ),
-      );
-      operationLogs.add(
-        TextSpan(
-          text: "The library may be missing or ",
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
-            fontSize: 14,
-          ),
-        ),
-      );
-      operationLogs.add(
-        TextSpan(
-          text: "referenced incorrectly",
-          style: GoogleFonts.poppins(
-            color: const Color.fromARGB(255, 189, 170, 0),
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-        ),
-      );
-      operationLogs.add(
-        TextSpan(
-          text: ".\nYou may ignore this warning.\n\n",
-          style: GoogleFonts.poppins(
-            color: const Color.fromARGB(255, 189, 170, 0),
-            fontWeight: FontWeight.bold,
             fontSize: 14,
           ),
         ),
