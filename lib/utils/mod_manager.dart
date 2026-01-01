@@ -1722,9 +1722,6 @@ Future<void> _manageMod(
 
     await _markAsOldAutoFix(modFolder, oldAutoFix.value);
     await _markAsRemovedSyntaxError(modFolder, removedSyntaxError.value);
-
-    //TODO: perhaps do it in xxmi ini handler dll
-    // await tryMarkAsUnoptimized(modFolder, iniFiles);
   } catch (_) {
     errorShouldTryAgain.value = true;
     operationLogs.add(
@@ -1905,46 +1902,6 @@ Future<void> _markAsRemovedSyntaxError(String modPath, bool mark) async {
       }
     } catch (_) {}
   }
-}
-
-Future<bool> containsCheckTextureOverride(List<IniSection> parsedIni) async {
-  for (var section in parsedIni) {
-    if (section.name.toLowerCase().startsWith('shaderregex')) {
-      for (var line in section.lines) {
-        if (line.trim().startsWith(';')) continue;
-        if (line.toLowerCase().contains('checktextureoverride')) {
-          return true;
-        } else if (line.toLowerCase().replaceAll(' ', '').startsWith('run=')) {
-          final match = RegExp(
-            r'^\s*run\s*=\s*(\S+)\s*$',
-            caseSensitive: false,
-          ).firstMatch(line);
-
-          if (match != null) {
-            final command = match.group(1); // "CommandListSomething"
-
-            //if CommandList or something found
-            if (command != null) {
-              //loop again on parsedini sections
-              for (var section in parsedIni) {
-                //if looping and found section name that is the same as commandlist earlier
-                if (section.name.toLowerCase() == command.toLowerCase()) {
-                  //loop on every lines on this section
-                  for (var line in section.lines) {
-                    if (line.trim().startsWith(';')) continue;
-                    if (line.toLowerCase().contains('checktextureoverride')) {
-                      return true;
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  return false;
 }
 
 Future<void> _markAsNamespaced(String modPath, bool mark) async {
