@@ -864,7 +864,10 @@ Future<List<TextSpan>> updateModData(
     }
 
     //Fix duplicated namespaces first, if any
-    await _autoModifyDuplicateNamespaceInManagedMod(groupAndModsPair);
+    await _autoModifyDuplicateNamespaceInManagedMod(
+      groupAndModsPair,
+      managedPath,
+    );
 
     //Get errored lines from xxmi ini handler
     errorReport = await Isolate.run(() {
@@ -1023,7 +1026,7 @@ Future<List<TextSpan>> updateModData(
     operationLogs.add(
       TextSpan(
         text:
-            "${'Duplicate namespace that cannot be automatically fixed'.tr(args: [e.groupIndex.toString(), e.modName])}${ConstantVar.defaultErrorInfo}",
+            "${'Duplicate namespace that cannot be automatically fixed'.tr(args: [e.groupName.toString(), e.modName])}${ConstantVar.defaultErrorInfo}",
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );
@@ -1357,24 +1360,25 @@ Future<File> _copyIniContentOnlyNamespace(String iniPath) async {
 }
 
 class NamespaceRewriteException implements Exception {
-  final int groupIndex;
+  final String groupName;
   final String modName;
 
   const NamespaceRewriteException({
-    required this.groupIndex,
+    required this.groupName,
     required this.modName,
   });
 
   @override
   String toString() {
     return 'NamespaceRewriteException: '
-        'group=$groupIndex, '
+        'group=$groupName, '
         'mod="$modName"';
   }
 }
 
 Future<void> _autoModifyDuplicateNamespaceInManagedMod(
   Map<(Directory, int), List<ModData>> groupAndModsPair,
+  String managedPath,
 ) async {
   final namespacesInManaged = <String>{};
 
@@ -1427,8 +1431,12 @@ Future<void> _autoModifyDuplicateNamespaceInManagedMod(
 
         if (!ok) {
           await _markAsNamespaced(mod.modDir.path, true);
+          final (groupName, _, _) = await _resolveGroupAndModName(
+            iniFiles[0],
+            managedPath,
+          );
           throw NamespaceRewriteException(
-            groupIndex: key.$2,
+            groupName: groupName ?? "Group_${key.$2}",
             modName: mod.modName,
           );
         }

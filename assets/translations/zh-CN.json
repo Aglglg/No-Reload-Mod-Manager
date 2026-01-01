@@ -212,7 +212,7 @@
   "Invalid keys": "无效按键",
   "Auto pin window": "自动固定窗口",
   "Click keybind to simulate keypress": "点击按键切换以模拟按键操作",
-  "Duplicate namespace that cannot be automatically fixed": "错误！在 group_{} — {} 中发现无法自动修复的重复 namespace。\n",
+  "Duplicate namespace that cannot be automatically fixed": "错误！在 {} — {} 中发现无法自动修复的重复 namespace。\n",
   "Namespace is already used by another slot in this mod.": "\n该 namespace 已被此模组中的其他槽位使用。\n",
   "Mod syntax errors were auto-fixed by earlier NRMM versions.": "该模组的语法错误已在早期版本的 NRMM 中自动修复。\n如果该模组仍有问题，请尝试重新下载模组，或将其移除后重新添加。",
   "Mod syntax errors are automatically removed.": "模组的语法错误会被自动移除。",

@@ -212,7 +212,7 @@
   "Invalid keys": "Invalid keys",
   "Auto pin window": "Auto pin window",
   "Click keybind to simulate keypress": "Click keybind to simulate keypress",
-  "Duplicate namespace that cannot be automatically fixed": "Error! Duplicate namespace that cannot be automatically fixed in group_{} — {}.\n",
+  "Duplicate namespace that cannot be automatically fixed": "Error! Duplicate namespace that cannot be automatically fixed in {} — {}.\n",
   "Namespace is already used by another slot in this mod.": "\nNamespace is already used by another slot in this mod.\n",
   "Mod syntax errors were auto-fixed by earlier NRMM versions.": "Mod syntax errors were auto-fixed by earlier NRMM versions.\nIf the mod has issues, try re-downloading or re-adding it.",
   "Mod syntax errors are automatically removed.": "Mod syntax errors are automatically removed.",

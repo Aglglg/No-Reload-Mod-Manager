@@ -212,7 +212,7 @@
   "Invalid keys": "Неверные клавиши",
   "Auto pin window": "Автоматически закрепить окно",
   "Click keybind to simulate keypress": "Нажмите привязку, чтобы имитировать нажатие клавиши",
-  "Duplicate namespace that cannot be automatically fixed": "Ошибка! Дублирующееся пространство имён, которое не может быть автоматически исправлено, в group_{} — {}.\n",
+  "Duplicate namespace that cannot be automatically fixed": "Ошибка! Дублирующееся пространство имён, которое не может быть автоматически исправлено, в {} — {}.\n",
   "Namespace is already used by another slot in this mod.": "\nПространство имён уже используется другим слотом в этом моде.\n",
   "Mod syntax errors were auto-fixed by earlier NRMM versions.": "Синтаксические ошибки мода были автоматически исправлены в более ранних версиях NRMM.\nЕсли с модом возникают проблемы, попробуйте загрузить мод заново или удалить и добавить его снова.",
   "Mod syntax errors are automatically removed.": "Синтаксические ошибки мода автоматически удаляются.",

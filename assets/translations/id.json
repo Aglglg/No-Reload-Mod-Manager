@@ -212,7 +212,7 @@
   "Invalid keys": "Tombol tidak valid",
   "Auto pin window": "Otomatis pin window",
   "Click keybind to simulate keypress": "Simulasikan tombol saat diklik",
-  "Duplicate namespace that cannot be automatically fixed": "Error! Namespace duplikat yang tidak bisa diperbaiki otomatis di group_{} — {}.\n",
+  "Duplicate namespace that cannot be automatically fixed": "Error! Namespace duplikat yang tidak bisa diperbaiki otomatis di {} — {}.\n",
   "Namespace is already used by another slot in this mod.": "\nNamespace sudah digunakan di slot lain di mod ini.\n",
   "Mod syntax errors were auto-fixed by earlier NRMM versions.": "Syntax error di mod ini diperbaiki otomatis dengan versi lama dari NRMM.\nJika ada masalah, coba download ulang atau tambahkan ulang modnya.",
   "Mod syntax errors are automatically removed.": "Syntax error dihilangkan secara otomatis.",
