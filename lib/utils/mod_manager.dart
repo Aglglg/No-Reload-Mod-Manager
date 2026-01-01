@@ -822,6 +822,7 @@ Future<List<TextSpan>> revertManagedMod(List<Directory> modDirs) async {
 Future<List<TextSpan>> updateModData(
   String modsPath,
   Function setBoolIfNeedAutoReload,
+  String targetGame,
 ) async {
   List<TextSpan> operationLogs = [];
   setBoolIfNeedAutoReload(true);
@@ -841,6 +842,7 @@ Future<List<TextSpan>> updateModData(
       modsPath,
       operationLogs,
       errorShouldTryAgain,
+      targetGame,
     );
 
     final managedPath = preparing.$1;
@@ -1135,6 +1137,7 @@ Future<(String, bool)> _prepareManagedFolder(
   String modsPath,
   List<TextSpan> operationLogs,
   Ref<bool> errorShouldTryAgain,
+  String targetGame,
 ) async {
   final managedPath = p.join(modsPath, ConstantVar.managedFolderName);
   bool needReloadManual = false;
@@ -1159,6 +1162,7 @@ Future<(String, bool)> _prepareManagedFolder(
     managedPath,
     operationLogs,
     errorShouldTryAgain,
+    targetGame,
   );
   await _createManagerGroupIni(managedPath, operationLogs, errorShouldTryAgain);
 
@@ -1555,6 +1559,7 @@ Future<void> _createBackgroundKeypressIni(
   String managedPath,
   List<TextSpan> operationLogs,
   Ref<bool> errorShouldTryAgain,
+  String targetGame,
 ) async {
   // Load the .txt template from assets
   final template = await rootBundle.loadString(
@@ -1569,7 +1574,7 @@ Future<void> _createBackgroundKeypressIni(
 
   // Write content into the .ini file
   try {
-    await iniFile.writeAsString(template);
+    await iniFile.writeAsString(template.replaceAll("{game}", targetGame));
   } catch (_) {
     errorShouldTryAgain.value = true;
     operationLogs.add(

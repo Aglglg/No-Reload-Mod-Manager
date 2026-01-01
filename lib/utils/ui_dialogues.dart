@@ -1306,7 +1306,7 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
       setState(() {
         _needReload = needReload;
       });
-    });
+    }, ref.read(targetGameProvider).name);
     setState(() {
       _showClose = true;
       contents = operationResults;

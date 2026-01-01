@@ -819,6 +819,7 @@ class _MainViewState extends ConsumerState<MainView>
           if (!ref.read(alertDialogShownProvider)) {
             ref.read(targetGameProvider.notifier).state =
                 TargetGame.Wuthering_Waves;
+            changeWindowTitleName(TargetGame.Wuthering_Waves.name);
           }
           ref.read(windowIsPinnedProvider.notifier).state = true;
           await windowManager.show();
@@ -831,6 +832,7 @@ class _MainViewState extends ConsumerState<MainView>
           if (!ref.read(alertDialogShownProvider)) {
             ref.read(targetGameProvider.notifier).state =
                 TargetGame.Genshin_Impact;
+            changeWindowTitleName(TargetGame.Genshin_Impact.name);
           }
           ref.read(windowIsPinnedProvider.notifier).state = true;
           await windowManager.show();
@@ -843,6 +845,7 @@ class _MainViewState extends ConsumerState<MainView>
           if (!ref.read(alertDialogShownProvider)) {
             ref.read(targetGameProvider.notifier).state =
                 TargetGame.Honkai_Star_Rail;
+            changeWindowTitleName(TargetGame.Honkai_Star_Rail.name);
           }
           ref.read(windowIsPinnedProvider.notifier).state = true;
           await windowManager.show();
@@ -855,6 +858,7 @@ class _MainViewState extends ConsumerState<MainView>
           if (!ref.read(alertDialogShownProvider)) {
             ref.read(targetGameProvider.notifier).state =
                 TargetGame.Zenless_Zone_Zero;
+            changeWindowTitleName(TargetGame.Zenless_Zone_Zero.name);
           }
           ref.read(windowIsPinnedProvider.notifier).state = true;
           await windowManager.show();
@@ -1242,6 +1246,7 @@ class _MainViewState extends ConsumerState<MainView>
     if (await windowManager.isVisible()) {
       if (!ref.read(alertDialogShownProvider)) {
         ref.read(targetGameProvider.notifier).state = TargetGame.none;
+        changeWindowTitleName("");
       }
       await windowManager.hide();
       DynamicDirectoryWatcher.stop();
@@ -1252,6 +1257,7 @@ class _MainViewState extends ConsumerState<MainView>
         if (!ref.read(alertDialogShownProvider)) {
           ref.read(targetGameProvider.notifier).state =
               TargetGame.Wuthering_Waves;
+          changeWindowTitleName(TargetGame.Wuthering_Waves.name);
         }
         ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
@@ -1261,6 +1267,7 @@ class _MainViewState extends ConsumerState<MainView>
         if (!ref.read(alertDialogShownProvider)) {
           ref.read(targetGameProvider.notifier).state =
               TargetGame.Genshin_Impact;
+          changeWindowTitleName(TargetGame.Genshin_Impact.name);
         }
         ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
@@ -1270,6 +1277,7 @@ class _MainViewState extends ConsumerState<MainView>
         if (!ref.read(alertDialogShownProvider)) {
           ref.read(targetGameProvider.notifier).state =
               TargetGame.Honkai_Star_Rail;
+          changeWindowTitleName(TargetGame.Honkai_Star_Rail.name);
         }
         ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
@@ -1279,6 +1287,7 @@ class _MainViewState extends ConsumerState<MainView>
         if (!ref.read(alertDialogShownProvider)) {
           ref.read(targetGameProvider.notifier).state =
               TargetGame.Zenless_Zone_Zero;
+          changeWindowTitleName(TargetGame.Zenless_Zone_Zero.name);
         }
         ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
@@ -1518,4 +1527,11 @@ void showUpdateModSnackbar(BuildContext context, ProviderContainer container) {
     snackBarPosition: SnackBarPosition.bottom,
     UpdateModDataSnackbarButton(),
   );
+}
+
+void changeWindowTitleName(String gameName) {
+  bitsdojo.appWindow.title =
+      gameName.isNotEmpty
+          ? "No Reload Mod Manager $gameName"
+          : "No Reload Mod Manager";
 }

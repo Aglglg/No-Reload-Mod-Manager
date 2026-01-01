@@ -1,2 +1,2 @@
 [Loader]
-manager = No Reload Mod Manager
+manager = No Reload Mod Manager {game}
