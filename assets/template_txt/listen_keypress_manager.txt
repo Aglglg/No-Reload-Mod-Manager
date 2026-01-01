@@ -1,2 +1,2 @@
 [Loader]
-manager = No_Reload_Mod_Manager.exe
+manager = No Reload Mod Manager

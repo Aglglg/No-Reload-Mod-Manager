@@ -218,5 +218,6 @@
   "Mod syntax errors are automatically removed.": "模組的語法錯誤會被自動移除。",
   "Missing modding library": "缺少 {}。\n由 {} 需要。\n此函式庫可能缺失，或被錯誤引用。\n你可以忽略此警告。\n\n",
   "Duplicate modding library": "發現多個 {} 副本：\n{}\n",
-  "Keep only one copy of modding library": "請僅保留一個 {} 副本。\n\n"
+  "Keep only one copy of modding library": "請僅保留一個 {} 副本。\n\n",
+  "Failed to call function to detect errored lines, if issue persist please contact NRMM creator.": "呼叫用於偵測錯誤行的函式失敗。\n如果問題仍然存在，請聯絡 NRMM 的開發者。"
 }
