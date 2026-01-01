@@ -1,0 +1,22 @@
+{
+    "rabbitfx": "RabbitFx",
+    
+    "gimiv8": "GIMIv8",
+    "gimi": "GIMI",
+    "global\\healthbar": "GIMI HealthBar Library",
+    "global\\offset": "GIMI Offset Library",
+    "global\\orfix": "ORFix",
+    "global\\region": "GIMI Region Library",
+    "global\\tracking": "GIMI Tracking Library",
+    "texfx": "TexFx",
+    
+    "srmi": "SRMI",
+    "srmiv1": "SRMIv1",
+    
+    "wwmiv1": "WWMIv1",
+
+    "zzmiv1": "ZZMIv1",
+    "zzmi": "ZZMI",
+    "slotfix": "SlotFix",
+    "healthbar": "HealthBar"
+}
