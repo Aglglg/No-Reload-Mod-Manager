@@ -123,3 +123,8 @@ Even though this is not main mod loader or mod tool, and only tool to organize m
 Special thanks to:
 - **All bug reporters, contributors, testers, users, and especially _supporters_!** ❤️
 ---
+
+## Additions
+If you don't like of the mod toggles/customizations are changed even though the game is in background (background_keypress.ini is mandatory)  
+Or you want to play multiple supported games at the same time without interferring mod selections  
+You can use [Custom XXMI-Lib-Package](https://github.com/Aglglg/XXMI-Libs-Package) (based on Original XXMI-Lib-Package)  
