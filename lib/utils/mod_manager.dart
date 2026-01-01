@@ -2127,7 +2127,16 @@ void _prettyIndentation(List<IniSection> sections) {
         );
       }
 
-      lines[i] = indent(trimmed, currentIndentation);
+      if (trimmed.startsWith("else if ") ||
+          trimmed.startsWith("elif ") ||
+          trimmed == "else") {
+        lines[i] = indent(
+          trimmed,
+          (currentIndentation - spacesPerIndent).clamp(0, currentIndentation),
+        );
+      } else {
+        lines[i] = indent(trimmed, currentIndentation);
+      }
 
       if (trimmed.startsWith('if ')) {
         currentIndentation += spacesPerIndent;
