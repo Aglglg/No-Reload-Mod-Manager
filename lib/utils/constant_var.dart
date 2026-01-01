@@ -45,10 +45,11 @@ class ConstantVar {
       "https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes";
 
   //LOWER CASED
-  static final List<String> knownModdingLibraries = [
-    "rabbitfx",
-    "global\\orfix",
-  ];
+  //namespace <> display name
+  static final Map<String, String> knownModdingLibraries = {
+    "rabbitfx": "RabbitFx",
+    "global\\orfix": "ORFix",
+  };
 
   static final managedPattern = RegExp(
     r'(\\modmanageragl\\group_)([1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)(\\active_slot)',

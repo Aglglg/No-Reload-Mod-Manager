@@ -1,5 +1,6 @@
 import 'dart:ffi';
 import 'package:ffi/ffi.dart';
+import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -23,12 +24,16 @@ class ErroredLinesReport {
       if (reason.startsWith("CRASH LINE")) {
         (crashLines[filePath] ??= []).add(ErroredLine(lineIndex, trimmedLine));
       } else if (reason.startsWith("DUPLICATE LIB:")) {
-        final libName =
+        final rawLibName =
             reason.replaceFirst("DUPLICATE LIB:", "").trim().toLowerCase();
+        final libName =
+            ConstantVar.knownModdingLibraries[rawLibName] ?? rawLibName;
         (duplicateLibs[libName] ??= []).add(filePath);
       } else if (reason.startsWith("NON EXISTENT LIB:")) {
-        final libName =
+        final rawLibName =
             reason.replaceFirst("NON EXISTENT LIB:", "").trim().toLowerCase();
+        final libName =
+            ConstantVar.knownModdingLibraries[rawLibName] ?? rawLibName;
         nonExistentLibs[libName] = filePath;
       } else {
         (otherError[filePath] ??= []).add(ErroredLine(lineIndex, trimmedLine));

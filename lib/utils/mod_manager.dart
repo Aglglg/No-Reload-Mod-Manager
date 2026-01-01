@@ -871,13 +871,13 @@ Future<List<TextSpan>> updateModData(
       return getErroredLines(
         d3dxIni,
         basePath,
-        ConstantVar.knownModdingLibraries,
+        ConstantVar.knownModdingLibraries.keys.toList(),
       );
     });
 
-    //Show duplicate known libs, libName <> files of the lib
+    //Show duplicate known libs, libDisplayName <> files of the lib
     for (var entry in errorReport.duplicateLibs.entries) {
-      final libName = entry.key.toUpperCase();
+      final libName = entry.key;
       final filePaths = entry.value
           .map((e) {
             return p.relative(e, from: p.dirname(basePath));
@@ -887,10 +887,19 @@ Future<List<TextSpan>> updateModData(
 
       operationLogs.add(
         TextSpan(
-          text: "Multiple copies of $libName were found:\n$filePaths\n",
+          text: "Multiple copies of $libName were found:\n",
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      );
+      operationLogs.add(
+        TextSpan(
+          text: "$filePaths\n",
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 189, 170, 0),
             fontSize: 14,
           ),
         ),
@@ -900,27 +909,91 @@ Future<List<TextSpan>> updateModData(
           text: "Keep only one copy of $libName.\n\n",
           style: GoogleFonts.poppins(
             color: Colors.red,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.bold,
             fontSize: 14,
           ),
         ),
       );
     }
 
-    //Show non existent lib, libName <> first mod that use it
+    //Show non existent lib, libDisplayName <> first mod that use it
     for (var entry in errorReport.nonExistentLibs.entries) {
-      final libName = entry.key.toUpperCase();
+      final libName = entry.key;
       final filePath = entry.value;
 
       if (!p.isWithin(managedPath, filePath)) continue;
 
+      final (groupName, modName, relativePath) = await _resolveGroupAndModName(
+        filePath,
+        managedPath,
+      );
+
+      operationLogs.add(
+        TextSpan(
+          text: "Missing ",
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 189, 170, 0),
+            fontSize: 14,
+          ),
+        ),
+      );
+      operationLogs.add(
+        TextSpan(
+          text: "$libName\n",
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 189, 170, 0),
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      );
+      operationLogs.add(
+        TextSpan(
+          text: "Required by ",
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 189, 170, 0),
+            fontSize: 14,
+          ),
+        ),
+      );
       operationLogs.add(
         TextSpan(
           text:
-              "Missing dependency: $libName\nRequired by: ${p.relative(filePath, from: managedPath)}.\nThe library may be missing or referenced incorrectly.\nYou may ignore this warning.\n\n",
+              groupName != null && modName != null
+                  ? "$groupName - $modName\n"
+                  : "${p.relative(filePath, from: managedPath)}\n",
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      );
+      operationLogs.add(
+        TextSpan(
+          text: "The library may be missing or ",
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 189, 170, 0),
+            fontSize: 14,
+          ),
+        ),
+      );
+      operationLogs.add(
+        TextSpan(
+          text: "referenced incorrectly",
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 189, 170, 0),
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      );
+      operationLogs.add(
+        TextSpan(
+          text: ".\nYou may ignore this warning.\n\n",
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 189, 170, 0),
+            fontWeight: FontWeight.bold,
             fontSize: 14,
           ),
         ),
@@ -978,7 +1051,11 @@ Future<List<TextSpan>> updateModData(
       !errorShouldTryAgain.value
           ? TextSpan(
             text: 'Mods successfully managed!'.tr(),
-            style: GoogleFonts.poppins(color: Colors.green, fontSize: 14),
+            style: GoogleFonts.poppins(
+              color: Colors.green,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
           )
           : TextSpan(
             text:
@@ -1035,6 +1112,57 @@ Future<List<TextSpan>> updateModData(
   }
 
   return operationLogs;
+}
+
+Future<(String? groupName, String? modName, String relativePath)>
+_resolveGroupAndModName(String iniPath, String managedPath) async {
+  Directory? current = File(iniPath).parent;
+
+  Directory? modRoot;
+  Directory? groupRoot;
+
+  while (current != null && p.isWithin(managedPath, current.path)) {
+    final modNameFile = File(p.join(current.path, 'modname'));
+    if (modRoot == null && await modNameFile.exists()) {
+      modRoot = current;
+    }
+
+    final groupNameFile = File(p.join(current.path, 'groupname'));
+    if (modRoot != null && await groupNameFile.exists()) {
+      groupRoot = current;
+      break;
+    }
+
+    final parent = current.parent;
+    if (parent.path == current.path) break;
+    current = parent;
+  }
+
+  String? modName;
+  String? groupName;
+
+  if (modRoot != null) {
+    try {
+      modName = await File(
+        p.join(modRoot.path, 'modname'),
+      ).readAsString().then((s) => s.trim());
+    } catch (_) {}
+  }
+
+  if (groupRoot != null) {
+    try {
+      groupName = await File(
+        p.join(groupRoot.path, 'groupname'),
+      ).readAsString().then((s) => s.trim());
+    } catch (_) {}
+  }
+
+  final relativePath =
+      modRoot != null
+          ? p.relative(iniPath, from: modRoot.path)
+          : p.relative(iniPath, from: managedPath);
+
+  return (groupName, modName, relativePath);
 }
 
 Future<void> _fixNonManagedModsCrashLine(
@@ -1342,7 +1470,7 @@ Future<void> _autoModifyDuplicateNamespaceInManagedMod(
         if ((namespacesInGroup.contains(namespace) ||
                 namespacesInManaged.contains(namespace)) &&
             //if it's namespace from known modding lib, let xxmi ini handler handle it later
-            !ConstantVar.knownModdingLibraries.contains(namespace)) {
+            !ConstantVar.knownModdingLibraries.keys.contains(namespace)) {
           final newNamespace = _getNewNamespace(
             namespace,
             futureNamespaces,
