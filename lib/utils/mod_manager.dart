@@ -170,8 +170,8 @@ void _addGroupToRiverpod(WidgetRef ref, Directory groupDir, int index) {
         modIcon: null,
         modName: "None".tr(),
         realIndex: 0,
-        isForced: false,
-        isIncludingRabbitFx: false,
+        isOldAutoFixed: false,
+        isSyntaxErrorRemoved: false,
         isUnoptimized: false,
         isNamespaced: false,
       ),
@@ -558,8 +558,8 @@ void _updateModIconProvider(
                     modIcon: newIcon,
                     modName: mod.modName,
                     realIndex: mod.realIndex,
-                    isForced: mod.isForced,
-                    isIncludingRabbitFx: mod.isIncludingRabbitFx,
+                    isOldAutoFixed: mod.isOldAutoFixed,
+                    isSyntaxErrorRemoved: mod.isSyntaxErrorRemoved,
                     isUnoptimized: mod.isUnoptimized,
                     isNamespaced: mod.isNamespaced,
                   );
@@ -614,8 +614,8 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
           modIcon: getModOrGroupIcon(modDir),
           modName: await getModName(modDir),
           realIndex: index + 1, //0 will be none
-          isForced: await checkModWasMarkedAsForced(modDir),
-          isIncludingRabbitFx: await checkModContainsRabbitFx(modDir),
+          isOldAutoFixed: await checkModWasMarkedAsOldAutoFixed(modDir),
+          isSyntaxErrorRemoved: await checkModSyntaxErrorRemoved(modDir),
           isUnoptimized: await checkModWasMarkedAsUnoptimized(modDir),
           isNamespaced: await checkModWasMarkedAsNamespaced(modDir),
         );
@@ -629,8 +629,8 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
         modIcon: null,
         modName: "None".tr(),
         realIndex: 0,
-        isForced: false,
-        isIncludingRabbitFx: false,
+        isOldAutoFixed: false,
+        isSyntaxErrorRemoved: false,
         isUnoptimized: false,
         isNamespaced: false,
       ),
@@ -642,9 +642,22 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
   }
 }
 
-Future<bool> checkModWasMarkedAsForced(Directory modDir) async {
+Future<bool> checkModWasMarkedAsOldAutoFixed(Directory modDir) async {
   try {
     final fileForcedName = File(p.join(modDir.path, 'modforced'));
+    if (await fileForcedName.exists()) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (_) {
+    return false;
+  }
+}
+
+Future<bool> checkModSyntaxErrorRemoved(Directory modDir) async {
+  try {
+    final fileForcedName = File(p.join(modDir.path, 'modsyntaxerrorremoved'));
     if (await fileForcedName.exists()) {
       return true;
     } else {
@@ -679,18 +692,6 @@ Future<bool> checkModWasMarkedAsNamespaced(Directory modDir) async {
   } catch (_) {
     return false;
   }
-}
-
-Future<bool> checkModContainsRabbitFx(Directory modDir) async {
-  try {
-    final iniFiles = await findIniFilesRecursiveExcludeDisabled(modDir.path);
-    for (var file in iniFiles) {
-      if (p.basename(file).toLowerCase() == "rabbitfx.ini") {
-        return true;
-      }
-    }
-  } catch (_) {}
-  return false;
 }
 
 Future<String> getModName(Directory modDir) async {
@@ -1617,6 +1618,8 @@ Future<void> _manageMod(
   try {
     // Find all INI files recursively
     final iniFiles = await findIniFilesRecursiveExcludeDisabled(modFolder);
+    Ref<bool> oldAutoFix = Ref(false);
+    Ref<bool> removedSyntaxError = Ref(false);
 
     // Create a list of Future objects for each INI file's backup and modification
     final futures = <Future>[];
@@ -1644,12 +1647,17 @@ Future<void> _manageMod(
           operationLogs,
           errorReport,
           errorShouldTryAgain,
+          oldAutoFix,
+          removedSyntaxError,
         );
       }());
     }
 
     // Wait for all the tasks to complete concurrently
     await Future.wait(futures);
+
+    await _markAsOldAutoFix(modFolder, oldAutoFix.value);
+    await _markAsRemovedSyntaxError(modFolder, removedSyntaxError.value);
 
     //TODO: perhaps do it in xxmi ini handler dll
     // await tryMarkAsUnoptimized(modFolder, iniFiles);
@@ -1673,6 +1681,8 @@ Future<void> _modifyIniFile(
   List<TextSpan> operationLogs,
   ErroredLinesReport errorReport,
   Ref<bool> errorShouldTryAgain,
+  Ref<bool> oldAutoFix,
+  Ref<bool> removedSyntaxError,
 ) async {
   try {
     // Open the INI file and read it asynchronously
@@ -1680,10 +1690,15 @@ Future<void> _modifyIniFile(
     final lines = await forceReadAsLinesUtf8(file);
 
     //Modify lines based on error report first before adding or modifying anything
-    _modifyLinesBasedOnError(lines, iniFilePath, errorReport);
+    _modifyLinesBasedOnError(
+      lines,
+      iniFilePath,
+      errorReport,
+      removedSyntaxError,
+    );
 
     // Parse the INI file sections
-    var parsedIni = await _parseIniSections(lines);
+    var parsedIni = await _parseIniSections(lines, oldAutoFix);
 
     // Modify the INI file sections based on the given modIndex and groupIndex
     _checkAndModifySections(parsedIni, modIndex, groupIndex);
@@ -1707,6 +1722,7 @@ void _modifyLinesBasedOnError(
   List<String> lines,
   String path,
   ErroredLinesReport errorReport,
+  Ref<bool> removedSyntaxError,
 ) {
   //Create a Map of index to trimmedLine for quick lookup
   //index, trimmedLine
@@ -1720,7 +1736,6 @@ void _modifyLinesBasedOnError(
   }
 
   // We need to continue even if expectedErrors is empty to remove old marks.
-  //TODO: remove mark as forced fix
 
   //Iterate through every line in the file to sync state
   for (int i = 0; i < lines.length; i++) {
@@ -1735,7 +1750,10 @@ void _modifyLinesBasedOnError(
 
       //Make sure the trimmed content matches the report
       if (cleanLine.trim().toLowerCase() == expectedErrors[i]!.toLowerCase()) {
-        //TODO: Mark as forced fix
+        //ignore if syntax error is only "endif"
+        if (expectedErrors[i]!.toLowerCase() != "endif") {
+          removedSyntaxError.value = true;
+        }
         //If it's on report, but not marked yet, add mark
         if (!isMarked) {
           lines[i] = ';-;$currentLine';
@@ -1783,6 +1801,46 @@ Future<File?> safeWriteIni(
   }
 
   return null;
+}
+
+Future<void> _markAsOldAutoFix(String modPath, bool mark) async {
+  if (mark) {
+    try {
+      final fileMarkNamespaced = File(p.join(modPath, 'modforced'));
+
+      if (!await fileMarkNamespaced.exists()) {
+        await fileMarkNamespaced.writeAsString('');
+      }
+    } catch (_) {}
+  } else {
+    try {
+      final fileMarkNamespaced = File(p.join(modPath, 'modforced'));
+
+      if (await fileMarkNamespaced.exists()) {
+        await fileMarkNamespaced.delete();
+      }
+    } catch (_) {}
+  }
+}
+
+Future<void> _markAsRemovedSyntaxError(String modPath, bool mark) async {
+  if (mark) {
+    try {
+      final fileMarkNamespaced = File(p.join(modPath, 'modsyntaxerrorremoved'));
+
+      if (!await fileMarkNamespaced.exists()) {
+        await fileMarkNamespaced.writeAsString('');
+      }
+    } catch (_) {}
+  } else {
+    try {
+      final fileMarkNamespaced = File(p.join(modPath, 'modsyntaxerrorremoved'));
+
+      if (await fileMarkNamespaced.exists()) {
+        await fileMarkNamespaced.delete();
+      }
+    } catch (_) {}
+  }
 }
 
 Future<bool> containsCheckTextureOverride(List<IniSection> parsedIni) async {
@@ -1900,7 +1958,10 @@ String _getSectionName(String trimmedLine) {
   return raw.trim();
 }
 
-Future<List<IniSection>> _parseIniSections(List<String> allLines) async {
+Future<List<IniSection>> _parseIniSections(
+  List<String> allLines,
+  Ref<bool> oldAutoFix,
+) async {
   final List<IniSection> sections = [];
   IniSection currentSection = IniSection('__preamble__', []);
   sections.add(currentSection);
@@ -1923,8 +1984,10 @@ Future<List<IniSection>> _parseIniSections(List<String> allLines) async {
       } else if (_isConstantsSection(currentSection.name) &&
           line.toLowerCase().contains("\$managed_slot_id")) {
         //also do not add $managed_slot_id on constants
-      } else if (line.startsWith(';') && line.contains('by NRMM')) {
-        //also do not add this old force fix by NRMM mark
+      } else if (line.startsWith(';Force') && line.contains('by NRMM')) {
+        //just add old auto fix mark
+        oldAutoFix.value = true;
+        currentSection.lines.add(rawLine);
       } else if (currentSection.name == '__preamble__' &&
           line.startsWith(';') &&
           (line.contains('No Reload Mod Manager') ||
@@ -1998,7 +2061,7 @@ Future<List<IniSection>> _parseIniSections(List<String> allLines) async {
     // Give nrmm mark
     sections[0].lines.insert(
       0,
-      "; Mod managed with No Reload Mod Manager (NRMM) by Agulag, for any problems, just contact/tag @aglgl on Discord.\n; \";-;\" are errored lines\n; Source of No Reload Mod Manager https://gamebanana.com/mods/582623",
+      "; Mod managed with No Reload Mod Manager (NRMM) by Agulag, for any problems, just contact/tag @aglgl on Discord.\n; \";-;\" are errored lines, results with or without NRMM should be the same.\n; Source of No Reload Mod Manager https://gamebanana.com/mods/582623",
     );
   }
   return sections;

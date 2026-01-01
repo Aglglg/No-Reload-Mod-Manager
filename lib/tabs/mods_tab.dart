@@ -223,8 +223,8 @@ class _ModContainerState extends ConsumerState<ModContainer>
       modIcon: oldMod.modIcon,
       realIndex: oldMod.realIndex,
       modName: _modNameTextFieldController.text,
-      isForced: oldMod.isForced,
-      isIncludingRabbitFx: oldMod.isIncludingRabbitFx,
+      isOldAutoFixed: oldMod.isOldAutoFixed,
+      isSyntaxErrorRemoved: oldMod.isSyntaxErrorRemoved,
       isUnoptimized: oldMod.isUnoptimized,
       isNamespaced: oldMod.isNamespaced,
     );
@@ -702,11 +702,11 @@ class _ModContainerState extends ConsumerState<ModContainer>
                         if (widget
                                 .currentGroupData
                                 .modsInGroup[widget.index]
-                                .isForced ||
+                                .isOldAutoFixed ||
                             widget
                                 .currentGroupData
                                 .modsInGroup[widget.index]
-                                .isIncludingRabbitFx ||
+                                .isSyntaxErrorRemoved ||
                             widget
                                 .currentGroupData
                                 .modsInGroup[widget.index]
@@ -748,11 +748,11 @@ class _ModContainerState extends ConsumerState<ModContainer>
                                   if (widget
                                       .currentGroupData
                                       .modsInGroup[widget.index]
-                                      .isForced)
+                                      .isOldAutoFixed)
                                     Tooltip(
                                       richMessage: TextSpan(
                                         text:
-                                            'Mod was forced to be managed and might not working properly.'
+                                            'Mod syntax errors were auto-fixed by earlier NRMM versions.'
                                                 .tr(),
                                         style: GoogleFonts.poppins(
                                           color: Colors.black,
@@ -761,7 +761,8 @@ class _ModContainerState extends ConsumerState<ModContainer>
                                         ),
                                       ),
                                       child: HoverableIcon(
-                                        iconData: Icons.sync_problem_rounded,
+                                        iconData:
+                                            Icons.running_with_errors_rounded,
                                         scaleFactor: sss,
                                         idleColor: Colors.yellow,
                                         activeColor: Colors.white,
@@ -770,11 +771,11 @@ class _ModContainerState extends ConsumerState<ModContainer>
                                   if (widget
                                       .currentGroupData
                                       .modsInGroup[widget.index]
-                                      .isIncludingRabbitFx)
+                                      .isSyntaxErrorRemoved)
                                     Tooltip(
                                       richMessage: TextSpan(
                                         text:
-                                            'Mod contains RabbitFx.ini, please remove it. You must only have 1 RabbitFx accross your entire "Mods" folder.'
+                                            'Mod syntax errors are automatically removed.'
                                                 .tr(),
                                         style: GoogleFonts.poppins(
                                           color: Colors.black,
@@ -783,10 +784,10 @@ class _ModContainerState extends ConsumerState<ModContainer>
                                         ),
                                       ),
                                       child: HoverableIcon(
-                                        iconData: Icons.warning_amber_rounded,
+                                        iconData: Icons.rule_rounded,
                                         scaleFactor: sss,
-                                        idleColor: Colors.yellow,
-                                        activeColor: Colors.white,
+                                        idleColor: Colors.white,
+                                        activeColor: Colors.grey,
                                       ),
                                     ),
                                   if (widget

@@ -25,8 +25,8 @@ class ModData {
   final Image? modIcon;
   final String modName;
   final int realIndex;
-  final bool isForced;
-  final bool isIncludingRabbitFx;
+  final bool isOldAutoFixed;
+  final bool isSyntaxErrorRemoved;
   final bool isUnoptimized;
   final bool isNamespaced;
 
@@ -35,8 +35,8 @@ class ModData {
     required this.modIcon,
     required this.modName,
     required this.realIndex,
-    required this.isForced,
-    required this.isIncludingRabbitFx,
+    required this.isOldAutoFixed,
+    required this.isSyntaxErrorRemoved,
     required this.isUnoptimized,
     required this.isNamespaced,
   });
