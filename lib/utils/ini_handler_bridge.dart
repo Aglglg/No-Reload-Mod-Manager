@@ -138,6 +138,8 @@ ErroredLinesReport getErroredLines(
     }
 
     return ErroredLinesReport.fromPointer(resultPtr, count);
+  } catch (_) {
+    throw IniHandlerException();
   } finally {
     if (resultPtr != nullptr) {
       _freeErroredFlowControlLinesSnapshot(resultPtr, count);
