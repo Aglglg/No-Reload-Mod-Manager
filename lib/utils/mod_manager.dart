@@ -1770,7 +1770,12 @@ Future<void> _modifyIniFile(
     var parsedIni = await _parseIniSections(lines, oldAutoFix);
 
     // Modify the INI file sections based on the given modIndex and groupIndex
-    _checkAndModifySections(parsedIni, modIndex, groupIndex);
+    _checkAndModifySections(
+      parsedIni,
+      modIndex,
+      groupIndex,
+      removedSyntaxError,
+    );
 
     // Write the modified content back to the INI file
     String modifiedIni = _getLiteralIni(parsedIni);
@@ -2090,7 +2095,7 @@ Future<List<IniSection>> _parseIniSections(
     // Give nrmm mark
     sections[0].lines.insert(
       0,
-      "; Mod managed with No Reload Mod Manager (NRMM) by Agulag, for any problems, just contact/tag @aglgl on Discord.\n; \";-;\" are errored lines, results with or without NRMM should be the same.\n; Source of No Reload Mod Manager https://gamebanana.com/mods/582623",
+      "; Mod managed with No Reload Mod Manager (NRMM) by Agulag, for any problems, just contact/tag @aglgl on Discord.\n; \";-;\" are errored lines.\n; Source of No Reload Mod Manager https://gamebanana.com/mods/582623",
     );
   }
   return sections;
@@ -2100,6 +2105,7 @@ void _checkAndModifySections(
   List<IniSection> sections,
   int modIndex,
   int groupIndex,
+  Ref<bool> removedSyntaxError,
 ) {
   bool managedSlotIdVarAdded = false;
   for (var section in sections) {
@@ -2116,7 +2122,7 @@ void _checkAndModifySections(
             r'\active_slot',
       );
 
-      _fixEndifLineAndTrailingFlowControlLine(section);
+      _fixEndifLineAndTrailingFlowControlLine(section, removedSyntaxError);
     }
     //Constants section
     else if (_isConstantsSection(name) && !managedSlotIdVarAdded) {
@@ -2182,7 +2188,10 @@ void _checkAndModifySections(
 ///Make sure "endif" is on bottom
 ///Modify based on error report can only remove/mark invalid line
 ///We still need to make sure that the manager if scope is correct here (endif placed on bottom)
-void _fixEndifLineAndTrailingFlowControlLine(IniSection section) {
+void _fixEndifLineAndTrailingFlowControlLine(
+  IniSection section,
+  Ref<bool> removedSyntaxError,
+) {
   int lastIndexForInsertion = _getLastIndexInSection(section.lines);
   int lastContentIndex = lastIndexForInsertion - 1;
   int? indexOfEndifForManagerIf;
@@ -2225,6 +2234,7 @@ void _fixEndifLineAndTrailingFlowControlLine(IniSection section) {
       //newly added mod to this version won't have this, handled by error report
       if (peekIf == null) {
         lines[i] = ";-;${lines[i]}";
+        removedSyntaxError.value = true;
       }
     }
     //Remove if line from stack if is endif line, close if
