@@ -28,10 +28,11 @@ jobs:
           cache: true
 
         #install inno setup to create installer exe by fastforge
-      - name: Install Inno Setup 6
+      - name: Check Inno Setup Installation
         run: |
-          choco install innosetup --version=6.5.4 -y
-        shell: pwsh
+          if (!(choco list --local-only | Select-String "innosetup")) {
+            choco install innosetup --yes
+          }
 
         #install fastforge
       - name: Install FastForge globally
