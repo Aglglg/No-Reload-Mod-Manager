@@ -959,11 +959,11 @@ Future<List<TextSpan>> updateModData(
             errorShouldTryAgain,
           );
 
-          for (var mod in modDatas) {
-            if (mod.modIcon == null) {
-              await _tryAutoGetModIcon(mod.modDir);
-            }
-          }
+          // for (var mod in modDatas) {
+          //   if (mod.modIcon == null) {
+          //     await _tryAutoGetModIcon(mod.modDir);
+          //   }
+          // }
 
           await Future.wait([
             for (var j = 0; j < modDatas.length; j++)
