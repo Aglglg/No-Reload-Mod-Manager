@@ -1,1 +1,1 @@
-
+Update to v2.8.0 for better mod manager. Ignore this if you already updated it. || https://gamebanana.com/mods/582623
