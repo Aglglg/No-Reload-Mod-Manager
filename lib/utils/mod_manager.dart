@@ -1779,6 +1779,8 @@ Future<void> _modifyIniFile(
       removedSyntaxError,
     );
 
+    _reorderByIniKeyPriority(parsedIni);
+
     _prettyIndentation(parsedIni);
 
     // Write the modified content back to the INI file
@@ -2105,6 +2107,180 @@ Future<List<IniSection>> _parseIniSections(
   return sections;
 }
 
+final List<String> textureOverrideIniKeys = [
+  "hash",
+  "format",
+  "width",
+  "height",
+  "width_multiply",
+  "height_multiply",
+  "override_byte_stride",
+  "override_vertex_count",
+  "uav_byte_stride",
+  "iteration",
+  "filter_index",
+  "expand_region_copy",
+  "deny_cpu_read",
+  "match_priority",
+  "match_type",
+  "match_usage",
+  "match_bind_flags",
+  "match_cpu_access_flags",
+  "match_misc_flags",
+  "match_byte_width",
+  "match_stride",
+  "match_mips",
+  "match_format",
+  "match_width",
+  "match_height",
+  "match_depth",
+  "match_array",
+  "match_msaa",
+  "match_msaa_quality",
+  "match_first_vertex",
+  "match_first_index",
+  "match_first_instance",
+  "match_vertex_count",
+  "match_index_count",
+  "match_instance_count",
+];
+final List<String> customShaderIniKeys = [
+  "vs",
+  "hs",
+  "ds",
+  "gs",
+  "ps",
+  "cs",
+  "max_executions_per_frame",
+  "flags",
+  "blend",
+  "alpha",
+  "mask",
+  "blend[0]",
+  "blend[1]",
+  "blend[2]",
+  "blend[3]",
+  "blend[4]",
+  "blend[5]",
+  "blend[6]",
+  "blend[7]",
+  "alpha[0]",
+  "alpha[1]",
+  "alpha[2]",
+  "alpha[3]",
+  "alpha[4]",
+  "alpha[5]",
+  "alpha[6]",
+  "alpha[7]",
+  "mask[0]",
+  "mask[1]",
+  "mask[2]",
+  "mask[3]",
+  "mask[4]",
+  "mask[5]",
+  "mask[6]",
+  "mask[7]",
+  "alpha_to_coverage",
+  "sample_mask",
+  "blend_factor[0]",
+  "blend_factor[1]",
+  "blend_factor[2]",
+  "blend_factor[3]",
+  "blend_state_merge",
+  "depth_enable",
+  "depth_write_mask",
+  "depth_func",
+  "stencil_enable",
+  "stencil_read_mask",
+  "stencil_write_mask",
+  "stencil_front",
+  "stencil_back",
+  "stencil_ref",
+  "depth_stencil_state_merge",
+  "fill",
+  "cull",
+  "front",
+  "depth_bias",
+  "depth_bias_clamp",
+  "slope_scaled_depth_bias",
+  "depth_clip_enable",
+  "scissor_enable",
+  "multisample_enable",
+  "antialiased_line_enable",
+  "rasterizer_state_merge",
+  "topology",
+  "sampler",
+];
+final List<String> shaderOverrideIniKeys = [
+  "hash",
+  "allow_duplicate_hash",
+  "depth_filter",
+  "partner",
+  "model",
+  "disable_scissor",
+  "filter_index",
+];
+final List<String> shaderRegexIniKeys = [
+  "shader_model",
+  "temps",
+  "filter_index",
+];
+
+void _reorderByIniKeyPriority(List<IniSection> sections) {
+  for (var section in sections) {
+    List<String> priorityKeys = [];
+
+    if (_isTextureOverrideSection(section.name)) {
+      priorityKeys = textureOverrideIniKeys;
+    } else if (_isCustomShaderSection(section.name)) {
+      priorityKeys = customShaderIniKeys;
+    } else if (_isShaderOverrideSection(section.name)) {
+      priorityKeys = shaderOverrideIniKeys;
+    } else if (_isShaderRegexMainSection(section.name)) {
+      priorityKeys = shaderRegexIniKeys;
+    } else {
+      continue;
+    }
+
+    final lowerKeys = priorityKeys.map((k) => k.toLowerCase()).toList();
+    final lines = section.lines;
+
+    final buckets = List.generate(priorityKeys.length, (_) => <String>[]);
+    final rest = <String>[];
+
+    for (final line in lines) {
+      final trimmed = line.trimLeft();
+      final lower = trimmed.toLowerCase();
+
+      bool matched = false;
+
+      for (int i = 0; i < lowerKeys.length; i++) {
+        final key = lowerKeys[i];
+
+        if (!lower.startsWith(key)) continue;
+
+        final restOfLine = lower.substring(key.length);
+
+        // Must be: [whitespace]* '='
+        final eqIndex = restOfLine.indexOf('=');
+        if (eqIndex == -1) continue;
+
+        if (restOfLine.substring(0, eqIndex).trim().isEmpty) {
+          buckets[i].add(line);
+          matched = true;
+          break;
+        }
+      }
+
+      if (!matched) {
+        rest.add(line);
+      }
+    }
+
+    section.lines = [for (final bucket in buckets) ...bucket, ...rest];
+  }
+}
+
 String indent(String trimmedText, int currentIndentation) {
   if (currentIndentation <= 0) return trimmedText;
   return ' ' * currentIndentation + trimmedText;
@@ -2364,6 +2540,30 @@ bool _isConstantsSection(String sectionName) {
   return lowerSectionName == "constants";
 }
 
+//Sections that have special keys that's ignored by Command List Parsing
+//////////////
+bool _isTextureOverrideSection(String sectionName) {
+  final lowerSectionName = sectionName.toLowerCase();
+  return lowerSectionName.startsWith("textureoverride");
+}
+
+bool _isCustomShaderSection(String sectionName) {
+  final lowerSectionName = sectionName.toLowerCase();
+  return lowerSectionName.startsWith("customshader");
+}
+
+bool _isShaderOverrideSection(String sectionName) {
+  final lowerSectionName = sectionName.toLowerCase();
+  return lowerSectionName.startsWith("shaderoverride");
+}
+
+bool _isShaderRegexMainSection(String sectionName) {
+  final lowerSectionName = sectionName.toLowerCase();
+  return lowerSectionName.startsWith('shaderregex') &&
+      !lowerSectionName.contains('.');
+}
+//////////////
+
 String _getLiteralIni(List<IniSection> sections) {
   final StringBuffer result = StringBuffer();
 
@@ -2372,16 +2572,26 @@ String _getLiteralIni(List<IniSection> sections) {
       result.writeln('[${section.name}]');
     }
 
-    bool lineWasEmpty = false;
+    bool needsSeparator = false;
 
     for (var line in section.lines) {
       result.writeln(line);
-      lineWasEmpty = line.trim().isEmpty;
+
+      final trimmed = line.trim();
+
+      // Decide whether this line should force a separator after the section
+      if (trimmed.isEmpty) {
+        needsSeparator = false;
+      } else if (trimmed.startsWith(';') && !trimmed.startsWith(';-;')) {
+        needsSeparator = false; // pure comment
+      } else {
+        needsSeparator = true; // real content
+      }
     }
 
-    if (!lineWasEmpty) {
-      result
-          .writeln(); // Blank line between sections, if previous line is not empty or blank line
+    if (needsSeparator) {
+      // Blank line between sections only if last line is real content
+      result.writeln();
     }
   }
 
