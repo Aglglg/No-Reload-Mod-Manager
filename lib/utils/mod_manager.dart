@@ -1121,7 +1121,7 @@ Future<void> _fixNonManagedModsCrashLine(
           if (lines[idx].trim().toLowerCase() ==
                   erroredLine.trimmedLine.toLowerCase() &&
               !lines[idx].trim().startsWith(";-;")) {
-            lines[idx] = ";-;${lines[idx]}";
+            lines[idx] = ";-;${lines[idx].trim()}";
           }
         }
         await safeWriteIni(File(filePath), lines.join('\n'));
@@ -1836,7 +1836,7 @@ void _modifyLinesBasedOnError(
         }
         //If it's on report, but not marked yet, add mark
         if (!isMarked) {
-          lines[i] = ';-;$currentLine';
+          lines[i] = ';-;${currentLine.trim()}';
         }
       }
     } else {
@@ -2022,7 +2022,10 @@ Future<List<IniSection>> _parseIniSections(
           .contains(r"if$managed_slot_id==$\modmanageragl\group_")) {
         //but, do not add manager if line (if$managed_slot_id==$\modmanageragl\group_)
       } else if (_isConstantsSection(currentSection.name) &&
-          line.toLowerCase().contains("\$managed_slot_id")) {
+          line
+              .toLowerCase()
+              .replaceAll(' ', '')
+              .contains("\$managed_slot_id=")) {
         //also do not add $managed_slot_id on constants
       } else if (line.startsWith(';Force') && line.contains('by NRMM')) {
         //just add old auto fix mark
@@ -2453,7 +2456,7 @@ void _fixEndifLineAndTrailingFlowControlLine(
       //usually happens if mod was managed with old version
       //newly added mod to this version won't have this, handled by error report
       if (peekIf == null) {
-        lines[i] = ";-;${lines[i]}";
+        lines[i] = ";-;${lines[i].trim()}";
         removedSyntaxError.value = true;
       }
     }
@@ -2471,7 +2474,7 @@ void _fixEndifLineAndTrailingFlowControlLine(
         }
         //but make sure it's located in the bottom, if not, comment it out
         else {
-          lines[i] = ";-;${lines[i]}";
+          lines[i] = ";-;${lines[i].trim()}";
         }
       }
     }
