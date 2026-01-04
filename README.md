@@ -4,7 +4,14 @@ How? Of course, first of all you must know [How to contribute to open sourced pr
 
 ---
 ### To-do list
--
+#### For Linux Support
+ - Fix path handling (case-sensitive vs case-insensitive)
+ - Fix files drag & drop system
+ - Fix folder icon changer for File Explorer
+ - Fix the system to detect foreground game window process which is used for hotkey for showing mod manager window
+ - Test whether it is possible to call XXMI Lib Ini Handler DLL which was made for Windows
+ - Fix keypress & mouse simulation which is used to change group and selected mod index
+  
 ---
 
 # No Reload Mod Manager / Skin Selection
