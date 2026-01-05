@@ -1064,9 +1064,12 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
 
                       ElevatedButton(
                         onPressed: () async {
-                          ref.read(windowIsPinnedProvider.notifier).state =
-                              false;
-                          await autoUpdater.checkForUpdates();
+                          //PLATFORM SPECIFIC
+                          if (Platform.isWindows) {
+                            ref.read(windowIsPinnedProvider.notifier).state =
+                                false;
+                            await autoUpdater.checkForUpdates();
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           overlayColor: Colors.white,
@@ -1080,7 +1083,10 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                         child: Padding(
                           padding: EdgeInsets.symmetric(vertical: 8 * sss),
                           child: Text(
-                            'Check for Updates'.tr(),
+                            //PLATFORM SPECIFIC
+                            Platform.isWindows
+                                ? 'Check for Updates'.tr()
+                                : 'Check for Updates (Not Supported)'.tr(),
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
                               fontSize: 12 * sss,

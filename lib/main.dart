@@ -157,10 +157,13 @@ Future<void> setupWindow(List<String> args) async {
 
   await checkToRelaunch();
 
-  String feedURL =
-      'https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/appcast.xml';
-  await autoUpdater.setFeedURL(feedURL);
-  await autoUpdater.setScheduledCheckInterval(0);
+  //PLATFORM SPECIFIC
+  if (Platform.isWindows) {
+    String feedURL =
+        'https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/appcast.xml';
+    await autoUpdater.setFeedURL(feedURL);
+    await autoUpdater.setScheduledCheckInterval(0);
+  }
 
   bitsdojo.doWhenWindowReady(() async {
     final minSize = Size(
