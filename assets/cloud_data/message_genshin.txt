@@ -1,1 +1,0 @@
-You can safely delete the folder named DISABLED_MANAGED_REMOVED. Removing it will free up a storage space.
