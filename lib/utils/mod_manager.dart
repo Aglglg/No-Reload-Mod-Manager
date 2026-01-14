@@ -2609,7 +2609,7 @@ Future<List<String>> _findIniFilesRecursive(String mainFolder) async {
   return await directory
       .list(recursive: true)
       .where((file) => file is File && file.path.endsWith('.ini'))
-      .where((file) => !file.path.toLowerCase().endsWith('desktop.ini'))
+      .where((file) => p.basename(file.path).toLowerCase() != "desktop.ini")
       .map((file) => file.path)
       .toList();
 }
@@ -2625,7 +2625,7 @@ Future<List<String>> findIniFilesRecursiveExcludeDisabled(
       .where((file) => file is File)
       .map((file) => file.path)
       .where((path) => path.toLowerCase().endsWith('.ini'))
-      .where((path) => !path.toLowerCase().endsWith('desktop.ini'))
+      .where((path) => p.basename(path).toLowerCase() != "desktop.ini")
       .where((path) => !p.basename(path).toLowerCase().startsWith('disabled'))
       .toList();
 }
