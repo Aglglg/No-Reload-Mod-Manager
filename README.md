@@ -110,6 +110,41 @@ Even though this is not main mod loader or mod tool, and only tool to organize m
 - The mods that you added also being modified, you can revert the changes by dragging it to Reverter area on Settings.
 - **XXMI DLL/3dmigoto (WWMI/GIMI/SRMI/ZZMI) will receives keypresses in the background**, automatically add background_keypress.ini to your Mods folder.
 
+## 📖 Mod Ini Files Modification
+- In order to switch selected mod in realtime without reload, ini files modification is needed.
+- Only mods inside `_MANAGED_` that are modified.
+- The changes made to the `.ini` files are minimal, and no new sections are ever added.
+- The changes made to the `.ini` files are guaranteed to be valid, as it is already smart enough to determine _bad_ lines from modder.
+- The manager only adds `if-endif` lines to the `Command List` sections and the `$managed_slot_id` variable to the existing `Constants` section.
+- Because the changes are so small, it is easy to undo them manually with only the `Find and Replace` feature in `Text Editor` like `Notepad`, even without using the `Reverter` system in the `Settings` tab.
+- Furthermore, the mod will still work perfectly even without this mod manager, even if you don't remove the `if-endif` lines. This is possible because the manager ensures the `if-endif` lines are placed correctly and that any other broken lines are handled beforehand.
+- But it is still better to remove the `if-endif` lines added by the manager if you’re not using it anymore.
+<details>
+ <summary><h2>(CLICK TO EXPAND AND READ THE DETAILED PROCESS)</h2></summary>
+
+**When you press the Update Mod Data button, the following process occurs:**  
+1. The manager gets the `Mods` path from the field you filled in.
+2. It checks for `d3dx.ini` and `d3d11.dll` files in the same directory as your `Mods` path (for example: `GIMI\Mods`, `GIMI\d3dx.ini`, and `GIMI\d3d11.dll`). The `d3dx.ini` file is necessary to identify errored lines in your mod files later. And the `d3d11.dll` is just to make sure that you're in modding environment.
+3. If the path is valid, it sets up a `_MANAGED_` folder inside the `Mods` folder. This is where all managed mods are stored. **Only the mods inside this folder will have their .ini files modified.**
+4. It creates the files needed for the mod manager to work, such as `background_keypress.ini` (which ensures simulated keypresses reach XXMI or 3DMigoto seamlessly) and `manager_group.ini` (to handle switching mods between groups).
+5. The manager looks through all group folders inside the `_MANAGED_` folder and identifies every managed mod within them.
+6. It searches for duplicate namespaces between mods. Since modders often use generic namespaces that can clash, the manager will automatically rename them if a conflict is found. This is an "all or nothing" process, meaning it guarantees that no `.ini` file will be left referencing an old namespace once the change is made. But, multiple ini files within the same mod could define `namespace =` line with the same value and it is fine and sometimes intended.
+7. It then uses a function to read the modding environment exactly like the internal parser of `XXMI` or `3DMigoto`. This helps identify errored lines accurately, specifically invalid `if-elif-endif` structures that could interfere with the manager's modifications.
+8. For every group folder, the manager deletes the old `group_x.ini` config file (where x is the group index) and creates a new one. It then processes each mod inside those groups.
+9. It looks for `.ini` files inside the mod folder.
+10. It creates a backup of the `.ini` files if one does not already exist.
+11. For each `.ini` files, it will add `;-;` to the start of any errored lines found during the parsing phase, marking them as ignored or `comments`.
+12. For each `.ini` file, it will look for the `[Constants]` section or create one if not found, and add the variable `global $managed_slot_id = x`, where `x` is the mod's index based on the folder name's sort order.
+13. It looks for `command list` sections (which are: `[Present]`, `[ClearRenderTargetView]`, `[ClearDepthStencilView]`, `[ClearUnorderedAccessViewUint]`, `[ClearUnorderedAccessViewFloat]`, `[BuiltInCustomShader...]`, `[CustomShader...]`, `[BuiltInCommandList...]`, `[CommandList...]`, `[ShaderOverride...]`, `[TextureOverride...]`, main `[ShaderRegex...]`). It adds a manager `if` line (`if $managed_slot_id == $\modmanageragl\group_x\active_slot`) at the first line in the section. And an `endif` at the bottom line of the section. **Because errored lines are already handled previously, adding `if-endif` is safe here**.
+14. It modifies `[Key...]` sections by adding the same manager expression to the `condition =` line.
+15. In sections  `[TextureOverride...]`, `[CustomShader...]`, `[ShaderOverride...]`, and main `[ShaderRegex...]`, certain lines (like `hash`, `match_priority`, `shader_model`, etc) are executed by XXMI or 3dmigoto regardless of the `if-endif` logic. The manager places these lines above the `if` line, **for better readability**.
+16. It also adds four spaces of `indentation` for every line inside an `if` block and removes them after an `endif`. **This is also for better readability only**.
+17. It then saves the modified `.ini` files by writing a temporary file first. Once the save is successful, it renames the temporary file to the original filename. This prevents empty or corrupted files if the app crashes during the process.
+18. Additionally, it also checks for specific lines that are known to crash the game due to flaws in XXMI or 3DMigoto logic. These include a single `[` on a line or a preamble `condition =` line with no value. The manager will remove or mark as `comment` these lines even if the `.ini` file is not part of a managed mod.
+19. The manager also provides a report in the `Update Mod Data` popup regarding duplicated or missing common modding `libraries` (OrFix, Slotfix, RabbitFx, etc) referenced by your mods.
+20. **Congrats for reading it all!**
+</details>
+
 ## Keybindings Simulated
 - **Clear Key (VK_CLEAR), Space Key (VK_SPACE), Enter Key (VK_RETURN)**
 - **Mouse position x, y coordinate** - determine group index & mod index
