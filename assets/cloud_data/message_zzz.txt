@@ -1,1 +1,0 @@
-If you want to know how mod ini files are modified, read here. Otherwise, ignore this for 24 hours. || https://github.com/Aglglg/No-Reload-Mod-Manager/tree/main#-mod-ini-files-modification
