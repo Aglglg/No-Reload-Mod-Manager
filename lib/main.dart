@@ -239,7 +239,7 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
   @override
   Widget build(BuildContext context) {
     return KeyboardListener(
-      onKeyEvent: (value) {
+      onKeyEvent: (value) async {
         if (value is KeyUpEvent ||
             ref.read(alertDialogShownProvider) ||
             ref.read(popupMenuShownProvider)) {
@@ -252,6 +252,7 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
                 value.physicalKey == PhysicalKeyboardKey.altRight) &&
             value is KeyUpEvent) {
           simulateKeyDown(VK_ESCAPE);
+          await Future.delayed(Duration(milliseconds: 50));
           simulateKeyUp(VK_ESCAPE);
           focusNode.requestFocus();
         }

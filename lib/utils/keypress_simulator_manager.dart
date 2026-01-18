@@ -100,8 +100,18 @@ Future<bool> simulateKeysFromKeySections(String keyString) async {
     if (keyCodes.length > 10) return false;
   }
 
+  //Move SHIFT keys to the end
+  //Fix unknown bug where 3dmigoto/xxmi ignore shift keypress simulation
+  final shiftKeys = keyCodes.where(_isShiftKey).toList();
+  keyCodes.removeWhere(_isShiftKey);
+  keyCodes.addAll(shiftKeys);
+
   await _simulateMultipleKeypresses(keyCodes);
   return true;
+}
+
+bool _isShiftKey(int vk) {
+  return vk == VK_SHIFT || vk == VK_LSHIFT || vk == VK_RSHIFT;
 }
 
 Future<void> _simulateMultipleKeypresses(List<int> keys) async {
