@@ -113,7 +113,7 @@
   "Reverting mods...": "Откат модов...\n",
   "Removing group will revert and remove all changes you made while these mods on this group where managed.": "Удаление группы откатит и удалит все изменения, которые вы сделали, пока моды в этой группе были управляемыми.",
   "Removing mod will revert and remove all changes you made while this mod where managed.": "Удаление мода откатит и удалит все изменения, которые вы сделали, пока этот мод был управляемым.",
-  "Folder will be moved": "\n\nПапка будет перемещена в {}",
+  "Folder will be moved": "\n\nПапка будет перемещена в {}\nЕё можно безопасно удалить позже.",
   "Max mod info": "Максимум модов на группу: 500.\nСейчас у вас {} модов. И вы хотите добавить еще {} модов.",
   "Checking folders...": "Проверка папок...\n",
   "Valid folders detected:": "Обнаружены допустимые папки:\n",

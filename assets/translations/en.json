@@ -113,7 +113,7 @@
   "Reverting mods...": "Reverting mods...\n",
   "Removing group will revert and remove all changes you made while these mods on this group where managed.": "Removing group will revert and remove all changes you made while these mods on this group where managed.",
   "Removing mod will revert and remove all changes you made while this mod where managed.": "Removing mod will revert and remove all changes you made while this mod where managed.",
-  "Folder will be moved": "\n\nFolder will be moved to {}",
+  "Folder will be moved": "\n\nFolder will be moved to {}\nYou can safely manually delete it later.",
   "Max mod info": "Max mods per group is 500 mods.\nCurrently you have {} mods. And you want to add {} more mods.",
   "Checking folders...": "Checking folders...\n",
   "Valid folders detected:": "Valid folders detected:\n",

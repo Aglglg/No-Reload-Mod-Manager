@@ -113,7 +113,7 @@
   "Reverting mods...": "正在還原模組。。。\n",
   "Removing group will revert and remove all changes you made while these mods on this group where managed.": "移除群組將還原並清除該群組內所有模組在管理期間的所有變更。",
   "Removing mod will revert and remove all changes you made while this mod where managed.": "移除模組將還原並清除該模組在管理期間的所有變更。",
-  "Folder will be moved": "\n\n資料夾將被移至 {}",
+  "Folder will be moved": "\n\n資料夾將被移至 {}\n之後可安全手動刪除。",
   "Max mod info": "每組最多容納40個模組。\n當前已有 {} 個模組，您正嘗試添加 {} 個模組。",
   "Checking folders...": "正在檢查資料夾。。。\n",
   "Valid folders detected:": "檢測到有效資料夾：\n",
