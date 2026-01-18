@@ -2229,8 +2229,36 @@ final List<String> shaderRegexIniKeys = [
   "filter_index",
 ];
 
+bool _isVariableDeclarationLine(String rawLine) {
+  final lineNoSpaces = rawLine.trim().toLowerCase().replaceAll(' ', '');
+
+  return lineNoSpaces.startsWith("global\$") ||
+      lineNoSpaces.startsWith("globalpersist\$") ||
+      lineNoSpaces.startsWith("persistglobal\$") ||
+      //Keep comment too
+      (lineNoSpaces.startsWith(";") && !lineNoSpaces.startsWith(";-;"));
+}
+
 void _reorderByIniKeyPriority(List<IniSection> sections) {
   for (var section in sections) {
+    // Constants section special handling
+    if (_isConstantsSection(section.name)) {
+      final top = <String>[];
+      final rest = <String>[];
+
+      for (final line in section.lines) {
+        if (_isVariableDeclarationLine(line)) {
+          top.add(line);
+        } else {
+          rest.add(line);
+        }
+      }
+
+      section.lines = [...top, ...rest];
+      continue;
+    }
+
+    //Other command list section
     List<String> priorityKeys = [];
 
     if (_isTextureOverrideSection(section.name)) {
@@ -2337,6 +2365,13 @@ void _checkAndModifySections(
 
     //Whitelisted or commandlist section
     if (_isWhitelistedSection(name)) {
+      //Constants section (it's also in whitelisted section)
+      if (_isConstantsSection(name) && !managedSlotIdVarAdded) {
+        //simply insert $managed_slot_id. Because, at parsing logic, the old $managed_slot_id guaranteed to be removed
+        lines.insert(0, 'global \$managed_slot_id = $modIndex');
+        managedSlotIdVarAdded = true;
+      }
+
       //simply insert manager if line on index 0. Because, at parsing logic, the old manager if line guaranteed to be removed
       lines.insert(
         0,
@@ -2346,12 +2381,6 @@ void _checkAndModifySections(
       );
 
       _fixEndifLineAndTrailingFlowControlLine(section, removedSyntaxError);
-    }
-    //Constants section
-    else if (_isConstantsSection(name) && !managedSlotIdVarAdded) {
-      //simply insert $managed_slot_id. Because, at parsing logic, the old $managed_slot_id guaranteed to be removed
-      lines.insert(0, 'global \$managed_slot_id = $modIndex');
-      managedSlotIdVarAdded = true;
     }
     //Key section
     else if (_isKeySection(name)) {
@@ -2505,6 +2534,7 @@ bool _isWhitelistedSection(String sectionName) {
     'cleardepthstencilview',
     'clearunorderedaccessviewuint',
     'clearunorderedaccessviewfloat',
+    'constants',
   };
 
   if (exact.contains(lower)) {
