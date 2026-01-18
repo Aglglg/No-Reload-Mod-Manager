@@ -43,7 +43,7 @@ dependencies:
       url: https://github.com/Aglglg/bitsdojo_window_patched.git
       path: bitsdojo_window
   animated_segmented_tab_control: ^2.0.0
-  google_fonts: ^6.2.1
+  google_fonts: ^7.0.2
   win32: ^5.12.0
   ffi: ^2.1.4
   hotkey_manager: ^0.2.3
