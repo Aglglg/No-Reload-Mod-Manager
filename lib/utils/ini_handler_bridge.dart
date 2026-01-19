@@ -153,10 +153,10 @@ ErroredLinesReport getErroredLines(
     for (int i = 0; i < knownLibNamespaces.length; i++) {
       malloc.free(knownLibNamespacesPtrs[i]);
     }
-    malloc.free(knownLibNamespacesPtrs);
+    calloc.free(knownLibNamespacesPtrs);
     malloc.free(pathPtr);
     malloc.free(basePtr);
-    malloc.free(countPtr);
+    calloc.free(countPtr);
   }
 }
 
