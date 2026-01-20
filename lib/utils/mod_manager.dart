@@ -2048,10 +2048,7 @@ Future<List<IniSection>> _parseIniSections(
 
   if (sections[0].name == "__preamble__") {
     // Give nrmm mark
-    sections[0].lines.insert(
-      0,
-      "; Mod managed with No Reload Mod Manager (NRMM). \";-;\" are errored lines.",
-    );
+    sections[0].lines.insert(0, "; \";-;\" are errored lines.");
   }
   return sections;
 }
