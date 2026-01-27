@@ -110,6 +110,8 @@ Future<void> initializeAndShowNotification() async {
   } catch (_) {}
 }
 
+// Drag & Drop file won't work if this tool is run with administrator privillage, while explorer.exe is not.
+// So relaunch it with explorer.exe to get the same privillage level (normal user)
 Future<void> relaunchAsNormalUser() async {
   final exePath = Platform.resolvedExecutable;
 

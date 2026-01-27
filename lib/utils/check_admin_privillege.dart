@@ -59,6 +59,7 @@ final checkTokenMembership = advapi32
       'CheckTokenMembership',
     );
 
+// Used to detect if this tool is ran as admin, if yes, it'll later be closed and relaunched as normal user (deprivilege)
 bool isRunningAsAdmin() {
   if (!Platform.isWindows) return false;
 
