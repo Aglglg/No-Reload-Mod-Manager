@@ -52,52 +52,6 @@ Future<List<ModGroupData>> refreshModData(Directory managedDir) async {
   return results;
 }
 
-Future<List<String>> checkForRabbitFxCount(Directory modsDir) async {
-  List<String> rabbitFxPath = [];
-
-  try {
-    final iniFiles = await findIniFilesRecursiveExcludeDisabled(modsDir.path);
-    for (var file in iniFiles) {
-      if (p.basename(file).toLowerCase() == "rabbitfx.ini") {
-        rabbitFxPath.add(file);
-      }
-    }
-  } catch (_) {}
-
-  return rabbitFxPath;
-}
-
-Future<bool> coreOrfixFound(Directory modsDir) async {
-  bool coreOrfixFound = false;
-
-  //Check for ORFix.ini file within Core folder
-  String coreFolderPath = p.join(p.dirname(modsDir.path), "Core");
-  try {
-    final iniFiles = await findIniFilesRecursiveExcludeDisabled(coreFolderPath);
-    for (var file in iniFiles) {
-      if (p.basename(file).toLowerCase() == "orfix.ini") {
-        coreOrfixFound = true;
-      }
-    }
-  } catch (_) {}
-
-  return coreOrfixFound;
-}
-
-Future<List<String>> checkForOrfixCount(Directory modsDir) async {
-  List<String> orfixPath = [];
-
-  try {
-    final iniFiles = await findIniFilesRecursiveExcludeDisabled(modsDir.path);
-    for (var file in iniFiles) {
-      if (p.basename(file).toLowerCase() == "orfix.ini") {
-        orfixPath.add(file);
-      }
-    }
-  } catch (_) {}
-
-  return orfixPath;
-}
 //////////////////////////
 
 Future<List<(Directory, int)>> getGroupFolders(
@@ -1727,6 +1681,9 @@ Future<void> _modifyIniFile(
 
     _reorderByIniKeyPriority(parsedIni);
 
+    //Remove manager if line, if inside that block is containing no command list line
+    _removeManagerLineWhenUnused(parsedIni);
+
     _prettyIndentation(parsedIni);
 
     // Write the modified content back to the INI file
@@ -1964,6 +1921,7 @@ Future<List<IniSection>> _parseIniSections(
       //Add lines to current section
       if (line
           .replaceAll(' ', '')
+          .trim()
           .toLowerCase()
           .contains(r"if$managed_slot_id==$\modmanageragl\group_")) {
         //but, do not add manager if line (if$managed_slot_id==$\modmanageragl\group_)
@@ -1978,9 +1936,10 @@ Future<List<IniSection>> _parseIniSections(
         oldAutoFix.value = true;
         currentSection.lines.add(rawLine);
       } else if (currentSection.name == '__preamble__' &&
-          line.startsWith(';') &&
-          (line.contains('No Reload Mod Manager') ||
-              line.contains('";-;" are errored lines'))) {
+              line.startsWith(';') &&
+              (line.contains('No Reload Mod Manager') ||
+                  line.contains('";-;" are errored lines')) ||
+          line.contains("Errored \"if-endif\" lines will not interfere")) {
         //also do not NRMM mark, we'll add it back later
       }
       // keep original line (with comments, etc.)
@@ -2048,7 +2007,10 @@ Future<List<IniSection>> _parseIniSections(
 
   if (sections[0].name == "__preamble__") {
     // Give nrmm mark
-    sections[0].lines.insert(0, "; \";-;\" are errored lines.");
+    sections[0].lines.insert(
+      0,
+      "; \";-;\" are errored lines.\n; Errored \"if-endif\" lines will not interfere. Already handled correctly, matched with XXMI INI Parser. Namespaced var also handled.",
+    );
   }
   return sections;
 }
@@ -2172,14 +2134,134 @@ final List<String> shaderRegexIniKeys = [
   "filter_index",
 ];
 
-bool _isVariableDeclarationLine(String rawLine) {
-  final lineNoSpaces = rawLine.trim().toLowerCase().replaceAll(' ', '');
+bool _isVariableDeclarationLine(
+  String rawLine,
+  String nextRawLine,
+  String nextNextRawLine,
+) {
+  String normalize(String s) => s.trim().toLowerCase().replaceAll(' ', '');
 
-  return lineNoSpaces.startsWith("global\$") ||
-      lineNoSpaces.startsWith("globalpersist\$") ||
-      lineNoSpaces.startsWith("persistglobal\$") ||
-      //Keep comment too
-      (lineNoSpaces.startsWith(";") && !lineNoSpaces.startsWith(";-;"));
+  final line = normalize(rawLine);
+  final nextLine = normalize(nextRawLine);
+  final nextNextLine = normalize(nextNextRawLine);
+
+  bool isVarDeclaration(String line) {
+    return line.startsWith('global\$') ||
+        line.startsWith('globalpersist\$') ||
+        line.startsWith('persistglobal\$');
+  }
+
+  bool isComment(String line) =>
+      line.startsWith(';') && !line.startsWith(';-;');
+
+  //Direct declaration
+  if (isVarDeclaration(line)) {
+    return true;
+  }
+
+  //Empty or comment - next is declaration
+  if ((line.isEmpty || isComment(line)) && isVarDeclaration(nextLine)) {
+    return true;
+  }
+
+  //Empty - comment - declaration
+  if (line.isEmpty && isComment(nextLine) && isVarDeclaration(nextNextLine)) {
+    return true;
+  }
+
+  //Comment - empty - declaration
+  if (isComment(line) && nextLine.isEmpty && isVarDeclaration(nextNextLine)) {
+    return true;
+  }
+
+  return false;
+}
+
+/// Called AFTER ini keys REORDERED
+void _removeManagerLineWhenUnused(List<IniSection> sections) {
+  for (var section in sections) {
+    if (_isWhitelistedSection(section.name)) {
+      final lines = section.lines;
+
+      List<String> linesAfterIf = [];
+
+      bool foundManagerIfLine = false;
+      for (var line in lines) {
+        if (line
+            .replaceAll(' ', '')
+            .trim()
+            .toLowerCase()
+            .startsWith(r"if$managed_slot_id==$\modmanageragl\group_")) {
+          foundManagerIfLine = true;
+        }
+        if (foundManagerIfLine == true) {
+          linesAfterIf.add(line);
+        }
+      }
+
+      final filteredLines =
+          linesAfterIf.where((rawLine) {
+            final line = rawLine.trim().toLowerCase();
+
+            if (line.isEmpty) return false;
+            if (line.startsWith(';')) return false;
+
+            if (line.startsWith("if ")) return false;
+            if (line.startsWith("elif ")) return false;
+            if (line.startsWith("else if ")) return false;
+            if (line == "else") return false;
+            if (line == "endif") return false;
+
+            return true;
+          }).toList();
+
+      if (filteredLines.isEmpty) {
+        StackCollection<String> ifLines = StackCollection();
+        int? indexOfManagerIfLine;
+        int? indexOfManagerEndifLine;
+
+        for (var i = 0; i < lines.length; i++) {
+          final trimmedLowerCaseLine = lines[i].trim().toLowerCase();
+
+          final bool isIfLine = trimmedLowerCaseLine.startsWith('if ');
+
+          final bool isEndifLine = trimmedLowerCaseLine == "endif";
+
+          if (isIfLine) {
+            ifLines.push(trimmedLowerCaseLine);
+
+            if (lines[i]
+                .replaceAll(' ', '')
+                .trim()
+                .toLowerCase()
+                .startsWith(r"if$managed_slot_id==$\modmanageragl\group_")) {
+              indexOfManagerIfLine = i;
+            }
+          } else if (isEndifLine) {
+            final poppedIf = ifLines.pop();
+
+            if (poppedIf != null &&
+                poppedIf
+                    .replaceAll(' ', '')
+                    .trim()
+                    .toLowerCase()
+                    .startsWith(
+                      r"if$managed_slot_id==$\modmanageragl\group_",
+                    )) {
+              indexOfManagerEndifLine = i;
+            }
+          }
+        }
+
+        if (indexOfManagerEndifLine != null) {
+          lines.removeAt(indexOfManagerEndifLine);
+        }
+        if (indexOfManagerIfLine != null) {
+          lines.removeAt(indexOfManagerIfLine);
+        }
+      }
+    }
+  }
 }
 
 void _reorderByIniKeyPriority(List<IniSection> sections) {
@@ -2189,8 +2271,14 @@ void _reorderByIniKeyPriority(List<IniSection> sections) {
       final top = <String>[];
       final rest = <String>[];
 
-      for (final line in section.lines) {
-        if (_isVariableDeclarationLine(line)) {
+      for (int i = 0; i < section.lines.length; i++) {
+        final line = section.lines[i];
+        final nextLine =
+            (i + 1 < section.lines.length) ? section.lines[i + 1] : '';
+        final nextNextLine =
+            (i + 2 < section.lines.length) ? section.lines[i + 2] : '';
+
+        if (_isVariableDeclarationLine(line, nextLine, nextNextLine)) {
           top.add(line);
         } else {
           rest.add(line);
