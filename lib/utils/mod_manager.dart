@@ -1938,8 +1938,8 @@ Future<List<IniSection>> _parseIniSections(
       } else if (currentSection.name == '__preamble__' &&
               line.startsWith(';') &&
               (line.contains('No Reload Mod Manager') ||
-                  line.contains('";-;" are errored lines')) ||
-          line.contains("Errored \"if-endif\" lines will not interfere")) {
+                  line.contains('";-;" are errored')) ||
+          line.contains("Errored conditional blocks")) {
         //also do not NRMM mark, we'll add it back later
       }
       // keep original line (with comments, etc.)
@@ -2009,7 +2009,7 @@ Future<List<IniSection>> _parseIniSections(
     // Give nrmm mark
     sections[0].lines.insert(
       0,
-      "; \";-;\" are errored lines.\n; Errored \"if-endif\" lines will not interfere. Already handled correctly, matched with XXMI INI Parser. Namespaced var also handled.",
+      "; \";-;\" are errored conditional lines.\n; Errored conditional blocks (if/else/elif/endif) are handled correctly, including namespaced variables.",
     );
   }
   return sections;
