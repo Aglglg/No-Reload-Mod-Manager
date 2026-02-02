@@ -38,6 +38,8 @@ class ConstantVar {
       "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/message_hsr.txt";
   static const String urlMessageZzz =
       "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/message_zzz.txt";
+  static const String urlMessageEndfield =
+      "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/message_endfield.txt";
   static const String urlJsonAutoIcon =
       "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/auto_icon/auto_icon.json";
   static const String urlJsonUpdatedKnownModdingLib =
@@ -87,6 +89,8 @@ enum TargetGame {
   Honkai_Star_Rail,
   // ignore: constant_identifier_names
   Zenless_Zone_Zero,
+  // ignore: constant_identifier_names
+  Arknights_Endfield,
 }
 
 enum HotkeyKeyboard { altW, altS, altA, altD }

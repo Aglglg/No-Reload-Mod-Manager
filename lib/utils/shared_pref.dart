@@ -100,6 +100,10 @@ class SharedPrefUtils {
     await _prefs?.setString(keyTargetProcessZzz, targetProcess);
   }
 
+  Future<void> setEndfieldTargetProcess(String targetProcess) async {
+    await _prefs?.setString(keyTargetProcessEndfield, targetProcess);
+  }
+
   Future<void> setWuwaModsPath(String path) async {
     await _prefs?.setString(keyModsPathWuwa, path);
   }
@@ -114,6 +118,10 @@ class SharedPrefUtils {
 
   Future<void> setZzzModsPath(String path) async {
     await _prefs?.setString(keyModsPathZzz, path);
+  }
+
+  Future<void> setEndfieldModsPath(String path) async {
+    await _prefs?.setString(keyModsPathEndfield, path);
   }
 
   String getWuwaTargetProcess() {
@@ -147,6 +155,15 @@ class SharedPrefUtils {
     String? result = _prefs?.getString(keyTargetProcessZzz);
     if (result == null || result.isEmpty) {
       result = defaultTargetProcessZzz;
+    }
+
+    return result;
+  }
+
+  String getEndfieldTargetProcess() {
+    String? result = _prefs?.getString(keyTargetProcessEndfield);
+    if (result == null || result.isEmpty) {
+      result = defaultTargetProcessEndfield;
     }
 
     return result;
@@ -208,6 +225,23 @@ class SharedPrefUtils {
     String defaultPath = p.join(
       getUserProfilePath(),
       r'AppData\Roaming\XXMI Launcher\ZZMI\Mods',
+    );
+    if (result == null) {
+      if (Directory(defaultPath).existsSync()) {
+        result = defaultPath;
+      } else {
+        result = '';
+      }
+    }
+
+    return result;
+  }
+
+  String getEndfieldModsPath() {
+    String? result = _prefs?.getString(keyModsPathEndfield);
+    String defaultPath = p.join(
+      getUserProfilePath(),
+      r'AppData\Roaming\XXMI Launcher\EFMI\Mods',
     );
     if (result == null) {
       if (Directory(defaultPath).existsSync()) {
@@ -299,6 +333,8 @@ class SharedPrefUtils {
         return getHsrUpdateModMessageCondition();
       case TargetGame.Zenless_Zone_Zero:
         return getZzzUpdateModMessageCondition();
+      case TargetGame.Arknights_Endfield:
+        return getEndfieldUpdateModMessageCondition();
       default:
         return false;
     }
@@ -321,6 +357,9 @@ class SharedPrefUtils {
       case TargetGame.Zenless_Zone_Zero:
         await setZzzUpdateModMessageCondition(condition);
         break;
+      case TargetGame.Arknights_Endfield:
+        await setEndfieldUpdateModMessageCondition(condition);
+        break;
       default:
     }
   }
@@ -338,8 +377,17 @@ class SharedPrefUtils {
     await _prefs?.setBool(keyZzzUpdateMod, condition);
   }
 
+  Future<void> setEndfieldUpdateModMessageCondition(bool condition) async {
+    await _prefs?.setBool(keyEndfieldUpdateMod, condition);
+  }
+
   bool getZzzUpdateModMessageCondition() {
     bool? result = _prefs?.getBool(keyZzzUpdateMod);
+    return result ??= false;
+  }
+
+  bool getEndfieldUpdateModMessageCondition() {
+    bool? result = _prefs?.getBool(keyEndfieldUpdateMod);
     return result ??= false;
   }
 
@@ -399,16 +447,19 @@ class SharedPrefUtils {
   static const String keyTargetProcessGenshin = 'targetProcessGenshin';
   static const String keyTargetProcessHsr = 'targetProcessHsr';
   static const String keyTargetProcessZzz = 'targetProcessZzz';
+  static const String keyTargetProcessEndfield = 'targetProcessEndfield';
 
   static const String keyModsPathWuwa = 'modsPathWuwa';
   static const String keyModsPathGenshin = 'modsPathGenshin';
   static const String keyModsPathHsr = 'modsPathHsr';
   static const String keyModsPathZzz = 'modsPathZzz';
+  static const String keyModsPathEndfield = 'modsPathEndfield';
 
   static const String defaultTargetProcessWuwa = 'Client-Win64-Shipping.exe';
   static const String defaultTargetProcessGenshin = 'GenshinImpact.exe';
   static const String defaultTargetProcessHsr = 'StarRail.exe';
   static const String defaultTargetProcessZzz = 'ZenlessZoneZero.exe';
+  static const String defaultTargetProcessEndfield = 'Endfield.exe';
 
   static const String defaultModsPathWuwa = 'Client-Win64-Shipping.exe';
   static const String defaultModsPathGenshin = 'GenshinImpact.exe';
@@ -432,6 +483,7 @@ class SharedPrefUtils {
   static const String keyZzzUpdateMod = "zzzUpdateMod";
   static const String keyGenshinUpdateMod = "genshinUpdateMod";
   static const String keyHsrUpdateMod = "hsrUpdateMod";
+  static const String keyEndfieldUpdateMod = "endfieldUpdateMod";
 
   static const String keyAutoGenerateFolderIcon = "autoFolderIco";
 

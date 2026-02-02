@@ -2720,6 +2720,8 @@ String getCurrentModsPath(TargetGame targetGame) {
       return SharedPrefUtils().getHsrModsPath();
     case TargetGame.Zenless_Zone_Zero:
       return SharedPrefUtils().getZzzModsPath();
+    case TargetGame.Arknights_Endfield:
+      return SharedPrefUtils().getEndfieldModsPath();
     default:
       return '';
   }

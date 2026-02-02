@@ -219,5 +219,7 @@
   "Missing modding library": "{} tidak ditemukan.\nDibutuhkan oleh {}.\nMungkin tidak ada atau digunakan secara tidak benar.\nPeringatan dapat diabaikan.\n\n",
   "Duplicate modding library": "{} ditemukan berkali-kali:\n{}\n",
   "Keep only one copy of modding library": "Pastikan hanya ada satu {}.\n\n",
-  "Failed to call function to detect errored lines, if issue persist please contact NRMM creator.": "Gagal untuk melakukan deteksi baris-baris mod yang error.\nJika masalah berlanjut, hubungi kreator dari NRMM."
+  "Failed to call function to detect errored lines, if issue persist please contact NRMM creator.": "Gagal untuk melakukan deteksi baris-baris mod yang error.\nJika masalah berlanjut, hubungi kreator dari NRMM.",
+  "Show (Endfield)": "Tampilkan (Endfield)",
+  "Arknights Endfield": "Arknights Endfield"
 }

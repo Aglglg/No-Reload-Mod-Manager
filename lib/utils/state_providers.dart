@@ -52,6 +52,8 @@ final StateProvider<bool> messageHsrDismissedProvider = StateProvider<bool>(
 final StateProvider<bool> messageZzzDismissedProvider = StateProvider<bool>(
   (ref) => false,
 );
+final StateProvider<bool> messageEndfieldDismissedProvider =
+    StateProvider<bool>((ref) => false);
 
 final StateProvider<HotkeyKeyboard> hotkeyKeyboardProvider =
     StateProvider<HotkeyKeyboard>((ref) {

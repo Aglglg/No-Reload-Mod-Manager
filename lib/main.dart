@@ -872,6 +872,19 @@ class _MainViewState extends ConsumerState<MainView>
           await windowManager.focus();
         },
       ),
+      MenuItemLabel(
+        label: 'Show (Endfield)'.tr(),
+        onClicked: (menuItem) async {
+          if (!ref.read(alertDialogShownProvider)) {
+            ref.read(targetGameProvider.notifier).state =
+                TargetGame.Arknights_Endfield;
+            changeWindowTitleName(TargetGame.Arknights_Endfield.name);
+          }
+          ref.read(windowIsPinnedProvider.notifier).state = true;
+          await windowManager.show();
+          await windowManager.focus();
+        },
+      ),
       MenuSeparator(),
       MenuItemLabel(
         label: "${'Reset Position'.tr()} (Alt+T)",
@@ -1040,6 +1053,20 @@ class _MainViewState extends ConsumerState<MainView>
           showInfoMessage(message, TargetGame.Zenless_Zone_Zero, detailUrl);
         }
         break;
+      case TargetGame.Arknights_Endfield:
+        if (!ref.read(messageEndfieldDismissedProvider)) {
+          rawMessage = await CloudData().loadTextFromCloud(
+            ConstantVar.urlMessageEndfield,
+            "",
+          );
+          List<String> splittedInput = rawMessage.split("||").toList();
+          message = splittedInput[0].trim();
+          if (splittedInput.length == 2) {
+            detailUrl = splittedInput[1].trim();
+          }
+          showInfoMessage(message, TargetGame.Arknights_Endfield, detailUrl);
+        }
+        break;
       default:
         break;
     }
@@ -1102,6 +1129,10 @@ class _MainViewState extends ConsumerState<MainView>
                   break;
                 case TargetGame.Zenless_Zone_Zero:
                   ref.read(messageZzzDismissedProvider.notifier).state = true;
+                  break;
+                case TargetGame.Arknights_Endfield:
+                  ref.read(messageEndfieldDismissedProvider.notifier).state =
+                      true;
                   break;
                 default:
                   break;
@@ -1295,6 +1326,16 @@ class _MainViewState extends ConsumerState<MainView>
           ref.read(targetGameProvider.notifier).state =
               TargetGame.Zenless_Zone_Zero;
           changeWindowTitleName(TargetGame.Zenless_Zone_Zero.name);
+        }
+        ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
+        await windowManager.show();
+        await windowManager.focus();
+      } else if (foregroundProcessName ==
+          SharedPrefUtils().getEndfieldTargetProcess()) {
+        if (!ref.read(alertDialogShownProvider)) {
+          ref.read(targetGameProvider.notifier).state =
+              TargetGame.Arknights_Endfield;
+          changeWindowTitleName(TargetGame.Arknights_Endfield.name);
         }
         ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();

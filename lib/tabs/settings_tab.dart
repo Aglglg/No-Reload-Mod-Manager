@@ -1378,6 +1378,8 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
         return '${'example:'.tr()} StarRail.exe';
       case TargetGame.Zenless_Zone_Zero:
         return '${'example:'.tr()} ZenlessZoneZero.exe';
+      case TargetGame.Arknights_Endfield:
+        return '${'example:'.tr()} Endfield.exe';
       default:
         return '';
     }
@@ -1386,13 +1388,15 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
   String _getModsPathHintText() {
     switch (ref.watch(targetGameProvider)) {
       case TargetGame.Wuthering_Waves:
-        return '${'example:'.tr()} D:\\WWMI\\Mods';
+        return '${'example:'.tr()} D:\\XXMI Launcher\\WWMI\\Mods';
       case TargetGame.Genshin_Impact:
-        return '${'example:'.tr()} D:\\GIMI\\Mods';
+        return '${'example:'.tr()} D:\\XXMI Launcher\\GIMI\\Mods';
       case TargetGame.Honkai_Star_Rail:
-        return '${'example:'.tr()} D:\\SRMI\\Mods';
+        return '${'example:'.tr()} D:\\XXMI Launcher\\SRMI\\Mods';
       case TargetGame.Zenless_Zone_Zero:
-        return '${'example:'.tr()} D:\\ZZMI\\Mods';
+        return '${'example:'.tr()} D:\\XXMI Launcher\\ZZMI\\Mods';
+      case TargetGame.Arknights_Endfield:
+        return '${'example:'.tr()} D:\\XXMI Launcher\\EFMI\\Mods';
       default:
         return '';
     }
@@ -1408,6 +1412,8 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
         return 'Honkai Star Rail'.tr();
       case TargetGame.Zenless_Zone_Zero:
         return 'Zenless Zone Zero'.tr();
+      case TargetGame.Arknights_Endfield:
+        return 'Arknights Endfield'.tr();
       default:
         return 'Please re-open with Hotkey or System Tray'.tr();
     }
@@ -1427,6 +1433,9 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
       case TargetGame.Zenless_Zone_Zero:
         SharedPrefUtils().setZzzTargetProcess(value);
         break;
+      case TargetGame.Arknights_Endfield:
+        SharedPrefUtils().setEndfieldTargetProcess(value);
+        break;
       default:
         break;
     }
@@ -1445,6 +1454,9 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
         break;
       case TargetGame.Zenless_Zone_Zero:
         SharedPrefUtils().setZzzModsPath(value);
+        break;
+      case TargetGame.Arknights_Endfield:
+        SharedPrefUtils().setEndfieldModsPath(value);
         break;
       default:
         break;
@@ -1469,6 +1481,10 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
         _targetProcessTextFieldController.text =
             SharedPrefUtils().getZzzTargetProcess();
         break;
+      case TargetGame.Arknights_Endfield:
+        _targetProcessTextFieldController.text =
+            SharedPrefUtils().getEndfieldTargetProcess();
+        break;
       default:
         break;
     }
@@ -1488,6 +1504,10 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
         break;
       case TargetGame.Zenless_Zone_Zero:
         _modsPathTextFieldController.text = SharedPrefUtils().getZzzModsPath();
+        break;
+      case TargetGame.Arknights_Endfield:
+        _modsPathTextFieldController.text =
+            SharedPrefUtils().getEndfieldModsPath();
         break;
       default:
         break;

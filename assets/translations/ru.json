@@ -219,5 +219,7 @@
   "Missing modding library": "Отсутствует {}.\nТребуется для {}.\nБиблиотека может отсутствовать или быть указана некорректно.\nВы можете игнорировать это предупреждение.\n\n",
   "Duplicate modding library": "Обнаружено несколько копий {}:\n{}\n",
   "Keep only one copy of modding library": "Оставьте только одну копию {}.\n\n",
-  "Failed to call function to detect errored lines, if issue persist please contact NRMM creator.": "Не удалось вызвать функцию для обнаружения строк с ошибками.\nЕсли проблема сохраняется, свяжитесь с разработчиком NRMM."
+  "Failed to call function to detect errored lines, if issue persist please contact NRMM creator.": "Не удалось вызвать функцию для обнаружения строк с ошибками.\nЕсли проблема сохраняется, свяжитесь с разработчиком NRMM.",
+  "Show (Endfield)": "Показать (Endfield)",
+  "Arknights Endfield": "Arknights Endfield"
 }
