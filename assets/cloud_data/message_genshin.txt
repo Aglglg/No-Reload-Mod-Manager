@@ -1,0 +1,1 @@
+If reload time takes so long, you can try right-click and disable groups you rarely used
