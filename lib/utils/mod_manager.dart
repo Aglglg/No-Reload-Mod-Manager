@@ -1891,7 +1891,7 @@ int _getLastIndexInSection(List<String> lines) {
   return lines.length;
 }
 
-String _getSectionName(String trimmedLine) {
+String getSectionName(String trimmedLine) {
   if (trimmedLine.length == 1) return '';
 
   final close = trimmedLine.indexOf(']', 1);
@@ -1914,7 +1914,7 @@ Future<List<IniSection>> _parseIniSections(
 
     if (line.startsWith('[')) {
       // New section
-      String sectionName = _getSectionName(line);
+      String sectionName = getSectionName(line);
       currentSection = IniSection(sectionName, []);
       sections.add(currentSection);
     } else {

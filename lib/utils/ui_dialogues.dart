@@ -1950,6 +1950,427 @@ class _EditModLinkDialogState extends ConsumerState<EditModLinkDialog> {
   }
 }
 
+class SaveModCustomizationsDialog extends ConsumerStatefulWidget {
+  final String validModsPath;
+  const SaveModCustomizationsDialog({super.key, required this.validModsPath});
+
+  @override
+  ConsumerState<SaveModCustomizationsDialog> createState() =>
+      _SaveModCustomizationsDialogState();
+}
+
+class _SaveModCustomizationsDialogState
+    extends ConsumerState<SaveModCustomizationsDialog> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showConfirm = true;
+  bool _isLoading = false;
+  bool _showClose = false;
+  List<TextSpan> contents = [];
+
+  @override
+  void initState() {
+    super.initState();
+    showWarning();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> showWarning() async {
+    setState(() {
+      contents = [
+        TextSpan(
+          text: 'Save mod customizations?'.tr(),
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 255, 255, 255),
+            fontWeight: FontWeight.w400,
+            fontSize: 14,
+          ),
+        ),
+        TextSpan(
+          text:
+              "It is recommended to reload the mods with F10 first and wait until the process is complete"
+                  .tr(),
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 189, 170, 0),
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      ];
+    });
+  }
+
+  Future<void> saveModsCustomizations() async {
+    setState(() {
+      _showConfirm = false;
+      _isLoading = true;
+    });
+
+    setState(() {
+      contents = [
+        TextSpan(
+          text: "Loading...".tr(),
+          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+        ),
+      ];
+    });
+
+    final String d3dxUserPath = p.join(
+      p.dirname(widget.validModsPath),
+      "d3dx_user.ini",
+    );
+
+    final String managedPath = p.join(
+      widget.validModsPath,
+      ConstantVar.managedFolderName,
+    );
+
+    if (!await File(d3dxUserPath).exists()) {
+      setState(() {
+        _showClose = true;
+        contents = [
+          TextSpan(
+            text: "File d3dx_user.ini does not exist".tr(),
+            style: GoogleFonts.poppins(color: Colors.red),
+          ),
+        ];
+      });
+    } else if (!await Directory(managedPath).exists()) {
+      setState(() {
+        _showClose = true;
+        contents = [
+          TextSpan(
+            text:
+                "Only mods inside the _MANAGED_ folder can have their customizations saved. Try pressing \"Update Mod Data\" first to create the folder."
+                    .tr(),
+            style: GoogleFonts.poppins(color: Colors.red),
+          ),
+        ];
+      });
+    } else {
+      //SAVE LOGIC
+      final d3dxUserFile = File(d3dxUserPath);
+
+      // Read d3dx_user.ini file as lines
+      List<String> d3dxUserLines = [];
+      try {
+        d3dxUserLines = await forceReadAsLinesUtf8(d3dxUserFile);
+      } catch (_) {}
+
+      final rawSavedValues = _getRawSavedValues(d3dxUserLines);
+
+      // NamespaceAndVarName, Value
+      final List<(String, int)> keyValues = [];
+
+      // For each string, split it into key-value pairs based on the last '='
+      for (final rawSavedValue in rawSavedValues) {
+        final parts = rawSavedValue.split('=');
+        final valStr = parts.last.trim();
+
+        final val = int.tryParse(valStr);
+        if (val == null) continue;
+
+        final key = parts.first.trim();
+        keyValues.add((key, val));
+      }
+
+      // Namespace, VarName, Value
+      List<(String, String, int)> finalKeyValues = [];
+
+      for (final (key, value) in keyValues) {
+        final lastSlash = key.lastIndexOf(r'\');
+        if (lastSlash == -1) continue;
+
+        final prefix = key.substring(0, lastSlash);
+        final varName = key.substring(lastSlash + 1).trim();
+
+        finalKeyValues.add((prefix, varName, value));
+      }
+
+      final iniFilePaths = await findIniFilesRecursiveExcludeDisabled(
+        managedPath,
+      );
+
+      // Namespace, FullPath
+      final List<(String, String)> namespaceAndPathPairs = [];
+
+      final basePath = File(d3dxUserPath).parent.path;
+
+      for (final iniFilePath in iniFilePaths) {
+        var namespace = await getNamespace(File(iniFilePath));
+
+        if (namespace.isEmpty) {
+          namespace = p.relative(iniFilePath, from: basePath);
+        }
+
+        namespaceAndPathPairs.add((namespace.toLowerCase(), iniFilePath));
+      }
+
+      // ini full path <> list of (varName, value)
+      final Map<String, List<(String, int)>> plannedModifications = {};
+
+      for (final (namespace, iniPath) in namespaceAndPathPairs) {
+        for (final (kvNamespace, varName, value) in finalKeyValues) {
+          if (kvNamespace == namespace) {
+            plannedModifications.putIfAbsent(iniPath, () => []).add((
+              varName,
+              value,
+            ));
+          }
+        }
+      }
+
+      await _modifyFiles(plannedModifications);
+
+      //
+      setState(() {
+        _showClose = true;
+        contents = [
+          TextSpan(
+            text:
+                "Current mod customizations have been set as the default.".tr(),
+            style: GoogleFonts.poppins(color: Colors.green, fontSize: 14),
+          ),
+        ];
+      });
+    }
+    //
+    _scrollToBottom();
+  }
+
+  Future<void> _scrollToBottom() async {
+    // Wait until scrollController has a valid position
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (!_scrollController.hasClients) return;
+
+    await _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  List<String> _getRawSavedValues(List<String> lines) {
+    final List<String> results = [];
+    bool inConstantsSection = false;
+
+    for (final rawLine in lines) {
+      final line = rawLine.trim();
+
+      if (line.startsWith(";")) {
+        continue;
+      }
+
+      if (line.startsWith('[')) {
+        final sectionName = getSectionName(line);
+        inConstantsSection = (sectionName.toLowerCase() == "constants");
+        continue;
+      }
+
+      if (inConstantsSection && line.startsWith(r"$") && line.contains('=')) {
+        results.add(line.replaceFirst(r"$\", ""));
+      }
+    }
+
+    return results;
+  }
+
+  Future<void> _modifyFiles(
+    Map<String, List<(String, int)>> plannedModifications,
+  ) async {
+    for (final entry in plannedModifications.entries) {
+      final iniPath = entry.key;
+      final modifications = entry.value;
+
+      List<String> rawLines = [];
+
+      try {
+        rawLines = await forceReadAsLinesUtf8(File(iniPath));
+      } catch (_) {
+        continue;
+      }
+
+      bool inConstantsSection = false;
+      bool modified = false;
+
+      for (var i = 0; i < rawLines.length; i++) {
+        final line = rawLines[i].trim();
+
+        if (line.startsWith(";")) {
+          continue;
+        }
+
+        // Look for constants section
+        if (line.startsWith("[")) {
+          final sectionName = getSectionName(line);
+          inConstantsSection = (sectionName.toLowerCase() == "constants");
+          continue;
+        }
+
+        // Only if line is in constants section and line contains "$", which mean a var declaration
+        if (inConstantsSection && line.contains(r'$')) {
+          // Split between var and prefixes (global persist)
+          final split = line.split('\$');
+          final prefixes = split.first;
+          // Still could be var name and its value
+          final rawVarName = split.length > 1 ? split[1] : '';
+
+          // Split prefixes
+          final splitPrefixes =
+              prefixes
+                  .split(' ')
+                  .map((p) => p.trim())
+                  .where((p) => p.isNotEmpty)
+                  .toList();
+
+          bool validLine = true;
+          for (final pref in splitPrefixes) {
+            // Is not a valid variable line if prefixes contains word that is not "global" or "persist"
+            if (!["global", "persist"].contains(pref)) {
+              validLine = false;
+            }
+          }
+
+          // Also not a valid line if prefixes doesn't contain "persist" and "global"
+          if (!splitPrefixes.contains("persist") ||
+              !splitPrefixes.contains("global")) {
+            validLine = false;
+          }
+
+          // Valid only if prefixes is exactly "global" and "persist"
+          if (!validLine) {
+            continue;
+          }
+
+          final lastEqual = rawVarName.lastIndexOf("=");
+
+          // Skip if the line is something like "global persist $" (empty var name)
+          if (lastEqual == -1 && rawVarName.trim() == "") {
+            continue;
+          }
+
+          // No value assigned yet, a var name could be written without default value ("=")
+          if (lastEqual == -1) {
+            // Get the var name, raw var name is something like "my_var   "
+            // "   my_var  " is not valid line (e.g: "global persist $  my_var  ")
+            final varName = rawVarName.trimRight();
+
+            for (final (name, value) in modifications) {
+              if (varName.toLowerCase() == name) {
+                rawLines[i] = "${rawLines[i]} = $value";
+                modified = true;
+                break;
+              }
+            }
+          }
+          // Value already exists, which mean line contains "=", sync the value
+          else {
+            // Get the var name, raw var name is something like "my_var   = 0"
+            // "   my_var  " is not valid line (e.g: "global persist $  my_var  = 0")
+
+            // from "my_var  = 0" to be "my_var"
+            final varName = rawVarName.substring(0, lastEqual).trimRight();
+
+            // make sure value is valid int
+            final existingVal = int.tryParse(
+              rawVarName.substring(lastEqual + 1).trim(),
+            );
+            if (existingVal == null) {
+              continue;
+            }
+
+            for (final (name, value) in modifications) {
+              // Only if value is not the same yet
+              if (varName.toLowerCase() == name && value != existingVal) {
+                rawLines[i] = "global persist \$$varName = $value";
+                modified = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      if (modified) {
+        try {
+          await safeWriteIni(File(iniPath), rawLines.join('\n'));
+        } catch (_) {}
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        "Save Mod Customizations".tr(),
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
+      ),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.trackpad,
+            },
+          ),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: RichText(text: TextSpan(children: contents)),
+          ),
+        ),
+      ),
+      actions:
+          _showClose
+              ? [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    ref.read(alertDialogShownProvider.notifier).state = false;
+                  },
+                  child: Text(
+                    'Close'.tr(),
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
+              ]
+              : _showConfirm
+              ? [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    ref.read(alertDialogShownProvider.notifier).state = false;
+                  },
+                  child: Text(
+                    'Cancel'.tr(),
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    await saveModsCustomizations();
+                  },
+                  child: Text(
+                    'Confirm'.tr(),
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
+              ]
+              : _isLoading
+              ? []
+              : [],
+    );
+  }
+}
+
 class DisableAllModsDialog extends ConsumerStatefulWidget {
   final String validModsPath;
   const DisableAllModsDialog({super.key, required this.validModsPath});
@@ -2015,11 +2436,7 @@ class _DisableAllModsDialogState extends ConsumerState<DisableAllModsDialog> {
       contents = [
         TextSpan(
           text: "Disabling all mods...".tr(),
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
+          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
         ),
       ];
     });
@@ -2240,11 +2657,7 @@ class _EnableAllModsDialogState extends ConsumerState<EnableAllModsDialog> {
       contents = [
         TextSpan(
           text: "Enabling all mods...".tr(),
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
+          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
         ),
       ];
     });

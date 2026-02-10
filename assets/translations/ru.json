@@ -221,5 +221,12 @@
   "Keep only one copy of modding library": "Оставьте только одну копию {}.\n\n",
   "Failed to call function to detect errored lines, if issue persist please contact NRMM creator.": "Не удалось вызвать функцию для обнаружения строк с ошибками.\nЕсли проблема сохраняется, свяжитесь с разработчиком NRMM.",
   "Show (Endfield)": "Показать (Endfield)",
-  "Arknights Endfield": "Arknights Endfield"
+  "Arknights Endfield": "Arknights Endfield",
+  "Save mod customizations?": "Сохранить настройки мода?\nТекущие настройки мода (например: включение/выключение головных уборов, цвета волос, цвета одежды и т. д.) будут сохранены как значения по умолчанию, чтобы они не были потеряны при отключении или переименовании мода.\nРекомендуется сделать это перед отключением мода.\nТолько для модов внутри папки _MANAGED_.",
+  "Save Mod Customizations": "Сохранить настройки мода",
+  "Set current mod customizations (toggles/states) as default": "Установить текущие настройки мода (переключатели/состояния) по умолчанию",
+  "It is recommended to reload the mods with F10 first and wait until the process is complete": "\n\nРекомендуется сначала перезагрузить моды с помощью F10 и дождаться завершения процесса.",
+  "File d3dx_user.ini does not exist": "Файл d3dx_user.ini не существует",
+  "Only mods inside the _MANAGED_ folder can have their customizations saved. Try pressing \"Update Mod Data\" first to create the folder.": "Только моды внутри папки _MANAGED_ могут сохранять свои настройки. Попробуйте сначала нажать «Обновить данные модов», чтобы создать папку.",
+  "Current mod customizations have been set as the default.": "Текущие настройки мода установлены по умолчанию."
 }

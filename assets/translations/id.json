@@ -221,5 +221,12 @@
   "Keep only one copy of modding library": "Pastikan hanya ada satu {}.\n\n",
   "Failed to call function to detect errored lines, if issue persist please contact NRMM creator.": "Gagal untuk melakukan deteksi baris-baris mod yang error.\nJika masalah berlanjut, hubungi kreator dari NRMM.",
   "Show (Endfield)": "Tampilkan (Endfield)",
-  "Arknights Endfield": "Arknights Endfield"
+  "Arknights Endfield": "Arknights Endfield",
+  "Save mod customizations?": "Simpan kustomisasi mod?\nAkan menyimpan kustomisasi mod saat ini (misalnya: mengaktifkan/menonaktifkan topi, warna rambut, warna pakaian, dan lain-lain) sebagai default, sehingga tidak akan hilang jika mod dinonaktifkan atau diganti nama.\nDisarankan untuk melakukan ini sebelum menonaktifkan mod.\nHanya untuk mod di dalam folder _MANAGED_.",
+  "Save Mod Customizations": "Simpan Kustomisasi Mod",
+  "Set current mod customizations (toggles/states) as default": "Jadikan kustomisasi mod saat ini (toggle/status) sebagai default",
+  "It is recommended to reload the mods with F10 first and wait until the process is complete": "\n\nDisarankan untuk reload dengan F10 terlebih dahulu dan menunggu hingga proses selesai.",
+  "File d3dx_user.ini does not exist": "File d3dx_user.ini tidak ditemukan",
+  "Only mods inside the _MANAGED_ folder can have their customizations saved. Try pressing \"Update Mod Data\" first to create the folder.": "Hanya mod di dalam folder _MANAGED_ yang dapat menyimpan kustomisasi. Coba tekan \"Update Mod Data\" terlebih dahulu untuk membuat folder tersebut.",
+  "Current mod customizations have been set as the default.": "Kustomisasi mod saat ini telah ditetapkan sebagai default."
 }

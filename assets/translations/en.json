@@ -221,5 +221,12 @@
   "Keep only one copy of modding library": "Keep only one copy of {}.\n\n",
   "Failed to call function to detect errored lines, if issue persist please contact NRMM creator.": "Failed to call function to detect errored lines.\nIf issue persist please contact NRMM creator.",
   "Show (Endfield)": "Show (Endfield)",
-  "Arknights Endfield": "Arknights Endfield"
+  "Arknights Endfield": "Arknights Endfield",
+  "Save mod customizations?": "Save mod customizations?\nThis will save your current mod customizations (for example: toggling hats, hair color, clothing color, etc.) as the default, so they won’t be lost if the mod is disabled or renamed.\nIt’s recommended to do this before disabling the mod.\nOnly for mods inside the _MANAGED_ folder.",
+  "Save Mod Customizations": "Save Mod Customizations",
+  "Set current mod customizations (toggles/states) as default": "Set current mod customizations (toggles/states) as default",
+  "It is recommended to reload the mods with F10 first and wait until the process is complete": "\n\nIt is recommended to reload the mods with F10 first and wait until the process is complete.",
+  "File d3dx_user.ini does not exist": "File d3dx_user.ini does not exist",
+  "Only mods inside the _MANAGED_ folder can have their customizations saved. Try pressing \"Update Mod Data\" first to create the folder.": "Only mods inside the _MANAGED_ folder can have their customizations saved. Try pressing \"Update Mod Data\" first to create the folder.",
+  "Current mod customizations have been set as the default.": "Current mod customizations have been set as the default."
 }

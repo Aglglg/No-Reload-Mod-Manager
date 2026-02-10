@@ -390,7 +390,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           max: 2.0,
                         ),
                       ),
-                      Container(height: 10),
+                      Container(height: 10 * sss),
                       Text(
                         'Background Transparency'.tr(),
                         style: GoogleFonts.poppins(
@@ -1164,114 +1164,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                         ),
                       ),
 
-                      Container(height: 20 * sss),
-
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              children: [
-                                Text(
-                                  "Support me".tr(),
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                    fontSize: 12 * sss,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                Container(height: 8 * sss),
-                                CustomImageButtonLink(
-                                  link: ref.watch(supportLinkProvider),
-                                  imageNormal: Image.network(
-                                    ConstantVar.urlSupportIcon,
-                                    height: 25 * sss,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return const Icon(Icons.error);
-                                    },
-                                  ),
-                                  imageOnHover: Image.network(
-                                    ConstantVar.urlSupportIconOnHover,
-                                    height: 25 * sss,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return const Icon(Icons.error);
-                                    },
-                                  ),
-                                ),
-                                Container(height: 15 * sss),
-                              ],
-                            ),
-                          ),
-                          Container(width: 15 * sss),
-                          Expanded(
-                            child: Column(
-                              children: [
-                                Text(
-                                  "Contact for help".tr(),
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                    fontSize: 12 * sss,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                Container(height: 8 * sss),
-                                CustomImageButtonLink(
-                                  link: ref.watch(contactLinkProvider),
-                                  imageNormal: Image.network(
-                                    ConstantVar.urlContactIcon,
-                                    height: 25 * sss,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return const Icon(Icons.error);
-                                    },
-                                  ),
-                                  imageOnHover: Image.network(
-                                    ConstantVar.urlContactIconOnHover,
-                                    height: 25 * sss,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return const Icon(Icons.error);
-                                    },
-                                  ),
-                                ),
-                                Container(height: 15 * sss),
-                              ],
-                            ),
-                          ),
-                          Container(width: 15 * sss),
-                          Expanded(
-                            child: Column(
-                              children: [
-                                Text(
-                                  "Tutorial".tr(),
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                    fontSize: 12 * sss,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                Container(height: 8 * sss),
-                                CustomImageButtonLink(
-                                  link: ref.watch(tutorialLinkProvider),
-                                  imageNormal: Image.network(
-                                    ConstantVar.urlTutorialIcon,
-                                    height: 25 * sss,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return const Icon(Icons.error);
-                                    },
-                                  ),
-                                  imageOnHover: Image.network(
-                                    ConstantVar.urlTutorialIconOnHover,
-                                    height: 25 * sss,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return const Icon(Icons.error);
-                                    },
-                                  ),
-                                ),
-                                Container(height: 15 * sss),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                      Container(height: 30 * sss),
                     ],
                   ),
                 ),
@@ -1595,6 +1488,19 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
     );
   }
 
+  void _onSaveModsCustomizationsClicked() {
+    if (ref.read(validModsPath) == null) return;
+    ref.read(alertDialogShownProvider.notifier).state = true;
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder:
+          (context) => SaveModCustomizationsDialog(
+            validModsPath: ref.read(validModsPath)!,
+          ),
+    );
+  }
+
   void _onDisableAllModsClicked() {
     if (ref.read(validModsPath) == null) return;
     ref.read(alertDialogShownProvider.notifier).state = true;
@@ -1897,12 +1803,164 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
             ),
           ),
 
-          Container(height: 15),
+          Container(height: 15 * sss),
           Divider(
             color: const Color.fromARGB(127, 33, 149, 243),
             thickness: 1 * sss,
           ),
-          Container(height: 15),
+          Container(height: 15 * sss),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  children: [
+                    Text(
+                      "Support me".tr(),
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 12 * sss,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Container(height: 8 * sss),
+                    CustomImageButtonLink(
+                      link: ref.watch(supportLinkProvider),
+                      imageNormal: Image.network(
+                        ConstantVar.urlSupportIcon,
+                        height: 25 * sss,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(Icons.error);
+                        },
+                      ),
+                      imageOnHover: Image.network(
+                        ConstantVar.urlSupportIconOnHover,
+                        height: 25 * sss,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(Icons.error);
+                        },
+                      ),
+                    ),
+                    Container(height: 15 * sss),
+                  ],
+                ),
+              ),
+              Container(width: 15 * sss),
+              Expanded(
+                child: Column(
+                  children: [
+                    Text(
+                      "Contact for help".tr(),
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 12 * sss,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Container(height: 8 * sss),
+                    CustomImageButtonLink(
+                      link: ref.watch(contactLinkProvider),
+                      imageNormal: Image.network(
+                        ConstantVar.urlContactIcon,
+                        height: 25 * sss,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(Icons.error);
+                        },
+                      ),
+                      imageOnHover: Image.network(
+                        ConstantVar.urlContactIconOnHover,
+                        height: 25 * sss,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(Icons.error);
+                        },
+                      ),
+                    ),
+                    Container(height: 15 * sss),
+                  ],
+                ),
+              ),
+              Container(width: 15 * sss),
+              Expanded(
+                child: Column(
+                  children: [
+                    Text(
+                      "Tutorial".tr(),
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 12 * sss,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Container(height: 8 * sss),
+                    CustomImageButtonLink(
+                      link: ref.watch(tutorialLinkProvider),
+                      imageNormal: Image.network(
+                        ConstantVar.urlTutorialIcon,
+                        height: 25 * sss,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(Icons.error);
+                        },
+                      ),
+                      imageOnHover: Image.network(
+                        ConstantVar.urlTutorialIconOnHover,
+                        height: 25 * sss,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(Icons.error);
+                        },
+                      ),
+                    ),
+                    Container(height: 15 * sss),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          Container(height: 5 * sss),
+          Divider(
+            color: const Color.fromARGB(127, 33, 149, 243),
+            thickness: 1 * sss,
+          ),
+          Container(height: 15 * sss),
+
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    _onSaveModsCustomizationsClicked();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    overlayColor: Colors.white,
+                    backgroundColor: const Color.fromARGB(127, 255, 255, 255),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12 * sss),
+                    child: Text(
+                      'Save Mod Customizations'.tr(),
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12 * sss,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Container(height: 2 * sss),
+          Text(
+            'Set current mod customizations (toggles/states) as default'.tr(),
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              color: const Color.fromARGB(200, 255, 255, 255),
+              fontSize: 11 * sss,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Container(height: 15 * sss),
 
           Row(
             children: [
@@ -1942,7 +2000,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
               fontWeight: FontWeight.w500,
             ),
           ),
-          Container(height: 15),
+          Container(height: 15 * sss),
 
           Row(
             children: [

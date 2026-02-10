@@ -221,5 +221,12 @@
   "Keep only one copy of modding library": "请仅保留一个 {} 副本。\n\n",
   "Failed to call function to detect errored lines, if issue persist please contact NRMM creator.": "调用用于检测错误行的函数失败。\n如果问题仍然存在，请联系 NRMM 的开发者。",
   "Show (Endfield)": "显示(终末地)",
-  "Arknights Endfield": "明日方舟：终末地"
+  "Arknights Endfield": "明日方舟：终末地",
+  "Save mod customizations?": "保存模组自定义设置？\n这将把当前的模组自定义设置（例如：帽子开关、头发颜色、服装颜色等）保存为默认值，这样即使模组被禁用或重命名也不会丢失。\n建议在禁用模组之前执行此操作。\n仅适用于 _MANAGED_ 文件夹内的模组。",
+  "Save Mod Customizations": "保存模组自定义设置",
+  "Set current mod customizations (toggles/states) as default": "将当前模组自定义设置（开关/状态）设为默认",
+  "It is recommended to reload the mods with F10 first and wait until the process is complete": "\n\n建议先按 F10 重新加载模组，并等待加载完成。",
+  "File d3dx_user.ini does not exist": "文件 d3dx_user.ini 不存在",
+  "Only mods inside the _MANAGED_ folder can have their customizations saved. Try pressing \"Update Mod Data\" first to create the folder.": "只有位于 _MANAGED_ 文件夹中的模组才能保存自定义设置。请先点击“更新模组数据”以创建该文件夹。",
+  "Current mod customizations have been set as the default.": "当前的模组自定义设置已设为默认。"
 }
