@@ -71,6 +71,8 @@ class ConstantVar {
     "zzmi": "ZZMI",
     "slotfix": "SlotFix",
     "healthbar": "HealthBar",
+
+    "efmiv1": "EFMIv1",
   };
 
   static final managedPattern = RegExp(
