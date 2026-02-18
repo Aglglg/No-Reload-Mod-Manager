@@ -49,9 +49,9 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
 
   String _getRevertInfoText() {
     return ref.watch(windowIsPinnedProvider)
-        ? 'Drag & Drop mod folders here, to revert any modifications caused by this tool.'
+        ? 'Drag & Drop mod folders here, so that the mod can be used again without mod manager.'
             .tr()
-        : '${'Drag & Drop mod folders here, to revert any modifications caused by this tool.'.tr()}\n${'Right-click and pin this window to use this.'.tr()}';
+        : '${'Drag & Drop mod folders here, so that the mod can be used again without mod manager.'.tr()}\n${'Right-click and pin this window to use this.'.tr()}';
   }
 
   void _onModRevertConfirm(List<Directory> modDirs, List<File> modArchives) {
@@ -167,10 +167,11 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                 borderRadius: BorderRadius.circular(20 * sss),
                                 child: ModsDropZone(
                                   dialogTitleText: "Revert mods".tr(),
+                                  forReverter: true,
                                   onConfirmFunction: _onModRevertConfirm,
                                   additionalContent: TextSpan(
                                     text:
-                                        "\n${'Reverting mods will remove all changes you made while these mods were managed.'.tr()}",
+                                        "\n${'Reverting mods will remove mod manager\'s "if-endif" line, so that it can be used again without mod manager.'.tr()}",
                                     style: GoogleFonts.poppins(
                                       color: const Color.fromARGB(
                                         255,

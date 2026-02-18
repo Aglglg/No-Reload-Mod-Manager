@@ -17,6 +17,7 @@ class ModsDropZone extends ConsumerStatefulWidget {
   final String dialogTitleText;
   final void Function(List<Directory> validFolders, List<File>)
   onConfirmFunction;
+  final bool forReverter;
   const ModsDropZone({
     super.key,
     required this.dialogTitleText,
@@ -26,6 +27,7 @@ class ModsDropZone extends ConsumerStatefulWidget {
     this.currentModsCountInGroup,
     this.additionalContent,
     this.copyDestination,
+    this.forReverter = false,
   });
 
   @override
@@ -119,6 +121,7 @@ class _ModsDropZoneState extends ConsumerState<ModsDropZone> {
                   dialogTitleText: widget.dialogTitleText,
                   onConfirmFunction: widget.onConfirmFunction,
                   additionalContent: widget.additionalContent,
+                  forReverter: widget.forReverter,
                 ),
           );
         }

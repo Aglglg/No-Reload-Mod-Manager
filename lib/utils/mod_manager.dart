@@ -702,24 +702,88 @@ Future<void> setSelectedModIndex(
 }
 
 /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 
+String _removeFirstFourSpaces(String input) {
+  int count = 0;
+  while (count < input.length && count < 4 && input[count] == ' ') {
+    count++;
+  }
+  return input.substring(count);
+}
+
+/// Will remove the manager if-endif, the added Constants var, and manager comments from ini file
 Future<List<TextSpan>> revertManagedMod(List<Directory> modDirs) async {
   List<TextSpan> operationLogs = [];
   bool containsError = false;
 
   for (Directory folder in modDirs) {
-    List<String> iniFilesBackup = await _findIniFilesManagedBackupRecursive(
-      folder.path,
-    );
-    for (final backupFilePath in iniFilesBackup) {
-      final originalFilePath = '${p.withoutExtension(backupFilePath)}.ini';
-      final backupFile = File(backupFilePath);
-      final originalFile = File(originalFilePath);
-
+    List<String> iniFiles = await _findIniFilesRecursive(folder.path);
+    for (final iniFile in iniFiles) {
+      bool modified = false;
       try {
-        if (await backupFile.exists()) {
-          await backupFile.copy(originalFile.path);
-          await backupFile.delete();
+        List<String> rawLines = await forceReadAsLinesUtf8(File(iniFile));
+        StackCollection<String> ifStack = StackCollection();
+
+        for (var i = 0; i < rawLines.length; i++) {
+          final trimmedLineLower = rawLines[i].trim().toLowerCase();
+
+          //reset if stack after new section
+          if (trimmedLineLower.startsWith('[')) {
+            ifStack = StackCollection();
+            continue;
+          }
+
+          //remove manager comment mark
+          if (trimmedLineLower.startsWith(';') &&
+                  (trimmedLineLower.contains('no reload mod manager') ||
+                      trimmedLineLower.contains('";-;" are errored')) ||
+              trimmedLineLower.contains("errored conditional blocks")) {
+            rawLines[i] = "-----";
+            modified = true;
+            continue;
+          }
+
+          //remove managed_slot_id var declaration
+          if (trimmedLineLower
+              .replaceAll(' ', '')
+              .startsWith(r"global$managed_slot_id=")) {
+            rawLines[i] = "-----";
+            modified = true;
+            continue;
+          }
+
+          //add "if" line to ifStack and remove if it's manager "if" line
+          if (trimmedLineLower.startsWith("if ")) {
+            ifStack.push(trimmedLineLower);
+            if (trimmedLineLower
+                .replaceAll(' ', '')
+                .contains(r"if$managed_slot_id==$\modmanageragl\group_")) {
+              rawLines[i] = "-----";
+              modified = true;
+              continue;
+            }
+          }
+
+          //remove endif line that connected to manager if
+          if (trimmedLineLower == "endif") {
+            final ifLine = ifStack.pop();
+            if (ifLine != null &&
+                ifLine
+                    .replaceAll(' ', '')
+                    .contains(r"if$managed_slot_id==$\modmanageragl\group_")) {
+              rawLines[i] = "-----";
+              modified = true;
+              continue;
+            }
+          }
+
+          rawLines[i] = _removeFirstFourSpaces(rawLines[i]);
+        }
+
+        if (modified) {
+          rawLines = rawLines.where((element) => element != "-----").toList();
+          await safeWriteIni(File(iniFile), rawLines.join('\n'));
         }
       } catch (_) {
         containsError = true;
@@ -731,26 +795,6 @@ Future<List<TextSpan>> revertManagedMod(List<Directory> modDirs) async {
           ),
         );
       }
-    }
-
-    if (iniFilesBackup.isEmpty) {
-      operationLogs.add(
-        TextSpan(
-          text: 'No backup found'.tr(args: [p.basename(folder.path)]),
-          style: GoogleFonts.poppins(
-            color: const Color.fromARGB(255, 189, 170, 0),
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-          ),
-        ),
-      );
-    } else {
-      operationLogs.add(
-        TextSpan(
-          text: 'Backup found'.tr(args: [p.basename(folder.path)]),
-          style: GoogleFonts.poppins(color: Colors.green, fontSize: 14),
-        ),
-      );
     }
   }
 
@@ -2662,7 +2706,6 @@ String _getLiteralIni(List<IniSection> sections) {
   return result.toString();
 }
 
-// ignore: unused_element
 Future<List<String>> _findIniFilesRecursive(String mainFolder) async {
   final directory = Directory(mainFolder);
   if (!await directory.exists()) return [];

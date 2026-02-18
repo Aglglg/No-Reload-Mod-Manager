@@ -385,6 +385,7 @@ class OnDropModFolderDialog extends ConsumerStatefulWidget {
   final String? copyDestination;
   final Function onConfirmFunction;
   final TextSpan? additionalContent;
+  final bool forReverter;
 
   const OnDropModFolderDialog({
     super.key,
@@ -394,6 +395,7 @@ class OnDropModFolderDialog extends ConsumerStatefulWidget {
     required this.onConfirmFunction,
     required this.additionalContent,
     required this.droppedArchives,
+    this.forReverter = false,
   });
 
   @override
@@ -419,11 +421,12 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
   ];
 
   Future<bool> isValidFolder(Directory f) async {
-    if (!isUnderManagedFolder(f.path) &&
-        !isFolderOnThisToolPath(f) &&
-        !await isParentOfManagedFolder(f.path) &&
-        !isParentOfThisToolPath(f) &&
-        !isParentOfDestFolder(f)) {
+    if (widget.forReverter ||
+        (!isUnderManagedFolder(f.path) &&
+            !isFolderOnThisToolPath(f) &&
+            !await isParentOfManagedFolder(f.path) &&
+            !isParentOfThisToolPath(f) &&
+            !isParentOfDestFolder(f))) {
       return true;
     }
     return false;
@@ -568,12 +571,14 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
     /////////////////////
     setState(() {
       validFolders = mValidFolders;
-      validArchives = widget.droppedArchives;
-      foldersOnManagedPath = mFoldersOnManagedPath;
-      foldersOnThisToolPath = mFoldersOnThisToolPath;
-      parentFolderOfManagedPath = mParentFolderOfManagedPath;
-      parentFolderOfThisToolPath = mParentFolderOfThisToolPath;
-      parentFolderOfDestPath = mParentFolderOfDestPath;
+      if (!widget.forReverter) {
+        validArchives = widget.droppedArchives;
+        foldersOnManagedPath = mFoldersOnManagedPath;
+        foldersOnThisToolPath = mFoldersOnThisToolPath;
+        parentFolderOfManagedPath = mParentFolderOfManagedPath;
+        parentFolderOfThisToolPath = mParentFolderOfThisToolPath;
+        parentFolderOfDestPath = mParentFolderOfDestPath;
+      }
     });
 
     addContent();
@@ -1683,9 +1688,9 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
         TextSpan(
           text:
               widget.isGroup
-                  ? "Removing group will revert and remove all changes you made while these mods on this group where managed."
+                  ? "Removing group will make the mods inside the group can be used again without mod manager."
                       .tr()
-                  : "Removing mod will revert and remove all changes you made while this mod where managed."
+                  : "Removing mod will make the mod can be used again without mod manager."
                       .tr(),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
