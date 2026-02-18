@@ -2681,13 +2681,24 @@ Future<List<String>> findIniFilesRecursiveExcludeDisabled(
   final directory = Directory(mainFolder);
   if (!await directory.exists()) return [];
 
-  return await directory
+  bool containsDisabledSegment(String path) {
+    for (final part in p.split(path)) {
+      if (part.toLowerCase().startsWith('disabled')) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  return directory
       .list(recursive: true)
-      .where((file) => file is File)
-      .map((file) => file.path)
+      .where((entity) => entity is File)
+      .map((entity) => entity.path)
       .where((path) => path.toLowerCase().endsWith('.ini'))
-      .where((path) => p.basename(path).toLowerCase() != "desktop.ini")
-      .where((path) => !p.basename(path).toLowerCase().startsWith('disabled'))
+      .where((path) => p.basename(path).toLowerCase() != 'desktop.ini')
+      .where(
+        (path) => !containsDisabledSegment(p.relative(path, from: mainFolder)),
+      )
       .toList();
 }
 
