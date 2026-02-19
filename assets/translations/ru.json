@@ -228,5 +228,6 @@
   "It is recommended to reload the mods with F10 first and wait until the process is complete": "\n\nРекомендуется сначала перезагрузить моды с помощью F10 и дождаться завершения процесса.",
   "File d3dx_user.ini does not exist": "Файл d3dx_user.ini не существует",
   "Only mods inside the _MANAGED_ folder can have their customizations saved. Try pressing \"Update Mod Data\" first to create the folder.": "Только моды внутри папки _MANAGED_ могут сохранять свои настройки. Попробуйте сначала нажать «Обновить данные модов», чтобы создать папку.",
-  "Current mod customizations have been set as the default.": "Текущие настройки мода установлены по умолчанию."
+  "Current mod customizations have been set as the default.": "Текущие настройки мода установлены по умолчанию.",
+  "Error cannot modify d3dx.ini for NRMM to work properly": "Ошибка! не удалось изменить d3dx.ini, поэтому NRMM не может работать корректно"
 }

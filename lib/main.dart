@@ -1186,10 +1186,6 @@ class _MainViewState extends ConsumerState<MainView>
 
     if (existAndValid) {
       String managedPath = p.join(modsPath, ConstantVar.managedFolderName);
-      String backgroundKeypressPath = p.join(
-        managedPath,
-        ConstantVar.backgroundKeypressFileName,
-      );
       String managerGroupPath = p.join(
         managedPath,
         ConstantVar.managerGroupFileName,
@@ -1201,12 +1197,6 @@ class _MainViewState extends ConsumerState<MainView>
         notReadyReason =
             "Mods path is correct, but the '_MANAGED_' folder is missing or outdated."
                 .tr();
-      }
-      //Check background_keypress.ini
-      else if (!await File(backgroundKeypressPath).exists()) {
-        existAndValid = false;
-        notReadyReason =
-            "Mods path is correct, but some requirements are missing.".tr();
       }
       //Check manager_group.ini
       else if (!await File(managerGroupPath).exists()) {
@@ -1224,7 +1214,7 @@ class _MainViewState extends ConsumerState<MainView>
           ConstantVar.managerGroupFileName,
         );
         final firstLine = await readFirstLine(managerGroupPath);
-        if (firstLine?.trim() != ";revision_3") {
+        if (firstLine?.trim() != ";revision_4") {
           existAndValid = false;
           notReadyReason =
               "Everything is correct, but config files are outdated.".tr();
