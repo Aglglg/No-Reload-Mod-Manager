@@ -717,6 +717,11 @@ Future<List<TextSpan>> revertManagedMod(List<Directory> modDirs) async {
   List<TextSpan> operationLogs = [];
   bool containsError = false;
 
+  final managerConditionLineRegex = RegExp(
+    r'\$managed_slot_id\s*==\s*\$(\\modmanageragl\\group_)([1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)(\\active_slot)',
+    caseSensitive: false,
+  );
+
   for (Directory folder in modDirs) {
     List<String> iniFiles = await _findIniFilesRecursive(folder.path);
     for (final iniFile in iniFiles) {
@@ -751,6 +756,129 @@ Future<List<TextSpan>> revertManagedMod(List<Directory> modDirs) async {
             rawLines[i] = "-----";
             modified = true;
             continue;
+          }
+
+          //Naive approach
+          //remove manager condition line
+          if (trimmedLineLower.replaceAll(' ', '').startsWith('condition=')) {
+            final indexOfEqual = rawLines[i].indexOf('=');
+            String expression = rawLines[i].substring(indexOfEqual + 1).trim();
+            bool managerExpressionRemoved = false;
+            bool expressionChanged = false;
+
+            //remove manager expression
+            if (managerConditionLineRegex.hasMatch(expression)) {
+              expression =
+                  expression.replaceAll(managerConditionLineRegex, '').trim();
+              expressionChanged = true;
+              managerExpressionRemoved = true;
+            }
+
+            if (managerExpressionRemoved) {
+              //"(&& $something)" to "($something)"
+              if (RegExp(r'\(\s*&&\s*').hasMatch(expression)) {
+                expression =
+                    expression.replaceAll(RegExp(r'\(\s*&&\s*'), '(').trim();
+                expressionChanged = true;
+              }
+
+              //"(|| $something)" to "($something)"
+              if (RegExp(r'\(\s*\|\|\s*').hasMatch(expression)) {
+                expression =
+                    expression.replaceAll(RegExp(r'\(\s*\|\|\s*'), '(').trim();
+                expressionChanged = true;
+              }
+
+              //"($something && )" to "($something)"
+              if (RegExp(r'\s*&&\s*\)').hasMatch(expression)) {
+                expression =
+                    expression.replaceAll(RegExp(r'\s*&&\s*\)'), ')').trim();
+                expressionChanged = true;
+              }
+
+              //"($something || )" to "($something)"
+              if (RegExp(r'\s*\|\|\s*\)').hasMatch(expression)) {
+                expression =
+                    expression.replaceAll(RegExp(r'\s*\|\|\s*\)'), ')').trim();
+                expressionChanged = true;
+              }
+
+              //remove ( ) if any, empty brackets, in case mod manager expression was inside bracket
+              if (RegExp(r'\(\s*\)').hasMatch(expression)) {
+                expression =
+                    expression.replaceAll(RegExp(r'\(\s*\)'), '').trim();
+                expressionChanged = true;
+              }
+
+              //in case mod manager expression was at the end
+              //remove left over && such as "$something &&", only if after && is empty or empty spaces, and end of line
+              if (RegExp(r'&&(?=\s*$)').hasMatch(expression)) {
+                expression =
+                    expression.replaceAll(RegExp(r'&&(?=\s*$)'), '').trim();
+                expressionChanged = true;
+              }
+
+              //in case mod manager expression was at the end
+              //remove left over || such as "$something ||", only if after || is empty or empty spaces, and end of line
+              if (RegExp(r'\|\|(?=\s*$)').hasMatch(expression)) {
+                expression =
+                    expression.replaceAll(RegExp(r'\|\|(?=\s*$)'), '').trim();
+                expressionChanged = true;
+              }
+
+              //in case mod manager expression was at the start
+              //remove first && such as "&& $something"
+              if (expression.startsWith("&&")) {
+                expression = expression.replaceFirst("&&", "").trim();
+                expressionChanged = true;
+              }
+
+              //in case mod manager expression was at the start
+              //remove first || such as "|| $something"
+              if (expression.startsWith("||")) {
+                expression = expression.replaceFirst("||", "").trim();
+                expressionChanged = true;
+              }
+
+              //in case mod manager expression was in the middle
+              //"$something && && $anything" to "$something && $anything"
+              if (RegExp(r'&&\s*&&').hasMatch(expression)) {
+                expression =
+                    expression.replaceAll(RegExp(r'&&\s*&&'), '&&').trim();
+                expressionChanged = true;
+              }
+
+              //"$something && || $anything" to "$something && $anything"
+              if (RegExp(r'&&\s*\|\|').hasMatch(expression)) {
+                expression =
+                    expression.replaceAll(RegExp(r'&&\s*\|\|'), '||').trim();
+                expressionChanged = true;
+              }
+
+              //"$something || || $anything" to "$something || $anything"
+              if (RegExp(r'\|\|\s*\|\|').hasMatch(expression)) {
+                expression =
+                    expression.replaceAll(RegExp(r'\|\|\s*\|\|'), '||').trim();
+                expressionChanged = true;
+              }
+
+              //"$something || && $anything" to "$something && $anything"
+              if (RegExp(r'\|\|\s*&&').hasMatch(expression)) {
+                expression =
+                    expression.replaceAll(RegExp(r'\|\|\s*&&'), '&&').trim();
+                expressionChanged = true;
+              }
+            }
+
+            if (expressionChanged) {
+              if (expression == "") {
+                rawLines[i] = "-----";
+              } else {
+                rawLines[i] = "condition = $expression";
+              }
+              modified = true;
+              continue;
+            }
           }
 
           //add "if" line to ifStack and remove if it's manager "if" line
