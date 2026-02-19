@@ -13,6 +13,7 @@
 #include <vector>
 #include <set>
 #include <string>
+#include <cwctype>
 
 struct Section {
 	wchar_t* section;
@@ -1466,6 +1467,17 @@ static void ParseTextureOverrideSections(Globals& G)
 	}
 }
 
+bool iequals(const std::wstring& a, const std::wstring& b)
+{
+	if (a.size() != b.size()) return false;
+
+	for (size_t i = 0; i < a.size(); ++i)
+		if (std::towlower(a[i]) != std::towlower(b[i]))
+			return false;
+
+	return true;
+}
+
 const IniLine* find_first_ini_line(
 	const std::vector<IniLine>& lines,
 	const std::wstring& key,
@@ -1473,9 +1485,8 @@ const IniLine* find_first_ini_line(
 )
 {
 	for (const IniLine& l : lines) {
-		if (l.first == key && l.second == val) {
+		if (iequals(l.first, key) && iequals(l.second, val))
 			return &l;
-		}
 	}
 	return nullptr;
 }
