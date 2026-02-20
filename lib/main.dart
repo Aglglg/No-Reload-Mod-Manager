@@ -998,73 +998,99 @@ class _MainViewState extends ConsumerState<MainView>
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     switch (targetGame) {
       case TargetGame.Wuthering_Waves:
-        if (!ref.read(messageWuwaDismissedProvider)) {
-          rawMessage = await CloudData().loadTextFromCloud(
-            ConstantVar.urlMessageWuwa,
-            "",
+        rawMessage = await CloudData().loadTextFromCloud(
+          ConstantVar.urlMessageWuwa,
+          "",
+        );
+        List<String> splittedInput = rawMessage.split("||").toList();
+        message = splittedInput[0].trim();
+        if (splittedInput.length == 2) {
+          detailUrl = splittedInput[1].trim();
+        }
+        if (ref.read(messageWuwaDismissedProvider) != rawMessage) {
+          showInfoMessage(
+            message,
+            TargetGame.Wuthering_Waves,
+            detailUrl,
+            rawMessage,
           );
-          List<String> splittedInput = rawMessage.split("||").toList();
-          message = splittedInput[0].trim();
-          if (splittedInput.length == 2) {
-            detailUrl = splittedInput[1].trim();
-          }
-          showInfoMessage(message, TargetGame.Wuthering_Waves, detailUrl);
         }
         break;
       case TargetGame.Genshin_Impact:
-        if (!ref.read(messageGenshinDismissedProvider)) {
-          rawMessage = await CloudData().loadTextFromCloud(
-            ConstantVar.urlMessageGenshin,
-            "",
+        rawMessage = await CloudData().loadTextFromCloud(
+          ConstantVar.urlMessageGenshin,
+          "",
+        );
+        List<String> splittedInput = rawMessage.split("||").toList();
+        message = splittedInput[0].trim();
+        if (splittedInput.length == 2) {
+          detailUrl = splittedInput[1].trim();
+        }
+
+        if (ref.read(messageGenshinDismissedProvider) != rawMessage) {
+          showInfoMessage(
+            message,
+            TargetGame.Genshin_Impact,
+            detailUrl,
+            rawMessage,
           );
-          List<String> splittedInput = rawMessage.split("||").toList();
-          message = splittedInput[0].trim();
-          if (splittedInput.length == 2) {
-            detailUrl = splittedInput[1].trim();
-          }
-          showInfoMessage(message, TargetGame.Genshin_Impact, detailUrl);
         }
         break;
       case TargetGame.Honkai_Star_Rail:
-        if (!ref.read(messageHsrDismissedProvider)) {
-          rawMessage = await CloudData().loadTextFromCloud(
-            ConstantVar.urlMessageHsr,
-            "",
+        rawMessage = await CloudData().loadTextFromCloud(
+          ConstantVar.urlMessageHsr,
+          "",
+        );
+        List<String> splittedInput = rawMessage.split("||").toList();
+        message = splittedInput[0].trim();
+        if (splittedInput.length == 2) {
+          detailUrl = splittedInput[1].trim();
+        }
+        if (ref.read(messageHsrDismissedProvider) != rawMessage) {
+          showInfoMessage(
+            message,
+            TargetGame.Honkai_Star_Rail,
+            detailUrl,
+            rawMessage,
           );
-          List<String> splittedInput = rawMessage.split("||").toList();
-          message = splittedInput[0].trim();
-          if (splittedInput.length == 2) {
-            detailUrl = splittedInput[1].trim();
-          }
-          showInfoMessage(message, TargetGame.Honkai_Star_Rail, detailUrl);
         }
         break;
       case TargetGame.Zenless_Zone_Zero:
-        if (!ref.read(messageZzzDismissedProvider)) {
-          rawMessage = await CloudData().loadTextFromCloud(
-            ConstantVar.urlMessageZzz,
-            "",
+        rawMessage = await CloudData().loadTextFromCloud(
+          ConstantVar.urlMessageZzz,
+          "",
+        );
+        List<String> splittedInput = rawMessage.split("||").toList();
+        message = splittedInput[0].trim();
+        if (splittedInput.length == 2) {
+          detailUrl = splittedInput[1].trim();
+        }
+        if (ref.read(messageZzzDismissedProvider) != rawMessage) {
+          showInfoMessage(
+            message,
+            TargetGame.Zenless_Zone_Zero,
+            detailUrl,
+            rawMessage,
           );
-          List<String> splittedInput = rawMessage.split("||").toList();
-          message = splittedInput[0].trim();
-          if (splittedInput.length == 2) {
-            detailUrl = splittedInput[1].trim();
-          }
-          showInfoMessage(message, TargetGame.Zenless_Zone_Zero, detailUrl);
         }
         break;
       case TargetGame.Arknights_Endfield:
-        if (!ref.read(messageEndfieldDismissedProvider)) {
-          rawMessage = await CloudData().loadTextFromCloud(
-            ConstantVar.urlMessageEndfield,
-            "",
+        rawMessage = await CloudData().loadTextFromCloud(
+          ConstantVar.urlMessageEndfield,
+          "",
+        );
+        List<String> splittedInput = rawMessage.split("||").toList();
+        message = splittedInput[0].trim();
+        if (splittedInput.length == 2) {
+          detailUrl = splittedInput[1].trim();
+        }
+        if (ref.read(messageEndfieldDismissedProvider) != rawMessage) {
+          showInfoMessage(
+            message,
+            TargetGame.Arknights_Endfield,
+            detailUrl,
+            rawMessage,
           );
-          List<String> splittedInput = rawMessage.split("||").toList();
-          message = splittedInput[0].trim();
-          if (splittedInput.length == 2) {
-            detailUrl = splittedInput[1].trim();
-          }
-          showInfoMessage(message, TargetGame.Arknights_Endfield, detailUrl);
         }
         break;
       default:
@@ -1076,6 +1102,7 @@ class _MainViewState extends ConsumerState<MainView>
     String message,
     TargetGame targetGame,
     String urlDetails,
+    String rawMessage,
   ) {
     if (message.isNotEmpty) {
       ScaffoldMessenger.of(context)
@@ -1118,21 +1145,24 @@ class _MainViewState extends ConsumerState<MainView>
                 reason == SnackBarClosedReason.dismiss) {
               switch (targetGame) {
                 case TargetGame.Wuthering_Waves:
-                  ref.read(messageWuwaDismissedProvider.notifier).state = true;
+                  ref.read(messageWuwaDismissedProvider.notifier).state =
+                      rawMessage;
                   break;
                 case TargetGame.Genshin_Impact:
                   ref.read(messageGenshinDismissedProvider.notifier).state =
-                      true;
+                      rawMessage;
                   break;
                 case TargetGame.Honkai_Star_Rail:
-                  ref.read(messageHsrDismissedProvider.notifier).state = true;
+                  ref.read(messageHsrDismissedProvider.notifier).state =
+                      rawMessage;
                   break;
                 case TargetGame.Zenless_Zone_Zero:
-                  ref.read(messageZzzDismissedProvider.notifier).state = true;
+                  ref.read(messageZzzDismissedProvider.notifier).state =
+                      rawMessage;
                   break;
                 case TargetGame.Arknights_Endfield:
                   ref.read(messageEndfieldDismissedProvider.notifier).state =
-                      true;
+                      rawMessage;
                   break;
                 default:
                   break;
