@@ -40,20 +40,18 @@ final StateProvider<Map<String, String>> updatedKnownModdingLibsProvider =
       (ref) => ConstantVar.knownModdingLibraries,
     );
 
-final StateProvider<bool> messageWuwaDismissedProvider = StateProvider<bool>(
-  (ref) => false,
+final StateProvider<String> messageWuwaDismissedProvider =
+    StateProvider<String>((ref) => '');
+final StateProvider<String> messageGenshinDismissedProvider =
+    StateProvider<String>((ref) => '');
+final StateProvider<String> messageHsrDismissedProvider = StateProvider<String>(
+  (ref) => '',
 );
-final StateProvider<bool> messageGenshinDismissedProvider = StateProvider<bool>(
-  (ref) => false,
+final StateProvider<String> messageZzzDismissedProvider = StateProvider<String>(
+  (ref) => '',
 );
-final StateProvider<bool> messageHsrDismissedProvider = StateProvider<bool>(
-  (ref) => false,
-);
-final StateProvider<bool> messageZzzDismissedProvider = StateProvider<bool>(
-  (ref) => false,
-);
-final StateProvider<bool> messageEndfieldDismissedProvider =
-    StateProvider<bool>((ref) => false);
+final StateProvider<String> messageEndfieldDismissedProvider =
+    StateProvider<String>((ref) => '');
 
 final StateProvider<HotkeyKeyboard> hotkeyKeyboardProvider =
     StateProvider<HotkeyKeyboard>((ref) {
