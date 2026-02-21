@@ -10,7 +10,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   hotkey_manager_windows
   pasteboard
   screen_retriever_windows
-  system_tray
+  tray_manager
   url_launcher_windows
   window_manager
   windows_single_instance

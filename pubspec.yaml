@@ -1,5 +1,5 @@
 name: no_reload_mod_manager
-description: "Mod Manager for games that support XXMI"
+description: "Mod Manager for Gacha Games"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -54,7 +54,11 @@ dependencies:
   path: ^1.9.1
   flutter_riverpod: ^2.6.1
   desktop_drop: ^0.6.0
-  system_tray: ^2.0.3
+  tray_manager:
+    git:
+      url: https://github.com/Aglglg/tray_manager.git
+      ref: 25d4121268028b783c571df943cbbd92d9848cfe
+      path: packages/tray_manager
   http: ^1.3.0
   pasteboard: ^0.2.0
   xinput_gamepad: ^1.3.1

@@ -33,8 +33,8 @@ import 'package:no_reload_mod_manager/tabs/settings_tab.dart';
 import 'package:no_reload_mod_manager/utils/get_process_name.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:system_tray/system_tray.dart';
 import 'package:top_snackbar_flutter/top_snack_bar.dart';
+import 'package:tray_manager/tray_manager.dart' as tray;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:win32/win32.dart';
 import 'package:window_manager/window_manager.dart';
@@ -531,7 +531,11 @@ class MainView extends ConsumerStatefulWidget {
 }
 
 class _MainViewState extends ConsumerState<MainView>
-    with WindowListener, SingleTickerProviderStateMixin, ModNavigationListener {
+    with
+        WindowListener,
+        SingleTickerProviderStateMixin,
+        ModNavigationListener,
+        tray.TrayListener {
   late TabController _tabController;
 
   List<Widget> _views = [TabKeybinds(), TabModsLoading(), TabSettings()];
@@ -804,118 +808,136 @@ class _MainViewState extends ConsumerState<MainView>
         await fetchKnownModdingLib();
   }
 
-  Future<void> initSystemTray() async {
-    final SystemTray systemTray = SystemTray();
+  @override
+  void onTrayIconMouseDown() {
+    tray.trayManager.popUpContextMenu();
+  }
 
-    // We first init the systray menu
-    await systemTray.initSystemTray(
-      title: "system tray",
-      toolTip: 'Mod Manager for Gacha Games'.tr(),
-      iconPath:
-          Platform.isWindows
-              ? 'assets/images/app_icon.ico'
-              : 'assets/images/app_icon.png',
+  @override
+  void onTrayIconRightMouseDown() {
+    tray.trayManager.popUpContextMenu();
+  }
+
+  Future<void> initSystemTray() async {
+    await tray.trayManager.setIcon(
+      Platform.isWindows
+          ? 'assets/images/app_icon.ico'
+          : 'assets/images/app_icon.png',
     );
 
-    // create context menu
-    final Menu menu = Menu();
-    await menu.buildFrom([
-      MenuItemLabel(
-        label: 'Show (WuWa)'.tr(),
-        onClicked: (menuItem) async {
-          if (!ref.read(alertDialogShownProvider)) {
-            ref.read(targetGameProvider.notifier).state =
-                TargetGame.Wuthering_Waves;
-            changeWindowTitleName(TargetGame.Wuthering_Waves.name);
-          }
-          ref.read(windowIsPinnedProvider.notifier).state = true;
-          await windowManager.show();
-          await windowManager.focus();
-        },
-      ),
-      MenuItemLabel(
-        label: 'Show (Genshin)'.tr(),
-        onClicked: (menuItem) async {
-          if (!ref.read(alertDialogShownProvider)) {
-            ref.read(targetGameProvider.notifier).state =
-                TargetGame.Genshin_Impact;
-            changeWindowTitleName(TargetGame.Genshin_Impact.name);
-          }
-          ref.read(windowIsPinnedProvider.notifier).state = true;
-          await windowManager.show();
-          await windowManager.focus();
-        },
-      ),
-      MenuItemLabel(
-        label: 'Show (HSR)'.tr(),
-        onClicked: (menuItem) async {
-          if (!ref.read(alertDialogShownProvider)) {
-            ref.read(targetGameProvider.notifier).state =
-                TargetGame.Honkai_Star_Rail;
-            changeWindowTitleName(TargetGame.Honkai_Star_Rail.name);
-          }
-          ref.read(windowIsPinnedProvider.notifier).state = true;
-          await windowManager.show();
-          await windowManager.focus();
-        },
-      ),
-      MenuItemLabel(
-        label: 'Show (ZZZ)'.tr(),
-        onClicked: (menuItem) async {
-          if (!ref.read(alertDialogShownProvider)) {
-            ref.read(targetGameProvider.notifier).state =
-                TargetGame.Zenless_Zone_Zero;
-            changeWindowTitleName(TargetGame.Zenless_Zone_Zero.name);
-          }
-          ref.read(windowIsPinnedProvider.notifier).state = true;
-          await windowManager.show();
-          await windowManager.focus();
-        },
-      ),
-      MenuItemLabel(
-        label: 'Show (Endfield)'.tr(),
-        onClicked: (menuItem) async {
-          if (!ref.read(alertDialogShownProvider)) {
-            ref.read(targetGameProvider.notifier).state =
-                TargetGame.Arknights_Endfield;
-            changeWindowTitleName(TargetGame.Arknights_Endfield.name);
-          }
-          ref.read(windowIsPinnedProvider.notifier).state = true;
-          await windowManager.show();
-          await windowManager.focus();
-        },
-      ),
-      MenuSeparator(),
-      MenuItemLabel(
-        label: "${'Reset Position'.tr()} (Alt+T)",
-        onClicked: (menuItem) async {
-          await windowManager.center();
-        },
-      ),
-      MenuItemLabel(
-        label: 'Hide'.tr(),
-        onClicked: (menuItem) => bitsdojo.appWindow.hide(),
-      ),
-      MenuSeparator(),
-      MenuItemLabel(label: 'Exit'.tr(), onClicked: (menuItem) => exit(0)),
-    ]);
+    await tray.trayManager.setToolTip("Mod Manager for Gacha Games");
 
-    // set context menu
-    await systemTray.setContextMenu(menu);
+    tray.Menu menu = tray.Menu(
+      items: [
+        tray.MenuItem(
+          key: 'Show (WuWa)',
+          label: 'Show (WuWa)'.tr(),
+          onClick: (menuItem) async {
+            if (!ref.read(alertDialogShownProvider)) {
+              ref.read(targetGameProvider.notifier).state =
+                  TargetGame.Wuthering_Waves;
+              changeWindowTitleName(TargetGame.Wuthering_Waves.name);
+            }
+            ref.read(windowIsPinnedProvider.notifier).state = true;
+            await windowManager.show();
+            await windowManager.focus();
+          },
+        ),
+        tray.MenuItem(
+          key: 'Show (Genshin)',
+          label: 'Show (Genshin)'.tr(),
+          onClick: (menuItem) async {
+            if (!ref.read(alertDialogShownProvider)) {
+              ref.read(targetGameProvider.notifier).state =
+                  TargetGame.Genshin_Impact;
+              changeWindowTitleName(TargetGame.Genshin_Impact.name);
+            }
+            ref.read(windowIsPinnedProvider.notifier).state = true;
+            await windowManager.show();
+            await windowManager.focus();
+          },
+        ),
+        tray.MenuItem(
+          key: 'Show (HSR)',
+          label: 'Show (HSR)'.tr(),
+          onClick: (menuItem) async {
+            if (!ref.read(alertDialogShownProvider)) {
+              ref.read(targetGameProvider.notifier).state =
+                  TargetGame.Honkai_Star_Rail;
+              changeWindowTitleName(TargetGame.Honkai_Star_Rail.name);
+            }
+            ref.read(windowIsPinnedProvider.notifier).state = true;
+            await windowManager.show();
+            await windowManager.focus();
+          },
+        ),
+        tray.MenuItem(
+          key: 'Show (ZZZ)',
+          label: 'Show (ZZZ)'.tr(),
+          onClick: (menuItem) async {
+            if (!ref.read(alertDialogShownProvider)) {
+              ref.read(targetGameProvider.notifier).state =
+                  TargetGame.Zenless_Zone_Zero;
+              changeWindowTitleName(TargetGame.Zenless_Zone_Zero.name);
+            }
+            ref.read(windowIsPinnedProvider.notifier).state = true;
+            await windowManager.show();
+            await windowManager.focus();
+          },
+        ),
+        tray.MenuItem(
+          key: 'Show (Endfield)',
+          label: 'Show (Endfield)'.tr(),
+          onClick: (menuItem) async {
+            if (!ref.read(alertDialogShownProvider)) {
+              ref.read(targetGameProvider.notifier).state =
+                  TargetGame.Arknights_Endfield;
+              changeWindowTitleName(TargetGame.Arknights_Endfield.name);
+            }
+            ref.read(windowIsPinnedProvider.notifier).state = true;
+            await windowManager.show();
+            await windowManager.focus();
+          },
+        ),
+        tray.MenuItem.separator(),
+        tray.MenuItem(
+          key: "Reset Position' (Alt+T)",
+          label: "${'Reset Position'.tr()} (Alt+T)",
+          onClick: (menuItem) async {
+            await windowManager.center();
+          },
+        ),
+        tray.MenuItem(
+          key: 'Hide',
+          label: 'Hide'.tr(),
+          onClick: (menuItem) => bitsdojo.appWindow.hide(),
+        ),
+        tray.MenuItem.separator(),
+        tray.MenuItem(
+          key: 'Exit',
+          label: 'Exit'.tr(),
+          onClick: (menuItem) => exit(0),
+        ),
+      ],
+    );
 
-    // handle system tray event
-    systemTray.registerSystemTrayEventHandler((eventName) {
-      if (eventName == kSystemTrayEventClick) {
-        systemTray.popUpContextMenu();
-      } else if (eventName == kSystemTrayEventRightClick) {
-        systemTray.popUpContextMenu();
-      }
-    });
+    await tray.trayManager.setContextMenu(menu);
+  }
+
+  @override
+  Future<void> dispose() async {
+    tray.trayManager.removeListener(this);
+    windowManager.removeListener(this);
+    ModNavigationListener.removeListener(this);
+    hotKeyManager.unregisterAll();
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
+    tray.trayManager.addListener(this);
     setupGamepadNavigation();
     ModNavigationListener.addListener(this);
 
@@ -1289,15 +1311,6 @@ class _MainViewState extends ConsumerState<MainView>
             TabSettings(),
           ];
     });
-  }
-
-  @override
-  Future<void> dispose() async {
-    windowManager.removeListener(this);
-    ModNavigationListener.removeListener(this);
-    hotKeyManager.unregisterAll();
-    _tabController.dispose();
-    super.dispose();
   }
 
   Future<void> toggleWindow() async {
