@@ -12,3 +12,5 @@ install_dir_name: "{userappdata}\\No Reload Mod Manager"
 setup_icon_file: windows\runner\resources\app_icon.ico
 locales:
   - en
+
+script_template: inno_setup.iss
