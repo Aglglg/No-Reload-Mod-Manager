@@ -1,1 +1,0 @@
-Update No Reload Mod Manager to v2.8.3++ to fix conflict with XXMI Launcher (ignore if you already updated it) || https://github.com/Aglglg/No-Reload-Mod-Manager/releases/tag/v2.8.3
