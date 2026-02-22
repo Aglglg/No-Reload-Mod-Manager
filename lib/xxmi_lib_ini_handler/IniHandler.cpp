@@ -1272,6 +1272,20 @@ static void delete_regex_group(Globals& G, std::wstring* regex_id)
 	ShaderRegexGroups::iterator i;
 
 	i = G.shader_regex_groups.find(*regex_id);
+	
+	if (i != G.shader_regex_groups.end())
+	{
+		auto it = std::find(G.registered_command_lists.begin(), G.registered_command_lists.end(), &i->second.command_list);
+		if (it != G.registered_command_lists.end())
+			G.registered_command_lists.erase(it);
+		it = std::find(G.registered_command_lists.begin(), G.registered_command_lists.end(), &i->second.post_command_list);
+		if (it != G.registered_command_lists.end())
+			G.registered_command_lists.erase(it);
+
+		i->second.command_list.clear();
+		i->second.post_command_list.clear();
+	}
+
 	G.shader_regex_groups.erase(i);
 }
 
