@@ -57,7 +57,7 @@ static Section AllowLinesWithoutEquals[] = {
 static bool whitelisted_duplicate_key(const wchar_t* section, const wchar_t* key)
 {
 	if (!_wcsnicmp(section, L"key", 3)) {
-		if (!_wcsicmp(key, L"key") || !_wcsicmp(key, L"back"))
+		if (!_wcsicmp(key, L"key") || !_wcsicmp(key, L"back") || !_wcsicmp(key, L"condition"))
 			return true;
 	}
 
@@ -1512,9 +1512,9 @@ static void RegisterPresetKeyBindings(Globals& G)
 
 	IniSections::iterator lower, upper, i;
 
-	wchar_t val[MAX_PATH];
 	CommandListExpression condition;
 	std::wstring ini_namespace;
+	std::vector<std::wstring> conditions;
 
 	lower = G.ini_sections.lower_bound(std::wstring(L"Key"));
 	upper = prefix_upper_bound(G.ini_sections, std::wstring(L"Key"));
@@ -1522,8 +1522,15 @@ static void RegisterPresetKeyBindings(Globals& G)
 	for (i = lower; i != upper; ++i) {
 		const wchar_t* section = i->first.c_str();
 
-		if (GetIniStringAndLog(G, section, L"condition", 0, val, MAX_PATH)) {
-			std::wstring sbuf(val);
+		conditions = GetIniStringMultipleKeys(G, section, L"Condition");
+
+		if (conditions.empty()) {
+			continue;
+		}
+
+		for (std::wstring conditionVal : conditions)
+		{
+			std::wstring sbuf(conditionVal);
 			std::transform(sbuf.begin(), sbuf.end(), sbuf.begin(), ::towlower);
 
 			std::wstring ini_namespace;
@@ -1534,7 +1541,7 @@ static void RegisterPresetKeyBindings(Globals& G)
 			if (!condition.parse(G, &sbuf, &ini_namespace, nullptr)) {
 				/*wprintf(
 					L"[WARNING] Invalid [Key] condition = \"%ls\" - [%ls] @ [%ls]\n",
-					val, section, ini_namespace.c_str()
+					conditionVal.c_str(), section, ini_namespace.c_str()
 				);*/
 
 				const IniLine* line = find_first_ini_line(i->second.kv_vec, L"condition", sbuf);
