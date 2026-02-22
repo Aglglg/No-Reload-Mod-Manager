@@ -2602,51 +2602,103 @@ void _checkAndModifySections(
     }
     //Key section
     else if (_isKeySection(name)) {
-      //look for condition line
-      final conditionLineIndex = lines.indexWhere(
-        (line) => line
-            .trim()
-            .toLowerCase()
-            .replaceAll(' ', '')
-            .startsWith('condition='),
+      //look for condition lines
+      final conditionIndexes = <int>[];
+
+      for (int i = 0; i < lines.length; i++) {
+        final normalized = lines[i].trim().toLowerCase().replaceAll(' ', '');
+        if (normalized.startsWith('condition=')) {
+          conditionIndexes.add(i);
+        }
+      }
+
+      final managedExpr =
+          '\$managed_slot_id == \$\\modmanageragl\\group_$groupIndex\\active_slot';
+      final standaloneManagedPattern = RegExp(
+        r'^\$managed_slot_id\s*==\s*\$\\modmanageragl\\group_\d+\\active_slot$',
+        caseSensitive: false,
       );
 
       //if condition line not found, add one
-      if (conditionLineIndex == -1) {
-        lines.insert(
-          0,
-          'condition = \$managed_slot_id == \$\\modmanageragl\\group_$groupIndex\\active_slot',
-        );
+      if (conditionIndexes.isEmpty) {
+        lines.insert(0, 'condition = $managedExpr');
       }
-      //if condition line is found, add managed line or modify managed line
+      //if condition line is found, append manager expression or modify manager expression
       else {
-        final conditionLine = lines[conditionLineIndex];
+        // but, check for multiple condition lines first, remove line that is standalone manager only expression
+        if (conditionIndexes.length > 1) {
+          bool foundNonStandalone = false;
+          final standaloneIndexes = <int>[];
 
-        //if already have managed line, update groupIndex
-        if (ConstantVar.managedPattern.hasMatch(conditionLine)) {
-          lines[conditionLineIndex] = conditionLine.replaceAllMapped(
-            ConstantVar.managedPattern,
-            (match) {
-              return '${match.group(1)}$groupIndex${match.group(3)}';
-            },
-          );
+          for (final index in conditionIndexes) {
+            final line = lines[index];
+
+            final parts = line.split('=');
+            final rhs =
+                parts.length > 1
+                    ? parts
+                        .sublist(1)
+                        .join('=')
+                        .replaceAll('(', '')
+                        .replaceAll(')', '')
+                        .trim()
+                    : '';
+
+            if (standaloneManagedPattern.hasMatch(rhs)) {
+              standaloneIndexes.add(index);
+            } else {
+              foundNonStandalone = true;
+            }
+          }
+
+          final toRemove = <int>[];
+
+          if (foundNonStandalone) {
+            // remove ALL standalone lines
+            toRemove.addAll(standaloneIndexes);
+          } else if (standaloneIndexes.length > 1) {
+            // only standalone exist → keep first
+            toRemove.addAll(standaloneIndexes.skip(1));
+          }
+
+          for (final index in toRemove.reversed) {
+            lines.removeAt(index);
+          }
+
+          // recompute indexes after removal
+          conditionIndexes
+            ..clear()
+            ..addAll(
+              List.generate(lines.length, (i) => i).where((i) {
+                final normalized = lines[i].trim().toLowerCase().replaceAll(
+                  ' ',
+                  '',
+                );
+                return normalized.startsWith('condition=');
+              }),
+            );
         }
-        //if not have managed line in condition, add it
-        else {
-          // Split only once, safe even if RHS is empty
-          final parts = conditionLine.split('=');
-          final lhs = parts.first.trimRight();
-          final rhs = parts.length > 1 ? parts.sublist(1).join('=').trim() : '';
 
-          final managedExpr =
-              '\$managed_slot_id == \$\\modmanageragl\\group_$groupIndex\\active_slot';
+        // update or append managed expression
+        for (final index in conditionIndexes) {
+          final conditionLine = lines[index];
 
-          if (rhs.isEmpty) {
-            // condition =    replace RHS entirely
-            lines[conditionLineIndex] = '$lhs = $managedExpr';
+          if (ConstantVar.managedPattern.hasMatch(conditionLine)) {
+            lines[index] = conditionLine.replaceAllMapped(
+              ConstantVar.managedPattern,
+              (match) => '${match.group(1)}$groupIndex${match.group(3)}',
+            );
           } else {
-            // condition = something && managed line
-            lines[conditionLineIndex] = '$lhs = $rhs && $managedExpr';
+            final parts = conditionLine.split('=');
+            final lhs = parts.first.trimRight();
+            final rhs =
+                parts.length > 1 ? parts.sublist(1).join('=').trim() : '';
+
+            if (rhs.isEmpty) {
+              lines[index] = '$lhs = $managedExpr';
+            } else {
+              lines[index] = '$lhs = ($rhs) && $managedExpr';
+            }
           }
         }
       }
