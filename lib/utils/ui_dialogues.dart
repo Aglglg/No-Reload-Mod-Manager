@@ -1341,7 +1341,7 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
 
       if (!await iconFile.exists()) {
         if (!context.mounted) return;
-        futures.add(tryGetIcon(group.$1.path, ref.read(autoIconProvider)));
+        futures.add(tryGetIcon(group.$1.path, ref.read(targetGameProvider)));
       }
     }
 

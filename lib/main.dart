@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:no_reload_mod_manager/utils/auto_group_icon.dart';
 import 'package:no_reload_mod_manager/utils/check_admin_privillege.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
@@ -814,7 +813,6 @@ class _MainViewState extends ConsumerState<MainView>
             "https://discord.com",
           );
     }
-    ref.read(autoIconProvider.notifier).state = await fetchGroupIconData();
 
     ref.read(updatedKnownModdingLibsProvider.notifier).state =
         await fetchKnownModdingLib();

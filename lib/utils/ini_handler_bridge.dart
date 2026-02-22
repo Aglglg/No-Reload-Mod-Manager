@@ -1,8 +1,8 @@
 import 'dart:ffi';
 import 'package:ffi/ffi.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/get_cloud_data.dart';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -162,7 +162,7 @@ ErroredLinesReport getErroredLines(
 
 Future<Map<String, String>> fetchKnownModdingLib() async {
   try {
-    final response = await http.get(
+    final response = await httpClient.client.get(
       Uri.parse(ConstantVar.urlJsonUpdatedKnownModdingLib),
     );
 

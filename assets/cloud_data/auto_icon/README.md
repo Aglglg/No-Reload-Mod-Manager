@@ -5,7 +5,7 @@ Mostly it's VB hash (Hunting Mode `Numpad 0` and cycle VB with `Numpad /` or `Nu
 Or you can also simply look for it in existing mod's ini file.
 3. One character can have multiple hashes and it's fine.
 4. Give image file on corresponding game folder.
-5. List the hash and image link in auto_icon.json.
+5. List the hash and image link in auto_icon.json. (Deprecated, use game_name/_icon.json instead)
 6. **Keep it mind that old character could have their hash changed because game update.**
 
 ### Icon rules

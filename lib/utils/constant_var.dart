@@ -41,8 +41,18 @@ class ConstantVar {
       "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/message_zzz.txt";
   static const String urlMessageEndfield =
       "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/message_endfield.txt";
-  static const String urlJsonAutoIcon =
-      "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/auto_icon/auto_icon.json";
+
+  static const String urlJsonAutoIconWuwa =
+      "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/auto_icon/wuwa/_icon.json";
+  static const String urlJsonAutoIconGenshin =
+      "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/auto_icon/genshin/_icon.json";
+  static const String urlJsonAutoIconHsr =
+      "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/auto_icon/hsr/_icon.json";
+  static const String urlJsonAutoIconZzz =
+      "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/auto_icon/zzz/_icon.json";
+  static const String urlJsonAutoIconEndfield =
+      "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/auto_icon/endfield/_icon.json";
+
   static const String urlJsonUpdatedKnownModdingLib =
       "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/common_modding_lib/common_modding_lib.json";
 

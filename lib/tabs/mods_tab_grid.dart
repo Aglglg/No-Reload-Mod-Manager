@@ -745,7 +745,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                                         .read(modGroupDataProvider)[index]
                                         .groupDir
                                         .path,
-                                    ref.read(autoIconProvider),
+                                    ref.read(targetGameProvider),
                                   );
                                   if (!context.mounted) return;
                                   if (!success) {

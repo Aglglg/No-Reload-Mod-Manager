@@ -511,7 +511,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                                     .read(modGroupDataProvider)[index]
                                     .groupDir
                                     .path,
-                                ref.read(autoIconProvider),
+                                ref.read(targetGameProvider),
                               );
                               if (!context.mounted) return;
                               if (!success) {
