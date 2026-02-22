@@ -1466,7 +1466,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
       if (selectedDirectory != null) {
         _modsPathTextFieldController.text = selectedDirectory;
         _saveModsPath(selectedDirectory);
-        isModsPathValid(selectedDirectory);
+        await isModsPathValid(selectedDirectory);
       }
     } finally {
       if (!wasPinned) {
@@ -1480,7 +1480,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
 
   Future<void> _onUpdateModDataClicked() async {
     ref.read(alertDialogShownProvider.notifier).state = true;
-    showDialog(
+    await showDialog(
       barrierDismissible: false,
       context: context,
       builder:
@@ -1720,7 +1720,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                               controller: _modsPathTextFieldController,
                               onChanged: (value) async {
                                 _saveModsPath(value);
-                                isModsPathValid(value);
+                                await isModsPathValid(value);
                               },
                               inputFormatters: [
                                 FilteringTextInputFormatter.deny(

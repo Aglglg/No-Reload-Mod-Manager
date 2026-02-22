@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:carousel_slider/carousel_slider.dart';
@@ -948,14 +949,18 @@ class _ModAreaState extends ConsumerState<ModAreaCarousel>
                 isGrid: false,
                 isActiveInGrid: false,
                 onSelected: () async {
-                  simulateKeySelectMod(
-                    widget.currentGroupData.realIndex,
-                    widget.currentGroupData.modsInGroup[index].realIndex,
+                  unawaited(
+                    simulateKeySelectMod(
+                      widget.currentGroupData.realIndex,
+                      widget.currentGroupData.modsInGroup[index].realIndex,
+                    ),
                   );
-                  setSelectedModIndex(
-                    ref,
-                    widget.currentGroupData.modsInGroup[index].realIndex,
-                    widget.currentGroupData.groupDir,
+                  unawaited(
+                    setSelectedModIndex(
+                      ref,
+                      widget.currentGroupData.modsInGroup[index].realIndex,
+                      widget.currentGroupData.groupDir,
+                    ),
                   );
                 },
                 onTap:

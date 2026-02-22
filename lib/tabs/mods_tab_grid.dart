@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:carousel_slider/carousel_slider.dart';
@@ -297,20 +298,24 @@ class _ModAreaGridState extends ConsumerState<ModAreaGrid>
                         isGrid: true,
                         onSelected: () async {
                           _scrollToItem(modData.key);
-                          simulateKeySelectMod(
-                            widget.currentGroupData.realIndex,
-                            widget
-                                .currentGroupData
-                                .modsInGroup[modData.key]
-                                .realIndex,
+                          unawaited(
+                            simulateKeySelectMod(
+                              widget.currentGroupData.realIndex,
+                              widget
+                                  .currentGroupData
+                                  .modsInGroup[modData.key]
+                                  .realIndex,
+                            ),
                           );
-                          setSelectedModIndex(
-                            ref,
-                            widget
-                                .currentGroupData
-                                .modsInGroup[modData.key]
-                                .realIndex,
-                            widget.currentGroupData.groupDir,
+                          unawaited(
+                            setSelectedModIndex(
+                              ref,
+                              widget
+                                  .currentGroupData
+                                  .modsInGroup[modData.key]
+                                  .realIndex,
+                              widget.currentGroupData.groupDir,
+                            ),
                           );
                         },
                         onTap: () {},

@@ -572,7 +572,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                         );
                         ref.read(alertDialogShownProvider.notifier).state =
                             true;
-                        showDialog(
+                        await showDialog(
                           barrierDismissible: false,
                           context: context,
                           builder:

@@ -308,7 +308,7 @@ Future<void> setGroupOrModIcon(
 }) async {
   String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
   DynamicDirectoryWatcher.stop();
-  oldImage?.image.evict();
+  await oldImage?.image.evict();
   if (fromClipboard == false) {
     bool windowWasPinned = ref.read(windowIsPinnedProvider);
     ref.read(windowIsPinnedProvider.notifier).state = true;
@@ -338,7 +338,7 @@ Future<void> setGroupOrModIcon(
 
           //Set folder icon in Explorer
           if (SharedPrefUtils().isAutoGenerateFolderIcon()) {
-            setFolderIcon(groupDir.path, targetDest);
+            await setFolderIcon(groupDir.path, targetDest);
           }
         } catch (_) {}
       } else if (modDir != null) {
@@ -385,7 +385,10 @@ Future<void> setGroupOrModIcon(
 
           //Set folder icon in Explorer
           if (SharedPrefUtils().isAutoGenerateFolderIcon()) {
-            setFolderIcon(groupDir.path, p.join(groupDir.path, "icon.png"));
+            await setFolderIcon(
+              groupDir.path,
+              p.join(groupDir.path, "icon.png"),
+            );
           }
         } else if (modDir != null) {
           Image img = Image.memory(
@@ -421,7 +424,7 @@ Future<void> unsetGroupOrModIcon(
 }) async {
   String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
   DynamicDirectoryWatcher.stop();
-  oldImage?.image.evict();
+  await oldImage?.image.evict();
   if (modDir == null) {
     Image imgResult = Image.file(
       File(''),
@@ -441,7 +444,7 @@ Future<void> unsetGroupOrModIcon(
 
       //Unset folder icon in Explorer
       if (SharedPrefUtils().isAutoGenerateFolderIcon()) {
-        unsetFolderIcon(groupDir.path);
+        await unsetFolderIcon(groupDir.path);
       }
     } catch (_) {}
   } else {
@@ -2928,7 +2931,7 @@ Future<void> openFileExplorerToSpecifiedPath(String path) async {
   if (Platform.isWindows) {
     if (await Directory(path).exists()) {
       try {
-        Process.run('explorer', [path]);
+        await Process.run('explorer', [path]);
       } catch (_) {}
     }
   }

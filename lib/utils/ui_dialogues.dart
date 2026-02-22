@@ -120,7 +120,7 @@ class _GenerateGroupIcoFileDialogState
         );
         contents = newContents;
       });
-      _scrollToBottom();
+      await _scrollToBottom();
     }
 
     setState(() {
@@ -319,7 +319,7 @@ class _PrefCorruptedDialogState extends ConsumerState<PrefCorruptedDialog> {
       );
     });
 
-    _scrollToBottom();
+    await _scrollToBottom();
   }
 
   Future<void> _scrollToBottom() async {
@@ -581,7 +581,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
       }
     });
 
-    addContent();
+    await addContent();
   }
 
   Future<void> addContent() async {
@@ -1067,7 +1067,7 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
       contents = operationLogs;
     });
 
-    _scrollToBottom();
+    await _scrollToBottom();
   }
 
   Future<Directory?> renameSourceFolderToBeDisabledPrefix(
@@ -1321,13 +1321,13 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
       _showClose = true;
       contents = operationResults;
     });
-    _scrollToBottom();
+    await _scrollToBottom();
     final groupFolders = await getGroupFolders(
       p.join(modsPath, ConstantVar.managedFolderName),
     );
 
     //No need to update mod data
-    SharedPrefUtils().setCurrentTargetGameNeedUpdateMod(
+    await SharedPrefUtils().setCurrentTargetGameNeedUpdateMod(
       ref.read(targetGameProvider),
       false,
     );
@@ -1460,7 +1460,7 @@ class _RevertModDialogState extends ConsumerState<RevertModDialog> {
       _showClose = true;
       contents = operationResults;
     });
-    _scrollToBottom();
+    await _scrollToBottom();
   }
 
   Future<void> _scrollToBottom() async {
@@ -1558,7 +1558,7 @@ class _DuplicatedUtilitiesDialogState
       }
     });
 
-    _scrollToBottom();
+    await _scrollToBottom();
   }
 
   Future<void> _scrollToBottom() async {
@@ -1766,7 +1766,7 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
       _isLoading = false;
     });
 
-    _scrollToBottom();
+    await _scrollToBottom();
   }
 
   Future<String> _getAvailableFolderName(
@@ -2144,7 +2144,7 @@ class _SaveModCustomizationsDialogState
       });
     }
     //
-    _scrollToBottom();
+    await _scrollToBottom();
   }
 
   Future<void> _scrollToBottom() async {
@@ -2516,7 +2516,7 @@ class _DisableAllModsDialogState extends ConsumerState<DisableAllModsDialog> {
       }
     });
 
-    _scrollToBottom();
+    await _scrollToBottom();
   }
 
   Future<void> _scrollToBottom() async {
@@ -2736,7 +2736,7 @@ class _EnableAllModsDialogState extends ConsumerState<EnableAllModsDialog> {
       }
     });
 
-    _scrollToBottom();
+    await _scrollToBottom();
   }
 
   Future<void> _scrollToBottom() async {

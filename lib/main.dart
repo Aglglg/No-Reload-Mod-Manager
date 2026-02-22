@@ -234,7 +234,7 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
   void debouncedSaveWindowSize() {
     _resizeDebounce?.cancel();
     _resizeDebounce = Timer(const Duration(milliseconds: 500), () async {
-      SharedPrefUtils().setSavedWindow(await windowManager.getSize());
+      await SharedPrefUtils().setSavedWindow(await windowManager.getSize());
     });
   }
 
@@ -246,7 +246,7 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
             ref.read(alertDialogShownProvider) ||
             ref.read(popupMenuShownProvider)) {
         } else {
-          ModNavigationListener.notifyListeners(value, null);
+          await ModNavigationListener.notifyListeners(value, null);
         }
 
         //Fix stuck on windows menu when press Alt
@@ -751,35 +751,47 @@ class _MainViewState extends ConsumerState<MainView>
   }
 
   Future<void> loadNetworkDatas() async {
-    precacheImage(
-      NetworkImage(ConstantVar.urlSupportIcon),
-      context,
-      onError: (exception, stackTrace) {},
+    unawaited(
+      precacheImage(
+        NetworkImage(ConstantVar.urlSupportIcon),
+        context,
+        onError: (exception, stackTrace) {},
+      ),
     );
-    precacheImage(
-      NetworkImage(ConstantVar.urlSupportIconOnHover),
-      context,
-      onError: (exception, stackTrace) {},
+    unawaited(
+      precacheImage(
+        NetworkImage(ConstantVar.urlSupportIconOnHover),
+        context,
+        onError: (exception, stackTrace) {},
+      ),
     );
-    precacheImage(
-      NetworkImage(ConstantVar.urlTutorialIcon),
-      context,
-      onError: (exception, stackTrace) {},
+    unawaited(
+      precacheImage(
+        NetworkImage(ConstantVar.urlTutorialIcon),
+        context,
+        onError: (exception, stackTrace) {},
+      ),
     );
-    precacheImage(
-      NetworkImage(ConstantVar.urlTutorialIconOnHover),
-      context,
-      onError: (exception, stackTrace) {},
+    unawaited(
+      precacheImage(
+        NetworkImage(ConstantVar.urlTutorialIconOnHover),
+        context,
+        onError: (exception, stackTrace) {},
+      ),
     );
-    precacheImage(
-      NetworkImage(ConstantVar.urlContactIcon),
-      context,
-      onError: (exception, stackTrace) {},
+    unawaited(
+      precacheImage(
+        NetworkImage(ConstantVar.urlContactIcon),
+        context,
+        onError: (exception, stackTrace) {},
+      ),
     );
-    precacheImage(
-      NetworkImage(ConstantVar.urlContactIconOnHover),
-      context,
-      onError: (exception, stackTrace) {},
+    unawaited(
+      precacheImage(
+        NetworkImage(ConstantVar.urlContactIconOnHover),
+        context,
+        onError: (exception, stackTrace) {},
+      ),
     );
     if (ref.read(supportLinkProvider).isEmpty) {
       ref.read(supportLinkProvider.notifier).state = await CloudData()
@@ -929,7 +941,7 @@ class _MainViewState extends ConsumerState<MainView>
     tray.trayManager.removeListener(this);
     windowManager.removeListener(this);
     ModNavigationListener.removeListener(this);
-    hotKeyManager.unregisterAll();
+    await hotKeyManager.unregisterAll();
     _tabController.dispose();
     super.dispose();
   }
@@ -975,7 +987,7 @@ class _MainViewState extends ConsumerState<MainView>
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      loadNetworkDatas();
+      unawaited(loadNetworkDatas());
       await initSystemTray();
 
       //show notif only after system tray loaded successfully
@@ -1007,7 +1019,7 @@ class _MainViewState extends ConsumerState<MainView>
           final listAnimController = ref.read(animControllerSpecialSnackbar);
           for (var controller in listAnimController) {
             try {
-              controller.reverse();
+              unawaited(controller.reverse());
             } catch (_) {}
           }
         } catch (_) {}
@@ -1198,7 +1210,7 @@ class _MainViewState extends ConsumerState<MainView>
     String? previousModsPath = ref.read(validModsPath);
     if (previousModsPath != null) {
       int prevGroupIndex = ref.read(currentGroupIndexProvider);
-      setSelectedGroupIndex(
+      await setSelectedGroupIndex(
         prevGroupIndex,
         p.join(previousModsPath, ConstantVar.managedFolderName),
       );
@@ -1574,7 +1586,7 @@ class _UpdateModDataSnackbarButtonState
                   );
                   for (var controller in listAnimController) {
                     try {
-                      controller.reverse();
+                      unawaited(controller.reverse());
                     } catch (_) {}
                   }
                 } catch (_) {}
