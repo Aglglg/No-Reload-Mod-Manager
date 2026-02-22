@@ -760,7 +760,10 @@ Future<List<TextSpan>> revertManagedMod(List<Directory> modDirs) async {
 
           //Naive approach
           //remove manager condition line
-          if (trimmedLineLower.replaceAll(' ', '').startsWith('condition=')) {
+          if (trimmedLineLower.replaceAll(' ', '').startsWith('condition=') ||
+              trimmedLineLower
+                  .replaceAll(' ', '')
+                  .startsWith(';-;condition=')) {
             final indexOfEqual = rawLines[i].indexOf('=');
             String expression = rawLines[i].substring(indexOfEqual + 1).trim();
             bool managerExpressionRemoved = false;
@@ -2607,7 +2610,8 @@ void _checkAndModifySections(
 
       for (int i = 0; i < lines.length; i++) {
         final normalized = lines[i].trim().toLowerCase().replaceAll(' ', '');
-        if (normalized.startsWith('condition=')) {
+        if (normalized.startsWith('condition=') ||
+            normalized.startsWith(';-;condition=')) {
           conditionIndexes.add(i);
         }
       }
@@ -2674,7 +2678,8 @@ void _checkAndModifySections(
                   ' ',
                   '',
                 );
-                return normalized.startsWith('condition=');
+                return normalized.startsWith('condition=') ||
+                    normalized.startsWith(';-;condition=');
               }),
             );
         }
