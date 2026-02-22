@@ -228,6 +228,5 @@
   "It is recommended to reload the mods with F10 first and wait until the process is complete": "\n\n建议先按 F10 重新加载模组，并等待加载完成。",
   "File d3dx_user.ini does not exist": "文件 d3dx_user.ini 不存在",
   "Only mods inside the _MANAGED_ folder can have their customizations saved. Try pressing \"Update Mod Data\" first to create the folder.": "只有位于 _MANAGED_ 文件夹中的模组才能保存自定义设置。请先点击“更新模组数据”以创建该文件夹。",
-  "Current mod customizations have been set as the default.": "当前的模组自定义设置已设为默认。",
-  "Error cannot modify d3dx.ini for NRMM to work properly": "错误 ! 无法修改 d3dx.ini，因此 NRMM 无法正常运行"
+  "Current mod customizations have been set as the default.": "当前的模组自定义设置已设为默认。"
 }

@@ -119,7 +119,7 @@ Even though this is not main mod loader or mod tool, and only tool to organize m
 1. The manager gets the `Mods` path from the field you filled in.
 2. It checks for `d3dx.ini` and `d3d11.dll` files in the same directory as your `Mods` path (for example: `GIMI\Mods`, `GIMI\d3dx.ini`, and `GIMI\d3d11.dll`). The `d3dx.ini` file is necessary to identify errored lines in your mod files later. And the `d3d11.dll` is just to make sure that you're in modding environment.
 3. If the path is valid, it sets up a `_MANAGED_` folder inside the `Mods` folder. This is where all managed mods are stored. **Only the mods inside this folder will have their .ini files modified.**
-4. It creates the files needed for the mod manager to work, such as `background_keypress.ini` (which ensures simulated keypresses reach XXMI or 3DMigoto seamlessly) and `manager_group.ini` (to handle switching mods between groups).
+4. It creates the files needed for the mod manager to work, such as `nrmm_keypress.txt` (which ensures simulated keypresses reach XXMI or 3DMigoto seamlessly) and `manager_group.ini` (to handle switching mods between groups).
 5. The manager looks through all group folders inside the `_MANAGED_` folder and identifies every managed mod within them.
 6. It searches for duplicate namespaces between mods. Since modders often use generic namespaces that can clash, the manager will automatically rename them if a conflict is found. This is an "all or nothing" process, meaning it guarantees that no `.ini` file will be left referencing an old namespace once the change is made. But, multiple ini files within the same mod could define `namespace =` line with the same value and it is fine and sometimes intended.
 7. It then uses a function to read the modding environment exactly like the internal parser of `XXMI` or `3DMigoto`. This helps identify errored lines accurately, specifically invalid `if-elif-endif` structures that could interfere with the manager's modifications.
@@ -158,6 +158,6 @@ Special thanks to:
 ---
 
 ## Additions
-If you don't like of the mod toggles/customizations are changed even though the game is in background (background_keypress.ini is mandatory)  
+If you don't like of the mod toggles/customizations are changed even though the game is in background (nrmm_keypress.txt is mandatory)  
 Or you want to play multiple supported games at the same time without interferring mod selections  
 You can use [Custom XXMI-Lib-Package](https://github.com/Aglglg/XXMI-Libs-Package) (based on Original XXMI-Lib-Package)  

@@ -1238,6 +1238,14 @@ class _MainViewState extends ConsumerState<MainView>
 
     if (existAndValid) {
       String managedPath = p.join(modsPath, ConstantVar.managedFolderName);
+      String backgroundKeypressPath = p.join(
+        managedPath,
+        ConstantVar.backgroundKeypressFileName,
+      );
+      String nrmmIncluderPath = p.join(
+        managedPath,
+        ConstantVar.nrmmIncluderFileName,
+      );
       String managerGroupPath = p.join(
         managedPath,
         ConstantVar.managerGroupFileName,
@@ -1249,6 +1257,18 @@ class _MainViewState extends ConsumerState<MainView>
         notReadyReason =
             "Mods path is correct, but the '_MANAGED_' folder is missing or outdated."
                 .tr();
+      }
+      //Check nrmm_keypress.txt
+      else if (!await File(backgroundKeypressPath).exists()) {
+        existAndValid = false;
+        notReadyReason =
+            "Mods path is correct, but some requirements are missing.".tr();
+      }
+      //Check nrmm includer
+      else if (!await File(nrmmIncluderPath).exists()) {
+        existAndValid = false;
+        notReadyReason =
+            "Mods path is correct, but some requirements are missing.".tr();
       }
       //Check manager_group.ini
       else if (!await File(managerGroupPath).exists()) {

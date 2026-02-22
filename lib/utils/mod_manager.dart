@@ -970,7 +970,6 @@ Future<List<TextSpan>> updateModData(
       operationLogs,
       errorShouldTryAgain,
       targetGame,
-      d3dxIni,
     );
 
     final managedPath = preparing.$1;
@@ -1262,7 +1261,6 @@ Future<(String, bool)> _prepareManagedFolder(
   List<TextSpan> operationLogs,
   Ref<bool> errorShouldTryAgain,
   String targetGame,
-  String d3dxIniPath,
 ) async {
   final managedPath = p.join(modsPath, ConstantVar.managedFolderName);
   bool needReloadManual = false;
@@ -1276,15 +1274,21 @@ Future<(String, bool)> _prepareManagedFolder(
     await Directory(managedPath).create();
   }
 
-  await _makeSureBackgroundKeypressActive(
+  //if background keypress not exist, ask user to reload manually
+  if (!await File(
+        p.join(managedPath, ConstantVar.backgroundKeypressFileName),
+      ).exists() ||
+      !await File(
+        p.join(managedPath, ConstantVar.nrmmIncluderFileName),
+      ).exists()) {
+    needReloadManual = true;
+  }
+
+  await _createBackgroundKeypressIni(
     managedPath,
     operationLogs,
     errorShouldTryAgain,
     targetGame,
-    d3dxIniPath,
-    (reload) {
-      needReloadManual = reload;
-    },
   );
   await _createManagerGroupIni(managedPath, operationLogs, errorShouldTryAgain);
 
@@ -1623,163 +1627,44 @@ Future<void> _tryRenameOldManagedFolder(String modsPath) async {
   }
 }
 
-Future<bool> _fixD3dxIniForKeypress(
-  String d3dxIniPath,
-  bool useCustomXXMI,
-  String targetGame,
-) async {
-  List<String> lines = await forceReadAsLinesUtf8(File(d3dxIniPath));
-
-  bool needManualReload = false;
-  final targetSection = useCustomXXMI ? "loader" : "system";
-
-  int? start;
-  int? end;
-
-  //fix for changing NRMM mode
-  for (var i = 0; i < lines.length; i++) {
-    if (lines[i].trim().toLowerCase().replaceAll(' ', '') ==
-            "check_foreground_window=0" &&
-        useCustomXXMI) {
-      lines[i] = "check_foreground_window = 1";
-      needManualReload = true;
-    }
-    if (lines[i]
-            .trim()
-            .toLowerCase()
-            .replaceAll(' ', '')
-            .startsWith('manager=noreloadmodmanager') &&
-        !useCustomXXMI) {
-      lines[i] = "-!-!-";
-      needManualReload = true;
-    }
-  }
-
-  lines = lines.where((element) => element != "-!-!-").toList();
-
-  //locate section bounds
-  for (int i = 0; i < lines.length; i++) {
-    final trimmed = lines[i].trim();
-    if (trimmed.startsWith(';')) continue;
-
-    if (trimmed.startsWith('[')) {
-      final name = getSectionName(trimmed.toLowerCase());
-
-      if (name == targetSection) {
-        start = i;
-
-        for (int j = i + 1; j < lines.length; j++) {
-          final t = lines[j].trim();
-          if (t.startsWith('[')) {
-            end = j;
-            break;
-          }
-        }
-        end ??= lines.length;
-        break;
-      }
-    }
-  }
-
-  //create section if absent
-  if (start == null) {
-    lines.add("");
-    lines.add("[$targetSection]");
-
-    if (useCustomXXMI) {
-      lines.add("manager = No Reload Mod Manager $targetGame");
-    } else {
-      lines.add("check_foreground_window = 0");
-    }
-
-    await safeWriteIni(File(d3dxIniPath), lines.join('\n'));
-    return true;
-  }
-
-  bool foundCheck = false;
-  bool foundManager = false;
-
-  //scan inside section
-  for (int i = start + 1; i < end!; i++) {
-    final raw = lines[i];
-    final trimmed = raw.trim();
-    if (trimmed.startsWith(';')) continue;
-    final lower = trimmed.toLowerCase();
-
-    if (!lower.contains('=')) continue;
-
-    final eq = raw.indexOf('=');
-    final key = raw.substring(0, eq).trim().toLowerCase();
-    final value = raw.substring(eq + 1).trim();
-
-    if (!useCustomXXMI && key == "check_foreground_window") {
-      foundCheck = true;
-
-      if (value != "0") {
-        lines[i] = "check_foreground_window = 0";
-        needManualReload = true;
-      }
-    }
-
-    if (useCustomXXMI && key == "manager") {
-      foundManager = true;
-
-      if (value.toLowerCase() !=
-          "no reload mod manager ${targetGame.toLowerCase()}") {
-        lines[i] = "manager = No Reload Mod Manager $targetGame";
-        needManualReload = true;
-      }
-    }
-  }
-
-  //append missing keys
-  if (!useCustomXXMI && !foundCheck) {
-    lines.insert(start + 1, "check_foreground_window = 0");
-    needManualReload = true;
-  }
-
-  if (useCustomXXMI && !foundManager) {
-    lines.insert(start + 1, "manager = No Reload Mod Manager $targetGame");
-    needManualReload = true;
-  }
-
-  if (needManualReload) {
-    await safeWriteIni(File(d3dxIniPath), lines.join('\n'));
-  }
-  return needManualReload;
-}
-
-Future<void> _makeSureBackgroundKeypressActive(
+Future<void> _createBackgroundKeypressIni(
   String managedPath,
   List<TextSpan> operationLogs,
   Ref<bool> errorShouldTryAgain,
   String targetGame,
-  String d3dxIniPath,
-  void Function(bool) needReload,
 ) async {
-  bool useCustomXXMI = SharedPrefUtils().useCustomXXMILib();
+  // Load the .txt template from assets
+  final template = await rootBundle.loadString(
+    SharedPrefUtils().useCustomXXMILib()
+        ? 'assets/template_txt/listen_keypress_manager.txt'
+        : 'assets/template_txt/listen_keypress_even_on_background.txt',
+  );
 
-  //Delete old background_keypress.ini that conflict with new XXMI Launcher
-  final filePath = p.join(managedPath, ConstantVar.backgroundKeypressFileName);
-  final oldIniFile = File(filePath);
-  try {
-    await oldIniFile.delete();
-  } catch (_) {}
+  // Create the required files
+  final keypressfilePath = p.join(
+    managedPath,
+    ConstantVar.backgroundKeypressFileName,
+  );
+  final keypressFile = File(keypressfilePath);
 
-  // Write content into the d3dx.ini file
+  final includerfilePath = p.join(
+    managedPath,
+    ConstantVar.nrmmIncluderFileName,
+  );
+  final includerFile = File(includerfilePath);
+
+  // Write content into the .ini file
   try {
-    bool reload = await _fixD3dxIniForKeypress(
-      d3dxIniPath,
-      useCustomXXMI,
-      targetGame,
+    await keypressFile.writeAsString(template.replaceAll("{game}", targetGame));
+    await includerFile.writeAsString(
+      "[IncludeKeypress]\ninclude = ${ConstantVar.backgroundKeypressFileName}",
     );
-    needReload(reload);
   } catch (_) {
     errorShouldTryAgain.value = true;
     operationLogs.add(
       TextSpan(
         text:
-            "${'Error cannot modify d3dx.ini for NRMM to work properly'.tr()}.\n${ConstantVar.defaultErrorInfo}\n\n",
+            "${'Error cannot create'.tr(args: [ConstantVar.backgroundKeypressFileName])}.\n${ConstantVar.defaultErrorInfo}\n\n",
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );
