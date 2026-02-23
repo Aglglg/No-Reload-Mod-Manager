@@ -1403,6 +1403,10 @@ class _MainViewState extends ConsumerState<MainView>
         ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
         await windowManager.focus();
+      } else {
+        if (ref.read(showMenuWhenTogglingOutsideGameProvider)) {
+          await tray.trayManager.popUpContextMenu();
+        }
       }
     }
   }

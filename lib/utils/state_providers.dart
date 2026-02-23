@@ -118,6 +118,10 @@ final isAutoPinWindowProvider = StateProvider<bool>((ref) {
   SharedPrefUtils().tryInit();
   return SharedPrefUtils().isAutoPinWindow();
 });
+final showMenuWhenTogglingOutsideGameProvider = StateProvider<bool>((ref) {
+  SharedPrefUtils().tryInit();
+  return SharedPrefUtils().shouldShowMenuOutsideGame();
+});
 
 final keybindSimulateKeypressProvider = StateProvider<bool>((ref) {
   SharedPrefUtils().tryInit();

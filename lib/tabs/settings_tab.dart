@@ -739,6 +739,45 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
+                          SizedBox(width: 40 * sss),
+                          SizedBox(
+                            height: 25 * sss,
+                            width: 35 * sss,
+                            child: FittedBox(
+                              fit: BoxFit.fill,
+                              child: Switch(
+                                value: ref.watch(
+                                  showMenuWhenTogglingOutsideGameProvider,
+                                ),
+                                onChanged: (value) {
+                                  SharedPrefUtils().setShowMenuOutsideGame(
+                                    value,
+                                  );
+                                  ref
+                                      .read(
+                                        showMenuWhenTogglingOutsideGameProvider
+                                            .notifier,
+                                      )
+                                      .state = value;
+                                },
+                                activeColor: Colors.blue,
+                                trackOutlineWidth: WidgetStatePropertyAll(0),
+                                trackOutlineColor: WidgetStatePropertyAll(
+                                  Colors.transparent,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Container(width: 15 * sss),
+                          Text(
+                            'Show Tray Menu when toggling outside the game'
+                                .tr(),
+                            style: GoogleFonts.poppins(
+                              color: const Color.fromARGB(255, 255, 255, 255),
+                              fontSize: 12 * sss,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ],
                       ),
 

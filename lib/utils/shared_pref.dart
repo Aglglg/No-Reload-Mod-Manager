@@ -427,6 +427,15 @@ class SharedPrefUtils {
     return result ??= false;
   }
 
+  Future<void> setShowMenuOutsideGame(bool value) async {
+    await _prefs?.setBool(keyShowMenuOutsideGame, value);
+  }
+
+  bool shouldShowMenuOutsideGame() {
+    bool? result = _prefs?.getBool(keyShowMenuOutsideGame);
+    return result ??= false;
+  }
+
   Future<void> setKeybindSimulateKeypress(bool value) async {
     await _prefs?.setBool(keyKeybindSimulateKeypress, value);
   }
@@ -488,6 +497,7 @@ class SharedPrefUtils {
   static const String keyAutoGenerateFolderIcon = "autoFolderIco";
 
   static const String keyAutoPinWindow = "autoPinWindow";
+  static const String keyShowMenuOutsideGame = "showMenuOutsideGame";
 
   static const String keyKeybindSimulateKeypress = "keybindSimulateKeypress";
 
