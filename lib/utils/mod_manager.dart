@@ -810,7 +810,7 @@ String _sanitizeKeyConditionExpressionFromModManager(String expression) {
 }
 
 /// Will remove the manager if-endif, the added Constants var, and manager comments from ini file
-Future<List<TextSpan>> revertManagedMod(List<Directory> modDirs) async {
+Future<List<TextSpan>> restoreManagedMod(List<Directory> modDirs) async {
   List<TextSpan> operationLogs = [];
   bool containsError = false;
 
@@ -908,7 +908,7 @@ Future<List<TextSpan>> revertManagedMod(List<Directory> modDirs) async {
         operationLogs.add(
           TextSpan(
             text:
-                '${'Error reverting'.tr(args: [p.basename(folder.path)])}.\n${ConstantVar.defaultErrorInfo}\n\n',
+                '${'Error restoring'.tr(args: [p.basename(folder.path)])}.\n${ConstantVar.defaultErrorInfo}\n\n',
             style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
           ),
         );
@@ -919,7 +919,7 @@ Future<List<TextSpan>> revertManagedMod(List<Directory> modDirs) async {
   operationLogs.add(
     containsError
         ? TextSpan(
-          text: 'Mods reverted. But there are some errors.'.tr(),
+          text: 'Mods restored. But there are some errors.'.tr(),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
             fontWeight: FontWeight.w600,
@@ -927,7 +927,7 @@ Future<List<TextSpan>> revertManagedMod(List<Directory> modDirs) async {
           ),
         )
         : TextSpan(
-          text: 'Mods reverted!'.tr(),
+          text: 'Mods restored!'.tr(),
           style: GoogleFonts.poppins(color: Colors.green, fontSize: 14),
         ),
   );

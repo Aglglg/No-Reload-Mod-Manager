@@ -17,7 +17,7 @@ class ModsDropZone extends ConsumerStatefulWidget {
   final String dialogTitleText;
   final void Function(List<Directory> validFolders, List<File>)
   onConfirmFunction;
-  final bool forReverter;
+  final bool forRestorer;
   const ModsDropZone({
     super.key,
     required this.dialogTitleText,
@@ -27,7 +27,7 @@ class ModsDropZone extends ConsumerStatefulWidget {
     this.currentModsCountInGroup,
     this.additionalContent,
     this.copyDestination,
-    this.forReverter = false,
+    this.forRestorer = false,
   });
 
   @override
@@ -81,7 +81,7 @@ class _ModsDropZoneState extends ConsumerState<ModsDropZone> {
                 .toList();
 
         List<File> droppedArchives = [];
-        //modArchives is empty for revert function
+        //modArchives is empty for restore function
         if (widget.acceptArchived) {
           droppedArchives =
               droppedFiles.where((f) => isArchive(f.path)).toList();
@@ -121,7 +121,7 @@ class _ModsDropZoneState extends ConsumerState<ModsDropZone> {
                   dialogTitleText: widget.dialogTitleText,
                   onConfirmFunction: widget.onConfirmFunction,
                   additionalContent: widget.additionalContent,
-                  forReverter: widget.forReverter,
+                  forRestorer: widget.forRestorer,
                 ),
           );
         }

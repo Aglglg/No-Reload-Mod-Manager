@@ -47,20 +47,20 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
     });
   }
 
-  String _getRevertInfoText() {
+  String _getRestoreInfoText() {
     return ref.watch(windowIsPinnedProvider)
         ? 'Drag & Drop mod folders here, so that the mod can be used again without mod manager.'
             .tr()
         : '${'Drag & Drop mod folders here, so that the mod can be used again without mod manager.'.tr()}\n${'Right-click and pin this window to use this.'.tr()}';
   }
 
-  void _onModRevertConfirm(List<Directory> modDirs, List<File> modArchives) {
-    //modArchives is empty for revert function
+  void _onModRestoreConfirm(List<Directory> modDirs, List<File> modArchives) {
+    //modArchives is empty for restore function
     ref.read(alertDialogShownProvider.notifier).state = true;
     showDialog(
       barrierDismissible: false,
       context: context,
-      builder: (context) => RevertModDialog(modDirs: modDirs),
+      builder: (context) => RestoreModDialog(modDirs: modDirs),
     );
   }
 
@@ -142,7 +142,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                       ),
                       Container(height: 10 * sss),
                       Text(
-                        'Reverter'.tr(),
+                        'Restorer'.tr(),
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontSize: 14 * sss,
@@ -166,12 +166,12 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(20 * sss),
                                 child: ModsDropZone(
-                                  dialogTitleText: "Revert mods".tr(),
-                                  forReverter: true,
-                                  onConfirmFunction: _onModRevertConfirm,
+                                  dialogTitleText: "Restore mods".tr(),
+                                  forRestorer: true,
+                                  onConfirmFunction: _onModRestoreConfirm,
                                   additionalContent: TextSpan(
                                     text:
-                                        "\n${'Reverting mods will remove mod manager\'s "if-endif" line, so that it can be used again without mod manager.'.tr()}",
+                                        "\n${'Restoring mods will remove mod manager\'s specific lines, so that it can be used again without mod manager.'.tr()}",
                                     style: GoogleFonts.poppins(
                                       color: const Color.fromARGB(
                                         255,
@@ -204,7 +204,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                       horizontal: 19,
                                     ),
                                     child: Text(
-                                      _getRevertInfoText(),
+                                      _getRestoreInfoText(),
                                       textAlign: TextAlign.center,
                                       style: GoogleFonts.poppins(
                                         color: const Color.fromARGB(

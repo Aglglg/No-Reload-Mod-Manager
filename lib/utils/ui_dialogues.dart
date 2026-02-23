@@ -385,7 +385,7 @@ class OnDropModFolderDialog extends ConsumerStatefulWidget {
   final String? copyDestination;
   final Function onConfirmFunction;
   final TextSpan? additionalContent;
-  final bool forReverter;
+  final bool forRestorer;
 
   const OnDropModFolderDialog({
     super.key,
@@ -395,7 +395,7 @@ class OnDropModFolderDialog extends ConsumerStatefulWidget {
     required this.onConfirmFunction,
     required this.additionalContent,
     required this.droppedArchives,
-    this.forReverter = false,
+    this.forRestorer = false,
   });
 
   @override
@@ -421,7 +421,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
   ];
 
   Future<bool> isValidFolder(Directory f) async {
-    if (widget.forReverter ||
+    if (widget.forRestorer ||
         (!isUnderManagedFolder(f.path) &&
             !isFolderOnThisToolPath(f) &&
             !await isParentOfManagedFolder(f.path) &&
@@ -571,7 +571,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
     /////////////////////
     setState(() {
       validFolders = mValidFolders;
-      if (!widget.forReverter) {
+      if (!widget.forRestorer) {
         validArchives = widget.droppedArchives;
         foldersOnManagedPath = mFoldersOnManagedPath;
         foldersOnThisToolPath = mFoldersOnThisToolPath;
@@ -1420,15 +1420,15 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
   }
 }
 
-class RevertModDialog extends ConsumerStatefulWidget {
+class RestoreModDialog extends ConsumerStatefulWidget {
   final List<Directory> modDirs;
-  const RevertModDialog({super.key, required this.modDirs});
+  const RestoreModDialog({super.key, required this.modDirs});
 
   @override
-  ConsumerState<RevertModDialog> createState() => _RevertModDialogState();
+  ConsumerState<RestoreModDialog> createState() => _RestoreModDialogState();
 }
 
-class _RevertModDialogState extends ConsumerState<RevertModDialog> {
+class _RestoreModDialogState extends ConsumerState<RestoreModDialog> {
   final ScrollController _scrollController = ScrollController();
   bool _showClose = false;
   List<TextSpan> contents = [];
@@ -1436,7 +1436,7 @@ class _RevertModDialogState extends ConsumerState<RevertModDialog> {
   @override
   void initState() {
     super.initState();
-    revertMods();
+    restoreMods();
   }
 
   @override
@@ -1445,17 +1445,17 @@ class _RevertModDialogState extends ConsumerState<RevertModDialog> {
     super.dispose();
   }
 
-  Future<void> revertMods() async {
+  Future<void> restoreMods() async {
     setState(() {
       contents = [];
       contents.add(
         TextSpan(
-          text: 'Reverting mods...'.tr(),
+          text: 'Restoring mods...'.tr(),
           style: GoogleFonts.poppins(color: Colors.white),
         ),
       );
     });
-    final operationResults = await revertManagedMod(widget.modDirs);
+    final operationResults = await restoreManagedMod(widget.modDirs);
     setState(() {
       _showClose = true;
       contents = operationResults;
@@ -1479,7 +1479,7 @@ class _RevertModDialogState extends ConsumerState<RevertModDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-        'Revert mods'.tr(),
+        'Restore mods'.tr(),
         style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
       ),
       content: ConstrainedBox(
@@ -1736,7 +1736,7 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
       }
 
       Directory movedDir = await widget.modOrGroupDir.rename(destPath);
-      List<TextSpan> operationLogs = await revertManagedMod([movedDir]);
+      List<TextSpan> operationLogs = await restoreManagedMod([movedDir]);
       operationLogs.insert(
         0,
         TextSpan(

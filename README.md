@@ -11,22 +11,25 @@ How? Of course, first of all you must know [How to contribute to open sourced pr
 # No Reload Mod Manager / Skin Selection
 (for XXMI Launcher supported games, or 3dmigoto mod)
 
-## Overview
-**No Reload Mod Manager** is a tool designed to make managing mods easier. With this tool, you can:
+## Quick Start
+1. Download.
+2. Install normally.
+3. Run it. Open from system tray or press Alt+W in-game.
+4. Check that your Mods path in Settings is correct (don’t rely on auto-detect).
 
-- Select skins/mods directly without needing to reload the game (F10).
-- Give images/icons to your mods.
-- Group your mods for a specific character.
-- View and edit mod keybindings.
+## Main Features
+- Select and manage mods
+- Edit keybinds and toggles
+- Click UI buttons to trigger toggles (no keyboard needed)
+- Supports keyboard, mouse, and XInput gamepads
+- Saves your mod states and settings
 
-This tool supports **mouse**, **keyboard**, and **gamepad (XInput only)** inputs for interaction.
-
----
-
-## Features
-- **Mod Selection**: Choose and apply mods on the fly.
-- **Keybinding Editor**: Modify mod keybindings conveniently.
-- UI Buttons to trigger Keybinds/Toggles without pressing the keyboard.
+## Extras
+- Warns about missing libraries (RabbitFx, Orfix, Slotfix, etc.)
+- Warns about duplicate libraries
+- Adds icons to mods
+- Helps organize mod folders
+- More
 
 ---
 
@@ -79,15 +82,16 @@ This tool supports **mouse**, **keyboard**, and **gamepad (XInput only)** inputs
 
 ### How To Remove Group/Mod
 1. Make sure your **Mods Path** is valid.
-1. While on **Mods** tab right click on group/mod and select remove group/mod.
-2. This will move your mod/group folder to **DISABLED_MANAGED_REMOVED** on your **Mods** folder.
-3. It will automatically revert any changes to mod's .ini files. Which means **any changes you made while these mods were managed will all be removed/reverted**.
-4. Press F10 to reload **if not automatically reloaded**.
+2. While on **Mods** tab right click on group/mod and select remove group/mod.
+3. This will move your mod/group folder to **DISABLED_MANAGED_REMOVED** on your **Mods** folder.
+4. It will automatically restore the mod's .ini files by removing mod manager-specific lines only. The rest of the mod files are not affected.
+5. Press F10 to reload **if not automatically reloaded**.
 ### How To Remove Group/Mod directly via File Explorer
 1. Go to your **\_MANAGED\_** folder on your **Mods** folder.
 2. In there, you can delete/move group or mod folder.
-3. In case you moved it and not delete it, open Mod Manager Window and go to **Settings** tab. Drag and drop the folders to the **Reverter**. This step is **very important**.
-4. Open Mod Manager Window. Press **Update Mod Data**. This step is **very important**.
+3. In case you moved it and not delete it, open Mod Manager Window and go to **Settings** tab. Drag and drop the folders to the **Restorer**. This step is **very important**.
+4. It will restore the mod's .ini files by removing mod manager-specific lines only. Your original mod content remains untouched.
+5. Open Mod Manager Window. Press **Update Mod Data**. This step is **very important**.
 
 ---
 
@@ -101,7 +105,7 @@ Even though this is not main mod loader or mod tool, and only tool to organize m
 - Built with **Flutter (Dart)**.
 - Toggle window shortcuts (Alt+W) works by reading **target game process names** (e.g., `Client-Win64-Shipping.exe`).
 - In order to change selected mods, this tool will do VK_KEYS keypress simulation & mouse movement.
-- The mods that you added also being modified, you can remove the lines that were added by the mod manager, by dragging it to Reverter area on Settings.
+- The mods that you added also being modified, you can remove the lines that were added by the mod manager, by dragging it to Restorer area on Settings.
 - **XXMI DLL/3dmigoto will receives keypresses in the background**, d3dx.ini modified.
 
 ## Mod Ini Files Modification
@@ -110,8 +114,8 @@ Even though this is not main mod loader or mod tool, and only tool to organize m
 - The changes made to the `.ini` files are minimal, and no new sections are ever added.
 - The changes made to the `.ini` files are guaranteed to be valid, as it is already smart enough to determine _bad_ lines from modder.
 - The manager only adds `if-endif` lines to the `Command List` sections and the `$managed_slot_id` variable to the existing `Constants` section.
-- **It is really recommended to remove the `if-endif` lines added by the manager, by using Reverter in Settings if you’re not using it anymore or if you wanted to post/distribute your mods**.
-- The reverter has been programmed to removes only mod manager specific lines/words without reverting everything back to zero (v2.8.3++).
+- **It is really recommended to remove the `if-endif` lines added by the manager, by using Restorer in Settings if you’re not using it anymore or if you wanted to post/distribute your mods**.
+- The restorer has been programmed to removes only mod manager specific lines/words without reverting everything back to zero (v2.8.3++).
 <details>
  <summary><h3>(CLICK TO EXPAND AND READ THE DETAILED PROCESS)</h3></summary>
 
