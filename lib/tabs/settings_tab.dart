@@ -51,7 +51,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
     return ref.watch(windowIsPinnedProvider)
         ? 'Drag & Drop mod folders here, so that the mod can be used again without mod manager.'
             .tr()
-        : '${'Drag & Drop mod folders here, so that the mod can be used again without mod manager.'.tr()}\n${'Right-click and pin this window to use this.'.tr()}';
+        : '${'Drag & Drop mod folders here, so that the mod can be used again without mod manager.'.tr()}\n\n${'Right-click and pin this window to use this.'.tr()}';
   }
 
   void _onModRestoreConfirm(List<Directory> modDirs, List<File> modArchives) {
