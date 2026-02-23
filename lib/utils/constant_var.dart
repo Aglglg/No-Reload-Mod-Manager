@@ -53,6 +53,9 @@ class ConstantVar {
   static const String urlJsonAutoIconEndfield =
       "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/auto_icon/endfield/_icon.json";
 
+  static const String urlAutoIconInfo =
+      "https://github.com/Aglglg/No-Reload-Mod-Manager/tree/main/assets/cloud_data/auto_icon";
+
   static const String urlJsonUpdatedKnownModdingLib =
       "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/common_modding_lib/common_modding_lib.json";
 
