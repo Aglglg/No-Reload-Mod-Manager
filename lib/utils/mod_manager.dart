@@ -952,6 +952,8 @@ Future<List<TextSpan>> updateModData(
 
   Ref<bool> errorShouldTryAgain = Ref(false);
 
+  final stopwatch = Stopwatch()..start();
+
   try {
     //Prepare _MANAGED_ folder first, make sure it's there or old managed folder to be new _MANAGED_ folder
     //And also create some ini files from template
@@ -1101,15 +1103,48 @@ Future<List<TextSpan>> updateModData(
         }(),
     ]);
 
+    stopwatch.stop();
+
+    final elapsed = stopwatch.elapsed;
+    final timeText =
+        elapsed.inMinutes > 0
+            ? '${elapsed.inMinutes}m ${elapsed.inSeconds % 60}s'
+            : elapsed.inSeconds > 0
+            ? '${elapsed.inSeconds}.${(elapsed.inMilliseconds % 1000) ~/ 100}s'
+            : '${elapsed.inMilliseconds}ms';
+
     operationLogs.add(
       !errorShouldTryAgain.value
           ? TextSpan(
-            text: 'Mods successfully managed!'.tr(),
-            style: GoogleFonts.poppins(
-              color: Colors.green,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
+            children: [
+              TextSpan(
+                text: 'Mods successfully managed!'.tr(),
+                style: GoogleFonts.poppins(
+                  color: Colors.green,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              TextSpan(
+                text: '  $timeText',
+                style: GoogleFonts.poppins(
+                  color: Colors.grey,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              if (elapsed.inSeconds > 6)
+                TextSpan(
+                  text:
+                      'To get faster mod reload, consider disabling mods you rarely use.'
+                          .tr(),
+                  style: GoogleFonts.poppins(
+                    color: Colors.grey,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+            ],
           )
           : TextSpan(
             text:
