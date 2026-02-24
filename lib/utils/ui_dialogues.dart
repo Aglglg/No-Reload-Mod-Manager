@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:archive/archive_io.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/main.dart';
+import 'package:no_reload_mod_manager/utils/archive_manager.dart';
 import 'package:no_reload_mod_manager/utils/auto_group_icon.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_group_folder_icon.dart';
@@ -53,7 +53,7 @@ class _GenerateGroupIcoFileDialogState
         TextSpan(
           text: "Generate ico files for all group folders?".tr(),
           style: GoogleFonts.poppins(
-            color: const Color.fromARGB(255, 255, 255, 255),
+            color: Colors.grey,
             fontWeight: FontWeight.w400,
             fontSize: 14,
           ),
@@ -601,9 +601,9 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
         TextSpan(
           text: "${p.basename(archive.path)}\n",
           style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
+            color: Colors.grey,
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
           ),
         ),
       );
@@ -612,7 +612,11 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
       resultLogs.add(
         TextSpan(
           text: "${p.basename(folder.path)}\n",
-          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+          style: GoogleFonts.poppins(
+            color: Colors.grey,
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+          ),
         ),
       );
     }
@@ -620,7 +624,11 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
       resultLogs.add(
         TextSpan(
           text: "${'None'.tr()}\n",
-          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+          style: GoogleFonts.poppins(
+            color: Colors.grey,
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+          ),
         ),
       );
     }
@@ -642,7 +650,11 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
       resultLogs.add(
         TextSpan(
           text: "${p.basename(folder.path)}\n",
-          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+          style: GoogleFonts.poppins(
+            color: Colors.grey,
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+          ),
         ),
       );
     }
@@ -652,8 +664,8 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
           text: "Please move these folders outside first".tr(),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            fontSize: 13,
           ),
         ),
       );
@@ -676,7 +688,11 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
       resultLogs.add(
         TextSpan(
           text: "${p.basename(folder.path)}\n",
-          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+          style: GoogleFonts.poppins(
+            color: Colors.grey,
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+          ),
         ),
       );
     }
@@ -688,8 +704,8 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
                   .tr(),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            fontSize: 13,
           ),
         ),
       );
@@ -714,7 +730,11 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
       resultLogs.add(
         TextSpan(
           text: "${p.basename(folder.path)}\n",
-          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+          style: GoogleFonts.poppins(
+            color: Colors.grey,
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+          ),
         ),
       );
     }
@@ -724,8 +744,8 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
           text: "This folder contains this tool exe file".tr(),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            fontSize: 13,
           ),
         ),
       );
@@ -750,7 +770,11 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
       resultLogs.add(
         TextSpan(
           text: "${p.basename(folder.path)}\n",
-          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+          style: GoogleFonts.poppins(
+            color: Colors.grey,
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+          ),
         ),
       );
     }
@@ -762,8 +786,8 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
                   .tr(),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            fontSize: 13,
           ),
         ),
       );
@@ -786,7 +810,11 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
       resultLogs.add(
         TextSpan(
           text: "${p.basename(folder.path)}\n",
-          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+          style: GoogleFonts.poppins(
+            color: Colors.grey,
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+          ),
         ),
       );
     }
@@ -798,8 +826,8 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
                   .tr(),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            fontSize: 13,
           ),
         ),
       );
@@ -904,8 +932,11 @@ class CopyModDialog extends ConsumerStatefulWidget {
 
 class _CopyModDialogState extends ConsumerState<CopyModDialog> {
   final ScrollController _scrollController = ScrollController();
+  bool _showConfirm = false;
   bool _showClose = false;
+  bool _showPasswordTextfield = true;
   List<TextSpan> contents = [];
+  Map<String, String> passwordedArchives = {};
 
   @override
   void initState() {
@@ -919,35 +950,75 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
     super.dispose();
   }
 
-  Future<bool> directoryHasZeroSize(Directory dir) async {
-    if (!await dir.exists()) return false;
+  Future<void> unwrapSingleFolderNesting(String path) async {
+    final dir = Directory(path);
 
-    await for (final entity in dir.list(recursive: true, followLinks: false)) {
-      if (entity is File) {
-        try {
-          final length = await entity.length();
-          if (length > 0) {
-            return false; // stop immediately if bytes already not 0
-          }
-        } catch (_) {
-          // ignore inaccessible files
+    try {
+      while (true) {
+        final entries = await dir.list().toList();
+
+        // Exclude "modname" file from consideration
+        final relevant =
+            entries
+                .where((e) => p.basename(e.path).toLowerCase() != 'modname')
+                .toList();
+
+        // Stop if more than 1 relevant entry, or it's empty
+        if (relevant.length != 1) break;
+
+        // Stop if the single relevant entry is a file (any type except Directory)
+        final single = relevant.first;
+        final isDir = await FileSystemEntity.isDirectory(single.path);
+        if (!isDir) break;
+
+        final singleSubDir = Directory(single.path);
+
+        // Move contents of singleSubDir up to dir
+        await for (final entity in singleSubDir.list()) {
+          final target = p.join(dir.path, p.basename(entity.path));
+          await entity.rename(target);
         }
+
+        // Remove the now-empty wrapper folder
+        await singleSubDir.delete();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> copyMods({bool proceed = false}) async {
+    //ARCHIVE CHECK PASSWORD
+    if (!proceed) {
+      for (var archive in widget.modArchives) {
+        bool isPassworded = await SevenZip.instance.isEncrypted(archive.path);
+        if (isPassworded) {
+          setState(() {
+            passwordedArchives = {...passwordedArchives, archive.path: ''};
+          });
+        }
+      }
+
+      if (passwordedArchives.isNotEmpty) {
+        setState(() {
+          _showConfirm = true;
+        });
+        return;
+      } else {
+        proceed = true;
       }
     }
 
-    return true; // no files or all empty
-  }
-
-  Future<void> copyMods() async {
-    setState(() {
-      contents = [];
-      contents.add(
-        TextSpan(
-          text: 'Copying mods...'.tr(),
-          style: GoogleFonts.poppins(color: Colors.white),
-        ),
-      );
-    });
+    if (proceed) {
+      setState(() {
+        contents = [];
+        _showPasswordTextfield = false;
+        contents.add(
+          TextSpan(
+            text: 'Copying mods...'.tr(),
+            style: GoogleFonts.poppins(color: Colors.white),
+          ),
+        );
+      });
+    }
 
     List<TextSpan> operationLogs = [];
 
@@ -966,13 +1037,21 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
           destDirPath = await checkForDuplicateFolderName(destDirPath);
 
           await copyDirectory(disabledFolder, Directory(destDirPath));
+
           //Even though source folder already disabled, after successfully copied, just delete it. Actually just simulating cut/move.
           //Rename source folder is also the same as testing whether that folder is used by other programs or not.
           await deleteUnusedFolder(disabledFolder);
+
+          //make sure the mod folder directly contains files not another nested folder
+          await unwrapSingleFolderNesting(destDirPath);
           operationLogs.add(
             TextSpan(
               text: 'Folder copied'.tr(args: [p.basename(folder.path)]),
-              style: GoogleFonts.poppins(color: Colors.green, fontSize: 14),
+              style: GoogleFonts.poppins(
+                color: Colors.green,
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+              ),
             ),
           );
         } catch (_) {
@@ -1001,41 +1080,46 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
         p.basenameWithoutExtension(archive.path),
       );
       try {
+        //group_x/archiveName
         String destDirPath = p.join(widget.targetGroupPath, destFolderName);
         destDirPath = await checkForDuplicateFolderName(destDirPath);
 
         //extract
-        await extractFileToDisk(archive.path, destDirPath);
+        final extractResult = await SevenZip.instance.extract(
+          archive.path,
+          outputDir: destDirPath,
+          password: passwordedArchives[archive.path] ?? '',
+        );
 
-        //check extract result, if folder not there after extraction, throw error, invalid archive
-        try {
-          if (!await Directory(destDirPath).exists()) {
+        if (extractResult.success) {
+          //make sure the mod folder directly contains files not another nested folder
+          await unwrapSingleFolderNesting(destDirPath);
+        } else {
+          try {
+            await Directory(destDirPath).delete(recursive: true);
+          } catch (_) {}
+          if (extractResult.wrongPassword) {
+            throw Exception("Wrong password");
+          } else {
             throw Exception("Failed to extract");
           }
-        } catch (e) {
-          if (e.toString().contains("Failed to extract")) {
-            rethrow;
-          }
-          //if not that error that means error when doing Directory().exists(), skip
-        }
-
-        //check bytes size, if all 0, that means archive may be having password, failed
-        if (await directoryHasZeroSize(Directory(destDirPath))) {
-          await deleteUnusedFolder(Directory(destDirPath));
-          throw Exception("Passworded archive");
         }
 
         operationLogs.add(
           TextSpan(
             text: 'Archive extracted'.tr(args: [p.basename(archive.path)]),
-            style: GoogleFonts.poppins(color: Colors.green, fontSize: 14),
+            style: GoogleFonts.poppins(
+              color: Colors.green,
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+            ),
           ),
         );
       } catch (e) {
-        if (e.toString().contains("Passworded archive")) {
+        if (e.toString().contains("Wrong password")) {
           operationLogs.add(
             TextSpan(
-              text: 'Error! Archive may have password, not supported'.tr(
+              text: 'Archive wrong password'.tr(
                 args: [p.basename(archive.path)],
               ),
               style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
@@ -1141,7 +1225,7 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
     );
   }
 
-  void _onConfirmToUpdateModClicked() {
+  void _onCloseClicked() {
     showUpdateModSnackbar(
       context,
       ProviderScope.containerOf(context, listen: false),
@@ -1170,7 +1254,63 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
           ),
           child: SingleChildScrollView(
             controller: _scrollController,
-            child: RichText(text: TextSpan(children: contents)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (_showPasswordTextfield)
+                  ...passwordedArchives.entries.map((e) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          p.basename(e.key),
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w400,
+                            color: Colors.grey,
+                            fontSize: 12,
+                          ),
+                          textAlign: TextAlign.start,
+                        ),
+                        SizedBox(height: 3),
+                        TextField(
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            isDense: true,
+                            disabledBorder: InputBorder.none,
+                            hintText: 'Archive password',
+                            hintStyle: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w300,
+                              color: const Color.fromARGB(80, 255, 255, 255),
+                              fontSize: 13,
+                            ),
+                          ),
+                          maxLines: 1,
+                          keyboardType: TextInputType.none,
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white,
+                            fontSize: 13,
+                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.deny(
+                              RegExp(r'[\n\r\u0085\u2028\u2029]'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            passwordedArchives[e.key] = value;
+                          },
+                          onSubmitted: (value) {
+                            passwordedArchives[e.key] = value;
+                          },
+                        ),
+                        SizedBox(height: 16),
+                      ],
+                    );
+                  }),
+
+                RichText(text: TextSpan(children: contents)),
+              ],
+            ),
           ),
         ),
       ),
@@ -1181,7 +1321,19 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
                   onPressed: () {
                     Navigator.of(context).pop();
                     ref.read(alertDialogShownProvider.notifier).state = false;
-                    _onConfirmToUpdateModClicked();
+                    _onCloseClicked();
+                  },
+                  child: Text(
+                    'Close'.tr(),
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
+              ]
+              : _showConfirm
+              ? [
+                TextButton(
+                  onPressed: () {
+                    copyMods(proceed: true);
                   },
                   child: Text(
                     'Confirm'.tr(),
@@ -1702,7 +1854,7 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
           text: "Folder will be moved".tr(
             args: ["Mods/${ConstantVar.managedRemovedFolderName}"],
           ),
-          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+          style: GoogleFonts.poppins(color: Colors.grey, fontSize: 14),
         ),
       ];
     });
@@ -1990,7 +2142,7 @@ class _SaveModCustomizationsDialogState
         TextSpan(
           text: 'Save mod customizations?'.tr(),
           style: GoogleFonts.poppins(
-            color: const Color.fromARGB(255, 255, 255, 255),
+            color: Colors.grey,
             fontWeight: FontWeight.w400,
             fontSize: 14,
           ),

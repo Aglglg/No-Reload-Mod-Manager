@@ -5,6 +5,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:no_reload_mod_manager/utils/archive_manager.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:no_reload_mod_manager/utils/ui_dialogues.dart';
 
@@ -84,7 +85,7 @@ class _ModsDropZoneState extends ConsumerState<ModsDropZone> {
         //modArchives is empty for restore function
         if (widget.acceptArchived) {
           droppedArchives =
-              droppedFiles.where((f) => isArchive(f.path)).toList();
+              droppedFiles.where((f) => SevenZip.isSupported(f.path)).toList();
         }
 
         if (widget.checkForMaxMods != null &&
@@ -146,16 +147,4 @@ class _ModsDropZoneState extends ConsumerState<ModsDropZone> {
       ),
     );
   }
-}
-
-bool isArchive(String path) {
-  final lower = path.toLowerCase();
-  return lower.endsWith('.tar.gz') ||
-      lower.endsWith('.tgz') ||
-      lower.endsWith('.tar.bz2') ||
-      lower.endsWith('tbz') ||
-      lower.endsWith('tar.xz') ||
-      lower.endsWith('txz') ||
-      lower.endsWith('tar') ||
-      lower.endsWith('zip');
 }
