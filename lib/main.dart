@@ -1459,7 +1459,7 @@ class _MainViewState extends ConsumerState<MainView>
               ),
             ),
           ),
-        if (SharedPrefUtils().useCustomXXMILib())
+        if (SharedPrefUtils().useCustomXXMILib(ref.watch(targetGameProvider)))
           Align(
             alignment: Alignment.topCenter,
             child: Text(

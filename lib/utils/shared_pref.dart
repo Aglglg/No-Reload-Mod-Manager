@@ -433,7 +433,7 @@ class SharedPrefUtils {
 
   bool shouldShowMenuOutsideGame() {
     bool? result = _prefs?.getBool(keyShowMenuOutsideGame);
-    return result ??= false;
+    return result ??= true;
   }
 
   Future<void> setKeybindSimulateKeypress(bool value) async {
@@ -445,12 +445,33 @@ class SharedPrefUtils {
     return result ??= false;
   }
 
-  bool useCustomXXMILib() {
-    bool? result = _prefs?.getBool(keyUseCustomXXMILib);
-    return result ??= false;
+  bool useCustomXXMILib(TargetGame targetGame) {
+    switch (targetGame) {
+      case TargetGame.Wuthering_Waves:
+        bool? result = _prefs?.getBool(keyUseCustomXXMILibWuwa);
+        return result ??= false;
+      case TargetGame.Genshin_Impact:
+        bool? result = _prefs?.getBool(keyUseCustomXXMILibGenshin);
+        return result ??= false;
+      case TargetGame.Honkai_Star_Rail:
+        bool? result = _prefs?.getBool(keyUseCustomXXMILibHsr);
+        return result ??= false;
+      case TargetGame.Zenless_Zone_Zero:
+        bool? result = _prefs?.getBool(keyUseCustomXXMILibZzz);
+        return result ??= false;
+      case TargetGame.Arknights_Endfield:
+        bool? result = _prefs?.getBool(keyUseCustomXXMILibEndfield);
+        return result ??= false;
+      default:
+        return false;
+    }
   }
 
-  static const String keyUseCustomXXMILib = 'customXXMILib';
+  static const String keyUseCustomXXMILibWuwa = 'customXXMILibWuwa';
+  static const String keyUseCustomXXMILibGenshin = 'customXXMILibGenshin';
+  static const String keyUseCustomXXMILibHsr = 'customXXMILibHsr';
+  static const String keyUseCustomXXMILibZzz = 'customXXMILibZzz';
+  static const String keyUseCustomXXMILibEndfield = 'customXXMILibEndfield';
 
   static const String keyTargetProcessWuwa = 'targetProcessWuwa';
   static const String keyTargetProcessGenshin = 'targetProcessGenshin';

@@ -1471,7 +1471,7 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
           _needReload = needReload;
         });
       },
-      ref.read(targetGameProvider).name,
+      ref.read(targetGameProvider),
       ref.read(updatedKnownModdingLibsProvider),
     );
     setState(() {

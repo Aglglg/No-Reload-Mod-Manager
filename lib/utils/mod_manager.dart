@@ -938,7 +938,7 @@ Future<List<TextSpan>> restoreManagedMod(List<Directory> modDirs) async {
 Future<List<TextSpan>> updateModData(
   String modsPath,
   Function setBoolIfNeedAutoReload,
-  String targetGame,
+  TargetGame targetGame,
   Map<String, String> knownModdingLibraries,
 ) async {
   List<TextSpan> operationLogs = [];
@@ -1285,7 +1285,7 @@ Future<(String, bool)> _prepareManagedFolder(
   String modsPath,
   List<TextSpan> operationLogs,
   Ref<bool> errorShouldTryAgain,
-  String targetGame,
+  TargetGame targetGame,
 ) async {
   final managedPath = p.join(modsPath, ConstantVar.managedFolderName);
   bool needReloadManual = false;
@@ -1656,11 +1656,11 @@ Future<void> _createBackgroundKeypressIni(
   String managedPath,
   List<TextSpan> operationLogs,
   Ref<bool> errorShouldTryAgain,
-  String targetGame,
+  TargetGame targetGame,
 ) async {
   // Load the .txt template from assets
   final template = await rootBundle.loadString(
-    SharedPrefUtils().useCustomXXMILib()
+    SharedPrefUtils().useCustomXXMILib(targetGame)
         ? 'assets/template_txt/listen_keypress_manager.txt'
         : 'assets/template_txt/listen_keypress_even_on_background.txt',
   );
@@ -1680,7 +1680,9 @@ Future<void> _createBackgroundKeypressIni(
 
   // Write content into the .ini file
   try {
-    await keypressFile.writeAsString(template.replaceAll("{game}", targetGame));
+    await keypressFile.writeAsString(
+      template.replaceAll("{game}", targetGame.name),
+    );
     await includerFile.writeAsString(
       "[IncludeKeypress]\ninclude = ${ConstantVar.backgroundKeypressFileName}",
     );
