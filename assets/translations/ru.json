@@ -225,5 +225,6 @@
   "To get faster mod reload, consider disabling mods you rarely use.": "\nДля ускорения перезагрузки модов отключите моды, которые вы редко используете. Вкладка Настройки, немного прокрутите вниз.",
   "Show Tray Menu when toggling outside the game": "Показывать Трей при переключении вне игры",
   "Contribute": "Внести вклад",
-  "Archive wrong password": "Неверный пароль для {}.\n"
+  "Archive wrong password": "Неверный пароль для {}.\n",
+  "Archive password": "Введите пароль архива"
 }

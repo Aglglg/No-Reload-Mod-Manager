@@ -225,5 +225,6 @@
   "To get faster mod reload, consider disabling mods you rarely use.": "\n如需加快模組載入速度，可以考慮停用不常用的模組。位於「設定」分頁中，向下捲動一點即可。",
   "Show Tray Menu when toggling outside the game": "在遊戲外切換時顯示系統列選單",
   "Contribute": "貢獻",
-  "Archive wrong password": "{} 的密碼不正確。\n"
+  "Archive wrong password": "{} 的密碼不正確。\n",
+  "Archive password": "輸入壓縮檔密碼"
 }

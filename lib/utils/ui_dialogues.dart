@@ -937,6 +937,7 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
   bool _showPasswordTextfield = true;
   List<TextSpan> contents = [];
   Map<String, String> passwordedArchives = {};
+  bool needUpdateModData = false;
 
   @override
   void initState() {
@@ -1054,6 +1055,7 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
               ),
             ),
           );
+          needUpdateModData = true;
         } catch (_) {
           operationLogs.add(
             TextSpan(
@@ -1115,6 +1117,7 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
             ),
           ),
         );
+        needUpdateModData = true;
       } catch (e) {
         if (e.toString().contains("Wrong password")) {
           operationLogs.add(
@@ -1226,11 +1229,13 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
   }
 
   void _onCloseClicked() {
-    showUpdateModSnackbar(
-      context,
-      ProviderScope.containerOf(context, listen: false),
-    );
-    triggerRefresh(ref);
+    if (needUpdateModData) {
+      showUpdateModSnackbar(
+        context,
+        ProviderScope.containerOf(context, listen: false),
+      );
+      triggerRefresh(ref);
+    }
   }
 
   @override
@@ -1277,7 +1282,7 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
                           decoration: InputDecoration(
                             isDense: true,
                             disabledBorder: InputBorder.none,
-                            hintText: 'Archive password',
+                            hintText: 'Archive password'.tr(),
                             hintStyle: GoogleFonts.poppins(
                               fontWeight: FontWeight.w300,
                               color: const Color.fromARGB(80, 255, 255, 255),

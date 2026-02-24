@@ -225,5 +225,6 @@
   "To get faster mod reload, consider disabling mods you rarely use.": "\nTo get faster mod reload, consider disabling mods you rarely use.\nSettings tab, just scroll down a bit.",
   "Show Tray Menu when toggling outside the game": "Show Tray Menu when toggling outside the game",
   "Contribute": "Contribute",
-  "Archive wrong password": "Incorrect password for {}.\n"
+  "Archive wrong password": "Incorrect password for {}.\n",
+  "Archive password": "Enter archive password"
 }

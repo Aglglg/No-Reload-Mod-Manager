@@ -225,5 +225,6 @@
   "To get faster mod reload, consider disabling mods you rarely use.": "\nUntuk mempercepat reload mod, pertimbangkan untuk menonaktifkan mod yang jarang digunakan.\nTab Setelan, scroll ke bawah sedikit.",
   "Show Tray Menu when toggling outside the game": "Tampilkan Tray Menu saat toggle di luar game",
   "Contribute": "Kontribusi",
-  "Archive wrong password": "Password salah untuk {}.\n"
+  "Archive wrong password": "Password salah untuk {}.\n",
+  "Archive password": "Masukkan password arsip"
 }
