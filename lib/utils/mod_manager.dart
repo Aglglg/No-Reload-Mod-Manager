@@ -1133,7 +1133,7 @@ Future<List<TextSpan>> updateModData(
                   fontWeight: FontWeight.w400,
                 ),
               ),
-              if (elapsed.inSeconds > 6)
+              if (elapsed.inSeconds > 3)
                 TextSpan(
                   text:
                       'To get faster mod reload, consider disabling mods you rarely use.'

@@ -2186,11 +2186,6 @@ class _SaveModCustomizationsDialogState
       "d3dx_user.ini",
     );
 
-    final String managedPath = p.join(
-      widget.validModsPath,
-      ConstantVar.managedFolderName,
-    );
-
     if (!await File(d3dxUserPath).exists()) {
       setState(() {
         _showClose = true;
@@ -2201,7 +2196,7 @@ class _SaveModCustomizationsDialogState
           ),
         ];
       });
-    } else if (!await Directory(managedPath).exists()) {
+    } else if (!await Directory(widget.validModsPath).exists()) {
       setState(() {
         _showClose = true;
         contents = [
@@ -2254,7 +2249,7 @@ class _SaveModCustomizationsDialogState
       }
 
       final iniFilePaths = await findIniFilesRecursiveExcludeDisabled(
-        managedPath,
+        widget.validModsPath,
       );
 
       // Namespace, FullPath
@@ -2507,6 +2502,15 @@ class _SaveModCustomizationsDialogState
               : _showConfirm
               ? [
                 TextButton(
+                  onPressed: () async {
+                    await simulateKeyF10();
+                  },
+                  child: Text(
+                    'Reload (F10)'.tr(),
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
+                TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
                     ref.read(alertDialogShownProvider.notifier).state = false;
@@ -2533,316 +2537,182 @@ class _SaveModCustomizationsDialogState
   }
 }
 
-class DisableAllModsDialog extends ConsumerStatefulWidget {
-  final String validModsPath;
-  const DisableAllModsDialog({super.key, required this.validModsPath});
+class BatchDisableOrEnableModsDialog extends ConsumerStatefulWidget {
+  final List<ModGroupData> groupAndModsPair;
+  const BatchDisableOrEnableModsDialog({
+    super.key,
+    required this.groupAndModsPair,
+  });
 
   @override
-  ConsumerState<DisableAllModsDialog> createState() =>
-      _DisableAllModsDialogState();
+  ConsumerState<BatchDisableOrEnableModsDialog> createState() =>
+      _BatchDisableOrEnableModsDialogState();
 }
 
-class _DisableAllModsDialogState extends ConsumerState<DisableAllModsDialog> {
+class _BatchDisableOrEnableModsDialogState
+    extends ConsumerState<BatchDisableOrEnableModsDialog> {
   final ScrollController _scrollController = ScrollController();
+
   bool _showConfirm = true;
   bool _isLoading = false;
+
   List<TextSpan> contents = [];
+
+  late Map<String, (ModData, bool)> _modChecked;
+
+  // Pre-filtered mods (no repeated where/toList calls)
+  late Map<ModGroupData, List<ModData>> _filteredMods;
+
+  // Cached text styles (avoid rebuilding fonts every frame)
+  late final TextStyle _groupTitleStyle;
+  late final TextStyle _groupPathStyle;
+  late final TextStyle _modNameStyle;
+  late final TextStyle _modPathStyle;
+  late final TextStyle _infoStyle;
 
   @override
   void initState() {
     super.initState();
-    showWarning();
+
+    // Pre-filter mods once
+    _filteredMods = {
+      for (final group in widget.groupAndModsPair)
+        group: group.modsInGroup.where((m) => m.modDir.path != 'None').toList(),
+    };
+
+    // Initialize checkbox state
+    _modChecked = {
+      for (final group in _filteredMods.entries)
+        for (final mod in group.value)
+          mod.modDir.path: (
+            mod,
+            !p.basename(mod.modDir.path).toLowerCase().startsWith('disabled'),
+          ),
+    };
   }
 
   @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
-  void showWarning() {
-    setState(() {
-      contents = [
-        TextSpan(
-          text: 'Disable all managed mods?'.tr(),
-          style: GoogleFonts.poppins(
-            color: const Color.fromARGB(255, 255, 255, 255),
-            fontWeight: FontWeight.w400,
-            fontSize: 14,
-          ),
-        ),
-        TextSpan(
-          text: 'Usually only for troubleshooting purpose.'.tr(),
-          style: GoogleFonts.poppins(
-            color: const Color.fromARGB(255, 255, 255, 255),
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-        ),
-      ];
-    });
-  }
-
-  Future<void> disableAllMods() async {
-    setState(() {
-      _showConfirm = false;
-      _isLoading = true;
-    });
-
-    final String managedPath = p.join(
-      widget.validModsPath,
-      ConstantVar.managedFolderName,
+    // Cache styles once (after context is available)
+    _groupTitleStyle = GoogleFonts.poppins(
+      color: Colors.white,
+      fontSize: 14,
+      fontWeight: FontWeight.w600,
     );
 
-    setState(() {
-      contents = [
-        TextSpan(
-          text: "Disabling all mods...".tr(),
-          style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
-        ),
-      ];
-    });
+    _groupPathStyle = GoogleFonts.poppins(
+      color: Colors.grey,
+      fontSize: 12,
+      fontWeight: FontWeight.w400,
+    );
 
-    final modGroups = await getGroupFolders(managedPath);
+    _modNameStyle = GoogleFonts.poppins(
+      color: const Color.fromARGB(230, 255, 255, 255),
+      fontSize: 13,
+      fontWeight: FontWeight.w400,
+    );
 
-    List<(Directory groupDir, ModData modData)> failedDisabledMod = [];
+    _modPathStyle = GoogleFonts.poppins(
+      color: Colors.grey,
+      fontSize: 12,
+      fontWeight: FontWeight.w400,
+    );
 
-    for (var group in modGroups) {
-      final mods = await getModsOnGroup(group.$1, false);
-      for (var mod in mods) {
-        if (p.basename(mod.modDir.path).toLowerCase().startsWith('disabled')) {
-          continue;
-        }
+    _infoStyle = GoogleFonts.poppins(
+      color: Colors.grey,
+      fontSize: 13,
+      fontWeight: FontWeight.w400,
+    );
+  }
 
-        //Dummy mod, for none, returned by getModsOnGroup
-        if (mod.modDir.path == 'None') continue;
+  // ─────────────────────────────────────────────
 
-        bool success = await completeDisableMod(mod.modDir);
-        if (!success) failedDisabledMod.add((group.$1, mod));
+  bool? _groupValue(ModGroupData group) {
+    final mods = _filteredMods[group]!;
+    if (mods.isEmpty) return false;
+
+    int checkedCount = 0;
+    for (final mod in mods) {
+      if (_modChecked[mod.modDir.path]!.$2 == true) {
+        checkedCount++;
       }
     }
 
-    List<TextSpan> failedDisableInfo = [];
-    for (var mod in failedDisabledMod) {
-      String groupName = '';
-      try {
-        groupName = await forceReadAsStringUtf8(
-          File(p.join(mod.$1.path, 'groupname')),
+    if (checkedCount == mods.length) return true;
+    if (checkedCount == 0) return false;
+    return null;
+  }
+
+  void _toggleGroup(ModGroupData group, bool? value) {
+    final target = value ?? false;
+    final mods = _filteredMods[group]!;
+
+    setState(() {
+      for (final mod in mods) {
+        _modChecked[mod.modDir.path] = (
+          _modChecked[mod.modDir.path]!.$1,
+          target,
         );
-      } catch (_) {}
-      failedDisableInfo.add(
-        TextSpan(
-          text: "$groupName - ${mod.$2.modName}\n${mod.$2.modDir.path}\n\n",
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-      );
-    }
-
-    setState(() {
-      _isLoading = false;
-
-      if (failedDisabledMod.isEmpty) {
-        contents = [
-          TextSpan(
-            text: "All managed mods have been disabled".tr(),
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ];
-      } else {
-        contents = [
-          ...failedDisableInfo,
-          TextSpan(
-            text:
-                "Some mods cannot be disabled, please rename and disable these mods manually via File Explorer."
-                    .tr(),
-            style: GoogleFonts.poppins(
-              color: const Color.fromARGB(255, 189, 170, 0),
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ];
       }
     });
-
-    await _scrollToBottom();
   }
 
-  Future<void> _scrollToBottom() async {
-    // Wait until scrollController has a valid position
-    await Future.delayed(const Duration(milliseconds: 100));
-    if (!_scrollController.hasClients) return;
-
-    await _scrollController.animateTo(
-      _scrollController.position.maxScrollExtent,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        "Disable all mods".tr(),
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
-      ),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
-        ),
-        child: ScrollConfiguration(
-          behavior: ScrollConfiguration.of(context).copyWith(
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.mouse,
-              PointerDeviceKind.trackpad,
-            },
-          ),
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: RichText(text: TextSpan(children: contents)),
-          ),
-        ),
-      ),
-      actions:
-          _showConfirm
-              ? [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    ref.read(alertDialogShownProvider.notifier).state = false;
-                  },
-                  child: Text(
-                    'Cancel'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () async {
-                    await disableAllMods();
-                  },
-                  child: Text(
-                    'Confirm'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
-                  ),
-                ),
-              ]
-              : _isLoading
-              ? []
-              : [
-                TextButton(
-                  onPressed: () async {
-                    Navigator.of(context).pop();
-                    ref.read(alertDialogShownProvider.notifier).state = true;
-                    await showDialog(
-                      barrierDismissible: false,
-                      context: context,
-                      builder:
-                          (context) => UpdateModDialog(
-                            modsPath: ref.read(validModsPath)!,
-                          ),
-                    );
-                  },
-                  child: Text(
-                    'Update Mod Data'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
-                  ),
-                ),
-              ],
-    );
-  }
-}
-
-class EnableAllModsDialog extends ConsumerStatefulWidget {
-  final String validModsPath;
-  const EnableAllModsDialog({super.key, required this.validModsPath});
-
-  @override
-  ConsumerState<EnableAllModsDialog> createState() =>
-      _EnableAllModsDialogState();
-}
-
-class _EnableAllModsDialogState extends ConsumerState<EnableAllModsDialog> {
-  final ScrollController _scrollController = ScrollController();
-  bool _showConfirm = true;
-  bool _isLoading = false;
-  List<TextSpan> contents = [];
-
-  @override
-  void initState() {
-    super.initState();
-    showWarning();
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  void showWarning() {
+  void _setAll(bool value) {
     setState(() {
-      contents = [
-        TextSpan(
-          text: 'Enable all managed mods?'.tr(),
-          style: GoogleFonts.poppins(
-            color: const Color.fromARGB(255, 255, 255, 255),
-            fontWeight: FontWeight.w400,
-            fontSize: 14,
-          ),
-        ),
-      ];
+      for (final key in _modChecked.keys) {
+        _modChecked[key] = (_modChecked[key]!.$1, value);
+      }
     });
   }
 
-  Future<void> enableAllMods() async {
+  // ─────────────────────────────────────────────
+
+  Future<void> batchDisableEnableMods() async {
     setState(() {
-      _showConfirm = false;
       _isLoading = true;
+      _showConfirm = false;
     });
-
-    final String managedPath = p.join(
-      widget.validModsPath,
-      ConstantVar.managedFolderName,
-    );
 
     setState(() {
       contents = [
         TextSpan(
-          text: "Enabling all mods...".tr(),
+          text: "Enabling/disabling mods...".tr(),
           style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
         ),
       ];
     });
 
-    final modGroups = await getGroupFolders(managedPath);
+    List<(Directory groupDir, ModData modData)> failedEnableDisableMod = [];
 
-    List<(Directory groupDir, ModData modData)> failedEnableMod = [];
-
-    for (var group in modGroups) {
-      final mods = await getModsOnGroup(group.$1, true);
-      for (var mod in mods) {
-        if (p.basename(mod.modDir.path).toLowerCase().startsWith('disabled')) {
-          //Dummy mod, for none, returned by getModsOnGroup
-          if (mod.modDir.path == 'None') continue;
-
-          bool success = await enableMod(mod.modDir);
-          if (!success) failedEnableMod.add((group.$1, mod));
+    for (var mod in _modChecked.entries) {
+      //Unchecked and not starts with Disabled, disable it
+      if (mod.value.$2 == false &&
+          !p.basename(mod.key).toLowerCase().startsWith('disabled')) {
+        bool success = await completeDisableMod(Directory(mod.key));
+        if (!success) {
+          failedEnableDisableMod.add((
+            Directory(p.dirname(mod.key)),
+            _modChecked[mod.key]!.$1,
+          ));
+        }
+      }
+      //Checked and starts with Disabled, enable it
+      else if (mod.value.$2 == true &&
+          p.basename(mod.key).toLowerCase().startsWith('disabled')) {
+        bool success = await enableMod(Directory(mod.key));
+        if (!success) {
+          failedEnableDisableMod.add((
+            Directory(p.dirname(mod.key)),
+            _modChecked[mod.key]!.$1,
+          ));
         }
       }
     }
 
     List<TextSpan> failedEnableInfo = [];
-    for (var mod in failedEnableMod) {
+    for (var mod in failedEnableDisableMod) {
       String groupName = '';
       try {
         groupName = await forceReadAsStringUtf8(
@@ -2865,10 +2735,10 @@ class _EnableAllModsDialogState extends ConsumerState<EnableAllModsDialog> {
     setState(() {
       _isLoading = false;
 
-      if (failedEnableMod.isEmpty) {
+      if (failedEnableDisableMod.isEmpty) {
         contents = [
           TextSpan(
-            text: "All managed mods have been enabled".tr(),
+            text: "Managed mods have been disabled/enabled".tr(),
             style: GoogleFonts.poppins(
               color: Colors.white,
               fontSize: 14,
@@ -2881,7 +2751,7 @@ class _EnableAllModsDialogState extends ConsumerState<EnableAllModsDialog> {
           ...failedEnableInfo,
           TextSpan(
             text:
-                "Some mods cannot be enabled, please rename and enable these mods manually via File Explorer."
+                "Some mods can't be enabled/disabled, please rename these mods manually with File Explorer."
                     .tr(),
             style: GoogleFonts.poppins(
               color: const Color.fromARGB(255, 189, 170, 0),
@@ -2897,7 +2767,6 @@ class _EnableAllModsDialogState extends ConsumerState<EnableAllModsDialog> {
   }
 
   Future<void> _scrollToBottom() async {
-    // Wait until scrollController has a valid position
     await Future.delayed(const Duration(milliseconds: 100));
     if (!_scrollController.hasClients) return;
 
@@ -2912,30 +2781,248 @@ class _EnableAllModsDialogState extends ConsumerState<EnableAllModsDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-        "Enable all mods".tr(),
+        "Enable/disable mods".tr(),
         style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
       ),
       content: ConstrainedBox(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.6,
+          minWidth: !_showConfirm ? 0 : MediaQuery.of(context).size.width * 0.6,
         ),
-        child: ScrollConfiguration(
-          behavior: ScrollConfiguration.of(context).copyWith(
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.mouse,
-              PointerDeviceKind.trackpad,
-            },
-          ),
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: RichText(text: TextSpan(children: contents)),
-          ),
-        ),
+        child:
+            !_showConfirm
+                ? ScrollConfiguration(
+                  behavior: ScrollConfiguration.of(context).copyWith(
+                    dragDevices: {
+                      PointerDeviceKind.touch,
+                      PointerDeviceKind.mouse,
+                      PointerDeviceKind.trackpad,
+                    },
+                  ),
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    child: RichText(text: TextSpan(children: contents)),
+                  ),
+                )
+                : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // -- Mod List --
+                    Expanded(
+                      child: ScrollConfiguration(
+                        behavior: ScrollConfiguration.of(context).copyWith(
+                          dragDevices: {
+                            PointerDeviceKind.touch,
+                            PointerDeviceKind.mouse,
+                            PointerDeviceKind.trackpad,
+                          },
+                        ),
+                        child: SingleChildScrollView(
+                          controller: _scrollController,
+                          child: ExpansionPanelList.radio(
+                            elevation: 0,
+                            dividerColor: Colors.transparent,
+                            expandedHeaderPadding: EdgeInsets.zero,
+                            animationDuration: const Duration(
+                              milliseconds: 250,
+                            ),
+                            materialGapSize: 0,
+                            children:
+                                widget.groupAndModsPair.asMap().entries.map((
+                                  e,
+                                ) {
+                                  final group = e.value;
+                                  final mods = _filteredMods[group]!;
+
+                                  return ExpansionPanelRadio(
+                                    value: e.key,
+                                    canTapOnHeader: true,
+                                    backgroundColor: Colors.transparent,
+
+                                    // -- Group Header --
+                                    headerBuilder: (context, isExpanded) {
+                                      final groupVal = _groupValue(group);
+
+                                      return Row(
+                                        children: [
+                                          Checkbox(
+                                            activeColor: Colors.blue,
+                                            tristate: true,
+                                            value: groupVal,
+                                            onChanged:
+                                                (v) => _toggleGroup(group, v),
+                                            materialTapTargetSize:
+                                                MaterialTapTargetSize
+                                                    .shrinkWrap,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: Row(
+                                              children: [
+                                                Flexible(
+                                                  child: Text(
+                                                    group.groupName,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: _groupTitleStyle,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Flexible(
+                                                  child: Text(
+                                                    p.basename(
+                                                      group.groupDir.path,
+                                                    ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: _groupPathStyle,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+
+                                    // -- Mods Body --
+                                    body: Column(
+                                      children:
+                                          mods.map((mod) {
+                                            final path = mod.modDir.path;
+
+                                            return Row(
+                                              children: [
+                                                const SizedBox(width: 25),
+                                                Checkbox(
+                                                  activeColor: Colors.blue,
+                                                  value: _modChecked[path]!.$2,
+                                                  onChanged:
+                                                      (v) => setState(
+                                                        () =>
+                                                            _modChecked[path] = (
+                                                              _modChecked[path]!
+                                                                  .$1,
+                                                              v!,
+                                                            ),
+                                                      ),
+                                                  materialTapTargetSize:
+                                                      MaterialTapTargetSize
+                                                          .shrinkWrap,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          4,
+                                                        ),
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  child: Row(
+                                                    children: [
+                                                      Flexible(
+                                                        child: Text(
+                                                          mod.modName,
+                                                          overflow:
+                                                              TextOverflow
+                                                                  .ellipsis,
+                                                          style: _modNameStyle,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 8),
+                                                      Flexible(
+                                                        child: Text(
+                                                          p.basename(path),
+                                                          overflow:
+                                                              TextOverflow
+                                                                  .ellipsis,
+                                                          style: _modPathStyle,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            );
+                                          }).toList(),
+                                    ),
+                                  );
+                                }).toList(),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    if (_showConfirm) const SizedBox(height: 10),
+
+                    // -- Legend --
+                    if (_showConfirm)
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 35,
+                            height: 35,
+                            child: FittedBox(
+                              fit: BoxFit.fill,
+                              child: Checkbox(
+                                value: true,
+                                onChanged: null,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Text("Enabled".tr(), style: _infoStyle),
+                          const SizedBox(width: 15),
+                          SizedBox(
+                            width: 35,
+                            height: 35,
+                            child: FittedBox(
+                              fit: BoxFit.fill,
+                              child: Checkbox(
+                                value: false,
+                                onChanged: null,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Text("Disabled".tr(), style: _infoStyle),
+                        ],
+                      ),
+                    if (_showConfirm) const SizedBox(height: 10),
+                    if (_showConfirm)
+                      Text(
+                        "Before disabling the mods, click Save Mod Customizations to save your changes to the mod toggles/states."
+                            .tr(),
+                        style: _infoStyle.copyWith(color: Colors.white),
+                      ),
+                  ],
+                ),
       ),
+
+      // -- Actions --
       actions:
           _showConfirm
               ? [
+                TextButton(
+                  onPressed: () => _setAll(true),
+                  child: Text(
+                    'Enable all mods'.tr(),
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => _setAll(false),
+                  child: Text(
+                    'Disable all mods'.tr(),
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
+                ),
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -2948,7 +3035,7 @@ class _EnableAllModsDialogState extends ConsumerState<EnableAllModsDialog> {
                 ),
                 TextButton(
                   onPressed: () async {
-                    await enableAllMods();
+                    await batchDisableEnableMods();
                   },
                   child: Text(
                     'Confirm'.tr(),
