@@ -1,11 +1,11 @@
 ### To update auto icon
-1. Modify auto_icon.json.
-2. Give the correct hash for the character, it can be any hash that represent the character.  
-Mostly it's VB hash (Hunting Mode `Numpad 0` and cycle VB with `Numpad /` or `Numpad *`)  
-Or you can also simply look for it in existing mod's ini file.
-3. One character can have multiple hashes and it's fine.
+1. Modify **`game_name/_icon.json`**.
+2. Give the correct hash for the character, it is usually VB hash that represent the character.  
+Hunting Mode `Numpad 0` and cycle VB with `Numpad /` or `Numpad *`)  
+**Or you can also simply look for it in existing mod's ini file.**
+3. One character can have multiple hashes, it's fine, and it's better.
 4. Give image file on corresponding game folder.
-5. List the hash and image link in auto_icon.json. (Deprecated, use game_name/_icon.json instead)
+5. List the hash and image link in **`game_name/_icon.json`**.
 6. **Keep it mind that old character could have their hash changed because game update.**
 
 ### Icon rules
