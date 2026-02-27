@@ -2370,49 +2370,6 @@ final List<String> shaderRegexIniKeys = [
   "filter_index",
 ];
 
-bool _isVariableDeclarationLine(
-  String rawLine,
-  String nextRawLine,
-  String nextNextRawLine,
-) {
-  String normalize(String s) => s.trim().toLowerCase().replaceAll(' ', '');
-
-  final line = normalize(rawLine);
-  final nextLine = normalize(nextRawLine);
-  final nextNextLine = normalize(nextNextRawLine);
-
-  bool isVarDeclaration(String line) {
-    return line.startsWith('global\$') ||
-        line.startsWith('globalpersist\$') ||
-        line.startsWith('persistglobal\$');
-  }
-
-  bool isComment(String line) =>
-      line.startsWith(';') && !line.startsWith(';-;');
-
-  //Direct declaration
-  if (isVarDeclaration(line)) {
-    return true;
-  }
-
-  //Empty or comment - next is declaration
-  if ((line.isEmpty || isComment(line)) && isVarDeclaration(nextLine)) {
-    return true;
-  }
-
-  //Empty - comment - declaration
-  if (line.isEmpty && isComment(nextLine) && isVarDeclaration(nextNextLine)) {
-    return true;
-  }
-
-  //Comment - empty - declaration
-  if (isComment(line) && nextLine.isEmpty && isVarDeclaration(nextNextLine)) {
-    return true;
-  }
-
-  return false;
-}
-
 /// Called AFTER ini keys REORDERED
 void _removeManagerLineWhenUnused(List<IniSection> sections) {
   for (var section in sections) {
@@ -2502,30 +2459,6 @@ void _removeManagerLineWhenUnused(List<IniSection> sections) {
 
 void _reorderByIniKeyPriority(List<IniSection> sections) {
   for (var section in sections) {
-    // Constants section special handling
-    if (_isConstantsSection(section.name)) {
-      final top = <String>[];
-      final rest = <String>[];
-
-      for (int i = 0; i < section.lines.length; i++) {
-        final line = section.lines[i];
-        final nextLine =
-            (i + 1 < section.lines.length) ? section.lines[i + 1] : '';
-        final nextNextLine =
-            (i + 2 < section.lines.length) ? section.lines[i + 2] : '';
-
-        if (_isVariableDeclarationLine(line, nextLine, nextNextLine)) {
-          top.add(line);
-        } else {
-          rest.add(line);
-        }
-      }
-
-      section.lines = [...top, ...rest];
-      continue;
-    }
-
-    //Other command list section
     List<String> priorityKeys = [];
 
     if (_isTextureOverrideSection(section.name)) {
@@ -2632,13 +2565,6 @@ void _checkAndModifySections(
 
     //Whitelisted or commandlist section
     if (_isWhitelistedSection(name)) {
-      //Constants section (it's also in whitelisted section)
-      if (_isConstantsSection(name) && !managedSlotIdVarAdded) {
-        //simply insert $managed_slot_id. Because, at parsing logic, the old $managed_slot_id guaranteed to be removed
-        lines.insert(0, 'global \$managed_slot_id = $modIndex');
-        managedSlotIdVarAdded = true;
-      }
-
       //simply insert manager if line on index 0. Because, at parsing logic, the old manager if line guaranteed to be removed
       lines.insert(
         0,
@@ -2648,6 +2574,12 @@ void _checkAndModifySections(
       );
 
       _fixEndifLineAndTrailingFlowControlLine(section, removedSyntaxError);
+    }
+    //Constants section
+    else if (_isConstantsSection(name) && !managedSlotIdVarAdded) {
+      //simply insert $managed_slot_id. Because, at parsing logic, the old $managed_slot_id guaranteed to be removed
+      lines.insert(0, 'global \$managed_slot_id = $modIndex');
+      managedSlotIdVarAdded = true;
     }
     //Key section
     else if (_isKeySection(name)) {
@@ -2792,7 +2724,6 @@ bool _isWhitelistedSection(String sectionName) {
     'cleardepthstencilview',
     'clearunorderedaccessviewuint',
     'clearunorderedaccessviewfloat',
-    'constants',
   };
 
   if (exact.contains(lower)) {
