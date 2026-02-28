@@ -1,8 +1,8 @@
 ### To update auto icon
 1. Modify **`game_name/_icon.json`**.
-2. Give the correct hash for the character, it is usually VB hash that represent the character.  
-Hunting Mode `Numpad 0` and cycle VB with `Numpad /` or `Numpad *`)  
-**Or you can also simply look for it in existing mod's ini file.**
+2. Give the correct hash for the character.  
+**You can simply look for it in existing mod's ini file.**  
+Usually, VB hash for WuWa & Endfield, IB hashes for Hoyo games.
 3. One character can have multiple hashes, it's fine, and it's better.
 4. Give image file on corresponding game folder.
 5. List the hash and image link in **`game_name/_icon.json`**.
