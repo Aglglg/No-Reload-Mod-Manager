@@ -715,6 +715,21 @@ String _removeFirstFourSpaces(String input) {
   return input.substring(count);
 }
 
+bool _isWrappedInMatchingParens(String expr) {
+  if (!expr.startsWith('(') || !expr.endsWith(')')) return false;
+  int depth = 0;
+  for (int i = 0; i < expr.length; i++) {
+    if (expr[i] == '(') {
+      depth++;
+    } else if (expr[i] == ')') {
+      depth--;
+    }
+    // if depth hits 0 before the end, the opening ( is closed early
+    if (depth == 0 && i < expr.length - 1) return false;
+  }
+  return true;
+}
+
 String _sanitizeKeyConditionExpressionFromModManager(String expression) {
   final managerConditionLineRegex = RegExp(
     r'\$managed_slot_id\s*==\s*\$(\\modmanageragl\\group_)(\d+)(\\active_slot)',
@@ -722,21 +737,6 @@ String _sanitizeKeyConditionExpressionFromModManager(String expression) {
   );
 
   bool managerExpressionRemoved = false;
-
-  bool isWrappedInMatchingParens(String expr) {
-    if (!expr.startsWith('(') || !expr.endsWith(')')) return false;
-    int depth = 0;
-    for (int i = 0; i < expr.length; i++) {
-      if (expr[i] == '(') {
-        depth++;
-      } else if (expr[i] == ')') {
-        depth--;
-      }
-      // if depth hits 0 before the end, the opening ( is closed early
-      if (depth == 0 && i < expr.length - 1) return false;
-    }
-    return true;
-  }
 
   //Naive approach, but should be fine
 
@@ -817,7 +817,7 @@ String _sanitizeKeyConditionExpressionFromModManager(String expression) {
       expression = expression.replaceAll(RegExp(r'\|\|\s*&&'), '&&').trim();
     }
 
-    if (isWrappedInMatchingParens(expression)) {
+    if (_isWrappedInMatchingParens(expression)) {
       expression = expression.substring(1, expression.length - 1).trim();
     }
   }
@@ -2630,7 +2630,7 @@ void _checkAndModifySections(
           final lhs = parts.first.trimRight();
           final rhs = parts.length > 1 ? parts.sublist(1).join('=').trim() : '';
 
-          if (rhs.startsWith('(') && rhs.endsWith(')')) {
+          if (_isWrappedInMatchingParens(rhs)) {
             lines[index] = '$lhs = $rhs && $managedExpr';
           } else {
             lines[index] = '$lhs = ($rhs) && $managedExpr';
