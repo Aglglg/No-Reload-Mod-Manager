@@ -2221,14 +2221,14 @@ class _SaveModCustomizationsDialogState
       final rawSavedValues = _getRawSavedValues(d3dxUserLines);
 
       // NamespaceAndVarName, Value
-      final List<(String, int)> keyValues = [];
+      final List<(String, double)> keyValues = [];
 
       // For each string, split it into key-value pairs based on the last '='
       for (final rawSavedValue in rawSavedValues) {
         final parts = rawSavedValue.split('=');
         final valStr = parts.last.trim();
 
-        final val = int.tryParse(valStr);
+        final val = double.tryParse(valStr);
         if (val == null) continue;
 
         final key = parts.first.trim();
@@ -2236,7 +2236,7 @@ class _SaveModCustomizationsDialogState
       }
 
       // Namespace, VarName, Value
-      List<(String, String, int)> finalKeyValues = [];
+      List<(String, String, double)> finalKeyValues = [];
 
       for (final (key, value) in keyValues) {
         final lastSlash = key.lastIndexOf(r'\');
@@ -2268,7 +2268,7 @@ class _SaveModCustomizationsDialogState
       }
 
       // ini full path <> list of (varName, value)
-      final Map<String, List<(String, int)>> plannedModifications = {};
+      final Map<String, List<(String, double)>> plannedModifications = {};
 
       for (final (namespace, iniPath) in namespaceAndPathPairs) {
         for (final (kvNamespace, varName, value) in finalKeyValues) {
@@ -2337,7 +2337,7 @@ class _SaveModCustomizationsDialogState
   }
 
   Future<void> _modifyFiles(
-    Map<String, List<(String, int)>> plannedModifications,
+    Map<String, List<(String, double)>> plannedModifications,
   ) async {
     for (final entry in plannedModifications.entries) {
       final iniPath = entry.key;
@@ -2432,16 +2432,13 @@ class _SaveModCustomizationsDialogState
             // from "my_var  = 0" to be "my_var"
             final varName = rawVarName.substring(0, lastEqual).trimRight();
 
-            // make sure value is valid int
-            final existingVal = int.tryParse(
+            // make sure value is valid float (or double in dart)
+            final existingVal = double.tryParse(
               rawVarName.substring(lastEqual + 1).trim(),
             );
-            if (existingVal == null) {
-              continue;
-            }
 
             for (final (name, value) in modifications) {
-              // Only if value is not the same yet
+              // Only if value is not the same yet (or can't be parsed)
               if (varName.toLowerCase() == name && value != existingVal) {
                 rawLines[i] = "global persist \$$varName = $value";
                 modified = true;
