@@ -723,6 +723,21 @@ String _sanitizeKeyConditionExpressionFromModManager(String expression) {
 
   bool managerExpressionRemoved = false;
 
+  bool isWrappedInMatchingParens(String expr) {
+    if (!expr.startsWith('(') || !expr.endsWith(')')) return false;
+    int depth = 0;
+    for (int i = 0; i < expr.length; i++) {
+      if (expr[i] == '(') {
+        depth++;
+      } else if (expr[i] == ')') {
+        depth--;
+      }
+      // if depth hits 0 before the end, the opening ( is closed early
+      if (depth == 0 && i < expr.length - 1) return false;
+    }
+    return true;
+  }
+
   //Naive approach, but should be fine
 
   //remove manager expression
@@ -802,7 +817,7 @@ String _sanitizeKeyConditionExpressionFromModManager(String expression) {
       expression = expression.replaceAll(RegExp(r'\|\|\s*&&'), '&&').trim();
     }
 
-    if (expression.startsWith('(') && expression.endsWith(')')) {
+    if (isWrappedInMatchingParens(expression)) {
       expression = expression.substring(1, expression.length - 1).trim();
     }
   }
