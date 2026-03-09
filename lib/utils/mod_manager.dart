@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 import 'package:easy_localization/easy_localization.dart';
@@ -962,6 +963,7 @@ Future<List<TextSpan>> updateModData(
 
   final basePath = p.dirname(modsPath);
   final d3dxIni = p.join(basePath, "d3dx.ini");
+  final dllPath = p.join(basePath, "d3d11.dll");
 
   ErroredLinesReport errorReport;
 
@@ -977,6 +979,7 @@ Future<List<TextSpan>> updateModData(
       operationLogs,
       errorShouldTryAgain,
       targetGame,
+      dllPath,
     );
 
     final managedPath = preparing.$1;
@@ -1301,6 +1304,7 @@ Future<(String, bool)> _prepareManagedFolder(
   List<TextSpan> operationLogs,
   Ref<bool> errorShouldTryAgain,
   TargetGame targetGame,
+  String dllPath,
 ) async {
   final managedPath = p.join(modsPath, ConstantVar.managedFolderName);
   bool needReloadManual = false;
@@ -1329,6 +1333,7 @@ Future<(String, bool)> _prepareManagedFolder(
     operationLogs,
     errorShouldTryAgain,
     targetGame,
+    dllPath,
   );
   await _createManagerGroupIni(managedPath, operationLogs, errorShouldTryAgain);
 
@@ -1667,15 +1672,52 @@ Future<void> _tryRenameOldManagedFolder(String modsPath) async {
   }
 }
 
+Future<bool> _isDllForNrmm(String dllPath) async {
+  return Isolate.run(() {
+    final file = File(dllPath);
+    // Sanity check — a real d3d11.dll is between 1MB and 150MB
+    final size = file.lengthSync();
+    if (size < 1024 * 1024 || size > 150 * 1024 * 1024) return false;
+
+    final bytes = file.readAsBytesSync();
+    final needle = ascii.encode('"Manager" key supported in [Loader] section');
+    final nLen = needle.length;
+
+    final skip = List<int>.filled(256, nLen);
+    for (int i = 0; i < nLen - 1; i++) {
+      skip[needle[i]] = nLen - 1 - i;
+    }
+
+    int i = nLen - 1;
+    while (i < bytes.length) {
+      int j = nLen - 1, k = i;
+      while (j >= 0 && bytes[k] == needle[j]) {
+        k--;
+        j--;
+      }
+      if (j == -1) return true;
+      i += skip[bytes[i]];
+    }
+    return false;
+  });
+}
+
 Future<void> _createBackgroundKeypressIni(
   String managedPath,
   List<TextSpan> operationLogs,
   Ref<bool> errorShouldTryAgain,
   TargetGame targetGame,
+  String dllPath,
 ) async {
+  bool nrmmCustomXXMIDll = false;
+
+  try {
+    nrmmCustomXXMIDll = await _isDllForNrmm(dllPath);
+  } catch (_) {}
+
   // Load the .txt template from assets
   final template = await rootBundle.loadString(
-    SharedPrefUtils().useCustomXXMILib(targetGame)
+    nrmmCustomXXMIDll
         ? 'assets/template_txt/listen_keypress_manager.txt'
         : 'assets/template_txt/listen_keypress_even_on_background.txt',
   );
