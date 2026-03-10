@@ -13,6 +13,9 @@ final StateProvider<bool> windowIsPinnedProvider = StateProvider<bool>(
 );
 
 final StateProvider<int> tabIndexProvider = StateProvider<int>((ref) => 1);
+final StateProvider<int> modsSubTabIndexProvider = StateProvider<int>(
+  (ref) => 1,
+);
 
 final StateProvider<bool> alertDialogShownProvider = StateProvider<bool>(
   (ref) => false,
@@ -63,6 +66,11 @@ final StateProvider<HotkeyGamepad> hotkeyGamepadProvider =
 
 final StateProvider<List<ModGroupData>> modGroupDataProvider =
     StateProvider<List<ModGroupData>>((ref) {
+      return [];
+    });
+
+final StateProvider<List<PresetData>> presetDataProvider =
+    StateProvider<List<PresetData>>((ref) {
       return [];
     });
 
@@ -126,4 +134,8 @@ final showMenuWhenTogglingOutsideGameProvider = StateProvider<bool>((ref) {
 final keybindSimulateKeypressProvider = StateProvider<bool>((ref) {
   SharedPrefUtils().tryInit();
   return SharedPrefUtils().keybindSimulateKeypress();
+});
+
+final troubleshootDataProvider = StateProvider<TroubleshootData?>((ref) {
+  return null;
 });

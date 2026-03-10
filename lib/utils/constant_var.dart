@@ -58,6 +58,8 @@ class ConstantVar {
 
   static const String urlJsonUpdatedKnownModdingLib =
       "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/common_modding_lib/common_modding_lib.json";
+  static const String urlJsonXxmiDllVersions =
+      "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/assets/cloud_data/xxmi_dll_versions/xxmi_dll_versions.json";
 
   static const String urlValidKeysExample =
       "https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes";

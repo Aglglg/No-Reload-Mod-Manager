@@ -397,6 +397,7 @@ class _BackgroundState extends ConsumerState<Background> {
                         label: 'Refresh'.tr(),
                       ),
                     if (ref.watch(tabIndexProvider) == 1 &&
+                        ref.watch(modsSubTabIndexProvider) == 1 &&
                         ref.watch(modGroupDataProvider).isNotEmpty)
                       CustomMenuItem(
                         scale: sss,
@@ -406,7 +407,8 @@ class _BackgroundState extends ConsumerState<Background> {
                         },
                         label: 'Search'.tr(),
                       ),
-                    if (ref.watch(tabIndexProvider) == 1)
+                    if (ref.watch(tabIndexProvider) == 1 &&
+                        ref.watch(modsSubTabIndexProvider) == 1)
                       CustomMenuItem.submenu(
                         scale: sss,
                         items: [
@@ -538,6 +540,9 @@ class _MainViewState extends ConsumerState<MainView>
   late TabController _tabController;
 
   List<Widget> _views = [TabKeybinds(), TabModsLoading(), TabSettings()];
+
+  bool isHovering = false;
+  bool isCancellingHover = false;
 
   @override
   void onWindowBlur() {
@@ -1326,9 +1331,20 @@ class _MainViewState extends ConsumerState<MainView>
         ref.read(currentGroupIndexProvider.notifier).state = groupIndex;
 
         DynamicDirectoryWatcher.watch(managedPath, ref: ref);
+
+        //reset mods sub tab to main, if group no group at all, because it's supposed only to be shown if there's a group
+        if (ref.read(modGroupDataProvider).isEmpty) {
+          ref.read(modsSubTabIndexProvider.notifier).state = 1;
+        }
       } else {
         DynamicDirectoryWatcher.stop();
+        //reset mods sub tab to main, it's supposed only to be shown if mods path valid
+        ref.read(modsSubTabIndexProvider.notifier).state = 1;
       }
+    } else {
+      DynamicDirectoryWatcher.stop();
+      //reset mods sub tab to main, it's supposed only to be shown if mods path valid
+      ref.read(modsSubTabIndexProvider.notifier).state = 1;
     }
 
     //Sometimes widget don't rebuild/don't show loading screen because loading time was too fast
@@ -1477,6 +1493,28 @@ class _MainViewState extends ConsumerState<MainView>
         ///Tab views
         IndexedStack(index: ref.watch(tabIndexProvider), children: _views),
 
+        //Sub Tab (Mods Tab)
+        SubTabModsIndicator(
+          onEnter: (_) {
+            setState(() {
+              isHovering = true;
+              isCancellingHover = false;
+            });
+          },
+          onExit: (_) async {
+            setState(() {
+              isCancellingHover = true;
+            });
+            await Future.delayed(Duration(seconds: 1));
+            if (isCancellingHover) {
+              setState(() {
+                isHovering = false;
+              });
+            }
+          },
+        ),
+        SubTabMods(isShown: isHovering),
+
         ///Tab bars
         Padding(
           padding: EdgeInsets.only(top: 25 * sss),
@@ -1532,6 +1570,240 @@ class _MainViewState extends ConsumerState<MainView>
         _tabController.index != 0) {
       _tabController.animateTo(_tabController.index - 1);
     }
+  }
+}
+
+class SubTabModsIndicator extends ConsumerStatefulWidget {
+  final void Function(PointerEnterEvent event) onEnter;
+  final void Function(PointerExitEvent event) onExit;
+  const SubTabModsIndicator({
+    required this.onEnter,
+    required this.onExit,
+    super.key,
+  });
+
+  @override
+  ConsumerState<SubTabModsIndicator> createState() =>
+      _SubTabModsIndicatorState();
+}
+
+class _SubTabModsIndicatorState extends ConsumerState<SubTabModsIndicator> {
+  @override
+  Widget build(BuildContext context) {
+    final shouldShow =
+        ref.watch(tabIndexProvider) == 1 &&
+        ref.watch(modGroupDataProvider).isNotEmpty &&
+        ref.watch(validModsPath) != null;
+    if (shouldShow) {
+      final sss = ref.watch(zoomScaleProvider);
+      return Align(
+        alignment: Alignment.bottomCenter,
+        child: Transform.translate(
+          offset: Offset(0, 25 * sss),
+          child: MouseRegion(
+            onEnter: widget.onEnter,
+            onExit: widget.onExit,
+            child: Container(
+              color: Colors.transparent,
+              width: 70 * sss,
+              child: Icon(Icons.arrow_drop_up_rounded, size: 50 * sss),
+            ),
+          ),
+        ),
+      );
+    } else {
+      return SizedBox();
+    }
+  }
+}
+
+class SubTabMods extends ConsumerStatefulWidget {
+  final bool isShown;
+  const SubTabMods({required this.isShown, super.key});
+
+  @override
+  ConsumerState<SubTabMods> createState() => _SubTabModsState();
+}
+
+class _SubTabModsState extends ConsumerState<SubTabMods>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<Offset> _slide;
+  bool isHovering = false;
+  bool isCancellingHover = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+    );
+
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sss = ref.watch(zoomScaleProvider);
+
+    final shouldShow =
+        ref.watch(tabIndexProvider) == 1 &&
+        ref.watch(modGroupDataProvider).isNotEmpty &&
+        ref.watch(validModsPath) != null &&
+        (widget.isShown || isHovering);
+
+    if (shouldShow) {
+      _controller.forward();
+    } else {
+      _controller.reverse();
+    }
+
+    return SlideTransition(
+      position: _slide,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: 15 * sss),
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: MouseRegion(
+            onEnter: (_) {
+              setState(() {
+                isHovering = true;
+                isCancellingHover = false;
+              });
+            },
+            onExit: (_) async {
+              setState(() {
+                isCancellingHover = true;
+              });
+              await Future.delayed(Duration(seconds: 1));
+              if (isCancellingHover) {
+                setState(() {
+                  isHovering = false;
+                });
+              }
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // _button(
+                //   sss,
+                //   icon: Icons.assignment_rounded,
+                //   label: "Presets",
+                //   left: true,
+                //   color:
+                //       ref.watch(modsSubTabIndexProvider) == 0
+                //           ? const Color.fromARGB(255, 128, 128, 128)
+                //           : const Color.fromARGB(255, 60, 60, 60),
+                //   onPressed: () {
+                //     ref.read(modsSubTabIndexProvider.notifier).state = 0;
+                //   },
+                // ),
+                _button(
+                  sss,
+                  icon: Icons.home_rounded,
+                  label: "Main",
+                  left: true,
+                  color:
+                      ref.watch(modsSubTabIndexProvider) == 1
+                          ? const Color.fromARGB(255, 128, 128, 128)
+                          : const Color.fromARGB(255, 60, 60, 60),
+                  onPressed: () {
+                    ref.read(modsSubTabIndexProvider.notifier).state = 1;
+                  },
+                ),
+                Tooltip(
+                  richMessage: TextSpan(
+                    text: "Fix problems".tr(),
+                    style: GoogleFonts.poppins(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 12 * sss,
+                    ),
+                  ),
+                  child: _button(
+                    sss,
+                    icon: Icons.construction_rounded,
+                    label: "Troubleshoot",
+                    right: true,
+                    color:
+                        ref.watch(modsSubTabIndexProvider) == 2
+                            ? const Color.fromARGB(255, 128, 128, 128)
+                            : const Color.fromARGB(255, 60, 60, 60),
+                    onPressed: () {
+                      ref.read(modsSubTabIndexProvider.notifier).state = 2;
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _button(
+    double sss, {
+    required IconData icon,
+    required String label,
+    bool left = false,
+    bool right = false,
+    required Color color,
+    required void Function() onPressed,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+      height: 30 * sss,
+      width: 120 * sss,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.only(
+          topLeft: left ? Radius.circular(10 * sss) : Radius.zero,
+          bottomLeft: left ? Radius.circular(10 * sss) : Radius.zero,
+          topRight: right ? Radius.circular(10 * sss) : Radius.zero,
+          bottomRight: right ? Radius.circular(10 * sss) : Radius.zero,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.only(
+            topLeft: left ? Radius.circular(10 * sss) : Radius.zero,
+            bottomLeft: left ? Radius.circular(10 * sss) : Radius.zero,
+            topRight: right ? Radius.circular(10 * sss) : Radius.zero,
+            bottomRight: right ? Radius.circular(10 * sss) : Radius.zero,
+          ),
+          onTap: onPressed,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Colors.white, size: 15 * sss),
+              SizedBox(width: 5 * sss),
+              Text(
+                label,
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 12 * sss,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

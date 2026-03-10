@@ -7,8 +7,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/main.dart';
+import 'package:no_reload_mod_manager/tabs/mods_presets_tab.dart';
 import 'package:no_reload_mod_manager/tabs/mods_tab_carousel.dart';
 import 'package:no_reload_mod_manager/tabs/mods_tab_grid.dart';
+import 'package:no_reload_mod_manager/tabs/mods_troubleshoot_tab.dart';
 import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
 import 'package:no_reload_mod_manager/utils/force_read_as_utf8.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
@@ -64,18 +66,28 @@ class _TabModsState extends ConsumerState<TabMods> with WindowListener {
   @override
   Widget build(BuildContext context) {
     int layoutMode = ref.watch(layoutModeProvider);
-    if (layoutMode == 0) {
-      if (ref.watch(isCarouselProvider)) {
+    int modsSubTabIndex = ref.watch(modsSubTabIndexProvider);
+
+    if (modsSubTabIndex == 0) {
+      return ModsPresetsTab();
+    } else if (modsSubTabIndex == 2) {
+      return ModsTroubleshootTab();
+    }
+    //default main view (index 1)
+    else {
+      if (layoutMode == 0) {
+        if (ref.watch(isCarouselProvider)) {
+          return TabModsCarousel();
+        } else {
+          return TabModsGrid();
+        }
+      } else if (layoutMode == 1) {
         return TabModsCarousel();
-      } else {
+      } else if (layoutMode == 2) {
         return TabModsGrid();
+      } else {
+        return TabModsCarousel();
       }
-    } else if (layoutMode == 1) {
-      return TabModsCarousel();
-    } else if (layoutMode == 2) {
-      return TabModsGrid();
-    } else {
-      return TabModsCarousel();
     }
   }
 }
