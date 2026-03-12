@@ -1311,7 +1311,9 @@ class _MainViewState extends ConsumerState<MainView>
             SharedPrefUtils().getGroupSort();
 
         if (ref.read(sortGroupMethod) == 1) {
-          datas.sort((a, b) => a.groupName.compareTo(b.groupName));
+          datas.sort(
+            (a, b) => a.groupName.toLowerCase().compareTo(b.groupName),
+          );
         }
 
         ref.read(modGroupDataProvider.notifier).state = datas;
