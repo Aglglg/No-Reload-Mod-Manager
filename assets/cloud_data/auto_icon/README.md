@@ -2,7 +2,7 @@
 1. Modify **`game_name/_icon.json`**.
 2. Give the correct hash for the character.  
 **You can simply look for it in existing mod's ini file.**  
-Usually, VB hash for WuWa & Endfield, IB hashes for Hoyo games.
+Usually, VB hash for WuWa, IB hashes for Hoyo games & Endfield.
 3. One character can have multiple hashes, it's fine, and it's better.
 4. Give image file on corresponding game folder.
 5. List the hash and image link in **`game_name/_icon.json`**.
