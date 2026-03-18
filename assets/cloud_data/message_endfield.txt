@@ -1,1 +1,1 @@
-Update EFMI with XXMI Launcher and use the mod fixer (issue: AMD users get very low FPS, still no mods for AMD) || https://gamebanana.com/tools/22185
+Update EFMI & XXMI and use mod fixer to fix mods in game v1.1 || https://gamebanana.com/tools/22185
