@@ -229,5 +229,8 @@
   "Helpful for troubleshooting unknown issues and reducing mod reload (F10) time": "Berguna untuk mengatasi masalah yang tidak diketahui dan mempercepat waktu reload mod (F10)",
   "Some mods can't be enabled/disabled, please rename these mods manually with File Explorer.": "Beberapa mod tidak dapat diaktifkan/dinonaktifkan. Silakan rename mod tersebut secara manual melalui File Explorer.",
   "Enabling/disabling mods...": "Mengaktifkan/menonaktifkan mod...",
-  "Reload (F10)": "Reload (F10)"
+  "Reload (F10)": "Reload (F10)",
+  "If mod customizations are still not saved": "\nJika kustomisasi mod masih belum tersimpan, mod creator mungkin lupa menambahkan keyword 'persist' pada toggle.\nAtau kamu lupa reload dengan F10.",
+  "Some malformed entries were detected in the d3dx_user.ini file": "\n\nBeberapa entri yang tidak valid terdeteksi dalam file d3dx_user.ini, yang mungkin mencegah beberapa kustomisasi mod untuk tersimpan.\nIni bisa terjadi ketika menggunakan 3DMigoto/XXMI DLL versi lama.",
+  "Update to a newer XXMI DLL or rename the following files/folders": "\n\nUpdate ke XXMI DLL yang lebih baru atau ganti nama file/folder berikut agar hanya menggunakan karakter bahasa Inggris standar (A-Z, a-z, 0-9):"
 }

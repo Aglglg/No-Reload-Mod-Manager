@@ -229,5 +229,8 @@
   "Helpful for troubleshooting unknown issues and reducing mod reload (F10) time": "Helpful for troubleshooting unknown issues and reducing mod reload (F10) time",
   "Some mods can't be enabled/disabled, please rename these mods manually with File Explorer.": "Some mods can't be enabled/disabled, please rename these mods manually with File Explorer",
   "Enabling/disabling mods...": "Disabling all mods...",
-  "Reload (F10)": "Reload (F10)"
+  "Reload (F10)": "Reload (F10)",
+  "If mod customizations are still not saved": "\nIf mod customizations are still not saved, the mod creator probably forgot to add the 'persist' keyword to the toggles.\nOr you forgot to reload with F10.",
+  "Some malformed entries were detected in the d3dx_user.ini file": "\n\nSome malformed entries were detected in the d3dx_user.ini file, which may prevent certain mod customizations from being saved.\nThis can happen when using an outdated 3DMigoto/XXMI DLL.",
+  "Update to a newer XXMI DLL or rename the following files/folders": "\n\nUpdate to a newer XXMI DLL or rename the following files/folders to use only standard English characters (A-Z, a-z, 0-9):"
 }

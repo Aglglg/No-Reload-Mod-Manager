@@ -2218,7 +2218,59 @@ class _SaveModCustomizationsDialogState
         d3dxUserLines = await forceReadAsLinesUtf8(d3dxUserFile);
       } catch (_) {}
 
-      final rawSavedValues = _getRawSavedValues(d3dxUserLines);
+      final rawSavedValues = _getRawSavedValues(
+        d3dxUserLines,
+      ); // Example: mods\_managed_\something = 1
+
+      // Malformed line (contains $\, or contains multiple $) which can occurs in old version of 3dmigoto/XXMI DLL
+      // Example: mods\something\$\mods\abc = 1
+      // Example: mods\something\abc$\mods\abc = 1
+      // (after "something\" should actually be non ascii chars, but not handled correctly)
+
+      bool malformedD3dxUserFile = false;
+      final potentiallyTriggeringBugPaths = <String>{};
+      bool isAscii(String s) => s.codeUnits.every((c) => c >= 0 && c <= 127);
+
+      for (final rawSavedValue in rawSavedValues) {
+        if (!rawSavedValue.contains(r"$\")) continue;
+
+        malformedD3dxUserFile = true;
+
+        final folderPaths =
+            rawSavedValue.split(r"$\").where((e) => e.startsWith("mods")).map((
+              e,
+            ) {
+              final lastSlash = e.lastIndexOf(r"\");
+              if (lastSlash != -1) {
+                return e.substring(0, lastSlash + 1);
+              }
+
+              return e;
+            }).toList();
+
+        if (folderPaths.length > 1) {
+          folderPaths.removeLast(); //last entry is not malformed
+        }
+
+        for (final relFolderPath in folderPaths) {
+          final mentionedFolder = Directory(
+            p.join(p.dirname(widget.validModsPath), relFolderPath),
+          );
+
+          if (!await mentionedFolder.exists()) continue;
+
+          await for (final e in mentionedFolder.list(recursive: false)) {
+            final name = p.basename(e.path);
+
+            final isRelevant =
+                (e is Directory) || (e is File && name.endsWith("ini"));
+
+            if (isRelevant && !isAscii(name)) {
+              potentiallyTriggeringBugPaths.add(e.path);
+            }
+          }
+        }
+      }
 
       // NamespaceAndVarName, Value
       final List<(String, double)> keyValues = [];
@@ -2290,8 +2342,57 @@ class _SaveModCustomizationsDialogState
           TextSpan(
             text:
                 "Current mod customizations have been set as the default.".tr(),
-            style: GoogleFonts.poppins(color: Colors.green, fontSize: 14),
+            style: GoogleFonts.poppins(
+              color: Colors.green,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
           ),
+
+          if (!malformedD3dxUserFile)
+            TextSpan(
+              text: "If mod customizations are still not saved".tr(),
+              style: GoogleFonts.poppins(
+                color: Colors.grey,
+                fontWeight: FontWeight.w400,
+                fontSize: 13,
+              ),
+            ),
+
+          if (malformedD3dxUserFile)
+            TextSpan(
+              text:
+                  "Some malformed entries were detected in the d3dx_user.ini file"
+                      .tr(),
+              style: GoogleFonts.poppins(
+                color: const Color.fromARGB(255, 189, 170, 0),
+                fontWeight: FontWeight.w400,
+                fontSize: 14,
+              ),
+            ),
+
+          if (malformedD3dxUserFile && potentiallyTriggeringBugPaths.isNotEmpty)
+            TextSpan(
+              text:
+                  "Update to a newer XXMI DLL or rename the following files/folders"
+                      .tr(),
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontWeight: FontWeight.w400,
+                fontSize: 14,
+              ),
+            ),
+
+          if (malformedD3dxUserFile && potentiallyTriggeringBugPaths.isNotEmpty)
+            TextSpan(
+              text:
+                  "\n${potentiallyTriggeringBugPaths.map((e) => p.relative(e, from: p.dirname(widget.validModsPath))).join('\n')}",
+              style: GoogleFonts.poppins(
+                color: Colors.grey,
+                fontWeight: FontWeight.w400,
+                fontSize: 13,
+              ),
+            ),
         ];
       });
     }

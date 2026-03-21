@@ -229,5 +229,8 @@
   "Helpful for troubleshooting unknown issues and reducing mod reload (F10) time": "有助于排查未知问题，并缩短模组重新加载（F10）时间",
   "Some mods can't be enabled/disabled, please rename these mods manually with File Explorer.": "部分模组无法启用或禁用，请使用文件资源管理器手动重命名这些模组。",
   "Enabling/disabling mods...": "正在启用/禁用模组。。。",
-  "Reload (F10)": "重新加载 (F10)"
+  "Reload (F10)": "重新加载 (F10)",
+  "If mod customizations are still not saved": "\n若模组自定义设置仍未保存，可能是模组作者忘记为开关添加 persist 关键字，\n或你忘记用 F10 重新加载。",
+  "Some malformed entries were detected in the d3dx_user.ini file": "\n\n在 d3dx_user.ini 文件中检测到一些格式错误的条目，这可能导致部分模组自定义设置无法保存。\n这可能是由于使用了过旧的 3DMigoto/XXMI DLL 所致。",
+  "Update to a newer XXMI DLL or rename the following files/folders": "\n\n请更新至更新版本的 XXMI DLL，或将以下文件/文件夹重命名，使其仅包含标准英文字符（A-Z、a-z、0-9）："
 }
