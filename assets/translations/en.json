@@ -179,7 +179,7 @@
   "Generate group folder icon": "Generate group folder icon",
   "Disable all managed mods?": "Disable all managed mods?\nAll mod folders will be renamed to \"DISABLED_\".\n\n",
   "Usually only for troubleshooting purpose.": "Usually only for troubleshooting purpose.",
-  "Mod uses namespaces": "Mod uses namespaces.\nIf there's a problem, try to right-click and select 'Namespace'.\nOtherwise, just ignore it.",
+  "Mod uses namespaces": "Mod uses namespaces.\nNo need to change it in most cases. Right-click \"Namespace\" if needed.",
   "Change namespace": "Change namespace",
   "To avoid duplication, it should be unique and easy to read, not generic or too long.": "To avoid duplication, it should be unique and easy to read, not generic or too long.\n\nExample:\nPhrolovaWhiteDress (good)\nPhrolova (bad)\n",
   "Change the namespace if it's duplicated with another mod.": "Change the namespace if it's duplicated with another mod.\n",

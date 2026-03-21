@@ -179,7 +179,7 @@
   "Generate group folder icon": "Сгенерировать иконку папки группы",
   "Disable all managed mods?": "Отключить все управляемые моды?\nВсе папки модов будут переименованы в \"DISABLED_\".\n\n",
   "Usually only for troubleshooting purpose.": "Обычно только для целей диагностики проблем.",
-  "Mod uses namespaces": "Мод использует пространства имен.\nЕсли возникла проблема, попробуйте щелкнуть правой кнопкой мыши и выбрать 'Namespace'.\nВ противном случае просто проигнорируйте это.",
+  "Mod uses namespaces": "Мод использует пространства имён.\nОбычно менять не нужно. При необходимости нажмите правой кнопкой и выберите «Namespace».",
   "Change namespace": "Изменить пространство имен",
   "To avoid duplication, it should be unique and easy to read, not generic or too long.": "Чтобы избежать дублирования, оно должно быть уникальным, легко читаемым, не общим или слишком длинным.\n\nПример:\nPhrolovaWhiteDress (хорошо)\nPhrolova (плохо)\n",
   "Change the namespace if it's duplicated with another mod.": "Измените пространство имен, если оно дублируется с другим модом.\n",

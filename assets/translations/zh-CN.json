@@ -179,7 +179,7 @@
   "Generate group folder icon": "生成分组文件夹图标",
   "Disable all managed mods?": "是否禁用所有已管理的模组？\n所有模组文件夹将被重命名为 “DISABLED_”。\n\n",
   "Usually only for troubleshooting purpose.": "通常仅用于故障排查。",
-  "Mod uses namespaces": "模组使用了namespace。\n如果出现问题，请右键点击并选择『Namespace』。\n如果一切正常，可以忽略。",
+  "Mod uses namespaces": "模组使用 namespace。\n一般无需更改。如需更改，请右键选择\"Namespace\"。",
   "Change namespace": "更改namespace",
   "To avoid duplication, it should be unique and easy to read, not generic or too long.": "为避免重复，应保持唯一且易于阅读，不要过于通用或过长。\n\n示例：\nPhrolovaWhiteDress（好）\nPhrolova（不好）\n",
   "Change the namespace if it's duplicated with another mod.": "如果与其他模组重复，请更改namespace。\n",
