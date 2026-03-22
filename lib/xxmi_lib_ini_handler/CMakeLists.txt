@@ -16,6 +16,7 @@ set_target_properties(xxmi_lib_ini_handler PROPERTIES
     CXX_EXTENSIONS NO
     # Let CMake handle LTCG/GL safely if supported
     INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE
+    LINK_FLAGS "/SUBSYSTEM:WINDOWS"
 )
 
 # Includes
