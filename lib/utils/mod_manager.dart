@@ -968,6 +968,7 @@ Future<List<TextSpan>> updateModData(
   ErroredLinesReport errorReport;
 
   Ref<bool> errorShouldTryAgain = Ref(false);
+  Ref<bool> usingCustomXxmiDll = Ref(false);
 
   final stopwatch = Stopwatch()..start();
 
@@ -978,6 +979,7 @@ Future<List<TextSpan>> updateModData(
       modsPath,
       operationLogs,
       errorShouldTryAgain,
+      usingCustomXxmiDll,
       targetGame,
       dllPath,
     );
@@ -1162,6 +1164,15 @@ Future<List<TextSpan>> updateModData(
                     fontWeight: FontWeight.w400,
                   ),
                 ),
+              if (usingCustomXxmiDll.value)
+                TextSpan(
+                  text: 'Custom XXMI DLL for NRMM is active!'.tr(),
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
             ],
           )
           : TextSpan(
@@ -1303,6 +1314,7 @@ Future<(String, bool)> _prepareManagedFolder(
   String modsPath,
   List<TextSpan> operationLogs,
   Ref<bool> errorShouldTryAgain,
+  Ref<bool> usingCustomXxmiDll,
   TargetGame targetGame,
   String dllPath,
 ) async {
@@ -1332,6 +1344,7 @@ Future<(String, bool)> _prepareManagedFolder(
     managedPath,
     operationLogs,
     errorShouldTryAgain,
+    usingCustomXxmiDll,
     targetGame,
     dllPath,
   );
@@ -1706,6 +1719,7 @@ Future<void> _createBackgroundKeypressIni(
   String managedPath,
   List<TextSpan> operationLogs,
   Ref<bool> errorShouldTryAgain,
+  Ref<bool> usingCustomXxmiDll,
   TargetGame targetGame,
   String dllPath,
 ) async {
@@ -1721,6 +1735,8 @@ Future<void> _createBackgroundKeypressIni(
         ? 'assets/template_txt/listen_keypress_manager.txt'
         : 'assets/template_txt/listen_keypress_even_on_background.txt',
   );
+
+  usingCustomXxmiDll.value = nrmmCustomXXMIDll;
 
   // Create the required files
   final keypressfilePath = p.join(

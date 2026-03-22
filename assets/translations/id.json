@@ -232,5 +232,6 @@
   "Reload (F10)": "Reload (F10)",
   "If mod customizations are still not saved": "\nJika kustomisasi mod masih belum tersimpan, mod creator mungkin lupa menambahkan keyword 'persist' pada toggle.\nAtau kamu lupa reload dengan F10.",
   "Some malformed entries were detected in the d3dx_user.ini file": "\n\nBeberapa entri yang tidak valid terdeteksi dalam file d3dx_user.ini, yang mungkin mencegah beberapa kustomisasi mod untuk tersimpan.\nIni bisa terjadi ketika menggunakan 3DMigoto/XXMI DLL versi lama.",
-  "Update to a newer XXMI DLL or rename the following files/folders": "\n\nUpdate ke XXMI DLL yang lebih baru atau ganti nama file/folder berikut agar hanya menggunakan karakter bahasa Inggris standar (A-Z, a-z, 0-9):"
+  "Update to a newer XXMI DLL or rename the following files/folders": "\n\nUpdate ke XXMI DLL yang lebih baru atau ganti nama file/folder berikut agar hanya menggunakan karakter bahasa Inggris standar (A-Z, a-z, 0-9):",
+  "Custom XXMI DLL for NRMM is active!": "\nCustom XXMI DLL untuk NRMM sedang aktif!"
 }
