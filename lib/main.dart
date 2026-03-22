@@ -1312,7 +1312,8 @@ class _MainViewState extends ConsumerState<MainView>
 
         if (ref.read(sortGroupMethod) == 1) {
           datas.sort(
-            (a, b) => a.groupName.toLowerCase().compareTo(b.groupName),
+            (a, b) =>
+                a.groupName.toLowerCase().compareTo(b.groupName.toLowerCase()),
           );
         }
 
