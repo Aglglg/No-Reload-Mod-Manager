@@ -2549,39 +2549,55 @@ void _reorderByIniKeyPriority(List<IniSection> sections) {
     final lowerKeys = priorityKeys.map((k) => k.toLowerCase()).toList();
     final lines = section.lines;
 
-    final buckets = List.generate(priorityKeys.length, (_) => <String>[]);
+    final prioritized = <String>[];
     final rest = <String>[];
+    final pendingComments =
+        <String>[]; // comments waiting to see what comes next
 
     for (final line in lines) {
       final trimmed = line.trimLeft();
-      final lower = trimmed.toLowerCase();
 
+      // Buffer comment & blank lines, they follow whatever the next real line does
+      if (trimmed.startsWith(';') ||
+          (trimmed.isEmpty && pendingComments.isNotEmpty)) {
+        pendingComments.add(line);
+        continue;
+      }
+
+      final lower = trimmed.toLowerCase();
       bool matched = false;
 
-      for (int i = 0; i < lowerKeys.length; i++) {
-        final key = lowerKeys[i];
-
+      for (final key in lowerKeys) {
         if (!lower.startsWith(key)) continue;
 
         final restOfLine = lower.substring(key.length);
-
-        // Must be: [whitespace]* '='
         final eqIndex = restOfLine.indexOf('=');
         if (eqIndex == -1) continue;
 
         if (restOfLine.substring(0, eqIndex).trim().isEmpty) {
-          buckets[i].add(line);
+          prioritized.addAll(
+            pendingComments,
+          ); // comments belong with this priority line
+          prioritized.add(line);
           matched = true;
           break;
         }
       }
 
       if (!matched) {
+        rest.addAll(
+          pendingComments,
+        ); // comments belong with this non-priority line
         rest.add(line);
       }
+
+      pendingComments.clear();
     }
 
-    section.lines = [for (final bucket in buckets) ...bucket, ...rest];
+    // Any trailing comments at end of section go to rest
+    rest.addAll(pendingComments);
+
+    section.lines = [...prioritized, ...rest];
   }
 }
 
