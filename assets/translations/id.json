@@ -26,7 +26,7 @@
   "Save Keybinds": "Simpan tombol mod",
   "Right-click a mod and select Keybind.": "Klik kanan di mod dan pilih Keybind.\nAtau cukup tekan [R (keyboard)] / [X (gamepad)] di sebuah mod. ",
   "Right-click and add group, then you can add mods.": "Klik kanan kemudian tambah grup, lalu bisa tambah mod.",
-  "Drag & Drop mod folders here to add mods to this group (1 folder = 1 mod).": "Drag & drop folder mod atau arsip ke sini untuk menambahkan mod ke group ini (1 folder = 1 mod, 1 arsip = 1 mod).",
+  "Drag & Drop mod folders here to add mods to this group (1 folder = 1 mod).": "Drag & drop folder mod atau arsip ke sini (1 folder = 1 mod, 1 arsip = 1 mod).",
   "Max group reached (500 Groups). Unable to add more group.": "Grup sudah maksimal (500 Groups). Tidak bisa menambahkan grup lagi.",
   "Rename": "Ganti nama",
   "Try auto icon": "Ikon otomatis",
