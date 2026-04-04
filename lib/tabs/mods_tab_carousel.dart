@@ -90,42 +90,53 @@ class _TabModsCarouselState extends ConsumerState<TabModsCarousel>
   @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
-    return Padding(
-      padding: EdgeInsets.only(top: 67 * sss, right: 45 * sss, left: 45 * sss),
-      child: Stack(
-        children: [
+    return Stack(
+      children: [
+        if (ref.watch(windowIsPinnedProvider) ||
+            ref.watch(modGroupDataProvider).isEmpty)
+          Align(
+            alignment:
+                ref.watch(modGroupDataProvider).isNotEmpty
+                    ? Alignment.topCenter
+                    : Alignment.center,
+            child: Padding(
+              padding: EdgeInsets.only(
+                top:
+                    ref.watch(modGroupDataProvider).isNotEmpty
+                        ? 81 * sss
+                        : 67 * sss,
+              ),
+              child: IgnorePointer(
+                child: Text(
+                  getTextDragAndDrop(),
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                  style: GoogleFonts.poppins(
+                    color:
+                        ref.watch(windowIsPinnedProvider)
+                            ? const Color.fromARGB(255, 33, 149, 243)
+                            : const Color.fromARGB(127, 255, 255, 255),
+                    fontSize: 12 * sss,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+        if (ref.watch(modGroupDataProvider).isNotEmpty)
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (ref.watch(windowIsPinnedProvider) ||
-                  ref.watch(modGroupDataProvider).isEmpty)
-                Center(
-                  child: Column(
-                    children: [
-                      IgnorePointer(
-                        child: Text(
-                          getTextDragAndDrop(),
-                          textAlign: TextAlign.center,
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: false,
-                          style: GoogleFonts.poppins(
-                            color:
-                                ref.watch(windowIsPinnedProvider)
-                                    ? const Color.fromARGB(255, 33, 149, 243)
-                                    : const Color.fromARGB(127, 255, 255, 255),
-                            fontSize: 12 * sss,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+              Padding(
+                padding: EdgeInsets.only(
+                  left: 45 * sss,
+                  right: 45 * sss,
+                  top: ref.watch(windowIsPinnedProvider) ? 95 * sss : 67 * sss,
                 ),
-
-              if (ref.watch(modGroupDataProvider).isNotEmpty)
-                Column(
+                child: Column(
                   children: [
-                    IgnorePointer(child: Container(height: 12 * sss)),
                     Center(
                       child: Row(
                         children: [
@@ -150,55 +161,55 @@ class _TabModsCarouselState extends ConsumerState<TabModsCarousel>
                     ),
                   ],
                 ),
+              ),
             ],
           ),
-          if (ref.watch(searchBarShownProvider))
-            Align(
-              alignment: Alignment.topCenter,
-              child: Padding(
-                padding: EdgeInsets.only(top: 15.0 * sss),
-                child: SizedBox(
-                  height: 38 * sss,
-                  child: SearchBar(
-                    focusNode: searchFocus,
-                    controller: searchController,
-                    onChanged: (value) {
-                      if (value == ' ') {
-                        ref.read(searchBarMode.notifier).state =
-                            (ref.read(searchBarMode) + 1) %
-                            4; //4 modes: all, group, mod, ingroup
-                        searchController.text = '';
-                        return;
-                      }
-                      if (value.isNotEmpty) goToSearchResult(ref, value);
-                    },
-                    onSubmitted:
-                        (value) =>
-                            ref.read(searchBarShownProvider.notifier).state =
-                                false,
-                    onTapOutside:
-                        (event) =>
-                            ref.read(searchBarShownProvider.notifier).state =
-                                false,
-                    leading: Icon(Icons.search),
-                    hintText: getSearchBarHint(),
-                    hintStyle: WidgetStatePropertyAll(
-                      GoogleFonts.poppins(fontSize: 13 * sss),
-                    ),
-                    textStyle: WidgetStatePropertyAll(
-                      GoogleFonts.poppins(fontSize: 13 * sss),
-                    ),
-                    shape: WidgetStatePropertyAll(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadiusGeometry.circular(20 * sss),
-                      ),
+        if (ref.watch(searchBarShownProvider))
+          Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: EdgeInsets.only(top: 15.0 * sss),
+              child: SizedBox(
+                height: 38 * sss,
+                child: SearchBar(
+                  focusNode: searchFocus,
+                  controller: searchController,
+                  onChanged: (value) {
+                    if (value == ' ') {
+                      ref.read(searchBarMode.notifier).state =
+                          (ref.read(searchBarMode) + 1) %
+                          4; //4 modes: all, group, mod, ingroup
+                      searchController.text = '';
+                      return;
+                    }
+                    if (value.isNotEmpty) goToSearchResult(ref, value);
+                  },
+                  onSubmitted:
+                      (value) =>
+                          ref.read(searchBarShownProvider.notifier).state =
+                              false,
+                  onTapOutside:
+                      (event) =>
+                          ref.read(searchBarShownProvider.notifier).state =
+                              false,
+                  leading: Icon(Icons.search),
+                  hintText: getSearchBarHint(),
+                  hintStyle: WidgetStatePropertyAll(
+                    GoogleFonts.poppins(fontSize: 13 * sss),
+                  ),
+                  textStyle: WidgetStatePropertyAll(
+                    GoogleFonts.poppins(fontSize: 13 * sss),
+                  ),
+                  shape: WidgetStatePropertyAll(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadiusGeometry.circular(20 * sss),
                     ),
                   ),
                 ),
               ),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 

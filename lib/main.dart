@@ -166,7 +166,7 @@ Future<void> setupWindow(List<String> args) async {
   bitsdojo.doWhenWindowReady(() async {
     final minSize = Size(
       750 * SharedPrefUtils().getOverallScale(),
-      370 * SharedPrefUtils().getOverallScale(),
+      395 * SharedPrefUtils().getOverallScale(),
     );
 
     Size? savedSize = SharedPrefUtils().getSavedWindowSize();
@@ -1473,6 +1473,7 @@ class _MainViewState extends ConsumerState<MainView>
             alignment: Alignment.topCenter,
             child: Transform.scale(
               scale: sss,
+              alignment: Alignment.topCenter,
               child: SizedBox(
                 width: 350,
 

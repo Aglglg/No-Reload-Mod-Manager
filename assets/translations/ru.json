@@ -26,7 +26,7 @@
   "Save Keybinds": "Сохранить привязки клавиш",
   "Right-click a mod and select Keybind.": "Щелкните правой кнопкой мыши на моде и выберите Keybind.\nИли просто нажмите [R (клавиатура)] / [X (геймпад)] на моде.",
   "Right-click and add group, then you can add mods.": "Щелкните правой кнопкой мыши и добавьте группу, затем вы сможете добавить моды.",
-  "Drag & Drop mod folders here to add mods to this group (1 folder = 1 mod).": "Перетащите сюда папки с модами или архивы, чтобы добавить их в эту группу (1 папка = 1 мод, 1 архив = 1 мод).",
+  "Drag & Drop mod folders here to add mods to this group (1 folder = 1 mod).": "Перетащите сюда папки с модами или архивы (1 папка = 1 мод, 1 архив = 1 мод).",
   "Max group reached (500 Groups). Unable to add more group.": "Достигнуто максимальное количество групп (500). Невозможно добавить больше групп.",
   "Rename": "Переименовать",
   "Try auto icon": "Авто иконка",
