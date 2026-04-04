@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
+import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
 import 'package:no_reload_mod_manager/utils/force_read_as_utf8.dart';
@@ -301,7 +302,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
             margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
             duration: Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
-            closeIconColor: const Color.fromARGB(255, 33, 149, 243),
+            closeIconColor: getAccentColor(ref),
             showCloseIcon: true,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
@@ -330,7 +331,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
         child: Stack(
           children: [
             Padding(
-              padding: EdgeInsets.only(top: 85 * sss),
+              padding: EdgeInsets.only(top: 102 * sss),
               child: Align(
                 alignment: Alignment.topCenter,
                 child: Column(
@@ -364,12 +365,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                                     )
                                     .state = value;
                               },
-                              activeColor: const Color.fromARGB(
-                                255,
-                                33,
-                                149,
-                                243,
-                              ),
+                              activeColor: getAccentColor(ref),
                               trackOutlineWidth: WidgetStatePropertyAll(0),
                               trackOutlineColor: WidgetStatePropertyAll(
                                 Colors.transparent,
@@ -395,7 +391,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
 
             Padding(
               padding: EdgeInsets.only(
-                top: 150 * sss,
+                top: 167 * sss,
                 right: 45 * sss,
                 left: 45 * sss,
                 bottom: 40 * sss,
@@ -495,6 +491,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
               child: Align(
                 alignment: Alignment.bottomCenter,
                 child: Transform.scale(
+                  alignment: Alignment.bottomCenter,
                   scale: sss,
                   child: TextButton(
                     onPressed: () async {
@@ -509,7 +506,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                     child: Text(
                       isEditing ? "Save Keybinds".tr() : "Edit Keybinds".tr(),
                       style: GoogleFonts.poppins(
-                        color: const Color.fromARGB(255, 33, 149, 243),
+                        color: getAccentColor(ref),
                         fontSize: 13,
                       ),
                     ),
@@ -523,7 +520,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
     } else {
       return Padding(
         padding: EdgeInsets.only(
-          top: 85 * sss,
+          top: 102 * sss,
           right: 49 * sss,
           left: 49 * sss,
           bottom: 30 * sss,
@@ -621,7 +618,7 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
           margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
           duration: Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
-          closeIconColor: const Color.fromARGB(255, 33, 149, 243),
+          closeIconColor: getAccentColor(ref),
           showCloseIcon: true,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -658,7 +655,7 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
         overlayColor: WidgetStatePropertyAll(
           controllers.length > 1
               ? Colors.transparent
-              : const Color.fromARGB(50, 33, 149, 243),
+              : getAccentColor(ref, alpha: 50),
         ),
         shadowColor: WidgetStatePropertyAll(Colors.transparent),
         padding: WidgetStatePropertyAll(EdgeInsetsGeometry.zero),
@@ -667,7 +664,7 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
             side: BorderSide(
               color:
                   state.contains(WidgetState.hovered)
-                      ? const Color.fromARGB(255, 33, 149, 243)
+                      ? getAccentColor(ref)
                       : const Color.fromARGB(127, 255, 255, 255),
               width: 3 * sss,
               strokeAlign: BorderSide.strokeAlignInside,
@@ -740,7 +737,7 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
                                   Colors.transparent,
                                 ),
                                 overlayColor: WidgetStatePropertyAll(
-                                  const Color.fromARGB(50, 33, 149, 243),
+                                  getAccentColor(ref, alpha: 50),
                                 ),
                                 shadowColor: WidgetStatePropertyAll(
                                   Colors.transparent,

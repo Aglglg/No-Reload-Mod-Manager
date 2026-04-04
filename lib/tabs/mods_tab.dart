@@ -9,6 +9,7 @@ import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/tabs/mods_tab_carousel.dart';
 import 'package:no_reload_mod_manager/tabs/mods_tab_grid.dart';
+import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
 import 'package:no_reload_mod_manager/utils/force_read_as_utf8.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
@@ -51,9 +52,10 @@ class _TabModsState extends ConsumerState<TabMods> with WindowListener {
     if (ref.read(layoutModeProvider) != 0) return;
     final size = await windowManager.getSize();
     if (mounted) {
-      double minimalHeight = 370 * ref.read(zoomScaleProvider);
+      double minimalHeight =
+          ConstantVar.minWindowHeight * ref.read(zoomScaleProvider);
       double currentHeight = size.height;
-      if (minimalHeight * 1.3 <= currentHeight) {
+      if (minimalHeight * 1.1 <= currentHeight) {
         ref.read(isCarouselProvider.notifier).state = false;
       } else {
         ref.read(isCarouselProvider.notifier).state = true;
@@ -273,7 +275,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                 widget.onSelected();
               },
               label: 'Select'.tr(),
-              textColor: const Color.fromARGB(255, 33, 149, 243),
+              textColor: getAccentColor(ref),
             ),
             if (!ref.watch(windowIsPinnedProvider))
               CustomMenuItem(
@@ -461,7 +463,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                         ),
                         duration: Duration(seconds: 3),
                         behavior: SnackBarBehavior.floating,
-                        closeIconColor: const Color.fromARGB(255, 33, 149, 243),
+                        closeIconColor: getAccentColor(ref),
                         showCloseIcon: true,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
@@ -513,7 +515,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                         ),
                         duration: Duration(seconds: 3),
                         behavior: SnackBarBehavior.floating,
-                        closeIconColor: const Color.fromARGB(255, 33, 149, 243),
+                        closeIconColor: getAccentColor(ref),
                         showCloseIcon: true,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
@@ -654,7 +656,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                               )
                               ? Colors.red
                               : widget.isSelected
-                              ? const Color.fromARGB(255, 33, 149, 243)
+                              ? getAccentColor(ref)
                               : const Color.fromARGB(127, 255, 255, 255),
                       width:
                           (isHovering &&
@@ -835,7 +837,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
             focusNode: modTextFieldFocusNode,
             textInputAction: TextInputAction.done,
             enabled: modTextFieldEnabled,
-            cursorColor: const Color.fromARGB(255, 33, 149, 243),
+            cursorColor: getAccentColor(ref),
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(color: Colors.white, fontSize: 12 * sss),
             decoration: InputDecoration(
@@ -848,14 +850,12 @@ class _ModContainerState extends ConsumerState<ModContainer>
               ),
               disabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(
-                  color: const Color.fromARGB(255, 33, 149, 243),
+                  color: getAccentColor(ref),
                   style: BorderStyle.none,
                 ),
               ),
               focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(
-                  color: const Color.fromARGB(255, 33, 149, 243),
-                ),
+                borderSide: BorderSide(color: getAccentColor(ref)),
               ),
             ),
             onEditingComplete: () {
@@ -914,7 +914,7 @@ class TabModsNotReady extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sss = ref.watch(zoomScaleProvider);
     return Padding(
-      padding: EdgeInsets.only(top: 85 * sss),
+      padding: EdgeInsets.only(top: 102 * sss),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -983,7 +983,7 @@ class TabModsLoading extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sss = ref.watch(zoomScaleProvider);
     return Padding(
-      padding: EdgeInsets.only(top: 57 * sss),
+      padding: EdgeInsets.only(top: 74 * sss),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

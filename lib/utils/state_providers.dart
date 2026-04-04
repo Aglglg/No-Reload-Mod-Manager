@@ -4,6 +4,8 @@ import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 
+final StateProvider<bool> isCasualMode = StateProvider<bool>((ref) => false);
+
 final StateProvider<TargetGame> targetGameProvider = StateProvider<TargetGame>(
   (ref) => TargetGame.none,
 );

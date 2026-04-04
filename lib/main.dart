@@ -165,8 +165,8 @@ Future<void> setupWindow(List<String> args) async {
 
   bitsdojo.doWhenWindowReady(() async {
     final minSize = Size(
-      750 * SharedPrefUtils().getOverallScale(),
-      395 * SharedPrefUtils().getOverallScale(),
+      ConstantVar.minWindowWidth * SharedPrefUtils().getOverallScale(),
+      ConstantVar.minWindowHeight * SharedPrefUtils().getOverallScale(),
     );
 
     Size? savedSize = SharedPrefUtils().getSavedWindowSize();
@@ -297,7 +297,7 @@ class _BackgroundState extends ConsumerState<Background> {
 
   Color getBorderColor(WidgetRef ref) {
     if (ref.watch(windowIsPinnedProvider)) {
-      return const Color.fromARGB(255, 33, 149, 243);
+      return getAccentColor(ref);
     } else {
       return const Color.fromARGB(127, 255, 255, 255);
     }
@@ -1144,7 +1144,7 @@ class _MainViewState extends ConsumerState<MainView>
               margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
               duration: Duration(days: 1),
               behavior: SnackBarBehavior.floating,
-              closeIconColor: const Color.fromARGB(255, 33, 149, 243),
+              closeIconColor: getAccentColor(ref),
               showCloseIcon: true,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
@@ -1159,7 +1159,7 @@ class _MainViewState extends ConsumerState<MainView>
               action:
                   urlDetails.isNotEmpty
                       ? SnackBarAction(
-                        textColor: const Color.fromARGB(255, 33, 149, 243),
+                        textColor: getAccentColor(ref),
                         label: "Details".tr(),
                         onPressed: () async {
                           try {
@@ -1452,7 +1452,7 @@ class _MainViewState extends ConsumerState<MainView>
       children: [
         if (kDebugMode)
           Align(
-            alignment: Alignment.topCenter,
+            alignment: Alignment.bottomCenter,
             child: Text(
               'Experimental Version',
               style: GoogleFonts.poppins(
@@ -1466,9 +1466,57 @@ class _MainViewState extends ConsumerState<MainView>
         ///Tab views
         IndexedStack(index: ref.watch(tabIndexProvider), children: _views),
 
+        //Switch Mode
+        Padding(
+          padding: EdgeInsets.only(top: 5.2 * sss),
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: Transform.scale(
+              alignment: Alignment.topCenter,
+              scale: sss,
+              child: TextButton(
+                onPressed: () async {
+                  final casualMode = ref.read(isCasualMode);
+                  ref.read(isCasualMode.notifier).state = !casualMode;
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      ref.watch(isCasualMode)
+                          ? Icons.folder_rounded
+                          : Icons.bolt_rounded,
+                      size: 20,
+                      color:
+                          ref.watch(isCasualMode)
+                              ? const Color.fromARGB(255, 77, 182, 172)
+                              : getAccentColor(ref),
+                    ),
+                    SizedBox(width: ref.watch(isCasualMode) ? 10 : 6),
+                    Text(
+                      ref.watch(isCasualMode)
+                          ? "Casual Mode"
+                          : "No-Reload Mode",
+                      style: GoogleFonts.poppins(
+                        color:
+                            ref.watch(isCasualMode)
+                                ? const Color.fromARGB(255, 77, 182, 172)
+                                : getAccentColor(ref),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+
         ///Tab bars
         Padding(
-          padding: EdgeInsets.only(top: 25 * sss),
+          padding: EdgeInsets.only(top: 42 * sss),
           child: Align(
             alignment: Alignment.topCenter,
             child: Transform.scale(
@@ -1597,7 +1645,7 @@ class _UpdateModDataSnackbarButtonState
               child: Text(
                 'Update Mod Data'.tr(),
                 style: GoogleFonts.poppins(
-                  color: const Color.fromARGB(255, 33, 149, 243),
+                  color: getAccentColor(ref),
                   fontWeight: FontWeight.bold,
                   fontSize: 14 * ref.read(zoomScaleProvider),
                 ),
@@ -1641,4 +1689,10 @@ void changeWindowTitleName(String gameName) {
       gameName.isNotEmpty
           ? "No Reload Mod Manager $gameName"
           : "No Reload Mod Manager";
+}
+
+Color getAccentColor(WidgetRef ref, {int alpha = 255}) {
+  return ref.watch(isCasualMode)
+      ? Color.fromARGB(alpha, 77, 182, 172)
+      : Color.fromARGB(alpha, 33, 149, 243);
 }

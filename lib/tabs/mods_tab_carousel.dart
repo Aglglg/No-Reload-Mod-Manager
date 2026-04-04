@@ -103,8 +103,8 @@ class _TabModsCarouselState extends ConsumerState<TabModsCarousel>
               padding: EdgeInsets.only(
                 top:
                     ref.watch(modGroupDataProvider).isNotEmpty
-                        ? 81 * sss
-                        : 67 * sss,
+                        ? 98 * sss
+                        : 84 * sss,
               ),
               child: IgnorePointer(
                 child: Text(
@@ -115,7 +115,7 @@ class _TabModsCarouselState extends ConsumerState<TabModsCarousel>
                   style: GoogleFonts.poppins(
                     color:
                         ref.watch(windowIsPinnedProvider)
-                            ? const Color.fromARGB(255, 33, 149, 243)
+                            ? getAccentColor(ref)
                             : const Color.fromARGB(127, 255, 255, 255),
                     fontSize: 12 * sss,
                     fontWeight: FontWeight.w500,
@@ -133,7 +133,7 @@ class _TabModsCarouselState extends ConsumerState<TabModsCarousel>
                 padding: EdgeInsets.only(
                   left: 45 * sss,
                   right: 45 * sss,
-                  top: ref.watch(windowIsPinnedProvider) ? 95 * sss : 67 * sss,
+                  top: ref.watch(windowIsPinnedProvider) ? 112 * sss : 84 * sss,
                 ),
                 child: Column(
                   children: [
@@ -347,7 +347,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                         ),
                         duration: Duration(seconds: 3),
                         behavior: SnackBarBehavior.floating,
-                        closeIconColor: const Color.fromARGB(255, 33, 149, 243),
+                        closeIconColor: getAccentColor(ref),
                         showCloseIcon: true,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
@@ -436,12 +436,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                               ),
                               duration: Duration(seconds: 3),
                               behavior: SnackBarBehavior.floating,
-                              closeIconColor: const Color.fromARGB(
-                                255,
-                                33,
-                                149,
-                                243,
-                              ),
+                              closeIconColor: getAccentColor(ref),
                               showCloseIcon: true,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20),
@@ -545,12 +540,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                                     ),
                                     duration: Duration(seconds: 3),
                                     behavior: SnackBarBehavior.floating,
-                                    closeIconColor: const Color.fromARGB(
-                                      255,
-                                      33,
-                                      149,
-                                      243,
-                                    ),
+                                    closeIconColor: getAccentColor(ref),
                                     showCloseIcon: true,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(20),
@@ -564,12 +554,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                                       ),
                                     ),
                                     action: SnackBarAction(
-                                      textColor: const Color.fromARGB(
-                                        255,
-                                        33,
-                                        149,
-                                        243,
-                                      ),
+                                      textColor: getAccentColor(ref),
                                       label: "Contribute".tr(),
                                       onPressed: () async {
                                         try {
@@ -765,7 +750,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
           child: Theme(
             data: Theme.of(context).copyWith(
               textSelectionTheme: TextSelectionThemeData(
-                selectionColor: const Color.fromARGB(127, 33, 149, 243),
+                selectionColor: getAccentColor(ref, alpha: 127),
               ),
             ),
             child: TextField(
@@ -773,7 +758,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
               focusNode: groupTextFieldFocusNode,
               textInputAction: TextInputAction.done,
               enabled: groupTextFieldEnabled,
-              cursorColor: const Color.fromARGB(255, 33, 149, 243),
+              cursorColor: getAccentColor(ref),
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 color: Colors.white,
@@ -791,14 +776,12 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                 ),
                 disabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(
-                    color: const Color.fromARGB(255, 33, 149, 243),
+                    color: getAccentColor(ref),
                     style: BorderStyle.none,
                   ),
                 ),
                 focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(
-                    color: const Color.fromARGB(255, 33, 149, 243),
-                  ),
+                  borderSide: BorderSide(color: getAccentColor(ref)),
                 ),
               ),
               onEditingComplete: () {

@@ -88,8 +88,8 @@ class _TabModsGridState extends ConsumerState<TabModsGrid>
                   padding: EdgeInsets.only(
                     top:
                         ref.watch(modGroupDataProvider).isNotEmpty
-                            ? 81 * sss
-                            : 67 * sss,
+                            ? 98 * sss
+                            : 84 * sss,
                   ),
                   child: IgnorePointer(
                     child: Text(
@@ -100,7 +100,7 @@ class _TabModsGridState extends ConsumerState<TabModsGrid>
                       style: GoogleFonts.poppins(
                         color:
                             ref.watch(windowIsPinnedProvider)
-                                ? const Color.fromARGB(255, 33, 149, 243)
+                                ? getAccentColor(ref)
                                 : const Color.fromARGB(127, 255, 255, 255),
                         fontSize: 12 * sss,
                         fontWeight: FontWeight.w500,
@@ -113,10 +113,7 @@ class _TabModsGridState extends ConsumerState<TabModsGrid>
             if (ref.watch(modGroupDataProvider).isNotEmpty)
               Padding(
                 padding: EdgeInsets.only(
-                  top:
-                      ref.watch(windowIsPinnedProvider)
-                          ? 103 * sss
-                          : (103 - 25) * sss,
+                  top: ref.watch(windowIsPinnedProvider) ? 123 * sss : 98 * sss,
                   right: 45 * sss,
                   left: 45 * sss,
                   bottom: 40 * sss,
@@ -130,9 +127,7 @@ class _TabModsGridState extends ConsumerState<TabModsGrid>
               Padding(
                 padding: EdgeInsets.only(
                   top:
-                      ref.watch(windowIsPinnedProvider)
-                          ? 235 * sss
-                          : (235 - 25) * sss,
+                      ref.watch(windowIsPinnedProvider) ? 255 * sss : 230 * sss,
                   right: 45 * sss,
                   left: 45 * sss,
                   bottom: 40 * sss,
@@ -565,12 +560,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                               ),
                               duration: Duration(seconds: 3),
                               behavior: SnackBarBehavior.floating,
-                              closeIconColor: const Color.fromARGB(
-                                255,
-                                33,
-                                149,
-                                243,
-                              ),
+                              closeIconColor: getAccentColor(ref),
                               showCloseIcon: true,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20),
@@ -684,12 +674,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                                     ),
                                     duration: Duration(seconds: 3),
                                     behavior: SnackBarBehavior.floating,
-                                    closeIconColor: const Color.fromARGB(
-                                      255,
-                                      33,
-                                      149,
-                                      243,
-                                    ),
+                                    closeIconColor: getAccentColor(ref),
                                     showCloseIcon: true,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(20),
@@ -774,12 +759,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                                         ),
                                         duration: Duration(seconds: 3),
                                         behavior: SnackBarBehavior.floating,
-                                        closeIconColor: const Color.fromARGB(
-                                          255,
-                                          33,
-                                          149,
-                                          243,
-                                        ),
+                                        closeIconColor: getAccentColor(ref),
                                         showCloseIcon: true,
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
@@ -958,12 +938,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                                 size: index == currentPageIndex ? 80 : 65,
                                 selectedColor:
                                     index == currentPageIndex
-                                        ? const Color.fromARGB(
-                                          255,
-                                          33,
-                                          149,
-                                          243,
-                                        )
+                                        ? getAccentColor(ref)
                                         : null,
                                 onTap:
                                     () => _carouselSliderGroupController
@@ -1013,7 +988,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
               child: TextField(
                 focusNode: groupTextFieldFocusNode,
                 enabled: groupTextFieldEnabled,
-                cursorColor: const Color.fromARGB(255, 33, 149, 243),
+                cursorColor: getAccentColor(ref),
                 textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
                   color: Colors.white,
@@ -1039,9 +1014,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                     ),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: const Color.fromARGB(255, 33, 149, 243),
-                    ),
+                    borderSide: BorderSide(color: getAccentColor(ref)),
                   ),
                 ),
                 onEditingComplete: () {
