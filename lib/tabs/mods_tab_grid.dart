@@ -100,7 +100,7 @@ class _TabModsGridState extends ConsumerState<TabModsGrid>
                       style: GoogleFonts.poppins(
                         color:
                             ref.watch(windowIsPinnedProvider)
-                                ? Colors.blue
+                                ? const Color.fromARGB(255, 33, 149, 243)
                                 : const Color.fromARGB(127, 255, 255, 255),
                         fontSize: 12 * sss,
                         fontWeight: FontWeight.w500,
@@ -565,7 +565,12 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                               ),
                               duration: Duration(seconds: 3),
                               behavior: SnackBarBehavior.floating,
-                              closeIconColor: Colors.blue,
+                              closeIconColor: const Color.fromARGB(
+                                255,
+                                33,
+                                149,
+                                243,
+                              ),
                               showCloseIcon: true,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20),
@@ -679,7 +684,12 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                                     ),
                                     duration: Duration(seconds: 3),
                                     behavior: SnackBarBehavior.floating,
-                                    closeIconColor: Colors.blue,
+                                    closeIconColor: const Color.fromARGB(
+                                      255,
+                                      33,
+                                      149,
+                                      243,
+                                    ),
                                     showCloseIcon: true,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(20),
@@ -764,7 +774,12 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                                         ),
                                         duration: Duration(seconds: 3),
                                         behavior: SnackBarBehavior.floating,
-                                        closeIconColor: Colors.blue,
+                                        closeIconColor: const Color.fromARGB(
+                                          255,
+                                          33,
+                                          149,
+                                          243,
+                                        ),
                                         showCloseIcon: true,
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
@@ -943,7 +958,12 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                                 size: index == currentPageIndex ? 80 : 65,
                                 selectedColor:
                                     index == currentPageIndex
-                                        ? Colors.blue
+                                        ? const Color.fromARGB(
+                                          255,
+                                          33,
+                                          149,
+                                          243,
+                                        )
                                         : null,
                                 onTap:
                                     () => _carouselSliderGroupController
@@ -993,7 +1013,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
               child: TextField(
                 focusNode: groupTextFieldFocusNode,
                 enabled: groupTextFieldEnabled,
-                cursorColor: Colors.blue,
+                cursorColor: const Color.fromARGB(255, 33, 149, 243),
                 textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
                   color: Colors.white,
@@ -1019,7 +1039,9 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                     ),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.blue),
+                    borderSide: BorderSide(
+                      color: const Color.fromARGB(255, 33, 149, 243),
+                    ),
                   ),
                 ),
                 onEditingComplete: () {

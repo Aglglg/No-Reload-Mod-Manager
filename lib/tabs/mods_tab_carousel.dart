@@ -111,7 +111,7 @@ class _TabModsCarouselState extends ConsumerState<TabModsCarousel>
                           style: GoogleFonts.poppins(
                             color:
                                 ref.watch(windowIsPinnedProvider)
-                                    ? Colors.blue
+                                    ? const Color.fromARGB(255, 33, 149, 243)
                                     : const Color.fromARGB(127, 255, 255, 255),
                             fontSize: 12 * sss,
                             fontWeight: FontWeight.w500,
@@ -336,7 +336,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                         ),
                         duration: Duration(seconds: 3),
                         behavior: SnackBarBehavior.floating,
-                        closeIconColor: Colors.blue,
+                        closeIconColor: const Color.fromARGB(255, 33, 149, 243),
                         showCloseIcon: true,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
@@ -425,7 +425,12 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                               ),
                               duration: Duration(seconds: 3),
                               behavior: SnackBarBehavior.floating,
-                              closeIconColor: Colors.blue,
+                              closeIconColor: const Color.fromARGB(
+                                255,
+                                33,
+                                149,
+                                243,
+                              ),
                               showCloseIcon: true,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20),
@@ -529,7 +534,12 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                                     ),
                                     duration: Duration(seconds: 3),
                                     behavior: SnackBarBehavior.floating,
-                                    closeIconColor: Colors.blue,
+                                    closeIconColor: const Color.fromARGB(
+                                      255,
+                                      33,
+                                      149,
+                                      243,
+                                    ),
                                     showCloseIcon: true,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(20),
@@ -543,7 +553,12 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                                       ),
                                     ),
                                     action: SnackBarAction(
-                                      textColor: Colors.blue,
+                                      textColor: const Color.fromARGB(
+                                        255,
+                                        33,
+                                        149,
+                                        243,
+                                      ),
                                       label: "Contribute".tr(),
                                       onPressed: () async {
                                         try {
@@ -747,7 +762,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
               focusNode: groupTextFieldFocusNode,
               textInputAction: TextInputAction.done,
               enabled: groupTextFieldEnabled,
-              cursorColor: Colors.blue,
+              cursorColor: const Color.fromARGB(255, 33, 149, 243),
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 color: Colors.white,
@@ -765,12 +780,14 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                 ),
                 disabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(
-                    color: Colors.blue,
+                    color: const Color.fromARGB(255, 33, 149, 243),
                     style: BorderStyle.none,
                   ),
                 ),
                 focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.blue),
+                  borderSide: BorderSide(
+                    color: const Color.fromARGB(255, 33, 149, 243),
+                  ),
                 ),
               ),
               onEditingComplete: () {

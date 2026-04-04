@@ -273,7 +273,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                 widget.onSelected();
               },
               label: 'Select'.tr(),
-              textColor: Colors.blue,
+              textColor: const Color.fromARGB(255, 33, 149, 243),
             ),
             if (!ref.watch(windowIsPinnedProvider))
               CustomMenuItem(
@@ -461,7 +461,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                         ),
                         duration: Duration(seconds: 3),
                         behavior: SnackBarBehavior.floating,
-                        closeIconColor: Colors.blue,
+                        closeIconColor: const Color.fromARGB(255, 33, 149, 243),
                         showCloseIcon: true,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
@@ -513,7 +513,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                         ),
                         duration: Duration(seconds: 3),
                         behavior: SnackBarBehavior.floating,
-                        closeIconColor: Colors.blue,
+                        closeIconColor: const Color.fromARGB(255, 33, 149, 243),
                         showCloseIcon: true,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
@@ -654,7 +654,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                               )
                               ? Colors.red
                               : widget.isSelected
-                              ? Colors.blue
+                              ? const Color.fromARGB(255, 33, 149, 243)
                               : const Color.fromARGB(127, 255, 255, 255),
                       width:
                           (isHovering &&
@@ -835,7 +835,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
             focusNode: modTextFieldFocusNode,
             textInputAction: TextInputAction.done,
             enabled: modTextFieldEnabled,
-            cursorColor: Colors.blue,
+            cursorColor: const Color.fromARGB(255, 33, 149, 243),
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(color: Colors.white, fontSize: 12 * sss),
             decoration: InputDecoration(
@@ -848,12 +848,14 @@ class _ModContainerState extends ConsumerState<ModContainer>
               ),
               disabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(
-                  color: Colors.blue,
+                  color: const Color.fromARGB(255, 33, 149, 243),
                   style: BorderStyle.none,
                 ),
               ),
               focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.blue),
+                borderSide: BorderSide(
+                  color: const Color.fromARGB(255, 33, 149, 243),
+                ),
               ),
             ),
             onEditingComplete: () {

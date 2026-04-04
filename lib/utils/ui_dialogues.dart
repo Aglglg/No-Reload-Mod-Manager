@@ -186,7 +186,9 @@ class _GenerateGroupIcoFileDialogState
                   },
                   child: Text(
                     'Cancel'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
+                    style: GoogleFonts.poppins(
+                      color: const Color.fromARGB(255, 33, 149, 243),
+                    ),
                   ),
                 ),
                 TextButton(
@@ -195,7 +197,9 @@ class _GenerateGroupIcoFileDialogState
                   },
                   child: Text(
                     'Confirm'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
+                    style: GoogleFonts.poppins(
+                      color: const Color.fromARGB(255, 33, 149, 243),
+                    ),
                   ),
                 ),
               ]
@@ -209,7 +213,9 @@ class _GenerateGroupIcoFileDialogState
                   },
                   child: Text(
                     'Confirm'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
+                    style: GoogleFonts.poppins(
+                      color: const Color.fromARGB(255, 33, 149, 243),
+                    ),
                   ),
                 ),
               ],
@@ -254,7 +260,9 @@ class ChangeLanguageDialog extends ConsumerWidget {
           },
           child: Text(
             'Restart'.tr(),
-            style: GoogleFonts.poppins(color: Colors.blue),
+            style: GoogleFonts.poppins(
+              color: const Color.fromARGB(255, 33, 149, 243),
+            ),
           ),
         ),
       ],
@@ -367,7 +375,9 @@ class _PrefCorruptedDialogState extends ConsumerState<PrefCorruptedDialog> {
           },
           child: Text(
             'Close'.tr(),
-            style: GoogleFonts.poppins(color: Colors.blue),
+            style: GoogleFonts.poppins(
+              color: const Color.fromARGB(255, 33, 149, 243),
+            ),
           ),
         ),
       ],
@@ -892,7 +902,9 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
                   },
                   child: Text(
                     'Cancel'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
+                    style: GoogleFonts.poppins(
+                      color: const Color.fromARGB(255, 33, 149, 243),
+                    ),
                   ),
                 ),
                 if (validFolders.isNotEmpty || validArchives.isNotEmpty)
@@ -1330,7 +1342,9 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
                   },
                   child: Text(
                     'Close'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
+                    style: GoogleFonts.poppins(
+                      color: const Color.fromARGB(255, 33, 149, 243),
+                    ),
                   ),
                 ),
               ]
@@ -1342,7 +1356,9 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
                   },
                   child: Text(
                     'Confirm'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
+                    style: GoogleFonts.poppins(
+                      color: const Color.fromARGB(255, 33, 149, 243),
+                    ),
                   ),
                 ),
               ]
@@ -1556,7 +1572,9 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
                       },
                       child: Text(
                         'Close & Reload'.tr(),
-                        style: GoogleFonts.poppins(color: Colors.blue),
+                        style: GoogleFonts.poppins(
+                          color: const Color.fromARGB(255, 33, 149, 243),
+                        ),
                       ),
                     )
                     : TextButton(
@@ -1568,7 +1586,9 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
                       },
                       child: Text(
                         'Close'.tr(),
-                        style: GoogleFonts.poppins(color: Colors.blue),
+                        style: GoogleFonts.poppins(
+                          color: const Color.fromARGB(255, 33, 149, 243),
+                        ),
                       ),
                     ),
               ]
@@ -1667,7 +1687,9 @@ class _RestoreModDialogState extends ConsumerState<RestoreModDialog> {
                   },
                   child: Text(
                     'Close'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
+                    style: GoogleFonts.poppins(
+                      color: const Color.fromARGB(255, 33, 149, 243),
+                    ),
                   ),
                 ),
               ]
@@ -1773,7 +1795,9 @@ class _DuplicatedUtilitiesDialogState
           },
           child: Text(
             'Disable all'.tr(),
-            style: GoogleFonts.poppins(color: Colors.blue),
+            style: GoogleFonts.poppins(
+              color: const Color.fromARGB(255, 33, 149, 243),
+            ),
           ),
         ),
         TextButton(
@@ -1783,7 +1807,9 @@ class _DuplicatedUtilitiesDialogState
           },
           child: Text(
             'Close'.tr(),
-            style: GoogleFonts.poppins(color: Colors.blue),
+            style: GoogleFonts.poppins(
+              color: const Color.fromARGB(255, 33, 149, 243),
+            ),
           ),
         ),
       ],
@@ -1995,7 +2021,9 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
                   },
                   child: Text(
                     'Cancel'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
+                    style: GoogleFonts.poppins(
+                      color: const Color.fromARGB(255, 33, 149, 243),
+                    ),
                   ),
                 ),
                 TextButton(
@@ -2019,7 +2047,9 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
                   },
                   child: Text(
                     'Confirm'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
+                    style: GoogleFonts.poppins(
+                      color: const Color.fromARGB(255, 33, 149, 243),
+                    ),
                   ),
                 ),
               ],
@@ -2094,7 +2124,9 @@ class _EditModLinkDialogState extends ConsumerState<EditModLinkDialog> {
           },
           child: Text(
             'Cancel'.tr(),
-            style: GoogleFonts.poppins(color: Colors.blue),
+            style: GoogleFonts.poppins(
+              color: const Color.fromARGB(255, 33, 149, 243),
+            ),
           ),
         ),
         TextButton(
@@ -2104,7 +2136,9 @@ class _EditModLinkDialogState extends ConsumerState<EditModLinkDialog> {
           },
           child: Text(
             'Confirm'.tr(),
-            style: GoogleFonts.poppins(color: Colors.blue),
+            style: GoogleFonts.poppins(
+              color: const Color.fromARGB(255, 33, 149, 243),
+            ),
           ),
         ),
       ],
@@ -2593,7 +2627,9 @@ class _SaveModCustomizationsDialogState
                   },
                   child: Text(
                     'Close'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
+                    style: GoogleFonts.poppins(
+                      color: const Color.fromARGB(255, 33, 149, 243),
+                    ),
                   ),
                 ),
               ]
@@ -2605,7 +2641,9 @@ class _SaveModCustomizationsDialogState
                   },
                   child: Text(
                     'Reload (F10)'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
+                    style: GoogleFonts.poppins(
+                      color: const Color.fromARGB(255, 33, 149, 243),
+                    ),
                   ),
                 ),
                 TextButton(
@@ -2615,7 +2653,9 @@ class _SaveModCustomizationsDialogState
                   },
                   child: Text(
                     'Cancel'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
+                    style: GoogleFonts.poppins(
+                      color: const Color.fromARGB(255, 33, 149, 243),
+                    ),
                   ),
                 ),
                 TextButton(
@@ -2624,7 +2664,9 @@ class _SaveModCustomizationsDialogState
                   },
                   child: Text(
                     'Confirm'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
+                    style: GoogleFonts.poppins(
+                      color: const Color.fromARGB(255, 33, 149, 243),
+                    ),
                   ),
                 ),
               ]
@@ -2944,7 +2986,12 @@ class _BatchDisableOrEnableModsDialogState
                                       return Row(
                                         children: [
                                           Checkbox(
-                                            activeColor: Colors.blue,
+                                            activeColor: const Color.fromARGB(
+                                              255,
+                                              33,
+                                              149,
+                                              243,
+                                            ),
                                             tristate: true,
                                             value: groupVal,
                                             onChanged:
@@ -2996,7 +3043,13 @@ class _BatchDisableOrEnableModsDialogState
                                               children: [
                                                 const SizedBox(width: 25),
                                                 Checkbox(
-                                                  activeColor: Colors.blue,
+                                                  activeColor:
+                                                      const Color.fromARGB(
+                                                        255,
+                                                        33,
+                                                        149,
+                                                        243,
+                                                      ),
                                                   value: _modChecked[path]!.$2,
                                                   onChanged:
                                                       (v) => setState(
@@ -3111,14 +3164,18 @@ class _BatchDisableOrEnableModsDialogState
                   onPressed: () => _setAll(true),
                   child: Text(
                     'Enable all mods'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
+                    style: GoogleFonts.poppins(
+                      color: const Color.fromARGB(255, 33, 149, 243),
+                    ),
                   ),
                 ),
                 TextButton(
                   onPressed: () => _setAll(false),
                   child: Text(
                     'Disable all mods'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
+                    style: GoogleFonts.poppins(
+                      color: const Color.fromARGB(255, 33, 149, 243),
+                    ),
                   ),
                 ),
                 TextButton(
@@ -3128,7 +3185,9 @@ class _BatchDisableOrEnableModsDialogState
                   },
                   child: Text(
                     'Cancel'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
+                    style: GoogleFonts.poppins(
+                      color: const Color.fromARGB(255, 33, 149, 243),
+                    ),
                   ),
                 ),
                 TextButton(
@@ -3137,7 +3196,9 @@ class _BatchDisableOrEnableModsDialogState
                   },
                   child: Text(
                     'Confirm'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
+                    style: GoogleFonts.poppins(
+                      color: const Color.fromARGB(255, 33, 149, 243),
+                    ),
                   ),
                 ),
               ]
@@ -3159,7 +3220,9 @@ class _BatchDisableOrEnableModsDialogState
                   },
                   child: Text(
                     'Update Mod Data'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
+                    style: GoogleFonts.poppins(
+                      color: const Color.fromARGB(255, 33, 149, 243),
+                    ),
                   ),
                 ),
               ],
@@ -3526,7 +3589,9 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
                   },
                   child: Text(
                     'Cancel'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
+                    style: GoogleFonts.poppins(
+                      color: const Color.fromARGB(255, 33, 149, 243),
+                    ),
                   ),
                 ),
                 if (namespacesMap.isNotEmpty)
@@ -3536,7 +3601,9 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
                     },
                     child: Text(
                       'Confirm'.tr(),
-                      style: GoogleFonts.poppins(color: Colors.blue),
+                      style: GoogleFonts.poppins(
+                        color: const Color.fromARGB(255, 33, 149, 243),
+                      ),
                     ),
                   ),
               ]
@@ -3553,7 +3620,9 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
                   },
                   child: Text(
                     _namespaceChanged ? 'Close & Reload'.tr() : 'Close'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.blue),
+                    style: GoogleFonts.poppins(
+                      color: const Color.fromARGB(255, 33, 149, 243),
+                    ),
                   ),
                 ),
               ],
