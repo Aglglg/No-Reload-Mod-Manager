@@ -325,7 +325,12 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                       )
                                       .state = value;
                                 },
-                                activeColor: Colors.blue,
+                                activeColor: const Color.fromARGB(
+                                  255,
+                                  33,
+                                  149,
+                                  243,
+                                ),
                                 trackOutlineWidth: WidgetStatePropertyAll(0),
                                 trackOutlineColor: WidgetStatePropertyAll(
                                   Colors.transparent,
@@ -370,7 +375,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                         child: Slider(
                           label:
                               "${ref.read(zoomScaleProvider).toStringAsFixed(2)}x",
-                          activeColor: Colors.blue,
+                          activeColor: const Color.fromARGB(255, 33, 149, 243),
                           divisions: 23,
                           value: sss,
                           onChangeEnd: (value) {
@@ -408,7 +413,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           ),
                         ),
                         child: Slider(
-                          activeColor: Colors.blue,
+                          activeColor: const Color.fromARGB(255, 33, 149, 243),
                           value: ref.watch(bgTransparencyProvider).toDouble(),
                           onChangeEnd: (value) {
                             SharedPrefUtils().setBgTransparency(value.round());
@@ -722,7 +727,12 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                       .read(isAutoPinWindowProvider.notifier)
                                       .state = value;
                                 },
-                                activeColor: Colors.blue,
+                                activeColor: const Color.fromARGB(
+                                  255,
+                                  33,
+                                  149,
+                                  243,
+                                ),
                                 trackOutlineWidth: WidgetStatePropertyAll(0),
                                 trackOutlineColor: WidgetStatePropertyAll(
                                   Colors.transparent,
@@ -760,7 +770,12 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                       )
                                       .state = value;
                                 },
-                                activeColor: Colors.blue,
+                                activeColor: const Color.fromARGB(
+                                  255,
+                                  33,
+                                  149,
+                                  243,
+                                ),
                                 trackOutlineWidth: WidgetStatePropertyAll(0),
                                 trackOutlineColor: WidgetStatePropertyAll(
                                   Colors.transparent,
@@ -1622,7 +1637,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                         context,
                       ).copyWith(dragDevices: {}),
                       child: TextField(
-                        cursorColor: Colors.blue,
+                        cursorColor: const Color.fromARGB(255, 33, 149, 243),
                         textAlign: TextAlign.center,
                         style: GoogleFonts.poppins(
                           color: Colors.white,
@@ -1650,7 +1665,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                             borderRadius: BorderRadius.circular(100 * sss),
                             borderSide: BorderSide(
                               width: 3 * sss,
-                              color: Colors.blue,
+                              color: const Color.fromARGB(255, 33, 149, 243),
                             ),
                           ),
                         ),
@@ -1700,7 +1715,12 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                                 fontSize: 12 * sss,
                                 fontWeight: FontWeight.w400,
                               ),
-                              cursorColor: Colors.blue,
+                              cursorColor: const Color.fromARGB(
+                                255,
+                                33,
+                                149,
+                                243,
+                              ),
                               decoration: InputDecoration(
                                 fillColor: Colors.white,
                                 hintText: _getModsPathHintText(),
@@ -1740,7 +1760,12 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                                   ),
                                   borderSide: BorderSide(
                                     width: 3 * sss,
-                                    color: Colors.blue,
+                                    color: const Color.fromARGB(
+                                      255,
+                                      33,
+                                      149,
+                                      243,
+                                    ),
                                     strokeAlign: BorderSide.strokeAlignOutside,
                                   ),
                                 ),

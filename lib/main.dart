@@ -1144,7 +1144,7 @@ class _MainViewState extends ConsumerState<MainView>
               margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
               duration: Duration(days: 1),
               behavior: SnackBarBehavior.floating,
-              closeIconColor: Colors.blue,
+              closeIconColor: const Color.fromARGB(255, 33, 149, 243),
               showCloseIcon: true,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
@@ -1159,7 +1159,7 @@ class _MainViewState extends ConsumerState<MainView>
               action:
                   urlDetails.isNotEmpty
                       ? SnackBarAction(
-                        textColor: Colors.blue,
+                        textColor: const Color.fromARGB(255, 33, 149, 243),
                         label: "Details".tr(),
                         onPressed: () async {
                           try {
@@ -1596,7 +1596,7 @@ class _UpdateModDataSnackbarButtonState
               child: Text(
                 'Update Mod Data'.tr(),
                 style: GoogleFonts.poppins(
-                  color: Colors.blue,
+                  color: const Color.fromARGB(255, 33, 149, 243),
                   fontWeight: FontWeight.bold,
                   fontSize: 14 * ref.read(zoomScaleProvider),
                 ),

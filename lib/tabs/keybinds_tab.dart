@@ -301,7 +301,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
             margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
             duration: Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
-            closeIconColor: Colors.blue,
+            closeIconColor: const Color.fromARGB(255, 33, 149, 243),
             showCloseIcon: true,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
@@ -364,7 +364,12 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                                     )
                                     .state = value;
                               },
-                              activeColor: Colors.blue,
+                              activeColor: const Color.fromARGB(
+                                255,
+                                33,
+                                149,
+                                243,
+                              ),
                               trackOutlineWidth: WidgetStatePropertyAll(0),
                               trackOutlineColor: WidgetStatePropertyAll(
                                 Colors.transparent,
@@ -504,7 +509,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                     child: Text(
                       isEditing ? "Save Keybinds".tr() : "Edit Keybinds".tr(),
                       style: GoogleFonts.poppins(
-                        color: Colors.blue,
+                        color: const Color.fromARGB(255, 33, 149, 243),
                         fontSize: 13,
                       ),
                     ),
@@ -616,7 +621,7 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
           margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
           duration: Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
-          closeIconColor: Colors.blue,
+          closeIconColor: const Color.fromARGB(255, 33, 149, 243),
           showCloseIcon: true,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),

@@ -53,7 +53,7 @@ class _ModsDropZoneState extends ConsumerState<ModsDropZone> {
         margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
         duration: Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
-        closeIconColor: Colors.blue,
+        closeIconColor: const Color.fromARGB(255, 33, 149, 243),
         showCloseIcon: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         content: Text(
