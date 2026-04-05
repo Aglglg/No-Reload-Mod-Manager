@@ -1466,7 +1466,7 @@ class _MainViewState extends ConsumerState<MainView>
         ///Tab views
         IndexedStack(index: ref.watch(tabIndexProvider), children: _views),
 
-        //Switch Mode
+        //Switch Style
         Padding(
           padding: EdgeInsets.only(top: 5.2 * sss),
           child: Align(
@@ -1476,31 +1476,31 @@ class _MainViewState extends ConsumerState<MainView>
               scale: sss,
               child: TextButton(
                 onPressed: () async {
-                  final casualMode = ref.read(isCasualMode);
-                  ref.read(isCasualMode.notifier).state = !casualMode;
+                  final casualStyle = ref.read(isCasualStyle);
+                  ref.read(isCasualStyle.notifier).state = !casualStyle;
                 },
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      ref.watch(isCasualMode)
+                      ref.watch(isCasualStyle)
                           ? Icons.folder_rounded
                           : Icons.bolt_rounded,
                       size: 20,
                       color:
-                          ref.watch(isCasualMode)
+                          ref.watch(isCasualStyle)
                               ? const Color.fromARGB(255, 77, 182, 172)
                               : getAccentColor(ref),
                     ),
-                    SizedBox(width: ref.watch(isCasualMode) ? 10 : 6),
+                    SizedBox(width: ref.watch(isCasualStyle) ? 10 : 6),
                     Text(
-                      ref.watch(isCasualMode)
-                          ? "Casual Mode"
-                          : "No-Reload Mode",
+                      ref.watch(isCasualStyle)
+                          ? "Casual Style"
+                          : "No-Reload Style",
                       style: GoogleFonts.poppins(
                         color:
-                            ref.watch(isCasualMode)
+                            ref.watch(isCasualStyle)
                                 ? const Color.fromARGB(255, 77, 182, 172)
                                 : getAccentColor(ref),
                         fontSize: 11,
@@ -1692,7 +1692,7 @@ void changeWindowTitleName(String gameName) {
 }
 
 Color getAccentColor(WidgetRef ref, {int alpha = 255}) {
-  return ref.watch(isCasualMode)
+  return ref.watch(isCasualStyle)
       ? Color.fromARGB(alpha, 77, 182, 172)
       : Color.fromARGB(alpha, 33, 149, 243);
 }
