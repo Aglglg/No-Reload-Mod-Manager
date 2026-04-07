@@ -954,6 +954,17 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
     super.dispose();
   }
 
+  Future<String> getSafeTarget(String target) async {
+    if (!await Directory(target).exists()) return target;
+
+    int i = 1;
+    while (true) {
+      final candidate = "${target}_$i";
+      if (!await Directory(candidate).exists()) return candidate;
+      i++;
+    }
+  }
+
   Future<void> unwrapSingleFolderNesting(String path) async {
     final dir = Directory(path);
 
@@ -961,11 +972,25 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
       while (true) {
         final entries = await dir.list().toList();
 
-        // Exclude "modname" file from consideration
+        // Exclude specific filenames
         final relevant =
-            entries
-                .where((e) => p.basename(e.path).toLowerCase() != 'modname')
-                .toList();
+            entries.where((e) {
+              final basename = p.basename(e.path).toLowerCase();
+              const excluded = {
+                'modname',
+                'modforced',
+                'modsyntaxerrorremoved',
+                'modunoptimized',
+                'modnamespaced',
+                'modlink',
+                'icon.png',
+                'preview.png',
+              };
+              return !excluded.contains(basename) &&
+                  !basename.startsWith('jasm_') &&
+                  !basename.startsWith('.imm') &&
+                  !basename.endsWith('.txt');
+            }).toList();
 
         // Stop if more than 1 relevant entry, or it's empty
         if (relevant.length != 1) break;
@@ -978,9 +1003,16 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
         final singleSubDir = Directory(single.path);
 
         // Move contents of singleSubDir up to dir
-        await for (final entity in singleSubDir.list()) {
+        final children = await singleSubDir.list().toList();
+
+        for (final entity in children) {
           final target = p.join(dir.path, p.basename(entity.path));
-          await entity.rename(target);
+          if (entity is File) {
+            await entity.rename(target); //auto overwritten
+          } else if (entity is Directory) {
+            // cannot overwrite folder, rename to non existing folder name
+            await entity.rename(await getSafeTarget(target));
+          }
         }
 
         // Remove the now-empty wrapper folder
