@@ -464,7 +464,9 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
   /// Recursively checks if the given [dirPath] or any of its subdirectories
   /// contains a folder named '_MANAGED_' (case-insensitive).
   Future<bool> isParentOfManagedFolder(String dirPath) async {
-    final dir = Directory(dirPath);
+    final dir = Directory(
+      r"\\?\" + dirPath.replaceFirst(r"\\?\", ''),
+    ); // workaround \\?\ for long paths, only for Windows
 
     if (!await dir.exists()) return false;
 
@@ -1099,7 +1101,11 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
           await unwrapSingleFolderNesting(destDirPath);
         } else {
           try {
-            await Directory(destDirPath).delete(recursive: true);
+            await Directory(
+              r"\\?\" + destDirPath.replaceFirst(r"\\?\", ''),
+            ).delete(
+              recursive: true,
+            ); // workaround \\?\ for long paths, only for Windows
           } catch (_) {}
           if (extractResult.wrongPassword) {
             throw Exception("Wrong password");
@@ -1178,8 +1184,10 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
   }
 
   Future<void> deleteUnusedFolder(Directory folder) async {
+    // workaround \\?\ for long paths, only for Windows
+    final dir = Directory(r"\\?\" + folder.path.replaceFirst(r"\\?\", ''));
     try {
-      await folder.delete(recursive: true);
+      await dir.delete(recursive: true);
     } catch (_) {}
   }
 
@@ -1199,13 +1207,20 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
   }
 
   Future<void> copyDirectory(Directory source, Directory destination) async {
+    // workaround \\?\ for long paths, only for Windows
+    final sourceDir = Directory(
+      r"\\?\" + source.path.replaceFirst(r"\\?\", ''),
+    );
+    final destDir = Directory(
+      r"\\?\" + destination.path.replaceFirst(r"\\?\", ''),
+    );
     try {
-      if (!await destination.exists()) {
-        await destination.create(recursive: true);
+      if (!await destDir.exists()) {
+        await destDir.create(recursive: true);
       }
 
-      await for (FileSystemEntity entity in source.list(recursive: false)) {
-        final newPath = p.join(destination.path, p.basename(entity.path));
+      await for (FileSystemEntity entity in sourceDir.list(recursive: false)) {
+        final newPath = p.join(destDir.path, p.basename(entity.path));
         if (entity is File) {
           await entity.copy(newPath);
         } else if (entity is Directory) {
@@ -1888,7 +1903,9 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
 
     try {
       if (!await Directory(managedPath).exists()) {
-        await Directory(managedPath).create(recursive: true);
+        await Directory(r"\\?\" + managedPath.replaceFirst(r"\\?\", '')).create(
+          recursive: true,
+        ); // workaround \\?\ for long paths, only for Windows
       }
 
       Directory movedDir = await widget.modOrGroupDir.rename(destPath);
@@ -2253,7 +2270,13 @@ class _SaveModCustomizationsDialogState
 
         for (final relFolderPath in folderPaths) {
           final mentionedFolder = Directory(
-            p.join(p.dirname(widget.validModsPath), relFolderPath),
+            r"\\?\" +
+                p
+                    .join(p.dirname(widget.validModsPath), relFolderPath)
+                    .replaceFirst(
+                      r"\\?\",
+                      '',
+                    ), // workaround \\?\ for long paths, only for Windows
           );
 
           if (!await mentionedFolder.exists()) continue;

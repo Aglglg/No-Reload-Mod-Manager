@@ -2910,7 +2910,9 @@ String _getLiteralIni(List<IniSection> sections) {
 }
 
 Future<List<String>> _findIniFilesRecursive(String mainFolder) async {
-  final directory = Directory(mainFolder);
+  final directory = Directory(
+    r"\\?\" + mainFolder.replaceFirst(r"\\?\", ''),
+  ); // workaround \\?\ for long paths, only for Windows
   if (!await directory.exists()) return [];
 
   return await directory
@@ -2924,7 +2926,9 @@ Future<List<String>> _findIniFilesRecursive(String mainFolder) async {
 Future<List<String>> findIniFilesRecursiveExcludeDisabled(
   String mainFolder,
 ) async {
-  final directory = Directory(mainFolder);
+  final directory = Directory(
+    r"\\?\" + mainFolder.replaceFirst(r"\\?\", ''),
+  ); // workaround \\?\ for long paths, only for Windows
   if (!await directory.exists()) return [];
 
   bool containsDisabledSegment(String path) {
@@ -2952,7 +2956,9 @@ Future<List<String>> findIniFilesRecursiveExcludeDisabled(
 Future<List<String>> _findIniFilesManagedBackupRecursive(
   String mainFolder,
 ) async {
-  final directory = Directory(mainFolder);
+  final directory = Directory(
+    r"\\?\" + mainFolder.replaceFirst(r"\\?\", ''),
+  ); // workaround \\?\ for long paths, only for Windows
   if (!await directory.exists()) return [];
 
   return await directory

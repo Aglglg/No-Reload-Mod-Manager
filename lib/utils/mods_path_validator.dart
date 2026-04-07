@@ -39,7 +39,11 @@ class ModsPathValidator {
     modsPath = sanitizePath(modsPath);
 
     // Folder doesn't exist
-    if (!await Directory(modsPath).exists()) {
+    try {
+      if (!await Directory(modsPath).exists()) {
+        return ModsPathStatus.invalidNotExist;
+      }
+    } catch (_) {
       return ModsPathStatus.invalidNotExist;
     }
 
