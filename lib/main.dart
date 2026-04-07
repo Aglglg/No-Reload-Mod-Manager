@@ -1326,7 +1326,10 @@ class _MainViewState extends ConsumerState<MainView>
         );
         ref.read(currentGroupIndexProvider.notifier).state = groupIndex;
 
-        DynamicDirectoryWatcher.watch(managedPath, ref: ref);
+        DynamicDirectoryWatcher.watch(
+          r"\\?\" + managedPath.replaceFirst(r"\\?\", ''),
+          ref: ref,
+        ); //if somehow there's long path, \\?\ workaround, only for Windows
       } else {
         DynamicDirectoryWatcher.stop();
       }
