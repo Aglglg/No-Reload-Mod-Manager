@@ -15,6 +15,7 @@ import 'package:no_reload_mod_manager/utils/custom_group_folder_icon.dart';
 import 'package:no_reload_mod_manager/utils/force_read_as_utf8.dart';
 import 'package:no_reload_mod_manager/utils/keypress_simulator_manager.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
+import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:path/path.dart' as p;
@@ -1377,18 +1378,6 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
     super.dispose();
   }
 
-  Future<bool> modsPathIsLocatedInTheSameDirectoryAsDllAndMainIniFile(
-    String path,
-  ) async {
-    final basePath = p.dirname(path);
-    final d3dxIni = p.join(basePath, "d3dx.ini");
-    final d3d11Dll = p.join(basePath, "d3d11.dll");
-    if (await File(d3dxIni).exists() && await File(d3d11Dll).exists()) {
-      return true;
-    }
-    return false;
-  }
-
   Future<void> validatingModsPath() async {
     setState(() {
       contents = [];
@@ -1400,26 +1389,64 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
       );
     });
 
-    bool validModsPath = false;
+    final modsPathStatus = await ModsPathValidator.validate(
+      widget.modsPath,
+      ref.read(isCasualStyle),
+    );
+    ref.read(modsPathStatusProvider.notifier).state = modsPathStatus;
 
-    try {
-      final modsPath = p.normalize(widget.modsPath);
-
-      if (!await Directory(modsPath).exists()) {
+    switch (modsPathStatus) {
+      case ModsPathStatus.invalidNotExist:
         setState(() {
           _showClose = true;
           contents = [
             TextSpan(
-              text: "Mods path doesn't exist".tr(),
+              text: "Mods path does not exist.".tr(),
               style: GoogleFonts.poppins(color: Colors.red),
             ),
           ];
         });
-      } else if ((modsPath.toLowerCase().endsWith('mods') ||
-              modsPath.toLowerCase().endsWith('mods\\')) &&
-          await modsPathIsLocatedInTheSameDirectoryAsDllAndMainIniFile(
-            modsPath,
-          )) {
+        break;
+      case ModsPathStatus.invalidNotModsFolder:
+        setState(() {
+          _showClose = true;
+          contents = [
+            TextSpan(
+              text:
+                  "Invalid Mods path. Make sure you're targeting the \"Mods\" folder."
+                      .tr(),
+              style: GoogleFonts.poppins(color: Colors.red),
+            ),
+          ];
+        });
+        break;
+      case ModsPathStatus.invalidMissingD3dx:
+        setState(() {
+          _showClose = true;
+          contents = [
+            TextSpan(
+              text:
+                  "Invalid Mods path. Cannot find d3dx.ini next to the \"Mods\" folder."
+                      .tr(),
+              style: GoogleFonts.poppins(color: Colors.red),
+            ),
+          ];
+        });
+        break;
+      case ModsPathStatus.invalidMissingDll:
+        setState(() {
+          _showClose = true;
+          contents = [
+            TextSpan(
+              text:
+                  "Invalid Mods path. Cannot find d3d11.dll next to the \"Mods\" folder."
+                      .tr(),
+              style: GoogleFonts.poppins(color: Colors.red),
+            ),
+          ];
+        });
+        break;
+      default:
         setState(() {
           contents = [
             TextSpan(
@@ -1428,37 +1455,9 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
             ),
           ];
         });
-        //
-        validModsPath = true;
-        //
-      } else {
-        setState(() {
-          _showClose = true;
-          contents = [
-            TextSpan(
-              text:
-                  "Mods path is invalid. Make sure you're targetting \"Mods\" folder."
-                      .tr(),
-              style: GoogleFonts.poppins(color: Colors.red),
-            ),
-          ];
-        });
-      }
-    } catch (_) {
-      setState(() {
-        _showClose = true;
-        contents = [
-          TextSpan(
-            text:
-                "Mods path is invalid, please remove all illegal characters."
-                    .tr(),
-            style: GoogleFonts.poppins(color: Colors.red),
-          ),
-        ];
-      });
     }
 
-    if (validModsPath) {
+    if (!modsPathStatus.isFullyInvalid) {
       await manageMods(p.normalize(widget.modsPath));
     }
   }

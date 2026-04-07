@@ -23,6 +23,7 @@ import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:no_reload_mod_manager/utils/ui_dialogues.dart';
 import 'package:path/path.dart' as p;
+import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:xinput_gamepad/xinput_gamepad.dart';
 
@@ -773,6 +774,19 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                                             color: Colors.yellow,
                                             fontSize: 13 * sss,
                                           ),
+                                        ),
+                                        action: SnackBarAction(
+                                          textColor: getAccentColor(ref),
+                                          label: "Contribute".tr(),
+                                          onPressed: () async {
+                                            try {
+                                              if (!await launchUrl(
+                                                Uri.parse(
+                                                  ConstantVar.urlAutoIconInfo,
+                                                ),
+                                              )) {}
+                                            } catch (_) {}
+                                          },
                                         ),
                                         dismissDirection: DismissDirection.down,
                                       ),

@@ -1332,7 +1332,7 @@ Future<(String, bool)> _prepareManagedFolder(
 
   //if background keypress not exist, ask user to reload manually
   if (!await File(
-        p.join(managedPath, ConstantVar.backgroundKeypressFileName),
+        p.join(managedPath, ConstantVar.nrmmKeypressFileName),
       ).exists() ||
       !await File(
         p.join(managedPath, ConstantVar.nrmmIncluderFileName),
@@ -1741,7 +1741,7 @@ Future<void> _createBackgroundKeypressIni(
   // Create the required files
   final keypressfilePath = p.join(
     managedPath,
-    ConstantVar.backgroundKeypressFileName,
+    ConstantVar.nrmmKeypressFileName,
   );
   final keypressFile = File(keypressfilePath);
 
@@ -1757,14 +1757,14 @@ Future<void> _createBackgroundKeypressIni(
       template.replaceAll("{game}", targetGame.name),
     );
     await includerFile.writeAsString(
-      "[IncludeKeypress]\ninclude = ${ConstantVar.backgroundKeypressFileName}",
+      "[IncludeKeypress]\ninclude = ${ConstantVar.nrmmKeypressFileName}",
     );
   } catch (_) {
     errorShouldTryAgain.value = true;
     operationLogs.add(
       TextSpan(
         text:
-            "${'Error cannot create'.tr(args: [ConstantVar.backgroundKeypressFileName])}.\n${ConstantVar.defaultErrorInfo}\n\n",
+            "${'Error cannot create'.tr(args: [ConstantVar.nrmmKeypressFileName])}.\n${ConstantVar.defaultErrorInfo}\n\n",
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );

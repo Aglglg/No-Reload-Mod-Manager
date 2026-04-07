@@ -72,7 +72,6 @@
   "Press this after you add/remove/edit/fix mods (usually when add/edit/remove mods directly via File Explorer)": "Нажимайте эту кнопку после добавления/удаления/редактирования/исправления модов (обычно при добавлении/редактировании/удалении модов напрямую через Проводник)",
   "Mods Path": "Путь к модам",
   "Mods Path (path doesn't exist)": "Путь к модам (путь не существует)",
-  "Mods Path (Invalid)": "Путь к модам (Недействителен)",
   "example:": "пример:",
   "Please select \"Mods\" folder": "Пожалуйста, выберите папку \"Mods\"",
   "Languages": "Языки",
@@ -102,9 +101,8 @@
   "Error! Cannot copy folder": "Ошибка! Не удается скопировать папку: {}",
   "Copy mods": "Копировать моды",
   "Validating Mods Path...": "Проверка пути к модам...\n",
-  "Mods path doesn't exist": "Путь к модам не существует",
   "Modifying mods...": "Изменение модов...",
-  "Mods path is invalid. Make sure you're targetting \"Mods\" folder.": "Путь к модам недействителен.\nУбедитесь, что вы выбираете папку Mods, и что она находится в том же каталоге, что и d3dx.ini.",
+  "Invalid Mods path. Make sure you're targeting the \"Mods\" folder.": "Путь к модам недействителен.\nУбедитесь, что вы указываете папку \"Mods\".",
   "Manage mods": "Управлять модами",
   "Close & Reload": "Закрыть и перезагрузить",
   "Close": "Закрыть",
@@ -233,5 +231,8 @@
   "If mod customizations are still not saved": "\nЕсли настройки мода всё ещё не сохраняются, создатель мода, вероятно, забыл добавить ключевое слово 'persist' к переключателям.\nИли вы забыли перезагрузить с помощью F10.",
   "Some malformed entries were detected in the d3dx_user.ini file": "\n\nВ файле d3dx_user.ini обнаружены некорректные записи, которые могут препятствовать сохранению некоторых настроек мода.\nЭто может произойти при использовании устаревшей версии 3DMigoto/XXMI DLL.",
   "Update to a newer XXMI DLL or rename the following files/folders": "\n\nОбновите XXMI DLL до более новой версии или переименуйте следующие файлы/папки, чтобы использовать только стандартные английские символы (A-Z, a-z, 0-9):",
-  "Custom XXMI DLL for NRMM is active!": "\nПользовательский XXMI DLL для NRMM активен!"
+  "Custom XXMI DLL for NRMM is active!": "\nПользовательский XXMI DLL для NRMM активен!",
+  "Mods Path (invalid)": "Путь к модам (недействителен)",
+  "Invalid Mods path. Cannot find d3dx.ini next to the \"Mods\" folder.": "Путь к модам недействителен.\nНе удаётся найти d3dx.ini рядом с папкой \"Mods\".\nУбедитесь, что вы указываете папку \"Mods\" внутри папки *MI, например \"GIMI\\Mods\".",
+  "Invalid Mods path. Cannot find d3d11.dll next to the \"Mods\" folder.": "Путь к модам недействителен.\nНе удаётся найти d3d11.dll рядом с папкой \"Mods\".\nУбедитесь, что вы хотя бы раз запускали игру через XXMI Launcher."
 }

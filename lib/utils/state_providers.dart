@@ -2,9 +2,13 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 
-final StateProvider<bool> isCasualStyle = StateProvider<bool>((ref) => false);
+final StateProvider<bool> isCasualStyle = StateProvider<bool>((ref) {
+  SharedPrefUtils().tryInit();
+  return SharedPrefUtils().getCasualStyle();
+});
 
 final StateProvider<TargetGame> targetGameProvider = StateProvider<TargetGame>(
   (ref) => TargetGame.none,
@@ -73,6 +77,9 @@ final currentGroupIndexProvider = StateProvider<int>((ref) => 0);
 final focusedOnTextField = StateProvider<bool>((ref) => false);
 
 final validModsPath = StateProvider<String?>((ref) => null);
+final modsPathStatusProvider = StateProvider<ModsPathStatus>(
+  (ref) => ModsPathStatus.invalidNotExist,
+);
 
 final modKeybindProvider =
     StateProvider<(ModData, String groupName, TargetGame targetGame)?>(

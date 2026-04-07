@@ -1,6 +1,5 @@
 //Sorry the code is messy.
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'package:auto_updater/auto_updater.dart';
 import 'package:flutter/foundation.dart';
@@ -18,6 +17,7 @@ import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/mod_navigator.dart';
 import 'package:no_reload_mod_manager/utils/mods_dropzone.dart';
+import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
 import 'package:no_reload_mod_manager/utils/refreshable_image.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
@@ -374,7 +374,8 @@ class _BackgroundState extends ConsumerState<Background> {
                 RightClickMenuRegion(
                   menuItems: <ContextMenuEntry>[
                     if (ref.watch(tabIndexProvider) == 1 &&
-                        ref.watch(modGroupDataProvider).isEmpty)
+                        ref.watch(modGroupDataProvider).isEmpty &&
+                        ref.watch(validModsPath) != null)
                       CustomMenuItem(
                         scale: sss,
                         onSelected: () async {
@@ -1227,84 +1228,65 @@ class _MainViewState extends ConsumerState<MainView>
     if (targetGame == TargetGame.none) return;
 
     String modsPath = getCurrentModsPath(targetGame);
-    bool existAndValid = false;
+    String managedPath = p.join(modsPath, ConstantVar.managedFolderName);
+    bool casualStyle = ref.read(isCasualStyle);
     String notReadyReason = "";
+    bool existAndValid = false;
 
-    try {
-      if (!await Directory(modsPath).exists()) {
-        existAndValid = false;
+    final modsPathStatus = await ModsPathValidator.validate(
+      modsPath,
+      casualStyle,
+    );
+
+    ref.read(modsPathStatusProvider.notifier).state = modsPathStatus;
+
+    switch (modsPathStatus) {
+      case ModsPathStatus.invalidNotExist:
         notReadyReason = "Mods path does not exist.".tr();
-      } else if (modsPath.toLowerCase().endsWith('mods') ||
-          modsPath.toLowerCase().endsWith('mods\\')) {
-        existAndValid = true;
-      } else {
-        existAndValid = false;
-        notReadyReason = "Mods path invalid.".tr();
-      }
-    } catch (_) {
-      existAndValid = false;
-      notReadyReason = "Mods path invalid.".tr();
-    }
-
-    if (existAndValid) {
-      String managedPath = p.join(modsPath, ConstantVar.managedFolderName);
-      String backgroundKeypressPath = p.join(
-        managedPath,
-        ConstantVar.backgroundKeypressFileName,
-      );
-      String nrmmIncluderPath = p.join(
-        managedPath,
-        ConstantVar.nrmmIncluderFileName,
-      );
-      String managerGroupPath = p.join(
-        managedPath,
-        ConstantVar.managerGroupFileName,
-      );
-
-      //Check managed folder
-      if (!await Directory(managedPath).exists()) {
-        existAndValid = false;
+        break;
+      case ModsPathStatus.invalidNotModsFolder:
+        notReadyReason =
+            "Invalid Mods path. Make sure you're targeting the \"Mods\" folder."
+                .tr();
+        break;
+      case ModsPathStatus.invalidMissingD3dx:
+        notReadyReason =
+            "Invalid Mods path. Cannot find d3dx.ini next to the \"Mods\" folder."
+                .tr();
+        break;
+      case ModsPathStatus.invalidMissingDll:
+        notReadyReason =
+            "Invalid Mods path. Cannot find d3d11.dll next to the \"Mods\" folder."
+                .tr();
+        break;
+      case ModsPathStatus.invalidNoReloadWithoutManagedFolder:
         notReadyReason =
             "Mods path is correct, but the '_MANAGED_' folder is missing or outdated."
                 .tr();
-      }
-      //Check nrmm_keypress.txt
-      else if (!await File(backgroundKeypressPath).exists()) {
-        existAndValid = false;
+        break;
+      case ModsPathStatus.invalidNoReloadWithoutPrerequisiteFiles:
         notReadyReason =
             "Mods path is correct, but some requirements are missing.".tr();
-      }
-      //Check nrmm includer
-      else if (!await File(nrmmIncluderPath).exists()) {
-        existAndValid = false;
+        break;
+      case ModsPathStatus.invalidNoReloadOutdated:
         notReadyReason =
-            "Mods path is correct, but some requirements are missing.".tr();
-      }
-      //Check manager_group.ini
-      else if (!await File(managerGroupPath).exists()) {
-        existAndValid = false;
-        notReadyReason =
-            "Mods path is correct, but some requirements are missing.".tr();
-      }
+            "Everything is correct, but config files are outdated.".tr();
+        break;
+      case ModsPathStatus.validCasualWithoutKeypress:
+        existAndValid = casualStyle;
+        break;
+      case ModsPathStatus.validCasual:
+        existAndValid = casualStyle;
+        break;
+      case ModsPathStatus.valid:
+        existAndValid = true;
+        break;
+    }
 
-      //Check for ini configuration version
-      if (existAndValid) {
-        String managedPath = p.join(modsPath, ConstantVar.managedFolderName);
-
-        String managerGroupPath = p.join(
-          managedPath,
-          ConstantVar.managerGroupFileName,
-        );
-        final firstLine = await readFirstLine(managerGroupPath);
-        if (firstLine?.trim() != ";revision_4") {
-          existAndValid = false;
-          notReadyReason =
-              "Everything is correct, but config files are outdated.".tr();
-        }
-      }
-
-      if (existAndValid) {
-        //Load mod & group datas
+    if (existAndValid) {
+      if (casualStyle) {
+      } else {
+        //Load mod & group data
         final datas = await refreshModData(Directory(managedPath));
 
         ref.read(sortGroupMethod.notifier).state =
@@ -1327,9 +1309,9 @@ class _MainViewState extends ConsumerState<MainView>
         ref.read(currentGroupIndexProvider.notifier).state = groupIndex;
 
         DynamicDirectoryWatcher.watch(managedPath, ref: ref);
-      } else {
-        DynamicDirectoryWatcher.stop();
       }
+    } else {
+      DynamicDirectoryWatcher.stop();
     }
 
     //Sometimes widget don't rebuild/don't show loading screen because loading time was too fast
@@ -1424,27 +1406,6 @@ class _MainViewState extends ConsumerState<MainView>
     }
   }
 
-  Future<String?> readFirstLine(String filePath) async {
-    final file = File(filePath);
-
-    if (!await file.exists()) return null;
-
-    // Open file as a stream of bytes
-    final stream = file.openRead();
-
-    // Decode bytes to UTF-8 text, split into lines
-    final lines = stream
-        .transform(utf8.decoder)
-        .transform(const LineSplitter());
-
-    // Return the first line
-    try {
-      return await lines.first;
-    } catch (_) {
-      return null; // File might be empty
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
@@ -1478,6 +1439,7 @@ class _MainViewState extends ConsumerState<MainView>
                 onPressed: () async {
                   final casualStyle = ref.read(isCasualStyle);
                   ref.read(isCasualStyle.notifier).state = !casualStyle;
+                  triggerRefresh(ref);
                 },
                 child: Row(
                   mainAxisSize: MainAxisSize.min,

@@ -794,5 +794,3 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
     );
   }
 }
-
-//TODO: FIX Text don't saved/tap outside not triggered when tap on another textfield

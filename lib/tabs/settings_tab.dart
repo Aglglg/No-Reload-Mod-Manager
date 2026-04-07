@@ -11,6 +11,7 @@ import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
 import 'package:no_reload_mod_manager/utils/languages_name.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mods_dropzone.dart';
+import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:no_reload_mod_manager/utils/ui_dialogues.dart';
@@ -1380,6 +1381,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
   }
 
   void _saveModsPath(String value) {
+    value = ModsPathValidator.sanitizePath(value);
     switch (ref.read(targetGameProvider)) {
       case TargetGame.Wuthering_Waves:
         SharedPrefUtils().setWuwaModsPath(value);
@@ -1453,35 +1455,37 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
     isModsPathValid(_modsPathTextFieldController.text);
   }
 
-  Future<bool> isModsPathValid(String path) async {
-    bool valid = false;
+  Future<void> isModsPathValid(String path) async {
+    final modsPathStatus = await ModsPathValidator.validate(
+      path,
+      ref.read(isCasualStyle),
+    );
 
-    try {
-      if (!await Directory(path).exists()) {
-        valid = false;
-        setState(() {
-          modsPathText = "Mods Path (path doesn't exist)".tr();
-        });
-      } else if (path.toLowerCase().endsWith('mods') ||
-          path.toLowerCase().endsWith('mods\\')) {
-        valid = true;
-        setState(() {
-          modsPathText = "Mods Path".tr();
-        });
-      } else {
-        valid = false;
-        setState(() {
-          modsPathText = "Mods Path (Invalid)".tr();
-        });
-      }
-    } catch (_) {
-      valid = false;
-      setState(() {
-        modsPathText = "Mods Path (Invalid)".tr();
-      });
+    if (modsPathStatus == ModsPathStatus.valid ||
+        modsPathStatus == ModsPathStatus.validCasual ||
+        modsPathStatus == ModsPathStatus.validCasualWithoutKeypress) {
+      ref.read(validModsPath.notifier).state = ModsPathValidator.sanitizePath(
+        path,
+      );
+    } else {
+      ref.read(validModsPath.notifier).state = null;
     }
 
-    return valid;
+    ref.read(modsPathStatusProvider.notifier).state = modsPathStatus;
+
+    if (modsPathStatus == ModsPathStatus.invalidNotExist) {
+      setState(() {
+        modsPathText = "Mods Path (path doesn't exist)".tr();
+      });
+    } else if (modsPathStatus.isFullyInvalid) {
+      setState(() {
+        modsPathText = "Mods Path (invalid)".tr();
+      });
+    } else {
+      setState(() {
+        modsPathText = "Mods Path".tr();
+      });
+    }
   }
 
   Future<void> _pickFolder() async {

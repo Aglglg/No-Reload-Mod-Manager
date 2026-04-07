@@ -32,6 +32,19 @@ class SharedPrefUtils {
     }
   }
 
+  Future<void> setCasualStyle(bool isCasual) async {
+    await _prefs?.setBool(keyStyle, isCasual);
+  }
+
+  bool getCasualStyle() {
+    bool? result = _prefs?.getBool(keyStyle);
+    if (result == null) {
+      return false;
+    } else {
+      return result;
+    }
+  }
+
   Future<void> setHotkeyKeyboard(HotkeyKeyboard value) async {
     await _prefs?.setString(keyHotkeyKeyboard, value.name);
   }
@@ -444,6 +457,8 @@ class SharedPrefUtils {
     bool? result = _prefs?.getBool(keyKeybindSimulateKeypress);
     return result ??= false;
   }
+
+  static const String keyStyle = 'modeCasualStyle';
 
   static const String keyTargetProcessWuwa = 'targetProcessWuwa';
   static const String keyTargetProcessGenshin = 'targetProcessGenshin';

@@ -11,7 +11,7 @@ class ConstantVar {
       "V1_3_x_MANAGED-DO_NOT_EDIT_COPY_MOVE_CUT";
   static const String anotherOldManagedFolderName =
       "MANAGED-DO_NOT_EDIT_COPY_MOVE_CUT";
-  static const String backgroundKeypressFileName = 'nrmm_keypress.txt';
+  static const String nrmmKeypressFileName = 'nrmm_keypress.txt';
   static const String nrmmIncluderFileName = 'nrmm_include.ini';
   static const String managerGroupFileName = 'manager_group.ini';
   static String defaultErrorInfo = "defaultErrorInfo".tr();

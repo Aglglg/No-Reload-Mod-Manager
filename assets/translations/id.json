@@ -71,8 +71,7 @@
   "Target Process": "Target Process",
   "Press this after you add/remove/edit/fix mods (usually when add/edit/remove mods directly via File Explorer)": "Tekan setelah menambahkan/menghapus/edit/fix mod (biasanya setelah menambahkan/edit/memindahkan mod langsung dari File Explorer)",
   "Mods Path": "Mods Path",
-  "Mods Path (path doesn't exist)": "Mods Path (Folder tidak ada)",
-  "Mods Path (Invalid)": "Mods Path (Tidak valid)",
+  "Mods Path (path doesn't exist)": "Mods Path (path tidak ada)",
   "example:": "contoh:",
   "Please select \"Mods\" folder": "Harus menargetkan folder \"Mods\"",
   "Languages": "Bahasa",
@@ -102,9 +101,8 @@
   "Error! Cannot copy folder": "Error! Gagal copy folder: {}",
   "Copy mods": "Copy mod",
   "Validating Mods Path...": "Memvalidasi Mods Path...\n",
-  "Mods path doesn't exist": "Mods path tidak ada",
   "Modifying mods...": "Memodifikasi mod...",
-  "Mods path is invalid. Make sure you're targetting \"Mods\" folder.": "Mods path tidak valid.\nPastikan untuk menargetkan folder \"Mods\", dan harus berada di lokasi yang sama dengan d3dx.ini.",
+  "Invalid Mods path. Make sure you're targeting the \"Mods\" folder.": "Mods path tidak valid.\nPastikan kamu memilih folder \"Mods\".",
   "Manage mods": "Kelola mod",
   "Close & Reload": "Tutup & Reload",
   "Close": "Tutup",
@@ -233,5 +231,8 @@
   "If mod customizations are still not saved": "\nJika kustomisasi mod masih belum tersimpan, mod creator mungkin lupa menambahkan keyword 'persist' pada toggle.\nAtau kamu lupa reload dengan F10.",
   "Some malformed entries were detected in the d3dx_user.ini file": "\n\nBeberapa entri yang tidak valid terdeteksi dalam file d3dx_user.ini, yang mungkin mencegah beberapa kustomisasi mod untuk tersimpan.\nIni bisa terjadi ketika menggunakan 3DMigoto/XXMI DLL versi lama.",
   "Update to a newer XXMI DLL or rename the following files/folders": "\n\nUpdate ke XXMI DLL yang lebih baru atau ganti nama file/folder berikut agar hanya menggunakan karakter bahasa Inggris standar (A-Z, a-z, 0-9):",
-  "Custom XXMI DLL for NRMM is active!": "\nCustom XXMI DLL untuk NRMM sedang aktif!"
+  "Custom XXMI DLL for NRMM is active!": "\nCustom XXMI DLL untuk NRMM sedang aktif!",
+  "Mods Path (invalid)": "Mods Path (tidak valid)",
+  "Invalid Mods path. Cannot find d3dx.ini next to the \"Mods\" folder.": "Mods path tidak valid.\nTidak dapat menemukan d3dx.ini di sebelah folder \"Mods\".\nPastikan kamu memilih folder \"Mods\" di dalam folder *MI, contoh: \"GIMI\\Mods\".",
+  "Invalid Mods path. Cannot find d3d11.dll next to the \"Mods\" folder.": "Mods path tidak valid.\nTidak dapat menemukan d3d11.dll di sebelah folder \"Mods\".\nPastikan kamu sudah menjalankan game dengan XXMI Launcher setidaknya sekali."
 }

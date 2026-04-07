@@ -72,7 +72,6 @@
   "Press this after you add/remove/edit/fix mods (usually when add/edit/remove mods directly via File Explorer)": "手動增刪/編輯模組後點擊此按鈕（通常透過檔案總管操作時需使用）",
   "Mods Path": "模組路徑",
   "Mods Path (path doesn't exist)": "模組路徑（路徑不存在）",
-  "Mods Path (Invalid)": "模組路徑（無效）",
   "example:": "例如：",
   "Please select \"Mods\" folder": "請選擇 \"Mods\" 資料夾",
   "Languages": "語言",
@@ -102,9 +101,8 @@
   "Error! Cannot copy folder": "錯誤！無法複製資料夾: {}",
   "Copy mods": "複製模組",
   "Validating Mods Path...": "正在驗證模組路徑。。。\n",
-  "Mods path doesn't exist": "模組路徑不存在",
   "Modifying mods...": "正在修改模組。。。",
-  "Mods path is invalid. Make sure you're targetting \"Mods\" folder.": "模組路徑無效。\n請確保路徑指向 Mods 資料夾，且該資料夾與 d3dx.ini 位於同一目錄。",
+  "Invalid Mods path. Make sure you're targeting the \"Mods\" folder.": "模組路徑無效。\n請確保你選擇的是「Mods」資料夾。",
   "Manage mods": "管理模組",
   "Close & Reload": "關閉並重新載入",
   "Close": "關閉",
@@ -233,5 +231,8 @@
   "If mod customizations are still not saved": "\n若模組自訂設定仍未儲存，可能是模組作者忘記為切換加入 persist 關鍵字，\n或你忘記用 F10 重新載入。",
   "Some malformed entries were detected in the d3dx_user.ini file": "\n\n在 d3dx_user.ini 檔案中偵測到一些格式錯誤的項目，這可能導致部分模組自訂設定無法儲存。\n這可能是由於使用了過舊的 3DMigoto/XXMI DLL 所致。",
   "Update to a newer XXMI DLL or rename the following files/folders": "\n\n請更新至更新版本的 XXMI DLL，或將以下檔案/資料夾重新命名，使其僅包含標準英文字符（A-Z、a-z、0-9）：",
-  "Custom XXMI DLL for NRMM is active!": "\n正在使用 NRMM 的自訂 XXMI DLL！"
+  "Custom XXMI DLL for NRMM is active!": "\n正在使用 NRMM 的自訂 XXMI DLL！",
+  "Mods Path (invalid)": "模組路徑（無效）",
+  "Invalid Mods path. Cannot find d3dx.ini next to the \"Mods\" folder.": "模組路徑無效。\n在「Mods」資料夾旁找不到 d3dx.ini。\n請確保你選擇的是 *MI 資料夾內的「Mods」資料夾，例如「GIMI\\Mods」。",
+  "Invalid Mods path. Cannot find d3d11.dll next to the \"Mods\" folder.": "模組路徑無效。\n在「Mods」資料夾旁找不到 d3d11.dll。\n請確保你已至少使用 XXMI Launcher 啟動過一次遊戲。"
 }

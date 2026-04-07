@@ -72,7 +72,6 @@
   "Press this after you add/remove/edit/fix mods (usually when add/edit/remove mods directly via File Explorer)": "Press this after you add/remove/edit/fix mods (usually when add/edit/remove mods directly via File Explorer)",
   "Mods Path": "Mods Path",
   "Mods Path (path doesn't exist)": "Mods Path (path doesn't exist)",
-  "Mods Path (Invalid)": "Mods Path (Invalid)",
   "example:": "example:",
   "Please select \"Mods\" folder": "Please select \"Mods\" folder",
   "Languages": "Languages",
@@ -102,9 +101,8 @@
   "Error! Cannot copy folder": "Error! Cannot copy folder: {}",
   "Copy mods": "Copy mods",
   "Validating Mods Path...": "Validating Mods Path...\n",
-  "Mods path doesn't exist": "Mods path doesn't exist",
   "Modifying mods...": "Modifying mods...",
-  "Mods path is invalid. Make sure you're targetting \"Mods\" folder.": "Invalid Mods path.\nMake sure you’re targeting the Mods folder, and that it is located in the same directory as d3dx.ini.",
+  "Invalid Mods path. Make sure you're targeting the \"Mods\" folder.": "Invalid Mods path.\nMake sure you're targeting the \"Mods\" folder.",
   "Manage mods": "Manage mods",
   "Close & Reload": "Close & Reload",
   "Close": "Close",
@@ -233,5 +231,8 @@
   "If mod customizations are still not saved": "\nIf mod customizations are still not saved, the mod creator probably forgot to add the 'persist' keyword to the toggles.\nOr you forgot to reload with F10.",
   "Some malformed entries were detected in the d3dx_user.ini file": "\n\nSome malformed entries were detected in the d3dx_user.ini file, which may prevent certain mod customizations from being saved.\nThis can happen when using an outdated 3DMigoto/XXMI DLL.",
   "Update to a newer XXMI DLL or rename the following files/folders": "\n\nUpdate to a newer XXMI DLL or rename the following files/folders to use only standard English characters (A-Z, a-z, 0-9):",
-  "Custom XXMI DLL for NRMM is active!": "\nCustom XXMI DLL for NRMM is active!"
+  "Custom XXMI DLL for NRMM is active!": "\nCustom XXMI DLL for NRMM is active!",
+  "Mods Path (invalid)": "Mods Path (invalid)",
+  "Invalid Mods path. Cannot find d3dx.ini next to the \"Mods\" folder.": "Invalid Mods path.\nCannot find d3dx.ini next to the \"Mods\" folder.\nMake sure you're targeting the \"Mods\" folder inside your *MI folder, e.g. \"GIMI\\Mods\".",
+  "Invalid Mods path. Cannot find d3d11.dll next to the \"Mods\" folder.": "Invalid Mods path.\nCannot find d3d11.dll next to the \"Mods\" folder.\nMake sure you've launched the game with XXMI Launcher at least once."
 }
