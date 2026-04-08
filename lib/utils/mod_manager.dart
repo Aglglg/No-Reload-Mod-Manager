@@ -1363,8 +1363,8 @@ Future<(String, bool)> _prepareManagedFolder(
   return (managedPath, needReloadManual);
 }
 
-Future<String> getNamespace(File iniFile) async {
-  String namespace = '';
+Future<String?> getNamespace(File iniFile) async {
+  String? namespace;
   List<String> lines = [];
 
   try {
@@ -1595,7 +1595,7 @@ Future<void> _autoModifyDuplicateNamespaceInManagedMod(
 
       for (final path in iniFiles) {
         final ns = await getNamespace(File(path));
-        if (ns.isNotEmpty) {
+        if (ns != null) {
           namespacesInMod.add(ns.toLowerCase());
         }
       }
@@ -1887,6 +1887,9 @@ Future<void> _manageMod(
   Ref<bool> errorShouldTryAgain,
 ) async {
   try {
+    //Track file/namespace that already have "global $managed_slot_id", but on another file with same namespace
+    final namespaceWithManagedVar = <String>[];
+
     // Find all INI files recursively
     final iniFiles = await findIniFilesRecursiveExcludeDisabled(modFolder);
     Ref<bool> oldAutoFix = Ref(false);
@@ -1920,6 +1923,7 @@ Future<void> _manageMod(
           errorShouldTryAgain,
           oldAutoFix,
           removedSyntaxError,
+          namespaceWithManagedVar,
         );
       }());
     }
@@ -1951,11 +1955,16 @@ Future<void> _modifyIniFile(
   Ref<bool> errorShouldTryAgain,
   Ref<bool> oldAutoFix,
   Ref<bool> removedSyntaxError,
+  List<String> namespaceWithManagedVar,
 ) async {
   try {
     // Open the INI file and read it asynchronously
     final file = File(iniFilePath);
     final lines = await forceReadAsLinesUtf8(file);
+
+    String? fileNamespace = await getNamespace(file);
+    fileNamespace ??= iniFilePath;
+    fileNamespace = fileNamespace.toLowerCase();
 
     //Modify lines based on error report first before adding or modifying anything
     _modifyLinesBasedOnError(
@@ -1974,6 +1983,8 @@ Future<void> _modifyIniFile(
       modIndex,
       groupIndex,
       removedSyntaxError,
+      fileNamespace,
+      namespaceWithManagedVar,
     );
 
     _reorderByIniKeyPriority(parsedIni);
@@ -2656,6 +2667,8 @@ void _checkAndModifySections(
   int modIndex,
   int groupIndex,
   Ref<bool> removedSyntaxError,
+  String fileNamespace,
+  List<String> namespaceWithManagedVar,
 ) {
   bool managedSlotIdVarAdded = false;
   for (var section in sections) {
@@ -2675,9 +2688,12 @@ void _checkAndModifySections(
       _fixEndifLineAndTrailingFlowControlLine(section, removedSyntaxError);
     }
     //Constants section
-    else if (_isConstantsSection(name) && !managedSlotIdVarAdded) {
+    else if (_isConstantsSection(name) &&
+        !managedSlotIdVarAdded &&
+        !namespaceWithManagedVar.contains(fileNamespace)) {
       //simply insert $managed_slot_id. Because, at parsing logic, the old $managed_slot_id guaranteed to be removed
       lines.insert(0, 'global \$managed_slot_id = $modIndex');
+      namespaceWithManagedVar.add(fileNamespace);
       managedSlotIdVarAdded = true;
     }
     //Key section
