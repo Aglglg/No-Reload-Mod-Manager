@@ -1219,12 +1219,22 @@ Future<List<TextSpan>> updateModData(
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );
-  } catch (_) {
+  } catch (e) {
     operationLogs.clear();
     operationLogs.add(
       TextSpan(
-        text: "${'Unexpected error!'.tr()} ${ConstantVar.defaultErrorInfo}",
+        text: "${'Unexpected error!'.tr()} ${ConstantVar.defaultErrorInfo}\n",
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
+      ),
+    );
+    operationLogs.add(
+      TextSpan(
+        text: e.toString(),
+        style: GoogleFonts.poppins(
+          color: Colors.grey,
+          fontSize: 13,
+          fontWeight: FontWeight.w400,
+        ),
       ),
     );
   }
