@@ -2366,9 +2366,7 @@ class _SaveModCustomizationsDialogState
       for (final iniFilePath in iniFilePaths) {
         var namespace = await getNamespace(File(iniFilePath));
 
-        if (namespace.isEmpty) {
-          namespace = p.relative(iniFilePath, from: basePath);
-        }
+        namespace ??= p.relative(iniFilePath, from: basePath);
 
         namespaceAndPathPairs.add((namespace.toLowerCase(), iniFilePath));
       }
@@ -3279,7 +3277,7 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
     //get the namespaces
     for (var path in iniFilesPath) {
       final namespace = await getNamespace(File(path));
-      if (namespace.isNotEmpty) {
+      if (namespace != null) {
         //ignore case
         bool alreadyExist = namespacesMap.keys.any(
           (k) => k.toLowerCase() == namespace.toLowerCase(),
