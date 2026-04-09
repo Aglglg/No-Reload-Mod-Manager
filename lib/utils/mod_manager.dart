@@ -39,7 +39,7 @@ Future<List<ModGroupData>> refreshModData(Directory managedDir) async {
       List<ModData> modsInGroup = await getModsOnGroup(group.$1, true);
       return ModGroupData(
         groupDir: group.$1,
-        groupIcon: getModOrGroupIcon(group.$1),
+        groupIcon: getGroupIcon(group.$1),
         groupName: await getGroupName(group.$1),
         modsInGroup: modsInGroup,
         realIndex: group.$2,
@@ -117,12 +117,12 @@ void _addGroupToRiverpod(WidgetRef ref, Directory groupDir, int index) {
   final currentList = ref.read(modGroupDataProvider);
   final newGroup = ModGroupData(
     groupDir: groupDir,
-    groupIcon: getModOrGroupIcon(groupDir),
+    groupIcon: getGroupIcon(groupDir),
     groupName: p.basename(groupDir.path),
     modsInGroup: [
       ModData(
         modDir: Directory("None"),
-        modIcon: null,
+        modIcon: getNoneModIcon(groupDir),
         modName: "None".tr(),
         realIndex: 0,
         isOldAutoFixed: false,
@@ -274,7 +274,53 @@ Future<void> setModNameOnDisk(Directory modDir, String modName) async {
 }
 
 Image? getModOrGroupIcon(Directory dir) {
-  final file = File(p.join(dir.path, "icon.png"));
+  return getIconFromPath(p.join(dir.path, "icon.png"));
+}
+
+Image? getGroupIcon(Directory groupDir) {
+  return getIconFromPath(getGroupIconPath(groupDir));
+}
+
+Image? getNoneModIcon(Directory groupDir) {
+  return getIconFromPath(
+    p.join(groupDir.path, ConstantVar.noneSlotIconFileName),
+  );
+}
+
+String getGroupIconPath(Directory groupDir) {
+  final newPath = p.join(groupDir.path, ConstantVar.groupIconFileName);
+  final newFile = File(newPath);
+  if (newFile.existsSync()) return newPath;
+
+  final legacyPath = p.join(groupDir.path, ConstantVar.legacyGroupIconFileName);
+  final legacyFile = File(legacyPath);
+  if (legacyFile.existsSync()) {
+    try {
+      legacyFile.renameSync(newPath);
+      return newPath;
+    } catch (_) {
+      return legacyPath;
+    }
+  }
+
+  return newPath;
+}
+
+Future<void> deleteLegacyGroupIconIfPresent(Directory groupDir) async {
+  final legacyPath = p.join(groupDir.path, ConstantVar.legacyGroupIconFileName);
+  final newPath = p.join(groupDir.path, ConstantVar.groupIconFileName);
+  if (legacyPath == newPath) return;
+
+  try {
+    final legacyFile = File(legacyPath);
+    if (await legacyFile.exists()) {
+      await legacyFile.delete();
+    }
+  } catch (_) {}
+}
+
+Image? getIconFromPath(String path) {
+  final file = File(path);
 
   if (file.existsSync()) {
     try {
@@ -305,6 +351,7 @@ Future<void> setGroupOrModIcon(
   Image? oldImage, {
   bool fromClipboard = false,
   bool isGroup = true,
+  bool isNoneMod = false,
   Directory? modDir,
 }) async {
   String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
@@ -334,8 +381,12 @@ Future<void> setGroupOrModIcon(
         _updateGroupIconProvider(ref, groupDir, imgResult);
         try {
           File sourceFile = File(pickResult.files[0].path!);
-          String targetDest = p.join(groupDir.path, "icon.png");
+          String targetDest = p.join(
+            groupDir.path,
+            ConstantVar.groupIconFileName,
+          );
           await sourceFile.copy(targetDest);
+          await deleteLegacyGroupIconIfPresent(groupDir);
 
           //Set folder icon in Explorer
           if (SharedPrefUtils().isAutoGenerateFolderIcon()) {
@@ -357,7 +408,10 @@ Future<void> setGroupOrModIcon(
         _updateModIconProvider(ref, groupDir, modDir, imgResult);
         try {
           File sourceFile = File(pickResult.files[0].path!);
-          String targetDest = p.join(modDir.path, "icon.png");
+          String targetDest =
+              isNoneMod
+                  ? p.join(groupDir.path, ConstantVar.noneSlotIconFileName)
+                  : p.join(modDir.path, "icon.png");
           await sourceFile.copy(targetDest);
         } catch (_) {}
       }
@@ -381,14 +435,15 @@ Future<void> setGroupOrModIcon(
           );
           _updateGroupIconProvider(ref, groupDir, img);
           await File(
-            p.join(groupDir.path, "icon.png"),
+            p.join(groupDir.path, ConstantVar.groupIconFileName),
           ).writeAsBytes(imgBytes.toList());
+          await deleteLegacyGroupIconIfPresent(groupDir);
 
           //Set folder icon in Explorer
           if (SharedPrefUtils().isAutoGenerateFolderIcon()) {
             await setFolderIcon(
               groupDir.path,
-              p.join(groupDir.path, "icon.png"),
+              p.join(groupDir.path, ConstantVar.groupIconFileName),
             );
           }
         } else if (modDir != null) {
@@ -405,7 +460,9 @@ Future<void> setGroupOrModIcon(
           );
           _updateModIconProvider(ref, groupDir, modDir, img);
           await File(
-            p.join(modDir.path, "icon.png"),
+            isNoneMod
+                ? p.join(groupDir.path, ConstantVar.noneSlotIconFileName)
+                : p.join(modDir.path, "icon.png"),
           ).writeAsBytes(imgBytes.toList());
         }
       }
@@ -421,6 +478,7 @@ Future<void> unsetGroupOrModIcon(
   WidgetRef ref,
   Directory groupDir,
   Image? oldImage, {
+  bool isNoneMod = false,
   Directory? modDir,
 }) async {
   String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
@@ -440,8 +498,13 @@ Future<void> unsetGroupOrModIcon(
     );
     _updateGroupIconProvider(ref, groupDir, imgResult);
     try {
-      File sourceFile = File(p.join(groupDir.path, "icon.png"));
-      await sourceFile.delete();
+      File sourceFile = File(
+        p.join(groupDir.path, ConstantVar.groupIconFileName),
+      );
+      if (await sourceFile.exists()) {
+        await sourceFile.delete();
+      }
+      await deleteLegacyGroupIconIfPresent(groupDir);
 
       //Unset folder icon in Explorer
       if (SharedPrefUtils().isAutoGenerateFolderIcon()) {
@@ -462,7 +525,11 @@ Future<void> unsetGroupOrModIcon(
     );
     _updateModIconProvider(ref, groupDir, modDir, imgResult);
     try {
-      File sourceFile = File(p.join(modDir.path, "icon.png"));
+      File sourceFile = File(
+        isNoneMod
+            ? p.join(groupDir.path, ConstantVar.noneSlotIconFileName)
+            : p.join(modDir.path, "icon.png"),
+      );
       await sourceFile.delete();
     } catch (_) {}
   }
@@ -584,7 +651,7 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
       0,
       ModData(
         modDir: Directory("None"),
-        modIcon: null,
+        modIcon: getNoneModIcon(groupDir),
         modName: "None".tr(),
         realIndex: 0,
         isOldAutoFixed: false,

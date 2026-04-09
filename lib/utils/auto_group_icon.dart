@@ -148,8 +148,9 @@ Future<bool> _searchAndDownload(
     //Signal cancellation before doing disk I/O so other workers stop
     cancelToken.cancel();
 
-    final savePath = p.join(rootPath, 'icon.png');
+    final savePath = p.join(rootPath, ConstantVar.groupIconFileName);
     await File(savePath).writeAsBytes(response.bodyBytes, flush: true);
+    await deleteLegacyGroupIconIfPresent(Directory(rootPath));
 
     if (SharedPrefUtils().isAutoGenerateFolderIcon()) {
       await setFolderIcon(p.dirname(savePath), savePath);

@@ -5,6 +5,9 @@ class ConstantVar {
   static const String managedBackupExtension = "ini_managed_backup";
   static const String managedFolderName = "_MANAGED_";
   static const String managedRemovedFolderName = "DISABLED_MANAGED_REMOVED";
+  static const String groupIconFileName = "icon_group.png";
+  static const String legacyGroupIconFileName = "icon.png";
+  static const String noneSlotIconFileName = "icon_none.png";
   static const String oldManagedFolderName =
       "V1_3_x_MANAGED-DO_NOT_EDIT_COPY_MOVE_CUT";
   static const String anotherOldManagedFolderName =
