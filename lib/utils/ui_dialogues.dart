@@ -107,7 +107,7 @@ class _GenerateGroupIcoFileDialogState
         ];
       });
 
-      await setFolderIcon(group.$1.path, getGroupIconPath(group.$1));
+      await setFolderIcon(group.$1.path, p.join(group.$1.path, 'icon.png'));
 
       setState(() {
         final newContents = List<TextSpan>.from(contents);
@@ -1493,7 +1493,7 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
     final futures = <Future>[];
 
     for (var group in groupFolders) {
-      final iconPath = getGroupIconPath(group.$1);
+      final iconPath = p.join(group.$1.path, 'icon.png');
       final iconFile = File(iconPath);
 
       if (!await iconFile.exists()) {
