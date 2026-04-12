@@ -107,6 +107,7 @@ class _GroupContainerState extends ConsumerState<GroupContainer> {
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter:
           (_) => setState(() {
             isHovering = true;
@@ -618,6 +619,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                 widget.isCentered || widget.isGrid ? widget.onSelected : null,
             onTap: widget.onTap,
             child: MouseRegion(
+              cursor: SystemMouseCursors.click,
               onEnter:
                   (_) => setState(() {
                     isHovering = true;

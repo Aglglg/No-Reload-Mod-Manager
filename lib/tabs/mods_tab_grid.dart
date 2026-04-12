@@ -1030,6 +1030,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                 });
               },
               child: TextField(
+                mouseCursor: SystemMouseCursors.text,
                 focusNode: groupTextFieldFocusNode,
                 enabled: groupTextFieldEnabled,
                 cursorColor: const Color.fromARGB(255, 33, 149, 243),

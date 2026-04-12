@@ -1387,6 +1387,7 @@ class _CustomImageButtonLinkState extends State<CustomImageButtonLink> {
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (_) {
         setState(() => _isHovering = true);
       },
