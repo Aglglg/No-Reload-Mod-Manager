@@ -3000,27 +3000,6 @@ Future<List<String>> findIniFilesRecursiveExcludeDisabled(
       .toList();
 }
 
-// ignore: unused_element
-Future<List<String>> _findIniFilesManagedBackupRecursive(
-  String mainFolder,
-) async {
-  final directory = Directory(
-    r"\\?\" + mainFolder.replaceFirst(r"\\?\", ''),
-  ); // workaround \\?\ for long paths, only for Windows
-  if (!await directory.exists()) return [];
-
-  return await directory
-      .list(recursive: true)
-      .where((file) => file is File)
-      .map((file) => file.path)
-      .where(
-        (path) => path.toLowerCase().endsWith(
-          '.${ConstantVar.managedBackupExtension}',
-        ),
-      )
-      .toList();
-}
-
 String getCurrentModsPath(TargetGame targetGame) {
   switch (targetGame) {
     case TargetGame.Wuthering_Waves:
