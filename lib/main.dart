@@ -165,8 +165,8 @@ Future<void> setupWindow(List<String> args) async {
 
   bitsdojo.doWhenWindowReady(() async {
     final minSize = Size(
-      750 * SharedPrefUtils().getOverallScale(),
-      395 * SharedPrefUtils().getOverallScale(),
+      ConstantVar.minWindowWidth * SharedPrefUtils().getOverallScale(),
+      ConstantVar.minWindowHeight * SharedPrefUtils().getOverallScale(),
     );
 
     Size? savedSize = SharedPrefUtils().getSavedWindowSize();
@@ -1455,7 +1455,7 @@ class _MainViewState extends ConsumerState<MainView>
       children: [
         if (kDebugMode)
           Align(
-            alignment: Alignment.topCenter,
+            alignment: Alignment.bottomCenter,
             child: Text(
               'Experimental Version',
               style: GoogleFonts.poppins(

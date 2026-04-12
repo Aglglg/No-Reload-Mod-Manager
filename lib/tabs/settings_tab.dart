@@ -384,12 +384,16 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           onChanged: (value) {
                             ref.read(zoomScaleProvider.notifier).state = value;
                             appWindow.minSize = Size(
-                              750 * ref.read(zoomScaleProvider),
-                              370 * ref.read(zoomScaleProvider),
+                              ConstantVar.minWindowWidth *
+                                  ref.read(zoomScaleProvider),
+                              ConstantVar.minWindowHeight *
+                                  ref.read(zoomScaleProvider),
                             );
                             appWindow.size = Size(
-                              750 * ref.read(zoomScaleProvider),
-                              370 * ref.read(zoomScaleProvider),
+                              ConstantVar.minWindowWidth *
+                                  ref.read(zoomScaleProvider),
+                              ConstantVar.minWindowHeight *
+                                  ref.read(zoomScaleProvider),
                             );
                           },
                           min: 0.85,

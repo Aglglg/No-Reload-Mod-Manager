@@ -495,6 +495,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
               child: Align(
                 alignment: Alignment.bottomCenter,
                 child: Transform.scale(
+                  alignment: Alignment.bottomCenter,
                   scale: sss,
                   child: TextButton(
                     onPressed: () async {
