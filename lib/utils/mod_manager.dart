@@ -2967,7 +2967,7 @@ Future<List<String>> _findIniFilesRecursive(String mainFolder) async {
       .list(recursive: true)
       .where((file) => file is File && file.path.endsWith('.ini'))
       .where((file) => p.basename(file.path).toLowerCase() != "desktop.ini")
-      .map((file) => file.path)
+      .map((file) => file.path.replaceFirst(r"\\?\", ''))
       .toList();
 }
 
@@ -2991,7 +2991,7 @@ Future<List<String>> findIniFilesRecursiveExcludeDisabled(
   return directory
       .list(recursive: true)
       .where((entity) => entity is File)
-      .map((entity) => entity.path)
+      .map((entity) => entity.path.replaceFirst(r"\\?\", ''))
       .where((path) => path.toLowerCase().endsWith('.ini'))
       .where((path) => p.basename(path).toLowerCase() != 'desktop.ini')
       .where(
