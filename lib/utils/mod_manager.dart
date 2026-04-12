@@ -1076,6 +1076,35 @@ Future<List<TextSpan>> updateModData(
       );
     }
 
+    final allIniFiles = await findIniFilesRecursiveExcludeDisabled(managedPath);
+    final longPathIniFiles =
+        allIniFiles.where((path) => path.length >= 200).toList();
+
+    //Show path that's too long, cannot be detected in errored lines, and can cause game crash
+    if (longPathIniFiles.isNotEmpty) {
+      operationLogs.add(
+        TextSpan(
+          text: "The following ini files have paths that are too long".tr(
+            args: ["  <>  ${longPathIniFiles.join("\n  <>  ")}"],
+          ),
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 189, 170, 0),
+            fontSize: 14,
+          ),
+        ),
+      );
+      operationLogs.add(
+        TextSpan(
+          text: "Please shorten the folder names".tr(),
+          style: GoogleFonts.poppins(
+            color: Colors.red,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      );
+    }
+
     //Fix any crash line that's not in _MANAGED_ folder, if any
     await _fixNonManagedModsCrashLine(errorReport, managedPath);
 

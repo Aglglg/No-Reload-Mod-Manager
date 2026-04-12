@@ -233,5 +233,7 @@
   "If mod customizations are still not saved": "\n若模組自訂設定仍未儲存，可能是模組作者忘記為切換加入 persist 關鍵字，\n或你忘記用 F10 重新載入。",
   "Some malformed entries were detected in the d3dx_user.ini file": "\n\n在 d3dx_user.ini 檔案中偵測到一些格式錯誤的項目，這可能導致部分模組自訂設定無法儲存。\n這可能是由於使用了過舊的 3DMigoto/XXMI DLL 所致。",
   "Update to a newer XXMI DLL or rename the following files/folders": "\n\n請更新至更新版本的 XXMI DLL，或將以下檔案/資料夾重新命名，使其僅包含標準英文字符（A-Z、a-z、0-9）：",
-  "Custom XXMI DLL for NRMM is active!": "\n正在使用 NRMM 的自訂 XXMI DLL！"
+  "Custom XXMI DLL for NRMM is active!": "\n正在使用 NRMM 的自訂 XXMI DLL！",
+  "The following ini files have paths that are too long": "以下 .ini 檔案的路徑過長：\n{}\n",
+  "Please shorten the folder names": "請縮短資料夾名稱或移除列出的模組，因為路徑過長可能導致模組衝突或遊戲無提示崩潰。\n\n"
 }

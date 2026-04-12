@@ -233,5 +233,7 @@
   "If mod customizations are still not saved": "\nIf mod customizations are still not saved, the mod creator probably forgot to add the 'persist' keyword to the toggles.\nOr you forgot to reload with F10.",
   "Some malformed entries were detected in the d3dx_user.ini file": "\n\nSome malformed entries were detected in the d3dx_user.ini file, which may prevent certain mod customizations from being saved.\nThis can happen when using an outdated 3DMigoto/XXMI DLL.",
   "Update to a newer XXMI DLL or rename the following files/folders": "\n\nUpdate to a newer XXMI DLL or rename the following files/folders to use only standard English characters (A-Z, a-z, 0-9):",
-  "Custom XXMI DLL for NRMM is active!": "\nCustom XXMI DLL for NRMM is active!"
+  "Custom XXMI DLL for NRMM is active!": "\nCustom XXMI DLL for NRMM is active!",
+  "The following ini files have paths that are too long": "The following .ini files have paths that are too long:\n{}\n",
+  "Please shorten the folder names": "Please shorten the folder names or remove the listed mods, because long paths can cause mod conflicts or silent game crashes.\n\n"
 }
