@@ -274,27 +274,30 @@ Future<void> setModNameOnDisk(Directory modDir, String modName) async {
 }
 
 Image? getModOrGroupIcon(Directory dir) {
-  final file = File(p.join(dir.path, "icon.png"));
+  try {
+    const names = ["icon.png", "preview.png", "预览.png"];
 
-  if (file.existsSync()) {
-    try {
-      return Image.file(
-        file,
-        cacheWidth: 156 * 2,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Icon(
-            size: 35,
-            Icons.image_outlined,
-            color: const Color.fromARGB(127, 255, 255, 255),
-          );
-        },
-      );
-    } catch (_) {
-      // fallback in case FileImage fails
-      return null;
+    for (final name in names) {
+      final file = File(p.join(dir.path, name));
+
+      if (file.existsSync()) {
+        return Image.file(
+          file,
+          cacheWidth: 156 * 2,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Icon(
+              size: 35,
+              Icons.image_outlined,
+              color: const Color.fromARGB(127, 255, 255, 255),
+            );
+          },
+        );
+      }
     }
-  } else {
+
+    return null;
+  } catch (_) {
     return null;
   }
 }
