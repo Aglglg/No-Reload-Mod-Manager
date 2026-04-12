@@ -14,6 +14,8 @@ class ErroredLinesReport {
   final Map<String, List<ErroredLine>> crashLines = {}; //filePath, errorLines
   //invalid flow control lines (if-elif-else-endif) and condition line in key section
   final Map<String, List<ErroredLine>> otherError = {}; //filePath,errorLines
+  final Map<String, List<ErroredLine>> otherErrorMissingEndif =
+      {}; //filePath,errorLines
 
   ErroredLinesReport.fromPointer(
     Pointer<ErroredLineFFI> ptr,
@@ -39,6 +41,10 @@ class ErroredLinesReport {
             reason.replaceFirst("NON EXISTENT LIB:", "").trim().toLowerCase();
         final libName = knownModdingLibs[rawLibName] ?? rawLibName;
         nonExistentLibs[libName] = filePath;
+      } else if (reason == "Missing \"endif\"") {
+        (otherErrorMissingEndif[filePath] ??= []).add(
+          ErroredLine(lineIndex, trimmedLine),
+        );
       } else {
         (otherError[filePath] ??= []).add(ErroredLine(lineIndex, trimmedLine));
       }

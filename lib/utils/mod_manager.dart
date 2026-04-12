@@ -2021,23 +2021,41 @@ void _modifyLinesBasedOnError(
 
   final fileCrashErrors = errorReport.crashLines[p.normalize(path)] ?? [];
   final fileOtherErrors = errorReport.otherError[p.normalize(path)] ?? [];
+  final fileOtherErrorsMissingEndif =
+      errorReport.otherErrorMissingEndif[p.normalize(path)] ?? [];
 
-  for (var e in [...fileCrashErrors, ...fileOtherErrors]) {
+  for (var e in [
+    ...fileCrashErrors,
+    ...fileOtherErrors,
+    ...fileOtherErrorsMissingEndif,
+  ]) {
     expectedErrors[e.lineIndex] = e.trimmedLine;
   }
 
-  // We need to continue even if expectedErrors is empty to remove old marks.
+  final Set<int> missingEndifIndexes = {
+    for (var e in fileOtherErrorsMissingEndif) e.lineIndex,
+  };
+
+  // We need to continue even if expectedErrors is empty to remove old marks, if somehow errored lines becomes valid.
+  // For example, errored line because missing referenced namespace, but then user add the namespace later.
 
   //Iterate through every line in the file to sync state
   for (int i = 0; i < lines.length; i++) {
     final currentLine = lines[i];
-    final bool isMarked = currentLine.trimLeft().startsWith(';-;');
+    final trimmed = currentLine.trimLeft();
+    final bool isMarked =
+        trimmed.startsWith(';-;') || trimmed.startsWith(';;-;;');
     final bool shouldBeMarked = expectedErrors.containsKey(i);
 
     if (shouldBeMarked) {
       //Get the version without the mark to compare content
-      String cleanLine =
-          isMarked ? currentLine.replaceFirst(';-;', '') : currentLine;
+      String cleanLine = currentLine;
+
+      if (currentLine.trimLeft().startsWith(';-;')) {
+        cleanLine = currentLine.replaceFirst(';-;', '');
+      } else if (currentLine.trimLeft().startsWith(';;-;;')) {
+        cleanLine = currentLine.replaceFirst(';;-;;', '');
+      }
 
       //Make sure the trimmed content matches the report
       if (cleanLine.trim().toLowerCase() == expectedErrors[i]!.toLowerCase()) {
@@ -2047,14 +2065,18 @@ void _modifyLinesBasedOnError(
         }
         //If it's on report, but not marked yet, add mark
         if (!isMarked) {
-          lines[i] = ';-;${currentLine.trim()}';
+          //;;-;; for errored line "if missing endif", so it will not accidentally create problem on next Update Mod Data.
+          final prefix = missingEndifIndexes.contains(i) ? ';;-;;' : ';-;';
+          lines[i] = '$prefix${currentLine.trim()}';
         }
       }
     } else {
       //If a line is marked but NOT in the error report, remove the mark
       if (isMarked) {
-        //replaceFirst only takes out the first occurrence of the tag
-        lines[i] = currentLine.replaceFirst(';-;', '');
+        //replaceFirst only takes out the first occurrence of the tag, also ignore ;;-;;
+        if (trimmed.startsWith(';-;')) {
+          lines[i] = currentLine.replaceFirst(';-;', '');
+        }
       }
     }
   }
