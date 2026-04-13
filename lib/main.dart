@@ -266,7 +266,12 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
         locale: context.locale,
         debugShowCheckedModeBanner: false,
         home: Background(successLoadPref: widget.successLoadPref),
-        theme: ThemeData.dark(),
+        theme: ThemeData.dark().copyWith(
+          colorScheme: ThemeData.dark().colorScheme.copyWith(
+            primary: const Color.fromARGB(127, 33, 149, 243),
+            secondary: const Color.fromARGB(127, 33, 149, 243),
+          ),
+        ),
       ),
     );
   }
