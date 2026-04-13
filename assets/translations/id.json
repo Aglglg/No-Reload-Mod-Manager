@@ -24,7 +24,7 @@
   "Mods path is correct, but some requirements are missing.": "Mods path sudah benar, tapi beberapa file yang dibutuhkan untuk mod manager tidak ada.",
   "Edit Keybinds": "Edit tombol mod",
   "Save Keybinds": "Simpan tombol mod",
-  "Right-click a mod and select Keybind.": "Klik kanan di mod dan pilih Keybind.\nAtau cukup tekan [R (keyboard)] / [X (gamepad)] di sebuah mod. ",
+  "Right-click a mod and select Keybind.": "Klik kanan pada mod dan pilih Keybind.\nAtau tekan [R (keyboard)] / [X (gamepad)] saat kursor berada di atas mod.",
   "Right-click and add group, then you can add mods.": "Klik kanan kemudian tambah grup, lalu bisa tambah mod.",
   "Drag & Drop mod folders here to add mods to this group (1 folder = 1 mod).": "Drag & drop folder mod atau arsip ke sini (1 folder = 1 mod, 1 arsip = 1 mod).",
   "Max group reached (500 Groups). Unable to add more group.": "Grup sudah maksimal (500 Groups). Tidak bisa menambahkan grup lagi.",
