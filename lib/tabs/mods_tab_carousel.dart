@@ -168,7 +168,11 @@ class _TabModsCarouselState extends ConsumerState<TabModsCarousel>
           Align(
             alignment: Alignment.topCenter,
             child: Padding(
-              padding: EdgeInsets.only(top: 15.0 * sss),
+              padding: EdgeInsets.only(
+                top: 95.0 * sss,
+                right: 45 * sss,
+                left: 45 * sss,
+              ),
               child: SizedBox(
                 height: 38 * sss,
                 child: SearchBar(

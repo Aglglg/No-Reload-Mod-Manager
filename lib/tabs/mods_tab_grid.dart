@@ -156,7 +156,11 @@ class _TabModsGridState extends ConsumerState<TabModsGrid>
           Align(
             alignment: Alignment.topCenter,
             child: Padding(
-              padding: EdgeInsets.only(top: 95.0 * sss),
+              padding: EdgeInsets.only(
+                top: 95.0 * sss,
+                right: 45 * sss,
+                left: 45 * sss,
+              ),
               child: SizedBox(
                 height: 38 * sss,
                 child: SearchBar(
