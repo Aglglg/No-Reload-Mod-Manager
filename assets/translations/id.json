@@ -202,7 +202,7 @@
   "Namespace is already used by another slot in this mod.": "\nNamespace sudah digunakan di slot lain di mod ini.\n",
   "Mod syntax errors were auto-fixed by earlier NRMM versions.": "Syntax error di mod ini diperbaiki otomatis dengan versi lama dari NRMM.\nJika ada masalah, coba download ulang atau tambahkan ulang modnya.",
   "Mod syntax errors are automatically removed.": "Syntax error dihilangkan secara otomatis.",
-  "Missing modding library": "{} tidak ditemukan.\nDibutuhkan oleh {}.\nMungkin tidak ada atau digunakan secara tidak benar.\nPeringatan dapat diabaikan.\n\n",
+  "Missing modding library": "{} tidak ditemukan.\nDibutuhkan oleh {}.\nPeringatan dapat diabaikan.\n\n",
   "Duplicate modding library": "{} ditemukan berkali-kali:\n{}\n",
   "Keep only one copy of modding library": "Pastikan hanya ada satu {}.\n\n",
   "Failed to call function to detect errored lines, if issue persist please contact NRMM creator.": "Gagal untuk melakukan deteksi baris-baris mod yang error.\nJika masalah berlanjut, hubungi kreator dari NRMM.",

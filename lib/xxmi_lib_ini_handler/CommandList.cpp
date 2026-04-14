@@ -159,9 +159,10 @@ bool ParseCommandListGeneralCommands(Globals& G, const wchar_t* key, std::wstrin
 				{
 					auto item = G.known_lib_namespaces.find(called_namespace);
 					if (item != G.known_lib_namespaces.end()) {
-						//Only if haven't tracked yet
+						//Only if haven't tracked yet && the namespace really not exist globally
 						auto non_exist = G.already_known_nonexist_lib.find(called_namespace);
-						if (non_exist == G.already_known_nonexist_lib.end())
+						auto namespace_not_exist = G.global_tracked_namespaces.find(called_namespace);
+						if (non_exist == G.already_known_nonexist_lib.end() && namespace_not_exist == G.global_tracked_namespaces.end())
 						{
 							G.already_known_nonexist_lib.insert(called_namespace);
 							G.errored_lines.insert(ErroredLine{
@@ -192,9 +193,10 @@ bool ParseCommandListGeneralCommands(Globals& G, const wchar_t* key, std::wstrin
 				{
 					auto item = G.known_lib_namespaces.find(called_namespace);
 					if (item != G.known_lib_namespaces.end()) {
-						//Only if haven't tracked yet
+						//Only if haven't tracked yet && the namespace really not exist globally
 						auto non_exist = G.already_known_nonexist_lib.find(called_namespace);
-						if (non_exist == G.already_known_nonexist_lib.end())
+						auto namespace_not_exist = G.global_tracked_namespaces.find(called_namespace);
+						if (non_exist == G.already_known_nonexist_lib.end() && namespace_not_exist == G.global_tracked_namespaces.end())
 						{
 							G.already_known_nonexist_lib.insert(called_namespace);
 							G.errored_lines.insert(ErroredLine{

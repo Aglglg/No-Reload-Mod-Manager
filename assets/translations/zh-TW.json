@@ -202,7 +202,7 @@
   "Namespace is already used by another slot in this mod.": "\n該 namespace 已被此模組中的其他槽位使用。\n",
   "Mod syntax errors were auto-fixed by earlier NRMM versions.": "此模組的語法錯誤已在較早版本的 NRMM 中自動修復。\n如果該模組仍有問題，請嘗試重新下載模組，或將其移除後再重新加入。",
   "Mod syntax errors are automatically removed.": "模組的語法錯誤會被自動移除。",
-  "Missing modding library": "缺少 {}。\n由 {} 需要。\n此函式庫可能缺失，或被錯誤引用。\n你可以忽略此警告。\n\n",
+  "Missing modding library": "缺少 {}。\n由 {} 需要。\n你可以忽略此警告。\n\n",
   "Duplicate modding library": "發現多個 {} 副本：\n{}\n",
   "Keep only one copy of modding library": "請僅保留一個 {} 副本。\n\n",
   "Failed to call function to detect errored lines, if issue persist please contact NRMM creator.": "呼叫用於偵測錯誤行的函式失敗。\n如果問題仍然存在，請聯絡 NRMM 的開發者。",

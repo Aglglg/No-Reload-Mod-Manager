@@ -393,6 +393,7 @@ static bool ParseIniPreamble(Globals& G, std::wstring* wline, std::wstring* ini_
 		if (!_wcsicmp(key.c_str(), L"namespace")) {
 			//printf("        Renaming namespace \"%S\" -> \"%S\"\n", ini_namespace->c_str(), val.c_str());
 			*ini_namespace = val;
+			G.global_tracked_namespaces.insert(val);
 			return true;
 		}
 	}
