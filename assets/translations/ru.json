@@ -215,7 +215,7 @@
   "File d3dx_user.ini does not exist": "Файл d3dx_user.ini не существует",
   "Only mods inside the _MANAGED_ folder can have their customizations saved. Try pressing \"Update Mod Data\" first to create the folder.": "Только моды внутри папки _MANAGED_ могут сохранять свои настройки. Попробуйте сначала нажать «Обновить данные модов», чтобы создать папку.",
   "Current mod customizations have been set as the default.": "Текущие настройки мода установлены по умолчанию.",
-  "To get faster mod reload, consider disabling mods you rarely use.": "\nДля ускорения перезагрузки модов отключите моды, которые вы редко используете. Вкладка Настройки, немного прокрутите вниз.",
+  "To get faster mod reload, consider disabling mods you rarely use.": "\nДля ускорения перезагрузки модов отключите моды, которые вы редко используете. Вкладка Настройки, немного прокрутите вниз.\n",
   "Show Tray Menu when toggling outside the game": "Показывать Трей при переключении вне игры",
   "Contribute": "Внести вклад",
   "Archive wrong password": "Неверный пароль для {}.\n",
@@ -233,7 +233,8 @@
   "If mod customizations are still not saved": "\nЕсли настройки мода всё ещё не сохраняются, создатель мода, вероятно, забыл добавить ключевое слово 'persist' к переключателям.\nИли вы забыли перезагрузить с помощью F10.",
   "Some malformed entries were detected in the d3dx_user.ini file": "\n\nВ файле d3dx_user.ini обнаружены некорректные записи, которые могут препятствовать сохранению некоторых настроек мода.\nЭто может произойти при использовании устаревшей версии 3DMigoto/XXMI DLL.",
   "Update to a newer XXMI DLL or rename the following files/folders": "\n\nОбновите XXMI DLL до более новой версии или переименуйте следующие файлы/папки, чтобы использовать только стандартные английские символы (A-Z, a-z, 0-9):",
-  "Custom XXMI DLL for NRMM is active!": "\nПользовательский XXMI DLL для NRMM активен!",
   "The following ini files have paths that are too long": "Следующие .ini файлы имеют слишком длинные пути:\n{}\n",
-  "Please shorten the folder names": "Пожалуйста, сократите названия папок или удалите указанные моды, так как длинные пути могут вызвать конфликты модов или скрытый вылет игры.\n\n"
+  "Please shorten the folder names": "Пожалуйста, сократите названия папок или удалите указанные моды, так как длинные пути могут вызвать конфликты модов или скрытый вылет игры.\n\n",
+  "XXMI for NRMM detected": "\nОбнаружен XXMI для NRMM.\nПереключатели/привязки клавиш модов работают только когда игра в фокусе.",
+  "Standard XXMI/3DMigoto detected": "\nОбнаружен стандартный XXMI/3DMigoto.\nПереключатели/привязки клавиш модов работают, даже когда игра не в фокусе."
 }

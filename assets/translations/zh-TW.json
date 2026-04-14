@@ -215,7 +215,7 @@
   "File d3dx_user.ini does not exist": "檔案 d3dx_user.ini 不存在",
   "Only mods inside the _MANAGED_ folder can have their customizations saved. Try pressing \"Update Mod Data\" first to create the folder.": "只有位於 _MANAGED_ 資料夾中的模組才能儲存自訂設定。請先點擊「更新模組資料」來建立該資料夾。",
   "Current mod customizations have been set as the default.": "目前的模組自訂設定已設為預設。",
-  "To get faster mod reload, consider disabling mods you rarely use.": "\n如需加快模組載入速度，可以考慮停用不常用的模組。位於「設定」分頁中，向下捲動一點即可。",
+  "To get faster mod reload, consider disabling mods you rarely use.": "\n如需加快模組載入速度，可以考慮停用不常用的模組。位於「設定」分頁中，向下捲動一點即可。\n",
   "Show Tray Menu when toggling outside the game": "在遊戲外切換時顯示系統列選單",
   "Contribute": "貢獻",
   "Archive wrong password": "{} 的密碼不正確。\n",
@@ -233,7 +233,8 @@
   "If mod customizations are still not saved": "\n若模組自訂設定仍未儲存，可能是模組作者忘記為切換加入 persist 關鍵字，\n或你忘記用 F10 重新載入。",
   "Some malformed entries were detected in the d3dx_user.ini file": "\n\n在 d3dx_user.ini 檔案中偵測到一些格式錯誤的項目，這可能導致部分模組自訂設定無法儲存。\n這可能是由於使用了過舊的 3DMigoto/XXMI DLL 所致。",
   "Update to a newer XXMI DLL or rename the following files/folders": "\n\n請更新至更新版本的 XXMI DLL，或將以下檔案/資料夾重新命名，使其僅包含標準英文字符（A-Z、a-z、0-9）：",
-  "Custom XXMI DLL for NRMM is active!": "\n正在使用 NRMM 的自訂 XXMI DLL！",
   "The following ini files have paths that are too long": "以下 .ini 檔案的路徑過長：\n{}\n",
-  "Please shorten the folder names": "請縮短資料夾名稱或移除列出的模組，因為路徑過長可能導致模組衝突或遊戲無提示崩潰。\n\n"
+  "Please shorten the folder names": "請縮短資料夾名稱或移除列出的模組，因為路徑過長可能導致模組衝突或遊戲無提示崩潰。\n\n",
+  "XXMI for NRMM detected": "\n偵測到 XXMI for NRMM。\n模組切換/按鍵切換僅在遊戲視窗處於焦點狀態時有效。",
+  "Standard XXMI/3DMigoto detected": "\n偵測到標準 XXMI/3DMigoto。\n即使遊戲視窗未處於焦點狀態，模組切換/按鍵切換仍可正常使用。"
 }

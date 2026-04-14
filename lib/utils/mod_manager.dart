@@ -1198,9 +1198,18 @@ Future<List<TextSpan>> updateModData(
                 ),
               if (usingCustomXxmiDll.value)
                 TextSpan(
-                  text: 'Custom XXMI DLL for NRMM is active!'.tr(),
+                  text: 'XXMI for NRMM detected'.tr(),
                   style: GoogleFonts.poppins(
-                    color: Colors.white,
+                    color: Colors.grey,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              if (!usingCustomXxmiDll.value)
+                TextSpan(
+                  text: 'Standard XXMI/3DMigoto detected'.tr(),
+                  style: GoogleFonts.poppins(
+                    color: Colors.grey,
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
                   ),

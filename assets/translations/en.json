@@ -215,7 +215,7 @@
   "File d3dx_user.ini does not exist": "File d3dx_user.ini does not exist",
   "Only mods inside the _MANAGED_ folder can have their customizations saved. Try pressing \"Update Mod Data\" first to create the folder.": "Only mods inside the _MANAGED_ folder can have their customizations saved. Try pressing \"Update Mod Data\" first to create the folder.",
   "Current mod customizations have been set as the default.": "Current mod customizations have been set as the default.",
-  "To get faster mod reload, consider disabling mods you rarely use.": "\nTo get faster mod reload, consider disabling mods you rarely use.\nSettings tab, just scroll down a bit.",
+  "To get faster mod reload, consider disabling mods you rarely use.": "\nTo get faster mod reload, consider disabling mods you rarely use.\nSettings tab, just scroll down a bit.\n",
   "Show Tray Menu when toggling outside the game": "Show Tray Menu when toggling outside the game",
   "Contribute": "Contribute",
   "Archive wrong password": "Incorrect password for {}.\n",
@@ -233,7 +233,8 @@
   "If mod customizations are still not saved": "\nIf mod customizations are still not saved, the mod creator probably forgot to add the 'persist' keyword to the toggles.\nOr you forgot to reload with F10.",
   "Some malformed entries were detected in the d3dx_user.ini file": "\n\nSome malformed entries were detected in the d3dx_user.ini file, which may prevent certain mod customizations from being saved.\nThis can happen when using an outdated 3DMigoto/XXMI DLL.",
   "Update to a newer XXMI DLL or rename the following files/folders": "\n\nUpdate to a newer XXMI DLL or rename the following files/folders to use only standard English characters (A-Z, a-z, 0-9):",
-  "Custom XXMI DLL for NRMM is active!": "\nCustom XXMI DLL for NRMM is active!",
   "The following ini files have paths that are too long": "The following .ini files have paths that are too long:\n{}\n",
-  "Please shorten the folder names": "Please shorten the folder names or remove the listed mods, because long paths can cause mod conflicts or silent game crashes.\n\n"
+  "Please shorten the folder names": "Please shorten the folder names or remove the listed mods, because long paths can cause mod conflicts or silent game crashes.\n\n",
+  "XXMI for NRMM detected": "\nXXMI for NRMM detected.\nMod toggles/keybinds only work when the game is in focus.",
+  "Standard XXMI/3DMigoto detected": "\nStandard XXMI/3DMigoto detected.\nMod toggles/keybinds work even when the game is not in focus."
 }
