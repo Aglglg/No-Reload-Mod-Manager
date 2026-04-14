@@ -136,7 +136,7 @@ class _TabModsGridState extends ConsumerState<TabModsGrid>
                           : (235 - 25) * sss,
                   right: 45 * sss,
                   left: 45 * sss,
-                  bottom: 40 * sss,
+                  bottom: 45 * sss,
                 ),
                 child: Align(
                   alignment: Alignment.topCenter,

@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
+import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_group_folder_icon.dart';
 import 'package:no_reload_mod_manager/utils/force_read_as_utf8.dart';
@@ -28,6 +29,9 @@ void triggerRefresh(WidgetRef ref) {
     TargetGame currentTargetGame = ref.read(targetGameProvider);
     ref.read(targetGameProvider.notifier).state = TargetGame.none;
     ref.read(targetGameProvider.notifier).state = currentTargetGame;
+    ref.read(randomTipsProvider.notifier).state = getRandomTips(
+      ref.read(randomTipsProvider),
+    );
   } catch (_) {}
 }
 

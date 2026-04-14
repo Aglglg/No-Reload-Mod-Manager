@@ -2,7 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 
 class ConstantVar {
   static const int minWindowWidth = 750;
-  static const int minWindowHeight = 395;
+  static const int minWindowHeight = 420;
   static const String thisProcessName = "No_Reload_Mod_Manager.exe";
   static const String managedBackupExtension = "ini_managed_backup";
   static const String managedFolderName = "_MANAGED_";

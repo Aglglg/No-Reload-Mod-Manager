@@ -1453,6 +1453,8 @@ class _MainViewState extends ConsumerState<MainView>
     }
   }
 
+  bool showRandomTips = false;
+
   @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
@@ -1464,12 +1466,15 @@ class _MainViewState extends ConsumerState<MainView>
             child: Text(
               'Experimental Version',
               style: GoogleFonts.poppins(
-                color: Colors.amber,
+                color: Colors.transparent,
                 fontSize: 10 * sss,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
+
+        ///Random tips
+        if (showRandomTips) RandomTips(),
 
         ///Tab views
         IndexedStack(index: ref.watch(tabIndexProvider), children: _views),
@@ -1514,6 +1519,24 @@ class _MainViewState extends ConsumerState<MainView>
                 ),
               ),
             ),
+          ),
+        ),
+
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: MouseRegion(
+            hitTestBehavior: HitTestBehavior.translucent,
+            onEnter: (_) {
+              setState(() {
+                showRandomTips = true;
+              });
+            },
+            onExit: (_) {
+              setState(() {
+                showRandomTips = false;
+              });
+            },
+            child: Container(height: 200 * sss),
           ),
         ),
       ],
@@ -1649,4 +1672,203 @@ void changeWindowTitleName(String gameName) {
       gameName.isNotEmpty
           ? "No Reload Mod Manager $gameName"
           : "No Reload Mod Manager";
+}
+
+class RandomTips extends ConsumerStatefulWidget {
+  const RandomTips({super.key});
+
+  @override
+  ConsumerState<RandomTips> createState() => _RandomTipsState();
+}
+
+class _RandomTipsState extends ConsumerState<RandomTips>
+    with SingleTickerProviderStateMixin {
+  int _streak = 0;
+  int _lastTapMs = 0;
+
+  static const int spamThresholdMs = 400;
+  static const int spamTrigger = 9;
+
+  late AnimationController _controller;
+  late Animation<double> _scale;
+  late Animation<double> _rotation;
+  late Animation<double> _shake;
+  late Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _scale = Tween<double>(
+      begin: 1.0,
+      end: 1.25,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
+
+    _rotation = Tween<double>(
+      begin: 0.0,
+      end: 0.15,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+
+    _shake = Tween<double>(
+      begin: 0,
+      end: 6,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticIn));
+
+    _opacity = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.5, end: 1.0), weight: 20),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.6), weight: 40),
+    ]).animate(_controller);
+  }
+
+  void _playNormalAnim() {
+    _controller.forward(from: 0);
+  }
+
+  void _playSpamAnim() async {
+    await _controller.forward(from: 0);
+    await _controller.reverse();
+  }
+
+  void _handleTap() {
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    if (now - _lastTapMs < spamThresholdMs) {
+      _streak++;
+    } else {
+      _streak = 1;
+    }
+
+    _lastTapMs = now;
+
+    if (_streak >= spamTrigger) {
+      _playSpamAnim();
+
+      ref.read(randomTipsProvider.notifier).state =
+          "Did you actually read it?".tr();
+      return;
+    }
+
+    _playNormalAnim();
+
+    final prevTips = ref.read(randomTipsProvider);
+    ref.read(randomTipsProvider.notifier).state = getRandomTips(prevTips);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sss = ref.watch(zoomScaleProvider);
+
+    bool show =
+        ref.watch(tabIndexProvider) == 1 &&
+        ref.watch(targetGameProvider) != TargetGame.none &&
+        ref.watch(validModsPath) != null &&
+        ref.watch(modGroupDataProvider).isNotEmpty;
+
+    if (!show) return IgnorePointer();
+
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: 15 * sss),
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            final isSpam = _streak >= spamTrigger;
+
+            return Transform.translate(
+              offset:
+                  isSpam
+                      ? Offset((_shake.value * (_streak % 2 == 0 ? 1 : -1)), 0)
+                      : Offset.zero,
+              child: child,
+            );
+          },
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 7 * sss,
+            children: [
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: _handleTap,
+                  child: AnimatedBuilder(
+                    animation: _controller,
+                    builder: (context, child) {
+                      final isSpam = _streak >= spamTrigger;
+
+                      return Transform.rotate(
+                        angle: _rotation.value * (_streak.isEven ? 1 : -1),
+                        child: Transform.scale(
+                          scale: _scale.value,
+                          child: Opacity(opacity: _opacity.value, child: child),
+                        ),
+                      );
+                    },
+                    child: Icon(
+                      Icons.auto_awesome_rounded,
+                      size: 13 * sss,
+                      color: const Color.fromARGB(127, 255, 255, 255),
+                    ),
+                  ),
+                ),
+              ),
+
+              /// Text now inherits shake automatically
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: _handleTap,
+                  child: Text(
+                    ref.watch(randomTipsProvider),
+                    style: GoogleFonts.poppins(
+                      color: const Color.fromARGB(127, 255, 255, 255),
+                      fontSize: 11 * sss,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String getRandomTips(String previousTips) {
+  final tips = <String>[
+    "Press Space to Search".tr(),
+    "Press Space to Search".tr(),
+    "Press Space to Search".tr(),
+    "Press Space to Search".tr(),
+    "Press Space to Search".tr(),
+    "Press Save Mod Customization button in Settings if you'd like to make current mod customizations permanent"
+        .tr(),
+    "Disable/enable mods in settings if you encounter unknown problems".tr(),
+    "Use Restorer in Settings if you want to share your mods, or to use it without mod manager"
+        .tr(),
+    "Try to right click on any area to discover more features".tr(),
+    "Scroll down in Settings tab to discover more features".tr(),
+    "Double-click or Press F to select a mod".tr(),
+  ];
+
+  final available = tips.where((t) => t != previousTips).toList();
+
+  // Fallback if all tips are the same (shouldn't happen but just in case)
+  if (available.isEmpty) return tips.first;
+
+  available.shuffle();
+  return available.first;
 }
