@@ -1081,7 +1081,10 @@ Future<List<TextSpan>> updateModData(
 
     final allIniFiles = await findIniFilesRecursiveExcludeDisabled(managedPath);
     final longPathIniFiles =
-        allIniFiles.where((path) => path.length >= 200).toList();
+        allIniFiles
+            .where((path) => path.length >= 200)
+            .map((e) => p.relative(e, from: basePath))
+            .toList();
 
     //Show path that's too long, cannot be detected in errored lines, and can cause game crash
     if (longPathIniFiles.isNotEmpty) {
