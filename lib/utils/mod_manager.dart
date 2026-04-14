@@ -996,6 +996,9 @@ Future<List<TextSpan>> updateModData(
       shouldThrowOnError: true,
     );
 
+    //filepath <> libName
+    final Map<String, String> filePathsWithKnownLibNamespace = {};
+
     final Map<(Directory, int), List<ModData>> groupAndModsPair = {};
 
     for (final (groupDir, groupIndex) in groupFullPathsAndIndexes) {
@@ -1007,10 +1010,11 @@ Future<List<TextSpan>> updateModData(
       groupAndModsPair[key] = mods;
     }
 
-    //Fix duplicated namespaces first, if any
+    //Fix duplicated namespaces first, if any + look for known lib namespaces in managed mod
     await _autoModifyDuplicateNamespaceInManagedMod(
       groupAndModsPair,
       managedPath,
+      filePathsWithKnownLibNamespace,
     );
 
     //Get errored lines from xxmi ini handler
@@ -1073,6 +1077,48 @@ Future<List<TextSpan>> updateModData(
           ),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
+            fontSize: 14,
+          ),
+        ),
+      );
+    }
+
+    //Show lib that's inside managed folder
+    for (var entry in filePathsWithKnownLibNamespace.entries) {
+      final libName = entry.value;
+      final filePath = entry.key;
+
+      if (!p.isWithin(managedPath, filePath)) continue;
+
+      final (groupName, modName, relativePath) = await _resolveGroupAndModName(
+        filePath,
+        managedPath,
+      );
+
+      operationLogs.add(
+        TextSpan(
+          text: "Modding library is inside managed folder".tr(
+            args: [
+              libName,
+              groupName != null && modName != null
+                  ? "$groupName - $modName"
+                  : p.relative(filePath, from: managedPath),
+            ],
+          ),
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 189, 170, 0),
+            fontSize: 14,
+          ),
+        ),
+      );
+      operationLogs.add(
+        TextSpan(
+          text: "Please put modding library outside managed folder".tr(
+            args: [libName],
+          ),
+          style: GoogleFonts.poppins(
+            color: Colors.red,
+            fontWeight: FontWeight.bold,
             fontSize: 14,
           ),
         ),
@@ -1621,6 +1667,7 @@ class NamespaceRewriteException implements Exception {
 Future<void> _autoModifyDuplicateNamespaceInManagedMod(
   Map<(Directory, int), List<ModData>> groupAndModsPair,
   String managedPath,
+  Map<String, String> filePathsWithKnownLibNamespace,
 ) async {
   final namespacesInManaged = <String>{};
 
@@ -1641,6 +1688,14 @@ Future<void> _autoModifyDuplicateNamespaceInManagedMod(
         final ns = await getNamespace(File(path));
         if (ns != null) {
           namespacesInMod.add(ns.toLowerCase());
+
+          //Also report if the namespace is the known lib namespace
+          if (ConstantVar.knownModdingLibraries.keys.contains(
+            ns.toLowerCase(),
+          )) {
+            filePathsWithKnownLibNamespace[path] =
+                ConstantVar.knownModdingLibraries[ns.toLowerCase()]!;
+          }
         }
       }
 

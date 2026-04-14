@@ -236,5 +236,7 @@
   "The following ini files have paths that are too long": "以下 .ini 檔案的路徑過長：\n{}\n",
   "Please shorten the folder names": "請縮短資料夾名稱或移除列出的模組，因為路徑過長可能導致模組衝突或遊戲無提示崩潰。\n\n",
   "XXMI for NRMM detected": "\n偵測到 XXMI for NRMM。\n模組切換/按鍵切換僅在遊戲視窗處於焦點狀態時有效。",
-  "Standard XXMI/3DMigoto detected": "\n偵測到標準 XXMI/3DMigoto。\n即使遊戲視窗未處於焦點狀態，模組切換/按鍵切換仍可正常使用。"
+  "Standard XXMI/3DMigoto detected": "\n偵測到標準 XXMI/3DMigoto。\n即使遊戲視窗未處於焦點狀態，模組切換/按鍵切換仍可正常使用。",
+  "Modding library is inside managed folder": "{} 在 {} 中被偵測到。\n",
+  "Please put modding library outside managed folder": "請將 {} 移動至根目錄「Mods」資料夾，然後使用設定中的還原區功能。\n\n"
 }

@@ -236,5 +236,7 @@
   "The following ini files have paths that are too long": "File .ini berikut memiliki path yang terlalu panjang:\n{}\n",
   "Please shorten the folder names": "Persingkat nama folder atau hapus mod yang tercantum, karena path yang terlalu panjang dapat menyebabkan konflik mod atau game crash.\n\n",
   "XXMI for NRMM detected": "\nXXMI untuk NRMM terdeteksi.\nToggle/keybind mod hanya berfungsi saat game sedang difokuskan.",
-  "Standard XXMI/3DMigoto detected": "\nStandard XXMI/3DMigoto terdeteksi.\nToggle/keybind mod tetap berfungsi meski game tidak sedang difokuskan"
+  "Standard XXMI/3DMigoto detected": "\nStandard XXMI/3DMigoto terdeteksi.\nToggle/keybind mod tetap berfungsi meski game tidak sedang difokuskan",
+  "Modding library is inside managed folder": "{} ditemukan di dalam {}.\n",
+  "Please put modding library outside managed folder": "Pindahkan {} ke folder \"Mods\" utama, lalu gunakan fungsi Restorer di Setelan.\n\n"
 }

@@ -236,5 +236,7 @@
   "The following ini files have paths that are too long": "Следующие .ini файлы имеют слишком длинные пути:\n{}\n",
   "Please shorten the folder names": "Пожалуйста, сократите названия папок или удалите указанные моды, так как длинные пути могут вызвать конфликты модов или скрытый вылет игры.\n\n",
   "XXMI for NRMM detected": "\nОбнаружен XXMI для NRMM.\nПереключатели/привязки клавиш модов работают только когда игра в фокусе.",
-  "Standard XXMI/3DMigoto detected": "\nОбнаружен стандартный XXMI/3DMigoto.\nПереключатели/привязки клавиш модов работают, даже когда игра не в фокусе."
+  "Standard XXMI/3DMigoto detected": "\nОбнаружен стандартный XXMI/3DMigoto.\nПереключатели/привязки клавиш модов работают, даже когда игра не в фокусе.",
+  "Modding library is inside managed folder": "{} обнаружен внутри {}.\n",
+  "Please put modding library outside managed folder": "Пожалуйста, переместите {} в корневую папку \"Mods\", затем воспользуйтесь функцией Восстановление в Настройках.\n\n"
 }

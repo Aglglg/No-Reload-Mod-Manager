@@ -236,5 +236,7 @@
   "The following ini files have paths that are too long": "The following .ini files have paths that are too long:\n{}\n",
   "Please shorten the folder names": "Please shorten the folder names or remove the listed mods, because long paths can cause mod conflicts or silent game crashes.\n\n",
   "XXMI for NRMM detected": "\nXXMI for NRMM detected.\nMod toggles/keybinds only work when the game is in focus.",
-  "Standard XXMI/3DMigoto detected": "\nStandard XXMI/3DMigoto detected.\nMod toggles/keybinds work even when the game is not in focus."
+  "Standard XXMI/3DMigoto detected": "\nStandard XXMI/3DMigoto detected.\nMod toggles/keybinds work even when the game is not in focus.",
+  "Modding library is inside managed folder": "{} was found inside {}.\n",
+  "Please put modding library outside managed folder": "Please move {} to the root \"Mods\" folder, then use Restorer function in Settings.\n\n"
 }
