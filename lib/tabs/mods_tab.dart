@@ -677,8 +677,8 @@ class _ModContainerState extends ConsumerState<ModContainer>
                               child: RefreshableLocalImage(
                                 imageWidget: currentMod.modIcon,
                                 errorWidget: Icon(
-                                  size: 40 * sss,
-                                  Icons.image_outlined,
+                                  size: 45 * sss,
+                                  Icons.close,
                                   color: const Color.fromARGB(
                                     127,
                                     255,
@@ -695,32 +695,6 @@ class _ModContainerState extends ConsumerState<ModContainer>
                                 color: const Color.fromARGB(127, 255, 255, 255),
                               ),
                             ),
-
-                        if (hasNoneModCustomIcon)
-                          Positioned(
-                            top: 8 * sss,
-                            right: 8 * sss,
-                            child: Container(
-                              padding: EdgeInsets.all(5 * sss),
-                              decoration: BoxDecoration(
-                                color: const Color.fromARGB(170, 0, 0, 0),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: const Color.fromARGB(
-                                    127,
-                                    255,
-                                    255,
-                                    255,
-                                  ),
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.close,
-                                size: 16 * sss,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
 
                         if (widget
                                 .currentGroupData
