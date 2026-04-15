@@ -288,6 +288,8 @@ class _ModContainerState extends ConsumerState<ModContainer>
                 label: 'Add mods'.tr(),
               ),
             CustomMenuItem.submenu(
+              label: 'Mod icon'.tr(),
+              scale: sss,
               items: [
                 CustomMenuItem(
                   scale: sss,
@@ -336,8 +338,6 @@ class _ModContainerState extends ConsumerState<ModContainer>
                   label: 'Remove icon'.tr(),
                 ),
               ],
-              label: isNoneModSlot ? 'Icon'.tr() : 'Mod icon'.tr(),
-              scale: sss,
             ),
             if (widget.index != 0)
               CustomMenuItem(
