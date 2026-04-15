@@ -238,5 +238,20 @@
   "XXMI for NRMM detected": "\nXXMI for NRMM detected.\nMod toggles/keybinds only work when the game is in focus.",
   "Standard XXMI/3DMigoto detected": "\nStandard XXMI/3DMigoto detected.\nMod toggles/keybinds work even when the game is not in focus.",
   "Modding library is inside managed folder": "{} was found inside {}.\n",
-  "Please put modding library outside managed folder": "Please move {} to the root \"Mods\" folder, then use Restorer function in Settings.\n\n"
+  "Please put modding library outside managed folder": "Please move {} to the root \"Mods\" folder, then use Restorer function in Settings.\n\n",
+  "Press Space to search mods": "Press Space to search mods",
+  "Right-click anywhere to discover more features": "Right-click anywhere to discover more features",
+  "Scroll down in Settings to discover more features": "Scroll down in Settings to discover more features",
+  "Double-click or press F to select a mod": "Double-click or press F to select a mod",
+  "Press WASD to navigate between groups and mods": "Press WASD to navigate between groups and mods",
+  "NRMM can also be used with XInput Gamepad": "NRMM can also be used with XInput Gamepad",
+  "Save Mod Customizations in Settings to make toggles permanent": "Save Mod Customizations in Settings to make toggles permanent",
+  "Disable mods in Settings if something feels wrong": "Disable mods in Settings if something feels wrong",
+  "Use Restorer in Settings before sharing mods or using them without NRMM": "Use Restorer in Settings before sharing mods or using them without NRMM",
+  "Press Update Mod Data in Settings if mods behave unexpectedly": "Press Update Mod Data in Settings if mods behave unexpectedly",
+  "Click mod keybind buttons instead of pressing keyboard keys": "Click mod keybind buttons instead of pressing keyboard keys",
+  "Did you actually read it?": "Did you actually read it?",
+  "No need to rush": "No need to rush",
+  "The tips are only useful if you read it": "The tips are only useful if you read it",
+  "Slow down": "Slow down"
 }

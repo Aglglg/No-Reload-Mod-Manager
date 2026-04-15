@@ -238,5 +238,20 @@
   "XXMI for NRMM detected": "\n偵測到 XXMI for NRMM。\n模組切換/按鍵切換僅在遊戲視窗處於焦點狀態時有效。",
   "Standard XXMI/3DMigoto detected": "\n偵測到標準 XXMI/3DMigoto。\n即使遊戲視窗未處於焦點狀態，模組切換/按鍵切換仍可正常使用。",
   "Modding library is inside managed folder": "{} 在 {} 中被偵測到。\n",
-  "Please put modding library outside managed folder": "請將 {} 移動至根目錄「Mods」資料夾，然後使用設定中的還原區功能。\n\n"
+  "Please put modding library outside managed folder": "請將 {} 移動至根目錄「Mods」資料夾，然後使用設定中的還原區功能。\n\n",
+  "Press Space to search mods": "按 Space 鍵搜尋模組",
+  "Right-click anywhere to discover more features": "在任意位置右鍵以發現更多功能",
+  "Scroll down in Settings to discover more features": "在設定中向下捲動以發現更多功能",
+  "Double-click or press F to select a mod": "雙擊或按 F 鍵選擇模組",
+  "Press WASD to navigate between groups and mods": "按 WASD 在群組和模組間導覽",
+  "NRMM can also be used with XInput Gamepad": "NRMM 也可與 XInput 手把配合使用",
+  "Save Mod Customizations in Settings to make toggles permanent": "在設定中儲存模組自訂設定，使切換永久生效",
+  "Disable mods in Settings if something feels wrong": "出現問題時，在設定中停用模組",
+  "Use Restorer in Settings before sharing mods or using them without NRMM": "分享模組或在 NRMM 外使用前，請先使用設定中的還原區",
+  "Press Update Mod Data in Settings if mods behave unexpectedly": "模組行為異常時，在設定中按更新模組資料",
+  "Click mod keybind buttons instead of pressing keyboard keys": "點擊模組按鍵切換按鈕，而非直接按鍵盤",
+  "Did you actually read it?": "你真的有在看嗎？",
+  "No need to rush": "不用著急",
+  "The tips are only useful if you read it": "只有閱讀這些提示，它們才有用",
+  "Slow down": "慢一點"
 }

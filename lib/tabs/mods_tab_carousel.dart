@@ -133,7 +133,7 @@ class _TabModsCarouselState extends ConsumerState<TabModsCarousel>
                 padding: EdgeInsets.only(
                   left: 45 * sss,
                   right: 45 * sss,
-                  top: ref.watch(windowIsPinnedProvider) ? 70 * sss : 42 * sss,
+                  top: ref.watch(windowIsPinnedProvider) ? 95 * sss : 67 * sss,
                 ),
                 child: Column(
                   children: [

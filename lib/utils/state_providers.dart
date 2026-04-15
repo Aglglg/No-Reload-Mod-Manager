@@ -2,7 +2,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
-import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 
@@ -131,5 +130,5 @@ final keybindSimulateKeypressProvider = StateProvider<bool>((ref) {
 });
 
 final randomTipsProvider = StateProvider<String>((ref) {
-  return "Press Space to Search".tr();
+  return "Press Space to search mods".tr();
 });

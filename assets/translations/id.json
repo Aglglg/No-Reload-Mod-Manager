@@ -238,5 +238,20 @@
   "XXMI for NRMM detected": "\nXXMI untuk NRMM terdeteksi.\nToggle/keybind mod hanya berfungsi saat game sedang difokuskan.",
   "Standard XXMI/3DMigoto detected": "\nStandard XXMI/3DMigoto terdeteksi.\nToggle/keybind mod tetap berfungsi meski game tidak sedang difokuskan",
   "Modding library is inside managed folder": "{} ditemukan di dalam {}.\n",
-  "Please put modding library outside managed folder": "Pindahkan {} ke folder \"Mods\" utama, lalu gunakan fungsi Restorer di Setelan.\n\n"
+  "Please put modding library outside managed folder": "Pindahkan {} ke folder \"Mods\" utama, lalu gunakan fungsi Restorer di Setelan.\n\n",
+  "Press Space to search mods": "Tekan Space untuk mencari mod",
+  "Right-click anywhere to discover more features": "Klik kanan di mana saja untuk menemukan fitur lainnya",
+  "Scroll down in Settings to discover more features": "Scroll ke bawah di Setelan untuk menemukan fitur lainnya",
+  "Double-click or press F to select a mod": "Double-click atau tekan F untuk memilih mod",
+  "Press WASD to navigate between groups and mods": "Tekan WASD untuk navigasi antar grup dan mod",
+  "NRMM can also be used with XInput Gamepad": "NRMM juga bisa digunakan dengan XInput Gamepad",
+  "Save Mod Customizations in Settings to make toggles permanent": "Simpan Kustomisasi Mod di Setelan agar toggle permanen",
+  "Disable mods in Settings if something feels wrong": "Nonaktifkan mod di Setelan jika ada yang tidak beres",
+  "Use Restorer in Settings before sharing mods or using them without NRMM": "Gunakan Restorer di Setelan sebelum membagikan atau menggunakan mod tanpa NRMM",
+  "Press Update Mod Data in Settings if mods behave unexpectedly": "Tekan Update Mod Data di Setelan jika mod berperilaku tidak semestinya",
+  "Click mod keybind buttons instead of pressing keyboard keys": "Klik tombol keybind mod, bukan tekan keyboard",
+  "Did you actually read it?": "Kamu baca nggak sih?",
+  "No need to rush": "Santai dulu gak sih",
+  "The tips are only useful if you read it": "Tips ini hanya berguna kalau kamu membacanya",
+  "Slow down": "Pelan-pelan"
 }

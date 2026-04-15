@@ -1473,9 +1473,6 @@ class _MainViewState extends ConsumerState<MainView>
             ),
           ),
 
-        ///Random tips
-        if (showRandomTips) RandomTips(),
-
         ///Tab views
         IndexedStack(index: ref.watch(tabIndexProvider), children: _views),
 
@@ -1521,6 +1518,9 @@ class _MainViewState extends ConsumerState<MainView>
             ),
           ),
         ),
+
+        ///Random tips
+        if (showRandomTips) RandomTips(),
 
         Align(
           alignment: Alignment.bottomCenter,
@@ -1734,6 +1734,15 @@ class _RandomTipsState extends ConsumerState<RandomTips>
     await _controller.reverse();
   }
 
+  final spamMessages = [
+    "Did you actually read it?".tr(),
+    "No need to rush".tr(),
+    "The tips are only useful if you read it".tr(),
+    "Slow down".tr(),
+  ];
+
+  bool spamMessageShown = false;
+
   void _handleTap() {
     final now = DateTime.now().millisecondsSinceEpoch;
 
@@ -1748,11 +1757,15 @@ class _RandomTipsState extends ConsumerState<RandomTips>
     if (_streak >= spamTrigger) {
       _playSpamAnim();
 
-      ref.read(randomTipsProvider.notifier).state =
-          "Did you actually read it?".tr();
+      if (!spamMessageShown) {
+        spamMessages.shuffle();
+      }
+
+      ref.read(randomTipsProvider.notifier).state = spamMessages.first;
+      spamMessageShown = true;
       return;
     }
-
+    spamMessageShown = false;
     _playNormalAnim();
 
     final prevTips = ref.read(randomTipsProvider);
@@ -1780,7 +1793,10 @@ class _RandomTipsState extends ConsumerState<RandomTips>
     return Align(
       alignment: Alignment.bottomCenter,
       child: Padding(
-        padding: EdgeInsets.only(bottom: 15 * sss),
+        padding:
+            ref.watch(isCarouselProvider)
+                ? EdgeInsets.only(bottom: 5 * sss)
+                : EdgeInsets.only(bottom: 15 * sss),
         child: AnimatedBuilder(
           animation: _controller,
           builder: (context, child) {
@@ -1805,8 +1821,6 @@ class _RandomTipsState extends ConsumerState<RandomTips>
                   child: AnimatedBuilder(
                     animation: _controller,
                     builder: (context, child) {
-                      final isSpam = _streak >= spamTrigger;
-
                       return Transform.rotate(
                         angle: _rotation.value * (_streak.isEven ? 1 : -1),
                         child: Transform.scale(
@@ -1849,19 +1863,22 @@ class _RandomTipsState extends ConsumerState<RandomTips>
 
 String getRandomTips(String previousTips) {
   final tips = <String>[
-    "Press Space to Search".tr(),
-    "Press Space to Search".tr(),
-    "Press Space to Search".tr(),
-    "Press Space to Search".tr(),
-    "Press Space to Search".tr(),
-    "Press Save Mod Customization button in Settings if you'd like to make current mod customizations permanent"
+    "Press Space to search mods".tr(),
+    "Press Space to search mods".tr(),
+    "Press Space to search mods".tr(),
+    "Press Space to search mods".tr(),
+    "Press Space to search mods".tr(),
+    "Right-click anywhere to discover more features".tr(),
+    "Scroll down in Settings to discover more features".tr(),
+    "Double-click or press F to select a mod".tr(),
+    "Press WASD to navigate between groups and mods".tr(),
+    "NRMM can also be used with XInput Gamepad".tr(),
+    "Save Mod Customizations in Settings to make toggles permanent".tr(),
+    "Disable mods in Settings if something feels wrong".tr(),
+    "Use Restorer in Settings before sharing mods or using them without NRMM"
         .tr(),
-    "Disable/enable mods in settings if you encounter unknown problems".tr(),
-    "Use Restorer in Settings if you want to share your mods, or to use it without mod manager"
-        .tr(),
-    "Try to right click on any area to discover more features".tr(),
-    "Scroll down in Settings tab to discover more features".tr(),
-    "Double-click or Press F to select a mod".tr(),
+    "Press Update Mod Data in Settings if mods behave unexpectedly".tr(),
+    "Click mod keybind buttons instead of pressing keyboard keys".tr(),
   ];
 
   final available = tips.where((t) => t != previousTips).toList();

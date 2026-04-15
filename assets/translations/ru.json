@@ -238,5 +238,20 @@
   "XXMI for NRMM detected": "\nОбнаружен XXMI для NRMM.\nПереключатели/привязки клавиш модов работают только когда игра в фокусе.",
   "Standard XXMI/3DMigoto detected": "\nОбнаружен стандартный XXMI/3DMigoto.\nПереключатели/привязки клавиш модов работают, даже когда игра не в фокусе.",
   "Modding library is inside managed folder": "{} обнаружен внутри {}.\n",
-  "Please put modding library outside managed folder": "Пожалуйста, переместите {} в корневую папку \"Mods\", затем воспользуйтесь функцией Восстановление в Настройках.\n\n"
+  "Please put modding library outside managed folder": "Пожалуйста, переместите {} в корневую папку \"Mods\", затем воспользуйтесь функцией Восстановление в Настройках.\n\n",
+  "Press Space to search mods": "Нажмите Space для поиска модов",
+  "Right-click anywhere to discover more features": "Щёлкните правой кнопкой мыши в любом месте, чтобы открыть больше функций",
+  "Scroll down in Settings to discover more features": "Прокрутите вниз в Настройках, чтобы открыть больше функций",
+  "Double-click or press F to select a mod": "Дважды щёлкните или нажмите F, чтобы выбрать мод",
+  "Press WASD to navigate between groups and mods": "Нажимайте WASD для навигации между группами и модами",
+  "NRMM can also be used with XInput Gamepad": "NRMM также можно использовать с XInput геймпадом",
+  "Save Mod Customizations in Settings to make toggles permanent": "Сохраните настройки мода в Настройках для постоянных переключателей",
+  "Disable mods in Settings if something feels wrong": "Отключите моды в Настройках при возникновении проблем",
+  "Use Restorer in Settings before sharing mods or using them without NRMM": "Используйте Восстановление в Настройках перед публикацией или использованием модов без NRMM",
+  "Press Update Mod Data in Settings if mods behave unexpectedly": "Нажмите Обновить данные модов в Настройках при неожиданном поведении модов",
+  "Click mod keybind buttons instead of pressing keyboard keys": "Нажимайте кнопки привязки клавиш мода, а не клавиши клавиатуры",
+  "Did you actually read it?": "Вы вообще читали?",
+  "No need to rush": "Не нужно спешить",
+  "The tips are only useful if you read it": "Советы полезны только если вы их читаете",
+  "Slow down": "Помедленнее"
 }
