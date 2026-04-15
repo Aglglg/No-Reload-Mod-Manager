@@ -264,6 +264,9 @@ class _ModContainerState extends ConsumerState<ModContainer>
   @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
+    final currentMod = widget.currentGroupData.modsInGroup[widget.index];
+    final isNoneModSlot = widget.index == 0;
+    final hasNoneModCustomIcon = isNoneModSlot && currentMod.modIcon != null;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -287,80 +290,58 @@ class _ModContainerState extends ConsumerState<ModContainer>
                 },
                 label: 'Add mods'.tr(),
               ),
-            if (widget.index != 0)
-              CustomMenuItem.submenu(
-                items: [
-                  if (widget.index != 0)
-                    CustomMenuItem(
-                      scale: sss,
-                      onSelected: () async {
-                        if (!context.mounted) return;
-                        await setGroupOrModIcon(
-                          ref,
-                          widget.currentGroupData.groupDir,
-                          widget
-                              .currentGroupData
-                              .modsInGroup[widget.index]
-                              .modIcon,
-                          fromClipboard: true,
-                          isGroup: false,
-                          modDir:
-                              widget
-                                  .currentGroupData
-                                  .modsInGroup[widget.index]
-                                  .modDir,
-                        );
-                      },
-                      label: 'Clipboard icon'.tr(),
-                    ),
-                  if (widget.index != 0)
-                    CustomMenuItem(
-                      scale: sss,
-                      onSelected: () async {
-                        if (!context.mounted) return;
-                        await setGroupOrModIcon(
-                          ref,
-                          widget.currentGroupData.groupDir,
-                          widget
-                              .currentGroupData
-                              .modsInGroup[widget.index]
-                              .modIcon,
-                          fromClipboard: false,
-                          isGroup: false,
-                          modDir:
-                              widget
-                                  .currentGroupData
-                                  .modsInGroup[widget.index]
-                                  .modDir,
-                        );
-                      },
-                      label: 'Custom icon'.tr(),
-                    ),
-                  if (widget.index != 0)
-                    CustomMenuItem(
-                      scale: sss,
-                      onSelected: () async {
-                        if (!context.mounted) return;
-                        await unsetGroupOrModIcon(
-                          ref,
-                          widget.currentGroupData.groupDir,
-                          modDir:
-                              widget
-                                  .currentGroupData
-                                  .modsInGroup[widget.index]
-                                  .modDir,
-                          widget
-                              .currentGroupData
-                              .modsInGroup[widget.index]
-                              .modIcon,
-                        );
-                      },
-                      label: 'Remove icon'.tr(),
-                    ),
-                ],
-                label: 'Mod icon'.tr(),
-                scale: sss,
-              ),
+            CustomMenuItem.submenu(
+              label: 'Mod icon'.tr(),
+              scale: sss,
+              items: [
+                CustomMenuItem(
+                  scale: sss,
+                  onSelected: () async {
+                    if (!context.mounted) return;
+                    await setGroupOrModIcon(
+                      ref,
+                      widget.currentGroupData.groupDir,
+                      currentMod.modIcon,
+                      fromClipboard: true,
+                      isGroup: false,
+                      isNoneMod: isNoneModSlot,
+                      modDir: currentMod.modDir,
+                    );
+                  },
+                  label: 'Clipboard icon'.tr(),
+                ),
+                CustomMenuItem(
+                  scale: sss,
+                  onSelected: () async {
+                    if (!context.mounted) return;
+                    await setGroupOrModIcon(
+                      ref,
+                      widget.currentGroupData.groupDir,
+                      currentMod.modIcon,
+                      fromClipboard: false,
+                      isGroup: false,
+                      isNoneMod: isNoneModSlot,
+                      modDir: currentMod.modDir,
+                    );
+                  },
+                  label: 'Custom icon'.tr(),
+                ),
+                CustomMenuItem(
+                  scale: sss,
+                  onSelected: () async {
+                    if (!context.mounted) return;
+                    await unsetGroupOrModIcon(
+                      ref,
+                      widget.currentGroupData.groupDir,
+                      currentMod.modIcon,
+                      isNoneMod: isNoneModSlot,
+                      modDir: currentMod.modDir,
+                    );
+                  },
+                  label: 'Remove icon'.tr(),
+                ),
+              ],
+            ),
             if (widget.index != 0)
               CustomMenuItem(
                 scale: sss,
@@ -686,6 +667,22 @@ class _ModContainerState extends ConsumerState<ModContainer>
                                 errorWidget: Icon(
                                   size: 40 * sss,
                                   Icons.image_outlined,
+                                  color: const Color.fromARGB(
+                                    127,
+                                    255,
+                                    255,
+                                    255,
+                                  ),
+                                ),
+                              ),
+                            )
+                            : hasNoneModCustomIcon
+                            ? SizedBox.expand(
+                              child: RefreshableLocalImage(
+                                imageWidget: currentMod.modIcon,
+                                errorWidget: Icon(
+                                  size: 45 * sss,
+                                  Icons.close,
                                   color: const Color.fromARGB(
                                     127,
                                     255,

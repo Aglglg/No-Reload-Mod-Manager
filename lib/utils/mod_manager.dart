@@ -126,7 +126,7 @@ void _addGroupToRiverpod(WidgetRef ref, Directory groupDir, int index) {
     modsInGroup: [
       ModData(
         modDir: Directory("None"),
-        modIcon: null,
+        modIcon: getNoneModIcon(groupDir),
         modName: "None".tr(),
         realIndex: 0,
         isOldAutoFixed: false,
@@ -278,28 +278,40 @@ Future<void> setModNameOnDisk(Directory modDir, String modName) async {
 }
 
 Image? getModOrGroupIcon(Directory dir) {
+  const names = ["icon.png", "preview.png", "预览.png"];
+
+  for (final name in names) {
+    final img = getIconFromPath(p.join(dir.path, name));
+    if (img != null) return img;
+  }
+
+  return null;
+}
+
+Image? getNoneModIcon(Directory groupDir) {
+  return getIconFromPath(
+    p.join(groupDir.path, ConstantVar.noneSlotIconFileName),
+  );
+}
+
+Image? getIconFromPath(String path) {
+  final file = File(path);
+
   try {
-    const names = ["icon.png", "preview.png", "预览.png"];
-
-    for (final name in names) {
-      final file = File(p.join(dir.path, name));
-
-      if (file.existsSync()) {
-        return Image.file(
-          file,
-          cacheWidth: 156 * 2,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Icon(
-              size: 35,
-              Icons.image_outlined,
-              color: const Color.fromARGB(127, 255, 255, 255),
-            );
-          },
-        );
-      }
+    if (file.existsSync()) {
+      return Image.file(
+        file,
+        cacheWidth: 156 * 2,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Icon(
+            size: 35,
+            Icons.image_outlined,
+            color: const Color.fromARGB(127, 255, 255, 255),
+          );
+        },
+      );
     }
-
     return null;
   } catch (_) {
     return null;
@@ -312,6 +324,7 @@ Future<void> setGroupOrModIcon(
   Image? oldImage, {
   bool fromClipboard = false,
   bool isGroup = true,
+  bool isNoneMod = false,
   Directory? modDir,
 }) async {
   String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
@@ -364,7 +377,10 @@ Future<void> setGroupOrModIcon(
         _updateModIconProvider(ref, groupDir, modDir, imgResult);
         try {
           File sourceFile = File(pickResult.files[0].path!);
-          String targetDest = p.join(modDir.path, "icon.png");
+          String targetDest =
+              isNoneMod
+                  ? p.join(groupDir.path, ConstantVar.noneSlotIconFileName)
+                  : p.join(modDir.path, "icon.png");
           await sourceFile.copy(targetDest);
         } catch (_) {}
       }
@@ -412,7 +428,9 @@ Future<void> setGroupOrModIcon(
           );
           _updateModIconProvider(ref, groupDir, modDir, img);
           await File(
-            p.join(modDir.path, "icon.png"),
+            isNoneMod
+                ? p.join(groupDir.path, ConstantVar.noneSlotIconFileName)
+                : p.join(modDir.path, "icon.png"),
           ).writeAsBytes(imgBytes.toList());
         }
       }
@@ -428,6 +446,7 @@ Future<void> unsetGroupOrModIcon(
   WidgetRef ref,
   Directory groupDir,
   Image? oldImage, {
+  bool isNoneMod = false,
   Directory? modDir,
 }) async {
   String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
@@ -469,7 +488,11 @@ Future<void> unsetGroupOrModIcon(
     );
     _updateModIconProvider(ref, groupDir, modDir, imgResult);
     try {
-      File sourceFile = File(p.join(modDir.path, "icon.png"));
+      File sourceFile = File(
+        isNoneMod
+            ? p.join(groupDir.path, ConstantVar.noneSlotIconFileName)
+            : p.join(modDir.path, "icon.png"),
+      );
       await sourceFile.delete();
     } catch (_) {}
   }
@@ -591,7 +614,7 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
       0,
       ModData(
         modDir: Directory("None"),
-        modIcon: null,
+        modIcon: getNoneModIcon(groupDir),
         modName: "None".tr(),
         realIndex: 0,
         isOldAutoFixed: false,
