@@ -1042,6 +1042,7 @@ Future<List<TextSpan>> updateModData(
       groupAndModsPair,
       managedPath,
       filePathsWithKnownLibNamespace,
+      knownModdingLibraries,
     );
 
     //Get errored lines from xxmi ini handler
@@ -1695,6 +1696,7 @@ Future<void> _autoModifyDuplicateNamespaceInManagedMod(
   Map<(Directory, int), List<ModData>> groupAndModsPair,
   String managedPath,
   Map<String, String> filePathsWithKnownLibNamespace,
+  Map<String, String> knownModdingLibraries,
 ) async {
   final namespacesInManaged = <String>{};
 
@@ -1717,11 +1719,9 @@ Future<void> _autoModifyDuplicateNamespaceInManagedMod(
           namespacesInMod.add(ns.toLowerCase());
 
           //Also report if the namespace is the known lib namespace
-          if (ConstantVar.knownModdingLibraries.keys.contains(
-            ns.toLowerCase(),
-          )) {
+          if (knownModdingLibraries.keys.contains(ns.toLowerCase())) {
             filePathsWithKnownLibNamespace[path] =
-                ConstantVar.knownModdingLibraries[ns.toLowerCase()]!;
+                knownModdingLibraries[ns.toLowerCase()]!;
           }
         }
       }
@@ -1734,7 +1734,7 @@ Future<void> _autoModifyDuplicateNamespaceInManagedMod(
         if ((namespacesInGroup.contains(namespace) ||
                 namespacesInManaged.contains(namespace)) &&
             //if it's namespace from known modding lib, let xxmi ini handler handle it later
-            !ConstantVar.knownModdingLibraries.keys.contains(namespace)) {
+            !knownModdingLibraries.keys.contains(namespace)) {
           final newNamespace = _getNewNamespace(
             namespace,
             futureNamespaces,
