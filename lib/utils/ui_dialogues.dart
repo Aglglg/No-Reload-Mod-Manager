@@ -994,13 +994,15 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
                 'modunoptimized',
                 'modnamespaced',
                 'modlink',
-                'icon.png',
-                'preview.png',
+                '.nahidamd',
               };
               return !excluded.contains(basename) &&
+                  !ConstantVar.modIconFilenames.contains(basename) &&
                   !basename.startsWith('jasm_') &&
+                  !basename.startsWith('.jasm') &&
                   !basename.startsWith('.imm') &&
-                  !basename.endsWith('.txt');
+                  !basename.endsWith('.txt') &&
+                  !basename.endsWith('.json');
             }).toList();
 
         // Stop if more than 1 relevant entry, or it's empty
