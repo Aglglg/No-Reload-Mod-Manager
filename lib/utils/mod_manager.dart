@@ -278,9 +278,7 @@ Future<void> setModNameOnDisk(Directory modDir, String modName) async {
 }
 
 Image? getModOrGroupIcon(Directory dir) {
-  const names = ["icon.png", "preview.png", "预览.png"];
-
-  for (final name in names) {
+  for (final name in ConstantVar.modIconFilenames) {
     final img = getIconFromPath(p.join(dir.path, name));
     if (img != null) return img;
   }
@@ -488,8 +486,6 @@ Future<void> unsetGroupOrModIcon(
     );
     _updateModIconProvider(ref, groupDir, modDir, imgResult);
     try {
-      const names = ["icon.png", "preview.png", "预览.png"];
-
       if (isNoneMod) {
         final file = File(
           p.join(groupDir.path, ConstantVar.noneSlotIconFileName),
@@ -498,7 +494,7 @@ Future<void> unsetGroupOrModIcon(
           await file.delete();
         }
       } else {
-        for (final name in names) {
+        for (final name in ConstantVar.modIconFilenames) {
           final file = File(p.join(modDir.path, name));
           if (await file.exists()) {
             await file.delete();

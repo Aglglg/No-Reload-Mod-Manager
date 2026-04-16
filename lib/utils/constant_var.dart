@@ -8,6 +8,25 @@ class ConstantVar {
   static const String managedFolderName = "_MANAGED_";
   static const String managedRemovedFolderName = "DISABLED_MANAGED_REMOVED";
   static const String noneSlotIconFileName = "icon_none.png";
+  static const List<String> modIconFilenames = [
+    "icon.png",
+    "preview.png",
+    "预览.png",
+    ".jasm_cover.png",
+    "cover.png",
+    "preview.jpg",
+    "预览.jpg",
+    ".jasm_cover.jpg",
+    "cover.jpg",
+    "preview.jpeg",
+    "预览.jpeg",
+    ".jasm_cover.jpeg",
+    "cover.jpeg",
+    "preview.webp",
+    "预览.webp",
+    ".jasm_cover.webp",
+    "cover.webp",
+  ];
   static const String oldManagedFolderName =
       "V1_3_x_MANAGED-DO_NOT_EDIT_COPY_MOVE_CUT";
   static const String anotherOldManagedFolderName =
