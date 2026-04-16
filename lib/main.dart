@@ -1536,7 +1536,7 @@ class _MainViewState extends ConsumerState<MainView>
                 showRandomTips = false;
               });
             },
-            child: Container(height: 200 * sss),
+            child: Container(height: bitsdojo.appWindow.size.height / 2),
           ),
         ),
       ],
@@ -1795,8 +1795,16 @@ class _RandomTipsState extends ConsumerState<RandomTips>
       child: Padding(
         padding:
             ref.watch(isCarouselProvider)
-                ? EdgeInsets.only(bottom: 5 * sss)
-                : EdgeInsets.only(bottom: 15 * sss),
+                ? EdgeInsets.only(
+                  bottom: 5 * sss,
+                  left: 45 * sss,
+                  right: 45 * sss,
+                )
+                : EdgeInsets.only(
+                  bottom: 15 * sss,
+                  left: 45 * sss,
+                  right: 45 * sss,
+                ),
         child: AnimatedBuilder(
           animation: _controller,
           builder: (context, child) {
@@ -1810,50 +1818,55 @@ class _RandomTipsState extends ConsumerState<RandomTips>
               child: child,
             );
           },
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 7 * sss,
-            children: [
-              MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: GestureDetector(
-                  onTap: _handleTap,
-                  child: AnimatedBuilder(
-                    animation: _controller,
-                    builder: (context, child) {
-                      return Transform.rotate(
-                        angle: _rotation.value * (_streak.isEven ? 1 : -1),
-                        child: Transform.scale(
-                          scale: _scale.value,
-                          child: Opacity(opacity: _opacity.value, child: child),
-                        ),
-                      );
-                    },
-                    child: Icon(
-                      Icons.auto_awesome_rounded,
-                      size: 13 * sss,
-                      color: const Color.fromARGB(127, 255, 255, 255),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 7 * sss,
+              children: [
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: _handleTap,
+                    child: AnimatedBuilder(
+                      animation: _controller,
+                      builder: (context, child) {
+                        return Transform.rotate(
+                          angle: _rotation.value * (_streak.isEven ? 1 : -1),
+                          child: Transform.scale(
+                            scale: _scale.value,
+                            child: Opacity(
+                              opacity: _opacity.value,
+                              child: child,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Icon(
+                        Icons.auto_awesome_rounded,
+                        size: 13 * sss,
+                        color: const Color.fromARGB(200, 33, 149, 243),
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-              /// Text now inherits shake automatically
-              MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: GestureDetector(
-                  onTap: _handleTap,
-                  child: Text(
-                    ref.watch(randomTipsProvider),
-                    style: GoogleFonts.poppins(
-                      color: const Color.fromARGB(127, 255, 255, 255),
-                      fontSize: 11 * sss,
-                      fontWeight: FontWeight.w400,
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: _handleTap,
+                    child: Text(
+                      ref.watch(randomTipsProvider),
+                      style: GoogleFonts.poppins(
+                        color: const Color.fromARGB(200, 33, 149, 243),
+                        fontSize: 11 * sss,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
