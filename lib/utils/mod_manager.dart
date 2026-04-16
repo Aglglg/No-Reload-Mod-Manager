@@ -488,12 +488,24 @@ Future<void> unsetGroupOrModIcon(
     );
     _updateModIconProvider(ref, groupDir, modDir, imgResult);
     try {
-      File sourceFile = File(
-        isNoneMod
-            ? p.join(groupDir.path, ConstantVar.noneSlotIconFileName)
-            : p.join(modDir.path, "icon.png"),
-      );
-      await sourceFile.delete();
+      const names = ["icon.png", "preview.png", "预览.png"];
+
+      if (isNoneMod) {
+        final file = File(
+          p.join(groupDir.path, ConstantVar.noneSlotIconFileName),
+        );
+        if (await file.exists()) {
+          await file.delete();
+        }
+      } else {
+        for (final name in names) {
+          final file = File(p.join(modDir.path, name));
+          if (await file.exists()) {
+            await file.delete();
+            break;
+          }
+        }
+      }
     } catch (_) {}
   }
 
