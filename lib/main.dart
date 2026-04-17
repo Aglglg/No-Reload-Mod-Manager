@@ -1285,6 +1285,14 @@ class _MainViewState extends ConsumerState<MainView>
 
     if (existAndValid) {
       if (casualStyle) {
+        ref.read(modGroupDataProvider.notifier).state = [];
+
+        ref.read(validModsPath.notifier).state = modsPath;
+
+        DynamicDirectoryWatcher.watch(
+          r"\\?\" + modsPath.replaceFirst(r"\\?\", ''),
+          ref: ref,
+        ); //if somehow there's long path, \\?\ workaround, only for Windows
       } else {
         //Load mod & group data
         final datas = await refreshModData(Directory(managedPath));

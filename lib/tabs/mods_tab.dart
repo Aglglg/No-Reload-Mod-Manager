@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:no_reload_mod_manager/casual_style/mods_tab_casual.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/tabs/mods_tab_carousel.dart';
@@ -65,19 +66,23 @@ class _TabModsState extends ConsumerState<TabMods> with WindowListener {
 
   @override
   Widget build(BuildContext context) {
-    int layoutMode = ref.watch(layoutModeProvider);
-    if (layoutMode == 0) {
-      if (ref.watch(isCarouselProvider)) {
-        return TabModsCarousel();
-      } else {
-        return TabModsGrid();
-      }
-    } else if (layoutMode == 1) {
-      return TabModsCarousel();
-    } else if (layoutMode == 2) {
-      return TabModsGrid();
+    if (ref.watch(isCasualStyle)) {
+      return TabModsCasual();
     } else {
-      return TabModsCarousel();
+      int layoutMode = ref.watch(layoutModeProvider);
+      if (layoutMode == 0) {
+        if (ref.watch(isCarouselProvider)) {
+          return TabModsCarousel();
+        } else {
+          return TabModsGrid();
+        }
+      } else if (layoutMode == 1) {
+        return TabModsCarousel();
+      } else if (layoutMode == 2) {
+        return TabModsGrid();
+      } else {
+        return TabModsCarousel();
+      }
     }
   }
 }
