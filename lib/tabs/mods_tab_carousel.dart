@@ -196,7 +196,7 @@ class _TabModsCarouselState extends ConsumerState<TabModsCarousel>
                       (event) =>
                           ref.read(searchBarShownProvider.notifier).state =
                               false,
-                  leading: Icon(Icons.search),
+                  leading: Icon(Icons.search, size: 20 * sss),
                   hintText: getSearchBarHint(),
                   hintStyle: WidgetStatePropertyAll(
                     GoogleFonts.poppins(fontSize: 13 * sss),

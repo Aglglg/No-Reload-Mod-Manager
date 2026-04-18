@@ -173,7 +173,7 @@ class _TabModsGridState extends ConsumerState<TabModsGrid>
                       (event) =>
                           ref.read(searchBarShownProvider.notifier).state =
                               false,
-                  leading: Icon(Icons.search),
+                  leading: Icon(Icons.search, size: 20 * sss),
                   hintText:
                       'Search group by name or real folder name only'.tr(),
                   hintStyle: WidgetStatePropertyAll(
