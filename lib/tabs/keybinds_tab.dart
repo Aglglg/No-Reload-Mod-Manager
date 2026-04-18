@@ -747,7 +747,11 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
                                 controller: controllers[index],
                                 enabled: widget.isEditing,
                                 decoration: InputDecoration(
-                                  isDense: false,
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    vertical: 15 * sss,
+                                    horizontal: 10 * sss,
+                                  ),
                                   disabledBorder: InputBorder.none,
                                 ),
                                 maxLines: null,

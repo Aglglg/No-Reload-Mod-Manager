@@ -32,6 +32,7 @@ struct Globals
 {
 	std::set<ErroredLine, ErroredLineLess> errored_lines;
 
+	std::unordered_set<std::wstring, WStringInsensitiveHash, WStringInsensitiveEquality> global_tracked_namespaces;
 	std::unordered_set<std::wstring, WStringInsensitiveHash, WStringInsensitiveEquality> known_lib_namespaces;
 	std::unordered_set<std::wstring, WStringInsensitiveHash, WStringInsensitiveEquality> already_known_duplicate_lib_path;
 	std::unordered_set<std::wstring, WStringInsensitiveHash, WStringInsensitiveEquality> already_known_nonexist_lib;

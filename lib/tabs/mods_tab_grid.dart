@@ -131,7 +131,7 @@ class _TabModsGridState extends ConsumerState<TabModsGrid>
                       ref.watch(windowIsPinnedProvider) ? 255 * sss : 230 * sss,
                   right: 45 * sss,
                   left: 45 * sss,
-                  bottom: 40 * sss,
+                  bottom: 45 * sss,
                 ),
                 child: Align(
                   alignment: Alignment.topCenter,
@@ -151,7 +151,11 @@ class _TabModsGridState extends ConsumerState<TabModsGrid>
           Align(
             alignment: Alignment.topCenter,
             child: Padding(
-              padding: EdgeInsets.only(top: 95.0 * sss),
+              padding: EdgeInsets.only(
+                top: 95.0 * sss,
+                right: 45 * sss,
+                left: 45 * sss,
+              ),
               child: SizedBox(
                 height: 38 * sss,
                 child: SearchBar(
@@ -1000,6 +1004,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                 });
               },
               child: TextField(
+                mouseCursor: SystemMouseCursors.text,
                 focusNode: groupTextFieldFocusNode,
                 enabled: groupTextFieldEnabled,
                 cursorColor: getAccentColor(ref),

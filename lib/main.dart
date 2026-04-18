@@ -266,7 +266,12 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
         locale: context.locale,
         debugShowCheckedModeBanner: false,
         home: Background(successLoadPref: widget.successLoadPref),
-        theme: ThemeData.dark(),
+        theme: ThemeData.dark().copyWith(
+          colorScheme: ThemeData.dark().colorScheme.copyWith(
+            primary: const Color.fromARGB(127, 33, 149, 243),
+            secondary: const Color.fromARGB(127, 33, 149, 243),
+          ),
+        ),
       ),
     );
   }
@@ -1417,6 +1422,8 @@ class _MainViewState extends ConsumerState<MainView>
     }
   }
 
+  bool showRandomTips = false;
+
   @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
@@ -1428,7 +1435,7 @@ class _MainViewState extends ConsumerState<MainView>
             child: Text(
               'Experimental Version',
               style: GoogleFonts.poppins(
-                color: Colors.amber,
+                color: Colors.transparent,
                 fontSize: 10 * sss,
                 fontWeight: FontWeight.bold,
               ),
@@ -1527,6 +1534,27 @@ class _MainViewState extends ConsumerState<MainView>
                 ),
               ),
             ),
+          ),
+        ),
+
+        ///Random tips
+        if (showRandomTips) RandomTips(),
+
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: MouseRegion(
+            hitTestBehavior: HitTestBehavior.translucent,
+            onEnter: (_) {
+              setState(() {
+                showRandomTips = true;
+              });
+            },
+            onExit: (_) {
+              setState(() {
+                showRandomTips = false;
+              });
+            },
+            child: Container(height: bitsdojo.appWindow.size.height / 2),
           ),
         ),
       ],
@@ -1668,4 +1696,233 @@ Color getAccentColor(WidgetRef ref, {int alpha = 255}) {
   return ref.watch(isCasualStyle)
       ? Color.fromARGB(alpha, 77, 182, 172)
       : Color.fromARGB(alpha, 33, 149, 243);
+}
+
+class RandomTips extends ConsumerStatefulWidget {
+  const RandomTips({super.key});
+
+  @override
+  ConsumerState<RandomTips> createState() => _RandomTipsState();
+}
+
+class _RandomTipsState extends ConsumerState<RandomTips>
+    with SingleTickerProviderStateMixin {
+  int _streak = 0;
+  int _lastTapMs = 0;
+
+  static const int spamThresholdMs = 400;
+  static const int spamTrigger = 9;
+
+  late AnimationController _controller;
+  late Animation<double> _scale;
+  late Animation<double> _rotation;
+  late Animation<double> _shake;
+  late Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _scale = Tween<double>(
+      begin: 1.0,
+      end: 1.25,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
+
+    _rotation = Tween<double>(
+      begin: 0.0,
+      end: 0.15,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+
+    _shake = Tween<double>(
+      begin: 0,
+      end: 6,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticIn));
+
+    _opacity = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.5, end: 1.0), weight: 20),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.6), weight: 40),
+    ]).animate(_controller);
+  }
+
+  void _playNormalAnim() {
+    _controller.forward(from: 0);
+  }
+
+  void _playSpamAnim() async {
+    await _controller.forward(from: 0);
+    await _controller.reverse();
+  }
+
+  final spamMessages = [
+    "Did you actually read it?".tr(),
+    "No need to rush".tr(),
+    "The tips are only useful if you read it".tr(),
+    "Slow down".tr(),
+  ];
+
+  bool spamMessageShown = false;
+
+  void _handleTap() {
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    if (now - _lastTapMs < spamThresholdMs) {
+      _streak++;
+    } else {
+      _streak = 1;
+    }
+
+    _lastTapMs = now;
+
+    if (_streak >= spamTrigger) {
+      _playSpamAnim();
+
+      if (!spamMessageShown) {
+        spamMessages.shuffle();
+      }
+
+      ref.read(randomTipsProvider.notifier).state = spamMessages.first;
+      spamMessageShown = true;
+      return;
+    }
+    spamMessageShown = false;
+    _playNormalAnim();
+
+    final prevTips = ref.read(randomTipsProvider);
+    ref.read(randomTipsProvider.notifier).state = getRandomTips(prevTips);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sss = ref.watch(zoomScaleProvider);
+
+    bool show =
+        ref.watch(tabIndexProvider) == 1 &&
+        ref.watch(targetGameProvider) != TargetGame.none &&
+        ref.watch(validModsPath) != null &&
+        ref.watch(modGroupDataProvider).isNotEmpty;
+
+    if (!show) return IgnorePointer();
+
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Padding(
+        padding:
+            ref.watch(isCarouselProvider)
+                ? EdgeInsets.only(
+                  bottom: 5 * sss,
+                  left: 45 * sss,
+                  right: 45 * sss,
+                )
+                : EdgeInsets.only(
+                  bottom: 15 * sss,
+                  left: 45 * sss,
+                  right: 45 * sss,
+                ),
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            final isSpam = _streak >= spamTrigger;
+
+            return Transform.translate(
+              offset:
+                  isSpam
+                      ? Offset((_shake.value * (_streak % 2 == 0 ? 1 : -1)), 0)
+                      : Offset.zero,
+              child: child,
+            );
+          },
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 7 * sss,
+              children: [
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: _handleTap,
+                    child: AnimatedBuilder(
+                      animation: _controller,
+                      builder: (context, child) {
+                        return Transform.rotate(
+                          angle: _rotation.value * (_streak.isEven ? 1 : -1),
+                          child: Transform.scale(
+                            scale: _scale.value,
+                            child: Opacity(
+                              opacity: _opacity.value,
+                              child: child,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Icon(
+                        Icons.auto_awesome_rounded,
+                        size: 13 * sss,
+                        color: const Color.fromARGB(200, 33, 149, 243),
+                      ),
+                    ),
+                  ),
+                ),
+
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: _handleTap,
+                    child: Text(
+                      ref.watch(randomTipsProvider),
+                      style: GoogleFonts.poppins(
+                        color: const Color.fromARGB(200, 33, 149, 243),
+                        fontSize: 11 * sss,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String getRandomTips(String previousTips) {
+  final tips = <String>[
+    "Press Space to search mods".tr(),
+    "Press Space to search mods".tr(),
+    "Press Space to search mods".tr(),
+    "Press Space to search mods".tr(),
+    "Press Space to search mods".tr(),
+    "Right-click anywhere to discover more features".tr(),
+    "Scroll down in Settings to discover more features".tr(),
+    "Double-click or press F to select a mod".tr(),
+    "Press WASD to navigate between groups and mods".tr(),
+    "NRMM can also be used with XInput Gamepad".tr(),
+    "Save Mod Customizations in Settings to make toggles permanent".tr(),
+    "Disable mods in Settings if something feels wrong".tr(),
+    "Use Restorer in Settings before sharing mods or using them without NRMM"
+        .tr(),
+    "Press Update Mod Data in Settings if mods behave unexpectedly".tr(),
+    "Click mod keybind buttons instead of pressing keyboard keys".tr(),
+  ];
+
+  final available = tips.where((t) => t != previousTips).toList();
+
+  // Fallback if all tips are the same (shouldn't happen but just in case)
+  if (available.isEmpty) return tips.first;
+
+  available.shuffle();
+  return available.first;
 }

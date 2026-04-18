@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
+import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_group_folder_icon.dart';
 import 'package:no_reload_mod_manager/utils/force_read_as_utf8.dart';
@@ -28,6 +29,9 @@ void triggerRefresh(WidgetRef ref) {
     TargetGame currentTargetGame = ref.read(targetGameProvider);
     ref.read(targetGameProvider.notifier).state = TargetGame.none;
     ref.read(targetGameProvider.notifier).state = currentTargetGame;
+    ref.read(randomTipsProvider.notifier).state = getRandomTips(
+      ref.read(randomTipsProvider),
+    );
   } catch (_) {}
 }
 
@@ -122,7 +126,7 @@ void _addGroupToRiverpod(WidgetRef ref, Directory groupDir, int index) {
     modsInGroup: [
       ModData(
         modDir: Directory("None"),
-        modIcon: null,
+        modIcon: getNoneModIcon(groupDir),
         modName: "None".tr(),
         realIndex: 0,
         isOldAutoFixed: false,
@@ -274,10 +278,25 @@ Future<void> setModNameOnDisk(Directory modDir, String modName) async {
 }
 
 Image? getModOrGroupIcon(Directory dir) {
-  final file = File(p.join(dir.path, "icon.png"));
+  for (final name in ConstantVar.modIconFilenames) {
+    final img = getIconFromPath(p.join(dir.path, name));
+    if (img != null) return img;
+  }
 
-  if (file.existsSync()) {
-    try {
+  return null;
+}
+
+Image? getNoneModIcon(Directory groupDir) {
+  return getIconFromPath(
+    p.join(groupDir.path, ConstantVar.noneSlotIconFileName),
+  );
+}
+
+Image? getIconFromPath(String path) {
+  final file = File(path);
+
+  try {
+    if (file.existsSync()) {
       return Image.file(
         file,
         cacheWidth: 156 * 2,
@@ -290,11 +309,9 @@ Image? getModOrGroupIcon(Directory dir) {
           );
         },
       );
-    } catch (_) {
-      // fallback in case FileImage fails
-      return null;
     }
-  } else {
+    return null;
+  } catch (_) {
     return null;
   }
 }
@@ -305,6 +322,7 @@ Future<void> setGroupOrModIcon(
   Image? oldImage, {
   bool fromClipboard = false,
   bool isGroup = true,
+  bool isNoneMod = false,
   Directory? modDir,
 }) async {
   String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
@@ -357,7 +375,10 @@ Future<void> setGroupOrModIcon(
         _updateModIconProvider(ref, groupDir, modDir, imgResult);
         try {
           File sourceFile = File(pickResult.files[0].path!);
-          String targetDest = p.join(modDir.path, "icon.png");
+          String targetDest =
+              isNoneMod
+                  ? p.join(groupDir.path, ConstantVar.noneSlotIconFileName)
+                  : p.join(modDir.path, "icon.png");
           await sourceFile.copy(targetDest);
         } catch (_) {}
       }
@@ -405,7 +426,9 @@ Future<void> setGroupOrModIcon(
           );
           _updateModIconProvider(ref, groupDir, modDir, img);
           await File(
-            p.join(modDir.path, "icon.png"),
+            isNoneMod
+                ? p.join(groupDir.path, ConstantVar.noneSlotIconFileName)
+                : p.join(modDir.path, "icon.png"),
           ).writeAsBytes(imgBytes.toList());
         }
       }
@@ -421,6 +444,7 @@ Future<void> unsetGroupOrModIcon(
   WidgetRef ref,
   Directory groupDir,
   Image? oldImage, {
+  bool isNoneMod = false,
   Directory? modDir,
 }) async {
   String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
@@ -462,8 +486,22 @@ Future<void> unsetGroupOrModIcon(
     );
     _updateModIconProvider(ref, groupDir, modDir, imgResult);
     try {
-      File sourceFile = File(p.join(modDir.path, "icon.png"));
-      await sourceFile.delete();
+      if (isNoneMod) {
+        final file = File(
+          p.join(groupDir.path, ConstantVar.noneSlotIconFileName),
+        );
+        if (await file.exists()) {
+          await file.delete();
+        }
+      } else {
+        for (final name in ConstantVar.modIconFilenames) {
+          final file = File(p.join(modDir.path, name));
+          if (await file.exists()) {
+            await file.delete();
+            break;
+          }
+        }
+      }
     } catch (_) {}
   }
 
@@ -584,7 +622,7 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
       0,
       ModData(
         modDir: Directory("None"),
-        modIcon: null,
+        modIcon: getNoneModIcon(groupDir),
         modName: "None".tr(),
         realIndex: 0,
         isOldAutoFixed: false,
@@ -993,6 +1031,9 @@ Future<List<TextSpan>> updateModData(
       shouldThrowOnError: true,
     );
 
+    //filepath <> libName
+    final Map<String, String> filePathsWithKnownLibNamespace = {};
+
     final Map<(Directory, int), List<ModData>> groupAndModsPair = {};
 
     for (final (groupDir, groupIndex) in groupFullPathsAndIndexes) {
@@ -1004,10 +1045,12 @@ Future<List<TextSpan>> updateModData(
       groupAndModsPair[key] = mods;
     }
 
-    //Fix duplicated namespaces first, if any
+    //Fix duplicated namespaces first, if any + look for known lib namespaces in managed mod
     await _autoModifyDuplicateNamespaceInManagedMod(
       groupAndModsPair,
       managedPath,
+      filePathsWithKnownLibNamespace,
+      knownModdingLibraries,
     );
 
     //Get errored lines from xxmi ini handler
@@ -1070,6 +1113,80 @@ Future<List<TextSpan>> updateModData(
           ),
           style: GoogleFonts.poppins(
             color: const Color.fromARGB(255, 189, 170, 0),
+            fontSize: 14,
+          ),
+        ),
+      );
+    }
+
+    //Show lib that's inside managed folder
+    for (var entry in filePathsWithKnownLibNamespace.entries) {
+      final libName = entry.value;
+      final filePath = entry.key;
+
+      if (!p.isWithin(managedPath, filePath)) continue;
+
+      final (groupName, modName, relativePath) = await _resolveGroupAndModName(
+        filePath,
+        managedPath,
+      );
+
+      operationLogs.add(
+        TextSpan(
+          text: "Modding library is inside managed folder".tr(
+            args: [
+              libName,
+              groupName != null && modName != null
+                  ? "$groupName - $modName"
+                  : p.relative(filePath, from: managedPath),
+            ],
+          ),
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 189, 170, 0),
+            fontSize: 14,
+          ),
+        ),
+      );
+      operationLogs.add(
+        TextSpan(
+          text: "Please put modding library outside managed folder".tr(
+            args: [libName],
+          ),
+          style: GoogleFonts.poppins(
+            color: Colors.red,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      );
+    }
+
+    final allIniFiles = await findIniFilesRecursiveExcludeDisabled(managedPath);
+    final longPathIniFiles =
+        allIniFiles
+            .where((path) => path.length >= 200)
+            .map((e) => p.relative(e, from: basePath))
+            .toList();
+
+    //Show path that's too long, cannot be detected in errored lines, and can cause game crash
+    if (longPathIniFiles.isNotEmpty) {
+      operationLogs.add(
+        TextSpan(
+          text: "The following ini files have paths that are too long".tr(
+            args: ["  <>  ${longPathIniFiles.join("\n  <>  ")}"],
+          ),
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 189, 170, 0),
+            fontSize: 14,
+          ),
+        ),
+      );
+      operationLogs.add(
+        TextSpan(
+          text: "Please shorten the folder names".tr(),
+          style: GoogleFonts.poppins(
+            color: Colors.red,
+            fontWeight: FontWeight.bold,
             fontSize: 14,
           ),
         ),
@@ -1166,9 +1283,18 @@ Future<List<TextSpan>> updateModData(
                 ),
               if (usingCustomXxmiDll.value)
                 TextSpan(
-                  text: 'Custom XXMI DLL for NRMM is active!'.tr(),
+                  text: 'XXMI for NRMM detected'.tr(),
                   style: GoogleFonts.poppins(
-                    color: Colors.white,
+                    color: Colors.grey,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              if (!usingCustomXxmiDll.value)
+                TextSpan(
+                  text: 'Standard XXMI/3DMigoto detected'.tr(),
+                  style: GoogleFonts.poppins(
+                    color: Colors.grey,
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
                   ),
@@ -1577,6 +1703,8 @@ class NamespaceRewriteException implements Exception {
 Future<void> _autoModifyDuplicateNamespaceInManagedMod(
   Map<(Directory, int), List<ModData>> groupAndModsPair,
   String managedPath,
+  Map<String, String> filePathsWithKnownLibNamespace,
+  Map<String, String> knownModdingLibraries,
 ) async {
   final namespacesInManaged = <String>{};
 
@@ -1597,6 +1725,12 @@ Future<void> _autoModifyDuplicateNamespaceInManagedMod(
         final ns = await getNamespace(File(path));
         if (ns != null) {
           namespacesInMod.add(ns.toLowerCase());
+
+          //Also report if the namespace is the known lib namespace
+          if (knownModdingLibraries.keys.contains(ns.toLowerCase())) {
+            filePathsWithKnownLibNamespace[path] =
+                knownModdingLibraries[ns.toLowerCase()]!;
+          }
         }
       }
 
@@ -1608,7 +1742,7 @@ Future<void> _autoModifyDuplicateNamespaceInManagedMod(
         if ((namespacesInGroup.contains(namespace) ||
                 namespacesInManaged.contains(namespace)) &&
             //if it's namespace from known modding lib, let xxmi ini handler handle it later
-            !ConstantVar.knownModdingLibraries.keys.contains(namespace)) {
+            !knownModdingLibraries.keys.contains(namespace)) {
           final newNamespace = _getNewNamespace(
             namespace,
             futureNamespaces,
@@ -2021,23 +2155,41 @@ void _modifyLinesBasedOnError(
 
   final fileCrashErrors = errorReport.crashLines[p.normalize(path)] ?? [];
   final fileOtherErrors = errorReport.otherError[p.normalize(path)] ?? [];
+  final fileOtherErrorsMissingEndif =
+      errorReport.otherErrorMissingEndif[p.normalize(path)] ?? [];
 
-  for (var e in [...fileCrashErrors, ...fileOtherErrors]) {
+  for (var e in [
+    ...fileCrashErrors,
+    ...fileOtherErrors,
+    ...fileOtherErrorsMissingEndif,
+  ]) {
     expectedErrors[e.lineIndex] = e.trimmedLine;
   }
 
-  // We need to continue even if expectedErrors is empty to remove old marks.
+  final Set<int> missingEndifIndexes = {
+    for (var e in fileOtherErrorsMissingEndif) e.lineIndex,
+  };
+
+  // We need to continue even if expectedErrors is empty to remove old marks, if somehow errored lines becomes valid.
+  // For example, errored line because missing referenced namespace, but then user add the namespace later.
 
   //Iterate through every line in the file to sync state
   for (int i = 0; i < lines.length; i++) {
     final currentLine = lines[i];
-    final bool isMarked = currentLine.trimLeft().startsWith(';-;');
+    final trimmed = currentLine.trimLeft();
+    final bool isMarked =
+        trimmed.startsWith(';-;') || trimmed.startsWith(';;-;;');
     final bool shouldBeMarked = expectedErrors.containsKey(i);
 
     if (shouldBeMarked) {
       //Get the version without the mark to compare content
-      String cleanLine =
-          isMarked ? currentLine.replaceFirst(';-;', '') : currentLine;
+      String cleanLine = currentLine;
+
+      if (currentLine.trimLeft().startsWith(';-;')) {
+        cleanLine = currentLine.replaceFirst(';-;', '');
+      } else if (currentLine.trimLeft().startsWith(';;-;;')) {
+        cleanLine = currentLine.replaceFirst(';;-;;', '');
+      }
 
       //Make sure the trimmed content matches the report
       if (cleanLine.trim().toLowerCase() == expectedErrors[i]!.toLowerCase()) {
@@ -2047,14 +2199,18 @@ void _modifyLinesBasedOnError(
         }
         //If it's on report, but not marked yet, add mark
         if (!isMarked) {
-          lines[i] = ';-;${currentLine.trim()}';
+          //;;-;; for errored line "if missing endif", so it will not accidentally create problem on next Update Mod Data.
+          final prefix = missingEndifIndexes.contains(i) ? ';;-;;' : ';-;';
+          lines[i] = '$prefix${currentLine.trim()}';
         }
       }
     } else {
       //If a line is marked but NOT in the error report, remove the mark
       if (isMarked) {
-        //replaceFirst only takes out the first occurrence of the tag
-        lines[i] = currentLine.replaceFirst(';-;', '');
+        //replaceFirst only takes out the first occurrence of the tag, also ignore ;;-;;
+        if (trimmed.startsWith(';-;')) {
+          lines[i] = currentLine.replaceFirst(';-;', '');
+        }
       }
     }
   }
@@ -2945,7 +3101,7 @@ Future<List<String>> _findIniFilesRecursive(String mainFolder) async {
       .list(recursive: true)
       .where((file) => file is File && file.path.endsWith('.ini'))
       .where((file) => p.basename(file.path).toLowerCase() != "desktop.ini")
-      .map((file) => file.path)
+      .map((file) => file.path.replaceFirst(r"\\?\", ''))
       .toList();
 }
 
@@ -2969,32 +3125,11 @@ Future<List<String>> findIniFilesRecursiveExcludeDisabled(
   return directory
       .list(recursive: true)
       .where((entity) => entity is File)
-      .map((entity) => entity.path)
+      .map((entity) => entity.path.replaceFirst(r"\\?\", ''))
       .where((path) => path.toLowerCase().endsWith('.ini'))
       .where((path) => p.basename(path).toLowerCase() != 'desktop.ini')
       .where(
         (path) => !containsDisabledSegment(p.relative(path, from: mainFolder)),
-      )
-      .toList();
-}
-
-// ignore: unused_element
-Future<List<String>> _findIniFilesManagedBackupRecursive(
-  String mainFolder,
-) async {
-  final directory = Directory(
-    r"\\?\" + mainFolder.replaceFirst(r"\\?\", ''),
-  ); // workaround \\?\ for long paths, only for Windows
-  if (!await directory.exists()) return [];
-
-  return await directory
-      .list(recursive: true)
-      .where((file) => file is File)
-      .map((file) => file.path)
-      .where(
-        (path) => path.toLowerCase().endsWith(
-          '.${ConstantVar.managedBackupExtension}',
-        ),
       )
       .toList();
 }

@@ -103,8 +103,8 @@ class _TabModsCarouselState extends ConsumerState<TabModsCarousel>
               padding: EdgeInsets.only(
                 top:
                     ref.watch(modGroupDataProvider).isNotEmpty
-                        ? 98 * sss
-                        : 84 * sss,
+                        ? 123 * sss
+                        : 109 * sss,
               ),
               child: IgnorePointer(
                 child: Text(
@@ -133,7 +133,8 @@ class _TabModsCarouselState extends ConsumerState<TabModsCarousel>
                 padding: EdgeInsets.only(
                   left: 45 * sss,
                   right: 45 * sss,
-                  top: ref.watch(windowIsPinnedProvider) ? 112 * sss : 84 * sss,
+                  top:
+                      ref.watch(windowIsPinnedProvider) ? 137 * sss : 109 * sss,
                 ),
                 child: Column(
                   children: [
@@ -168,7 +169,11 @@ class _TabModsCarouselState extends ConsumerState<TabModsCarousel>
           Align(
             alignment: Alignment.topCenter,
             child: Padding(
-              padding: EdgeInsets.only(top: 15.0 * sss),
+              padding: EdgeInsets.only(
+                top: 95.0 * sss,
+                right: 45 * sss,
+                left: 45 * sss,
+              ),
               child: SizedBox(
                 height: 38 * sss,
                 child: SearchBar(

@@ -2,11 +2,31 @@ import 'package:easy_localization/easy_localization.dart';
 
 class ConstantVar {
   static const int minWindowWidth = 750;
-  static const int minWindowHeight = 412;
+  static const int minWindowHeight = 437;
   static const String thisProcessName = "No_Reload_Mod_Manager.exe";
   static const String managedBackupExtension = "ini_managed_backup";
   static const String managedFolderName = "_MANAGED_";
   static const String managedRemovedFolderName = "DISABLED_MANAGED_REMOVED";
+  static const String noneSlotIconFileName = "icon_none.png";
+  static const List<String> modIconFilenames = [
+    "icon.png",
+    "preview.png",
+    "预览.png",
+    ".jasm_cover.png",
+    "cover.png",
+    "preview.jpg",
+    "预览.jpg",
+    ".jasm_cover.jpg",
+    "cover.jpg",
+    "preview.jpeg",
+    "预览.jpeg",
+    ".jasm_cover.jpeg",
+    "cover.jpeg",
+    "preview.webp",
+    "预览.webp",
+    ".jasm_cover.webp",
+    "cover.webp",
+  ];
   static const String oldManagedFolderName =
       "V1_3_x_MANAGED-DO_NOT_EDIT_COPY_MOVE_CUT";
   static const String anotherOldManagedFolderName =
