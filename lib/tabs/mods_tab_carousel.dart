@@ -103,8 +103,8 @@ class _TabModsCarouselState extends ConsumerState<TabModsCarousel>
               padding: EdgeInsets.only(
                 top:
                     ref.watch(modGroupDataProvider).isNotEmpty
-                        ? 123 * sss
-                        : 109 * sss,
+                        ? 98 * sss
+                        : 84 * sss,
               ),
               child: IgnorePointer(
                 child: Text(
@@ -133,8 +133,7 @@ class _TabModsCarouselState extends ConsumerState<TabModsCarousel>
                 padding: EdgeInsets.only(
                   left: 45 * sss,
                   right: 45 * sss,
-                  top:
-                      ref.watch(windowIsPinnedProvider) ? 137 * sss : 109 * sss,
+                  top: ref.watch(windowIsPinnedProvider) ? 112 * sss : 84 * sss,
                 ),
                 child: Column(
                   children: [

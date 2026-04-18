@@ -268,8 +268,8 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
         home: Background(successLoadPref: widget.successLoadPref),
         theme: ThemeData.dark().copyWith(
           colorScheme: ThemeData.dark().colorScheme.copyWith(
-            primary: const Color.fromARGB(127, 33, 149, 243),
-            secondary: const Color.fromARGB(127, 33, 149, 243),
+            primary: getAccentColor(ref, alpha: 127),
+            secondary: getAccentColor(ref, alpha: 127),
           ),
         ),
       ),
