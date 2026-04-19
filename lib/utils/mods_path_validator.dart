@@ -36,7 +36,11 @@ class ModsPathValidator {
     String modsPath,
     bool isCasualStyle,
   ) async {
-    modsPath = sanitizePath(modsPath);
+    final sanitizedPath = sanitizePath(modsPath);
+    if (sanitizedPath == null) {
+      return ModsPathStatus.invalidNotExist;
+    }
+    modsPath = sanitizedPath;
 
     // Folder doesn't exist
     try {
@@ -122,7 +126,7 @@ class ModsPathValidator {
     }
   }
 
-  static String sanitizePath(String path) {
+  static String? sanitizePath(String path) {
     // Strip surrounding quotes
     path = path.trim();
     if ((path.startsWith('"') && path.endsWith('"')) ||
@@ -131,20 +135,23 @@ class ModsPathValidator {
     }
 
     // Remove invalid path characters (except path separators and colon for drive)
-    path = path.replaceAll(RegExp(r'[<>"|?*]'), '');
+    path = path.replaceAll(RegExp(r'[<>"|?*\x00-\x1F]'), '');
 
     // Normalize path separators to platform standard
-    path = path.replaceAll('/', p.separator);
+    path = path.replaceAll('/', p.separator).replaceAll('\\', p.separator);
 
-    // Remove trailing separator
-    if (path.length > 3 && path.endsWith(p.separator)) {
+    // Bail early if nothing is left
+    if (path.trim().isEmpty) return null;
+
+    // Remove trailing separator, but preserve roots (e.g. C:\ or \\server\share\)
+    final isUNC = path.startsWith(p.separator + p.separator);
+    final minLength = isUNC ? path.indexOf(p.separator, 2) + 1 : 3;
+    if (path.length > minLength && path.endsWith(p.separator)) {
       path = path.substring(0, path.length - 1);
     }
 
-    // Resolve to absolute path if relative
-    if (!p.isAbsolute(path)) {
-      path = p.absolute(path);
-    }
+    // Reject relative paths
+    if (!p.isAbsolute(path)) return null;
 
     return path;
   }

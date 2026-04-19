@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -196,7 +197,10 @@ class SharedPrefUtils {
       }
     }
 
-    return result;
+    String? sanitizedPath = ModsPathValidator.sanitizePath(result);
+    sanitizedPath ??= '';
+    if (result != sanitizedPath) setWuwaModsPath(sanitizedPath);
+    return sanitizedPath;
   }
 
   String getGenshinModsPath() {
@@ -213,7 +217,10 @@ class SharedPrefUtils {
       }
     }
 
-    return result;
+    String? sanitizedPath = ModsPathValidator.sanitizePath(result);
+    sanitizedPath ??= '';
+    if (result != sanitizedPath) setGenshinModsPath(sanitizedPath);
+    return sanitizedPath;
   }
 
   String getHsrModsPath() {
@@ -230,7 +237,10 @@ class SharedPrefUtils {
       }
     }
 
-    return result;
+    String? sanitizedPath = ModsPathValidator.sanitizePath(result);
+    sanitizedPath ??= '';
+    if (result != sanitizedPath) setHsrModsPath(sanitizedPath);
+    return sanitizedPath;
   }
 
   String getZzzModsPath() {
@@ -247,7 +257,10 @@ class SharedPrefUtils {
       }
     }
 
-    return result;
+    String? sanitizedPath = ModsPathValidator.sanitizePath(result);
+    sanitizedPath ??= '';
+    if (result != sanitizedPath) setZzzModsPath(sanitizedPath);
+    return sanitizedPath;
   }
 
   String getEndfieldModsPath() {
@@ -264,7 +277,10 @@ class SharedPrefUtils {
       }
     }
 
-    return result;
+    String? sanitizedPath = ModsPathValidator.sanitizePath(result);
+    sanitizedPath ??= '';
+    if (result != sanitizedPath) setEndfieldModsPath(sanitizedPath);
+    return sanitizedPath;
   }
 
   double getOverallScale() {

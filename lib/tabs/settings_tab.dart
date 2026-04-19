@@ -1497,7 +1497,11 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
   }
 
   void _saveModsPath(String value) {
-    value = ModsPathValidator.sanitizePath(value);
+    final sanitizedPath = ModsPathValidator.sanitizePath(value);
+    if (sanitizedPath == null) {
+      return;
+    }
+    value = sanitizedPath;
     switch (ref.read(targetGameProvider)) {
       case TargetGame.Wuthering_Waves:
         SharedPrefUtils().setWuwaModsPath(value);
