@@ -1468,10 +1468,7 @@ class _MainViewState extends ConsumerState<MainView>
                           ? Icons.folder_rounded
                           : Icons.bolt_rounded,
                       size: 20,
-                      color:
-                          ref.watch(isCasualStyle)
-                              ? const Color.fromARGB(255, 77, 182, 172)
-                              : getAccentColor(ref),
+                      color: getAccentColor(ref),
                     ),
                     SizedBox(width: ref.watch(isCasualStyle) ? 10 : 6),
                     Text(
@@ -1479,10 +1476,7 @@ class _MainViewState extends ConsumerState<MainView>
                           ? "Casual Style"
                           : "No-Reload Style",
                       style: GoogleFonts.poppins(
-                        color:
-                            ref.watch(isCasualStyle)
-                                ? const Color.fromARGB(255, 77, 182, 172)
-                                : getAccentColor(ref),
+                        color: getAccentColor(ref),
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
                       ),
