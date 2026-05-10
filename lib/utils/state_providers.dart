@@ -79,11 +79,7 @@ final focusedOnTextField = StateProvider<bool>((ref) => false);
 
 final validModsPath = StateProvider<String?>((ref) => null);
 
-final currentPathWuwaCasualStyle = StateProvider<String?>((ref) => null);
-final currentPathGenshinCasualStyle = StateProvider<String?>((ref) => null);
-final currentPathHsrCasualStyle = StateProvider<String?>((ref) => null);
-final currentPathZzzCasualStyle = StateProvider<String?>((ref) => null);
-final currentPathEndfieldCasualStyle = StateProvider<String?>((ref) => null);
+final currentFullPathCasualStyle = StateProvider<String?>((ref) => null);
 
 final modsPathStatusProvider = StateProvider<ModsPathStatus>(
   (ref) => ModsPathStatus.invalidNotExist,

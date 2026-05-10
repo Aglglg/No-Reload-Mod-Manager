@@ -1,3 +1,5 @@
+//TODO: SEPARATE CURRENT PATH PER GAME
+//TODO: SAVE CURRENT PATH WITH SHARED PREF
 import 'dart:io';
 import 'dart:ui';
 
@@ -5,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/main.dart';
-import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:path/path.dart' as p;
 import 'package:window_manager/window_manager.dart';
@@ -65,15 +67,35 @@ class _TopBarCasualState extends ConsumerState<TopBarCasual> {
   @override
   void initState() {
     super.initState();
-    pathTextfieldFocusNode.addListener(() {
+    pathTextfieldFocusNode.addListener(() async {
       setState(() {
         pathTextfieldFocused = pathTextfieldFocusNode.hasFocus;
       });
+      pathTextfieldController.text = await getTextFieldPath();
+
       pathTextfieldController.selection = TextSelection(
         baseOffset: 0,
         extentOffset: pathTextfieldController.text.length,
       );
     });
+  }
+
+  Future<String> getTextFieldPath() async {
+    final modsPath = ref.read(validModsPath);
+    if (modsPath != null) {
+      String? currentPath = getCurrentPath(ref);
+      if (currentPath != null) {
+        currentPath = await getValidCurrentPath(currentPath, modsPath);
+      } else {
+        currentPath = modsPath;
+      }
+      final relPath = p.relative(
+        currentPath,
+        from: p.dirname(p.dirname(modsPath)),
+      );
+      return relPath;
+    }
+    return "";
   }
 
   @override
@@ -168,14 +190,86 @@ class PathTextField extends ConsumerStatefulWidget {
 }
 
 class _PathTextFieldState extends ConsumerState<PathTextField> {
+  void showSnackbar(double sss, String message) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: const Color(0xFF2B2930),
+        margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
+        duration: Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        closeIconColor: getAccentColor(ref),
+        showCloseIcon: true,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: Text(
+          message,
+          style: GoogleFonts.poppins(color: Colors.yellow, fontSize: 13 * sss),
+        ),
+        dismissDirection: DismissDirection.down,
+      ),
+    );
+  }
+
+  Future<void> inputPath(double sss, String path) async {
+    final modsPath = ref.read(validModsPath);
+    if (modsPath != null) {
+      //example D:\XXMI Launcher, not D:\XXMI Launcher\GIMI
+      final basePath = p.dirname(p.dirname(modsPath));
+      String? fullPath;
+
+      // Strip surrounding quotes
+      path = path.trim();
+      if ((path.startsWith('"') && path.endsWith('"')) ||
+          (path.startsWith("'") && path.endsWith("'"))) {
+        path = path.substring(1, path.length - 1).trim();
+      }
+
+      if (p.isRelative(path)) {
+        fullPath = p.join(basePath, path);
+      } else {
+        fullPath = path;
+      }
+
+      fullPath = ModsPathValidator.sanitizePath(fullPath);
+
+      if (fullPath == null) {
+        showSnackbar(sss, "The specified path doesn't exist");
+      } else {
+        final valid = await isValidCurrentPath(fullPath, modsPath);
+        switch (valid) {
+          case -1:
+            showSnackbar(
+              sss,
+              "The specified is outside of the working directory",
+            );
+            break;
+          case 0:
+            showSnackbar(sss, "The specified path doesn't exist");
+            break;
+          case 1:
+            setCurrentPath(ref, fullPath);
+            break;
+          case 2:
+            setCurrentPath(ref, p.dirname(fullPath));
+            break;
+          default:
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
     return TextField(
       controller: widget.pathTextfieldController,
       focusNode: widget.pathTextfieldFocusNode,
-      onTap: () {
-        widget.pathTextfieldFocusNode.requestFocus();
+      onSubmitted: (_) async {
+        await inputPath(sss, widget.pathTextfieldController.text);
+      },
+      onTapOutside: (_) async {
+        widget.pathTextfieldFocusNode.unfocus();
+        await inputPath(sss, widget.pathTextfieldController.text);
       },
       decoration: InputDecoration(
         isDense: true,
@@ -216,13 +310,15 @@ class PathBreadcrumbs extends ConsumerStatefulWidget {
 
 class _PathBreadcrumbsState extends ConsumerState<PathBreadcrumbs>
     with WindowListener {
-  List<String> splittedPaths = [];
+  // folderName, fullPath
+  List<(String, String)> splittedPaths = [];
   final scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     constructSplittedPaths();
+    listenToChangesInCurrentPath();
     _scrollToEnd();
     windowManager.addListener(this);
   }
@@ -263,10 +359,16 @@ class _PathBreadcrumbsState extends ConsumerState<PathBreadcrumbs>
     );
   }
 
+  void listenToChangesInCurrentPath() {
+    ref.listenManual(currentFullPathCasualStyle, (_, _) {
+      constructSplittedPaths();
+    });
+  }
+
   Future<void> constructSplittedPaths() async {
     final modsPath = ref.read(validModsPath);
     if (modsPath != null) {
-      String? currentPath = getCurrentPath();
+      String? currentPath = getCurrentPath(ref);
       if (currentPath != null) {
         currentPath = await getValidCurrentPath(currentPath, modsPath);
       } else {
@@ -276,29 +378,26 @@ class _PathBreadcrumbsState extends ConsumerState<PathBreadcrumbs>
         currentPath,
         from: p.dirname(p.dirname(modsPath)),
       );
-      final splitPaths =
-          relPath
-              .split(p.separator)
-              .where((element) => element.trim().isNotEmpty)
-              .toList();
-      splittedPaths = splitPaths;
-    }
-  }
 
-  String? getCurrentPath() {
-    switch (ref.read(targetGameProvider)) {
-      case TargetGame.Arknights_Endfield:
-        return ref.read(currentPathGenshinCasualStyle);
-      case TargetGame.Genshin_Impact:
-        return ref.read(currentPathGenshinCasualStyle);
-      case TargetGame.Honkai_Star_Rail:
-        return ref.read(currentPathHsrCasualStyle);
-      case TargetGame.Wuthering_Waves:
-        return ref.read(currentPathWuwaCasualStyle);
-      case TargetGame.Zenless_Zone_Zero:
-        return ref.read(currentPathZzzCasualStyle);
-      default:
-        return null;
+      final parts =
+          relPath.split(p.separator).where((e) => e.trim().isNotEmpty).toList();
+
+      final List<(String, String)> result = [];
+
+      String accumulatedPath = p.dirname(p.dirname(modsPath));
+
+      for (final part in parts) {
+        accumulatedPath = p.join(accumulatedPath, part);
+
+        result.add((
+          part, // folder name
+          accumulatedPath, // full path
+        ));
+      }
+
+      setState(() {
+        splittedPaths = result;
+      });
     }
   }
 
@@ -307,10 +406,12 @@ class _PathBreadcrumbsState extends ConsumerState<PathBreadcrumbs>
         splittedPaths.asMap().entries.expand((entry) {
           final index = entry.key;
           final value = entry.value;
+          final folderName = value.$1;
+          final fullPath = value.$2;
 
           return [
             ClickableText(
-              text: value,
+              text: folderName,
               fontSize: 14 * sss,
               color:
                   index == splittedPaths.length - 1
@@ -318,7 +419,7 @@ class _PathBreadcrumbsState extends ConsumerState<PathBreadcrumbs>
                       : const Color.fromARGB(169, 255, 255, 255),
               hoverColor: Colors.white,
               onTap: () {
-                print("TAP");
+                setCurrentPath(ref, fullPath);
               },
             ),
 
@@ -424,18 +525,46 @@ class _ClickableTextState extends State<ClickableText> {
   }
 }
 
-Future<String> getValidCurrentPath(String currentPath, String modsPath) async {
+String? getCurrentPath(WidgetRef ref) {
+  return ref.read(currentFullPathCasualStyle);
+}
+
+void setCurrentPath(WidgetRef ref, String currentFullPath) {
+  ref.read(currentFullPathCasualStyle.notifier).state = currentFullPath;
+}
+
+Future<String> getValidCurrentPath(
+  String currentFullPath,
+  String modsPath,
+) async {
   final String basePath = p.dirname(modsPath);
 
-  if (p.isWithin(basePath, currentPath) || basePath == currentPath) {
-    if (await Directory(currentPath).exists()) {
-      return currentPath;
-    } else if (await File(currentPath).exists()) {
-      return p.dirname(currentPath);
+  if (p.isWithin(basePath, currentFullPath) || basePath == currentFullPath) {
+    if (await Directory(currentFullPath).exists()) {
+      return currentFullPath;
+    } else if (await File(currentFullPath).exists()) {
+      return p.dirname(currentFullPath);
     } else {
       return modsPath;
     }
   } else {
     return modsPath;
+  }
+}
+
+/// -1 invalid outside basePath, 0 invalid, 1 valid, 2 valid but is a file
+Future<int> isValidCurrentPath(String currentFullPath, String modsPath) async {
+  final String basePath = p.dirname(modsPath);
+
+  if (p.isWithin(basePath, currentFullPath) || basePath == currentFullPath) {
+    if (await Directory(currentFullPath).exists()) {
+      return 1;
+    } else if (await File(currentFullPath).exists()) {
+      return 2;
+    } else {
+      return 0;
+    }
+  } else {
+    return -1;
   }
 }
