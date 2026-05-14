@@ -1,13 +1,16 @@
-//TODO: SEPARATE CURRENT PATH PER GAME
-//TODO: SAVE CURRENT PATH WITH SHARED PREF
+import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'dart:ui';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/main.dart';
+import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
+import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:path/path.dart' as p;
 import 'package:window_manager/window_manager.dart';
@@ -21,6 +24,16 @@ class TabModsCasual extends ConsumerStatefulWidget {
 
 class _TabModsCasualState extends ConsumerState<TabModsCasual> {
   @override
+  void initState() {
+    super.initState();
+    ref.listenManual(targetGameProvider, (previous, next) {
+      if (next == TargetGame.none) {
+        ref.read(currentFullPathCasualStyle.notifier).state = null;
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
     return Padding(
@@ -33,20 +46,216 @@ class _TabModsCasualState extends ConsumerState<TabModsCasual> {
       child: Column(
         children: [
           TopBarCasual(),
-          Expanded(
-            child: Container(
-              color: const Color.fromARGB(0, 202, 196, 141),
-              child: Text(
-                "ITS JUST A FILE EXPLORER",
-                style: GoogleFonts.poppins(
-                  fontSize: 25 * sss,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
+          SizedBox(height: 20 * sss),
+          Expanded(child: ExplorerView()),
         ],
       ),
+    );
+  }
+}
+
+class _SortableEntry {
+  final FileSystemEntity entity;
+  final int typeOrder;
+  final String lowerName;
+
+  const _SortableEntry({
+    required this.entity,
+    required this.typeOrder,
+    required this.lowerName,
+  });
+}
+
+class _ExplorerItem extends StatelessWidget {
+  final FileSystemEntity entry;
+  final double width;
+  final double spacing;
+  final double runSpacing;
+  final double sss;
+
+  const _ExplorerItem({
+    required this.entry,
+    required this.width,
+    required this.spacing,
+    required this.runSpacing,
+    required this.sss,
+  });
+
+  ///////
+  String fastBasename(String path) {
+    final idx = path.lastIndexOf(Platform.pathSeparator);
+    return idx == -1 ? path : path.substring(idx + 1);
+  }
+
+  ///////
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      margin: EdgeInsets.only(right: spacing, bottom: runSpacing),
+      child: Column(
+        children: [
+          Icon(
+            entry is Directory
+                ? Icons.folder_rounded
+                : entry is File
+                ? Icons.insert_drive_file_rounded
+                : Icons.file_present_rounded,
+            size: 78 * sss,
+            color: const Color.fromARGB(169, 255, 255, 255),
+          ),
+          Text(fastBasename(entry.path), textAlign: TextAlign.center),
+        ],
+      ),
+    );
+  }
+}
+
+class ExplorerView extends ConsumerStatefulWidget {
+  const ExplorerView({super.key});
+
+  @override
+  ConsumerState<ExplorerView> createState() => ExplorerViewState();
+}
+
+class ExplorerViewState extends ConsumerState<ExplorerView> {
+  List<FileSystemEntity> _entries = [];
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      initCurrentPath();
+    });
+
+    ref.listenManual(currentFullPathCasualStyle, (previous, next) {
+      _loadEntries(next);
+    });
+  }
+
+  Future<void> initCurrentPath() async {
+    final modsPath = ref.read(validModsPath);
+    if (modsPath != null) {
+      String? currentPath = getCurrentPath(ref);
+      if (currentPath != null) {
+        final validatedPath = await getValidCurrentPath(currentPath, modsPath);
+        if (validatedPath != currentPath) {
+          currentPath = validatedPath;
+          setCurrentPath(ref, currentPath);
+        }
+      } else {
+        currentPath = modsPath;
+        setCurrentPath(ref, currentPath);
+      }
+
+      await _loadEntries(currentPath);
+    }
+  }
+
+  String fastBasename(String path) {
+    final idx = path.lastIndexOf(Platform.pathSeparator);
+    return idx == -1 ? path : path.substring(idx + 1);
+  }
+
+  Future<void> _loadEntries(String? path) async {
+    if (path == null) return;
+
+    final entries = <FileSystemEntity>[];
+
+    await for (final entity in Directory(
+      path,
+    ).list(followLinks: false, recursive: false)) {
+      entries.add(entity);
+
+      if (entries.length % 100 == 0) {
+        if (!mounted) return;
+
+        setState(() {
+          _entries = entries.toList(growable: false);
+        });
+
+        await Future.delayed(Duration.zero);
+      }
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _entries = entries;
+    });
+
+    await Future.microtask(() {
+      final sorted = _sortEntries(entries);
+
+      if (mounted) {
+        setState(() {
+          _entries = sorted;
+        });
+      }
+    });
+  }
+
+  List<FileSystemEntity> _sortEntries(List<FileSystemEntity> entries) {
+    final sortable =
+        entries.map((e) {
+          return _SortableEntry(
+            entity: e,
+            typeOrder:
+                e is Directory
+                    ? 0
+                    : e is File
+                    ? 1
+                    : 2,
+            lowerName: fastBasename(e.path).toLowerCase(),
+          );
+        }).toList();
+
+    sortable.sort((a, b) {
+      final typeDiff = a.typeOrder - b.typeOrder;
+      if (typeDiff != 0) return typeDiff;
+      return compareAsciiLowerCaseNatural(a.lowerName, b.lowerName);
+    });
+
+    return sortable.map((e) => e.entity).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sss = ref.watch(zoomScaleProvider);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const itemWidth = 120.0;
+        const spacing = 8.0;
+        const runSpacing = 15.0;
+
+        final itemsPerRow =
+            ((constraints.maxWidth + spacing) / (itemWidth + spacing)).floor();
+
+        final rowCount = (_entries.length / itemsPerRow).ceil();
+
+        return ListView.builder(
+          itemExtent: 180 + runSpacing,
+          itemCount: rowCount,
+          itemBuilder: (context, rowIndex) {
+            final start = rowIndex * itemsPerRow;
+            final end = min(start + itemsPerRow, _entries.length);
+
+            return Row(
+              children: [
+                for (int i = start; i < end; i++)
+                  _ExplorerItem(
+                    entry: _entries[i],
+                    width: itemWidth,
+                    spacing: spacing,
+                    runSpacing: runSpacing,
+                    sss: sss,
+                  ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -85,7 +294,11 @@ class _TopBarCasualState extends ConsumerState<TopBarCasual> {
     if (modsPath != null) {
       String? currentPath = getCurrentPath(ref);
       if (currentPath != null) {
-        currentPath = await getValidCurrentPath(currentPath, modsPath);
+        final validatedPath = await getValidCurrentPath(currentPath, modsPath);
+        if (validatedPath != currentPath) {
+          currentPath = validatedPath;
+          setCurrentPath(ref, currentPath);
+        }
       } else {
         currentPath = modsPath;
       }
@@ -240,7 +453,7 @@ class _PathTextFieldState extends ConsumerState<PathTextField> {
           case -1:
             showSnackbar(
               sss,
-              "The specified is outside of the working directory",
+              "The specified path is outside of the working directory",
             );
             break;
           case 0:
@@ -317,7 +530,9 @@ class _PathBreadcrumbsState extends ConsumerState<PathBreadcrumbs>
   @override
   void initState() {
     super.initState();
-    constructSplittedPaths();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      constructSplittedPaths();
+    });
     listenToChangesInCurrentPath();
     _scrollToEnd();
     windowManager.addListener(this);
@@ -370,7 +585,11 @@ class _PathBreadcrumbsState extends ConsumerState<PathBreadcrumbs>
     if (modsPath != null) {
       String? currentPath = getCurrentPath(ref);
       if (currentPath != null) {
-        currentPath = await getValidCurrentPath(currentPath, modsPath);
+        final validatedPath = await getValidCurrentPath(currentPath, modsPath);
+        if (validatedPath != currentPath) {
+          currentPath = validatedPath;
+          setCurrentPath(ref, currentPath);
+        }
       } else {
         currentPath = modsPath;
       }
@@ -526,11 +745,17 @@ class _ClickableTextState extends State<ClickableText> {
 }
 
 String? getCurrentPath(WidgetRef ref) {
-  return ref.read(currentFullPathCasualStyle);
+  final result = ref.read(currentFullPathCasualStyle);
+  return result ??
+      SharedPrefUtils().getCurrentPath(ref.read(targetGameProvider));
 }
 
 void setCurrentPath(WidgetRef ref, String currentFullPath) {
   ref.read(currentFullPathCasualStyle.notifier).state = currentFullPath;
+  SharedPrefUtils().setCurrentPath(
+    currentFullPath,
+    ref.read(targetGameProvider),
+  );
 }
 
 Future<String> getValidCurrentPath(
@@ -545,6 +770,17 @@ Future<String> getValidCurrentPath(
     } else if (await File(currentFullPath).exists()) {
       return p.dirname(currentFullPath);
     } else {
+      // Walk up until we find an existing directory within bounds
+      String candidate = p.dirname(currentFullPath);
+      while (candidate != p.dirname(candidate)) {
+        if (await Directory(candidate).exists()) {
+          if (p.isWithin(basePath, candidate) || candidate == basePath) {
+            return candidate;
+          }
+          break;
+        }
+        candidate = p.dirname(candidate);
+      }
       return modsPath;
     }
   } else {

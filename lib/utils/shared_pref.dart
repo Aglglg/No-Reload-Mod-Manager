@@ -283,6 +283,44 @@ class SharedPrefUtils {
     return sanitizedPath;
   }
 
+  Future<void> setCurrentPath(String path, TargetGame targetGame) async {
+    switch (targetGame) {
+      case TargetGame.Arknights_Endfield:
+        await _prefs?.setString(keyCurrentPathEndfield, path);
+        break;
+      case TargetGame.Genshin_Impact:
+        await _prefs?.setString(keyCurrentPathGenshin, path);
+        break;
+      case TargetGame.Honkai_Star_Rail:
+        await _prefs?.setString(keyCurrentPathHsr, path);
+        break;
+      case TargetGame.Wuthering_Waves:
+        await _prefs?.setString(keyCurrentPathWuwa, path);
+        break;
+      case TargetGame.Zenless_Zone_Zero:
+        await _prefs?.setString(keyCurrentPathZzz, path);
+        break;
+      default:
+    }
+  }
+
+  String? getCurrentPath(TargetGame targetGame) {
+    switch (targetGame) {
+      case TargetGame.Arknights_Endfield:
+        return _prefs?.getString(keyCurrentPathEndfield);
+      case TargetGame.Genshin_Impact:
+        return _prefs?.getString(keyCurrentPathGenshin);
+      case TargetGame.Honkai_Star_Rail:
+        return _prefs?.getString(keyCurrentPathHsr);
+      case TargetGame.Wuthering_Waves:
+        return _prefs?.getString(keyCurrentPathWuwa);
+      case TargetGame.Zenless_Zone_Zero:
+        return _prefs?.getString(keyCurrentPathZzz);
+      default:
+        return null;
+    }
+  }
+
   double getOverallScale() {
     double? result = _prefs?.getDouble(keyOverallScale);
     if (result == null) {
@@ -487,6 +525,12 @@ class SharedPrefUtils {
   static const String keyModsPathHsr = 'modsPathHsr';
   static const String keyModsPathZzz = 'modsPathZzz';
   static const String keyModsPathEndfield = 'modsPathEndfield';
+
+  static const String keyCurrentPathWuwa = 'currentPathWuwa';
+  static const String keyCurrentPathGenshin = 'currentPathGenshin';
+  static const String keyCurrentPathHsr = 'currentPathHsr';
+  static const String keyCurrentPathZzz = 'currentPathZzz';
+  static const String keyCurrentPathEndfield = 'currentPathEndfield';
 
   static const String defaultTargetProcessWuwa = 'Client-Win64-Shipping.exe';
   static const String defaultTargetProcessGenshin = 'GenshinImpact.exe';

@@ -237,6 +237,14 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
     });
   }
 
+  bool isAnyTextFieldFocused() {
+    final context = FocusManager.instance.primaryFocus?.context;
+    if (context == null) return false;
+
+    return context.widget is EditableText ||
+        context.findAncestorWidgetOfExactType<EditableText>() != null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return KeyboardListener(
@@ -252,10 +260,12 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
         if ((value.physicalKey == PhysicalKeyboardKey.altLeft ||
                 value.physicalKey == PhysicalKeyboardKey.altRight) &&
             value is KeyUpEvent) {
-          simulateKeyDown(VK_ESCAPE);
-          await Future.delayed(Duration(milliseconds: 50));
-          simulateKeyUp(VK_ESCAPE);
-          focusNode.requestFocus();
+          if (!isAnyTextFieldFocused()) {
+            // simulateKeyDown(VK_ESCAPE);
+            // await Future.delayed(Duration(milliseconds: 50));
+            // simulateKeyUp(VK_ESCAPE);
+            // focusNode.requestFocus();
+          }
         }
       },
       focusNode: focusNode,
