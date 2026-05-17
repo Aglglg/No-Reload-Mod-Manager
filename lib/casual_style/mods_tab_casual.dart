@@ -1,3 +1,5 @@
+//TODO: double click to open folder
+//TODO: border only on selected items
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
@@ -8,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/main.dart';
+import 'package:no_reload_mod_manager/utils/archive_manager.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
@@ -46,7 +49,7 @@ class _TabModsCasualState extends ConsumerState<TabModsCasual> {
       child: Column(
         children: [
           TopBarCasual(),
-          SizedBox(height: 20 * sss),
+          SizedBox(height: 10 * sss),
           Expanded(child: ExplorerView()),
         ],
       ),
@@ -58,54 +61,127 @@ class _SortableEntry {
   final FileSystemEntity entity;
   final int typeOrder;
   final String lowerName;
+  final bool isArchive;
 
   const _SortableEntry({
     required this.entity,
     required this.typeOrder,
     required this.lowerName,
+    required this.isArchive,
   });
 }
 
-class _ExplorerItem extends StatelessWidget {
+class ExplorerItem extends ConsumerStatefulWidget {
   final FileSystemEntity entry;
   final double width;
+  final double height;
   final double spacing;
-  final double runSpacing;
   final double sss;
 
-  const _ExplorerItem({
+  const ExplorerItem({
+    super.key,
     required this.entry,
     required this.width,
+    required this.height,
     required this.spacing,
-    required this.runSpacing,
     required this.sss,
   });
 
-  ///////
+  @override
+  ConsumerState<ExplorerItem> createState() => _ExplorerItemState();
+}
+
+class _ExplorerItemState extends ConsumerState<ExplorerItem> {
+  bool hovered = false;
+
   String fastBasename(String path) {
     final idx = path.lastIndexOf(Platform.pathSeparator);
     return idx == -1 ? path : path.substring(idx + 1);
   }
 
-  ///////
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      margin: EdgeInsets.only(right: spacing, bottom: runSpacing),
-      child: Column(
-        children: [
-          Icon(
-            entry is Directory
-                ? Icons.folder_rounded
-                : entry is File
-                ? Icons.insert_drive_file_rounded
-                : Icons.file_present_rounded,
-            size: 78 * sss,
-            color: const Color.fromARGB(169, 255, 255, 255),
+    final sss = ref.watch(zoomScaleProvider);
+    return GestureDetector(
+      onTap: () {
+        if (widget.entry is Directory) {
+          setCurrentPath(ref, widget.entry.path);
+        }
+      },
+      child: MouseRegion(
+        onEnter:
+            (_) => setState(() {
+              hovered = true;
+            }),
+        onExit:
+            (_) => setState(() {
+              hovered = false;
+            }),
+        child: Container(
+          width: widget.width,
+          height: widget.height,
+          margin: EdgeInsets.only(
+            right: widget.spacing,
+            bottom: widget.spacing,
           ),
-          Text(fastBasename(entry.path), textAlign: TextAlign.center),
-        ],
+          decoration:
+              widget.entry.path.endsWith('_MANAGED_')
+                  ? BoxDecoration(
+                    color: Color.fromARGB(100, 127, 127, 127),
+                    borderRadius: BorderRadius.all(Radius.circular(5 * sss)),
+                    border: Border.all(
+                      color: const Color.fromARGB(50, 255, 255, 255),
+                      strokeAlign: BorderSide.strokeAlignInside,
+                      width: 1.5 * sss,
+                    ),
+                  )
+                  : BoxDecoration(),
+          child: Padding(
+            padding: EdgeInsets.all(8.0 * sss),
+            child: Column(
+              children: [
+                Icon(
+                  widget.entry is Directory
+                      ? Icons.folder_rounded
+                      : widget.entry is File
+                      ? SevenZip.isSupported(widget.entry.path)
+                          ? Icons.folder_zip_rounded
+                          : widget.entry.path.endsWith('.ini')
+                          ? Icons.article_rounded
+                          : Icons.insert_drive_file_rounded
+                      : Icons.file_present_rounded,
+                  size: 85 * sss,
+                  color:
+                      hovered
+                          ? getAccentColor(ref)
+                          : fastBasename(
+                            widget.entry.path,
+                          ).toLowerCase().startsWith('disabled')
+                          ? const Color.fromARGB(169, 169, 169, 169)
+                          : const Color.fromARGB(169, 255, 255, 255),
+                ),
+                Text(
+                  fastBasename(widget.entry.path),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12 * sss,
+                    fontWeight: FontWeight.w500,
+                    color:
+                        hovered
+                            ? getAccentColor(ref)
+                            : fastBasename(
+                              widget.entry.path,
+                            ).toLowerCase().startsWith('disabled')
+                            ? const Color.fromARGB(169, 169, 169, 169)
+                            : const Color.fromARGB(169, 255, 255, 255),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -198,18 +274,39 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
 
   List<FileSystemEntity> _sortEntries(List<FileSystemEntity> entries) {
     final sortable =
-        entries.map((e) {
-          return _SortableEntry(
-            entity: e,
-            typeOrder:
-                e is Directory
-                    ? 0
-                    : e is File
-                    ? 1
-                    : 2,
-            lowerName: fastBasename(e.path).toLowerCase(),
-          );
-        }).toList();
+        entries
+            .where((e) => fastBasename(e.path).toLowerCase() != 'desktop.ini')
+            .map((e) {
+              bool archive = SevenZip.isSupported(e.path);
+              bool ini = e.path.endsWith('.ini');
+              String lowerName = fastBasename(e.path).toLowerCase();
+              bool disabled = lowerName.startsWith('disabled');
+              bool isModsFolder =
+                  e.path.toLowerCase() ==
+                  ref.read(validModsPath)?.toLowerCase();
+              return _SortableEntry(
+                entity: e,
+                typeOrder:
+                    isModsFolder
+                        ? -1
+                        : e is Directory
+                        ? disabled
+                            ? 1
+                            : 0
+                        : archive
+                        ? disabled
+                            ? 3
+                            : 2
+                        : ini
+                        ? disabled
+                            ? 5
+                            : 4
+                        : 6,
+                lowerName: lowerName,
+                isArchive: archive,
+              );
+            })
+            .toList();
 
     sortable.sort((a, b) {
       final typeDiff = a.typeOrder - b.typeOrder;
@@ -225,35 +322,45 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
     final sss = ref.watch(zoomScaleProvider);
     return LayoutBuilder(
       builder: (context, constraints) {
-        const itemWidth = 120.0;
-        const spacing = 8.0;
-        const runSpacing = 15.0;
+        final itemWidth = 120 * sss;
+        final itemHeight = 170 * sss;
+        final spacing = 8.0 * sss;
 
         final itemsPerRow =
             ((constraints.maxWidth + spacing) / (itemWidth + spacing)).floor();
 
         final rowCount = (_entries.length / itemsPerRow).ceil();
 
-        return ListView.builder(
-          itemExtent: 180 + runSpacing,
-          itemCount: rowCount,
-          itemBuilder: (context, rowIndex) {
-            final start = rowIndex * itemsPerRow;
-            final end = min(start + itemsPerRow, _entries.length);
+        return ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.trackpad,
+            },
+            scrollbars: true,
+          ),
+          child: ListView.builder(
+            itemExtent: itemHeight,
+            itemCount: rowCount,
+            itemBuilder: (context, rowIndex) {
+              final start = rowIndex * itemsPerRow;
+              final end = min(start + itemsPerRow, _entries.length);
 
-            return Row(
-              children: [
-                for (int i = start; i < end; i++)
-                  _ExplorerItem(
-                    entry: _entries[i],
-                    width: itemWidth,
-                    spacing: spacing,
-                    runSpacing: runSpacing,
-                    sss: sss,
-                  ),
-              ],
-            );
-          },
+              return Row(
+                children: [
+                  for (int i = start; i < end; i++)
+                    ExplorerItem(
+                      entry: _entries[i],
+                      width: itemWidth,
+                      height: itemHeight,
+                      spacing: spacing,
+                      sss: sss,
+                    ),
+                ],
+              );
+            },
+          ),
         );
       },
     );
@@ -316,7 +423,7 @@ class _TopBarCasualState extends ConsumerState<TopBarCasual> {
     final sss = ref.watch(zoomScaleProvider);
     return Row(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Icon(
