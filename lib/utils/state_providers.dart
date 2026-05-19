@@ -144,3 +144,6 @@ final keybindSimulateKeypressProvider = StateProvider<bool>((ref) {
 final randomTipsProvider = StateProvider<String>((ref) {
   return "Press Space to search mods".tr();
 });
+
+final isShiftPressed = StateProvider<bool>((ref) => false);
+final isCtrlPressed = StateProvider<bool>((ref) => false);

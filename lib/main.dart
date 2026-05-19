@@ -252,8 +252,25 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
         if (value is KeyUpEvent ||
             ref.read(alertDialogShownProvider) ||
             ref.read(popupMenuShownProvider)) {
+          if (value.physicalKey == PhysicalKeyboardKey.shiftLeft ||
+              value.physicalKey == PhysicalKeyboardKey.shiftRight) {
+            ref.read(isShiftPressed.notifier).state = false;
+          }
+          if (value.physicalKey == PhysicalKeyboardKey.controlLeft ||
+              value.physicalKey == PhysicalKeyboardKey.controlRight) {
+            ref.read(isCtrlPressed.notifier).state = false;
+          }
         } else {
           await ModNavigationListener.notifyListeners(value, null);
+
+          if (value.physicalKey == PhysicalKeyboardKey.shiftLeft ||
+              value.physicalKey == PhysicalKeyboardKey.shiftRight) {
+            ref.read(isShiftPressed.notifier).state = true;
+          }
+          if (value.physicalKey == PhysicalKeyboardKey.controlLeft ||
+              value.physicalKey == PhysicalKeyboardKey.controlRight) {
+            ref.read(isCtrlPressed.notifier).state = true;
+          }
         }
 
         //Fix stuck on windows menu when press Alt

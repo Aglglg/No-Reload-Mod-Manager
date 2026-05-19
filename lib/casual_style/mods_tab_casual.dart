@@ -1,5 +1,3 @@
-//TODO: double click to open folder
-//TODO: border only on selected items
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
@@ -72,19 +70,23 @@ class _SortableEntry {
 }
 
 class ExplorerItem extends ConsumerStatefulWidget {
+  final int index;
   final FileSystemEntity entry;
   final double width;
   final double height;
   final double spacing;
-  final double sss;
+  final bool isSelected;
+  final void Function() onSingleTap;
 
   const ExplorerItem({
     super.key,
+    required this.index,
     required this.entry,
     required this.width,
     required this.height,
     required this.spacing,
-    required this.sss,
+    required this.isSelected,
+    required this.onSingleTap,
   });
 
   @override
@@ -102,83 +104,103 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
   @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
-    return GestureDetector(
-      onTap: () {
-        if (widget.entry is Directory) {
-          setCurrentPath(ref, widget.entry.path);
-        }
+    return Listener(
+      onPointerDown: (_) {
+        widget.onSingleTap();
       },
-      child: MouseRegion(
-        onEnter:
-            (_) => setState(() {
-              hovered = true;
-            }),
-        onExit:
-            (_) => setState(() {
-              hovered = false;
-            }),
-        child: Container(
-          width: widget.width,
-          height: widget.height,
-          margin: EdgeInsets.only(
-            right: widget.spacing,
-            bottom: widget.spacing,
-          ),
-          decoration:
-              widget.entry.path.endsWith('_MANAGED_')
-                  ? BoxDecoration(
-                    color: Color.fromARGB(100, 127, 127, 127),
-                    borderRadius: BorderRadius.all(Radius.circular(5 * sss)),
-                    border: Border.all(
-                      color: const Color.fromARGB(50, 255, 255, 255),
-                      strokeAlign: BorderSide.strokeAlignInside,
-                      width: 1.5 * sss,
+      child: GestureDetector(
+        onDoubleTapDown: (_) {
+          if (widget.entry is Directory &&
+              !ref.read(isCtrlPressed) &&
+              !ref.read(isShiftPressed)) {
+            setCurrentPath(ref, widget.entry.path);
+          }
+        },
+        child: MouseRegion(
+          onEnter:
+              (_) => setState(() {
+                hovered = true;
+              }),
+          onExit:
+              (_) => setState(() {
+                hovered = false;
+              }),
+          child: Container(
+            width: widget.width,
+            height: widget.height,
+            margin: EdgeInsets.only(
+              right: widget.spacing,
+              bottom: widget.spacing,
+            ),
+            decoration:
+                widget.isSelected
+                    ? BoxDecoration(
+                      color: Color.fromARGB(100, 127, 127, 127),
+                      borderRadius: BorderRadius.all(Radius.circular(5 * sss)),
+                      border: Border.all(
+                        color: Color.fromARGB(
+                          hovered ? 100 : 50,
+                          255,
+                          255,
+                          255,
+                        ),
+                        strokeAlign: BorderSide.strokeAlignInside,
+                        width: 1.5 * sss,
+                      ),
+                    )
+                    : BoxDecoration(
+                      color: Color.fromARGB(0, 127, 127, 127),
+                      borderRadius: BorderRadius.all(Radius.circular(5 * sss)),
+                      border: Border.all(
+                        color: Color.fromARGB(hovered ? 100 : 0, 255, 255, 255),
+                        strokeAlign: BorderSide.strokeAlignInside,
+                        width: 1.5 * sss,
+                      ),
                     ),
-                  )
-                  : BoxDecoration(),
-          child: Padding(
-            padding: EdgeInsets.all(8.0 * sss),
-            child: Column(
-              children: [
-                Icon(
-                  widget.entry is Directory
-                      ? Icons.folder_rounded
-                      : widget.entry is File
-                      ? SevenZip.isSupported(widget.entry.path)
-                          ? Icons.folder_zip_rounded
-                          : widget.entry.path.endsWith('.ini')
-                          ? Icons.article_rounded
-                          : Icons.insert_drive_file_rounded
-                      : Icons.file_present_rounded,
-                  size: 85 * sss,
-                  color:
-                      hovered
-                          ? getAccentColor(ref)
-                          : fastBasename(
-                            widget.entry.path,
-                          ).toLowerCase().startsWith('disabled')
-                          ? const Color.fromARGB(169, 169, 169, 169)
-                          : const Color.fromARGB(169, 255, 255, 255),
-                ),
-                Text(
-                  fastBasename(widget.entry.path),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12 * sss,
-                    fontWeight: FontWeight.w500,
+            child: Padding(
+              padding: EdgeInsets.all(8.0 * sss),
+              child: Column(
+                children: [
+                  Icon(
+                    widget.entry is Directory
+                        ? Icons.folder_rounded
+                        : widget.entry is File
+                        ? SevenZip.isSupported(widget.entry.path)
+                            ? Icons.folder_zip_rounded
+                            : widget.entry.path.endsWith('.ini')
+                            ? Icons.text_snippet_rounded
+                            : Icons.insert_drive_file_rounded
+                        : Icons.file_present_rounded,
+                    size: 85 * sss,
                     color:
                         hovered
                             ? getAccentColor(ref)
                             : fastBasename(
                               widget.entry.path,
                             ).toLowerCase().startsWith('disabled')
-                            ? const Color.fromARGB(169, 169, 169, 169)
+                            ? const Color.fromARGB(100, 169, 169, 169)
                             : const Color.fromARGB(169, 255, 255, 255),
                   ),
-                ),
-              ],
+                  Text(
+                    fastBasename(widget.entry.path),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12 * sss,
+                      fontWeight: FontWeight.w500,
+                      color:
+                          hovered
+                              ? getAccentColor(ref)
+                              : fastBasename(
+                                widget.entry.path,
+                              ).toLowerCase().startsWith('disabled')
+                              ? const Color.fromARGB(255, 169, 169, 169)
+                              : const Color.fromARGB(169, 255, 255, 255),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -196,6 +218,8 @@ class ExplorerView extends ConsumerStatefulWidget {
 
 class ExplorerViewState extends ConsumerState<ExplorerView> {
   List<FileSystemEntity> _entries = [];
+  Set<int> selectedItems = {};
+  int lastSelectedItem = 0;
 
   @override
   void initState() {
@@ -207,6 +231,8 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
 
     ref.listenManual(currentFullPathCasualStyle, (previous, next) {
       _loadEntries(next);
+
+      resetItemSelection();
     });
   }
 
@@ -234,41 +260,55 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
     return idx == -1 ? path : path.substring(idx + 1);
   }
 
+  int _loadGeneration = 0;
+
   Future<void> _loadEntries(String? path) async {
     if (path == null) return;
+
+    final generation = ++_loadGeneration;
 
     final entries = <FileSystemEntity>[];
 
     await for (final entity in Directory(
       path,
     ).list(followLinks: false, recursive: false)) {
+      if (_loadGeneration != generation) return; // superseded
       entries.add(entity);
 
       if (entries.length % 100 == 0) {
-        if (!mounted) return;
-
+        if (!mounted || _loadGeneration != generation) return;
         setState(() {
           _entries = entries.toList(growable: false);
         });
-
         await Future.delayed(Duration.zero);
       }
     }
 
-    if (!mounted) return;
-
+    if (!mounted || _loadGeneration != generation) return;
     setState(() {
       _entries = entries;
     });
 
     await Future.microtask(() {
+      if (!mounted || _loadGeneration != generation) return;
       final sorted = _sortEntries(entries);
-
-      if (mounted) {
+      if (mounted && _loadGeneration == generation) {
         setState(() {
           _entries = sorted;
         });
       }
+    });
+  }
+
+  void resetItemSelection() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {
+        selectedItems = {};
+        lastSelectedItem = 0;
+      });
+      ref.read(isShiftPressed.notifier).state = false;
+      ref.read(isCtrlPressed.notifier).state = false;
     });
   }
 
@@ -324,7 +364,7 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
       builder: (context, constraints) {
         final itemWidth = 120 * sss;
         final itemHeight = 170 * sss;
-        final spacing = 8.0 * sss;
+        final spacing = 10 * sss;
 
         final itemsPerRow =
             ((constraints.maxWidth + spacing) / (itemWidth + spacing)).floor();
@@ -351,11 +391,43 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
                 children: [
                   for (int i = start; i < end; i++)
                     ExplorerItem(
+                      index: i,
                       entry: _entries[i],
                       width: itemWidth,
                       height: itemHeight,
                       spacing: spacing,
-                      sss: sss,
+                      isSelected: selectedItems.contains(i),
+                      onSingleTap: () {
+                        setState(() {
+                          if (ref.read(isShiftPressed)) {
+                            int greaterNumber =
+                                lastSelectedItem > i ? lastSelectedItem : i;
+                            int leastNumber =
+                                lastSelectedItem < i ? lastSelectedItem : i;
+                            Set<int> selections = {};
+                            if (ref.read(isCtrlPressed)) {
+                              selections = selectedItems;
+                            }
+                            for (var i = leastNumber; i <= greaterNumber; i++) {
+                              selections.add(i);
+                            }
+                            selectedItems = selections;
+                            return;
+                          } else if (ref.read(isCtrlPressed)) {
+                            final temp = selectedItems;
+                            if (temp.contains(i)) {
+                              temp.remove(i);
+                            } else {
+                              temp.add(i);
+                            }
+                            selectedItems = temp;
+                          } else {
+                            selectedItems = {i};
+                          }
+
+                          lastSelectedItem = i;
+                        });
+                      },
                     ),
                 ],
               );
@@ -533,7 +605,7 @@ class _PathTextFieldState extends ConsumerState<PathTextField> {
   Future<void> inputPath(double sss, String path) async {
     final modsPath = ref.read(validModsPath);
     if (modsPath != null) {
-      //example D:\XXMI Launcher, not D:\XXMI Launcher\GIMI
+      //example D:\XXMI Launcher, not D:\XXMI Launcher\GIMI (not the MI path)
       final basePath = p.dirname(p.dirname(modsPath));
       String? fullPath;
 
@@ -542,6 +614,10 @@ class _PathTextFieldState extends ConsumerState<PathTextField> {
       if ((path.startsWith('"') && path.endsWith('"')) ||
           (path.startsWith("'") && path.endsWith("'"))) {
         path = path.substring(1, path.length - 1).trim();
+      }
+
+      if (path.startsWith(r"\\?\")) {
+        path = path.replaceFirst(r"\\?\", '');
       }
 
       if (p.isRelative(path)) {
