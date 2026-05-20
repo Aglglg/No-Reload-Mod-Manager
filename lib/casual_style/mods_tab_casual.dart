@@ -10,6 +10,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/utils/archive_manager.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/force_read_as_utf8.dart';
+import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
@@ -95,6 +97,72 @@ class ExplorerItem extends ConsumerStatefulWidget {
 
 class _ExplorerItemState extends ConsumerState<ExplorerItem> {
   bool hovered = false;
+  String? imagePreviewPath;
+  String? modOrGroupName;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      checkForImagePreview();
+      checkForModOrGroupName();
+    });
+  }
+
+  @override
+  void didUpdateWidget(ExplorerItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.entry.path != widget.entry.path) {
+      setState(() => imagePreviewPath = null);
+      setState(() => modOrGroupName = null);
+      checkForImagePreview();
+      checkForModOrGroupName();
+    }
+  }
+
+  Future<void> checkForImagePreview() async {
+    if (widget.entry is! Directory) return;
+    for (var name in ConstantVar.modIconFilenames) {
+      final path = p.join(widget.entry.path, name);
+      if (await File(path).exists()) {
+        await ResizeImage(FileImage(File(path)), width: 192).evict();
+        if (!mounted) return;
+        setState(() {
+          imagePreviewPath = p.join(widget.entry.path, name);
+        });
+        return;
+      }
+    }
+  }
+
+  Future<void> checkForModOrGroupName() async {
+    if (widget.entry is! Directory) return;
+    final dir = Directory(widget.entry.path);
+    String dirNameLower = fastBasename(widget.entry.path).toLowerCase();
+    if (dirNameLower.startsWith('disabled')) {
+      dirNameLower = dirNameLower.replaceFirst('disabled', '');
+    }
+    try {
+      final fileModname = File(p.join(dir.path, 'modname'));
+      final fileGroupname = File(p.join(dir.path, 'groupname'));
+
+      if (await fileModname.exists()) {
+        final name = await fileModname.readAsString();
+        if (mounted && name.toLowerCase() != dirNameLower) {
+          setState(() {
+            modOrGroupName = name.trim();
+          });
+        }
+      } else if (await fileGroupname.exists()) {
+        final name = await fileGroupname.readAsString();
+        if (mounted && name.toLowerCase() != dirNameLower) {
+          setState(() {
+            modOrGroupName = name.trim();
+          });
+        }
+      }
+    } catch (_) {}
+  }
 
   String fastBasename(String path) {
     final idx = path.lastIndexOf(Platform.pathSeparator);
@@ -161,28 +229,73 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
               padding: EdgeInsets.all(8.0 * sss),
               child: Column(
                 children: [
-                  Icon(
-                    widget.entry is Directory
-                        ? Icons.folder_rounded
-                        : widget.entry is File
-                        ? SevenZip.isSupported(widget.entry.path)
-                            ? Icons.folder_zip_rounded
-                            : widget.entry.path.endsWith('.ini')
-                            ? Icons.text_snippet_rounded
-                            : Icons.insert_drive_file_rounded
-                        : Icons.file_present_rounded,
-                    size: 85 * sss,
-                    color:
-                        hovered
-                            ? getAccentColor(ref)
-                            : fastBasename(
-                              widget.entry.path,
-                            ).toLowerCase().startsWith('disabled')
-                            ? const Color.fromARGB(100, 169, 169, 169)
-                            : const Color.fromARGB(169, 255, 255, 255),
+                  Stack(
+                    children: [
+                      Center(
+                        child: Icon(
+                          widget.entry is Directory
+                              ? Icons.folder_rounded
+                              : widget.entry is File
+                              ? SevenZip.isSupported(widget.entry.path)
+                                  ? Icons.folder_zip_rounded
+                                  : widget.entry.path.endsWith('.ini')
+                                  ? Icons.text_snippet_rounded
+                                  : Icons.insert_drive_file_rounded
+                              : Icons.file_present_rounded,
+                          size: 85 * sss,
+                          color:
+                              hovered
+                                  ? getAccentColor(ref)
+                                  : fastBasename(
+                                    widget.entry.path,
+                                  ).toLowerCase().startsWith('disabled')
+                                  ? const Color.fromARGB(100, 169, 169, 169)
+                                  : const Color.fromARGB(169, 255, 255, 255),
+                        ),
+                      ),
+                      if (widget.entry is Directory && imagePreviewPath != null)
+                        Center(
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 25 * sss),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(6 * sss),
+                              child: Container(
+                                width: 64 * sss,
+                                height: 43 * sss,
+                                decoration: BoxDecoration(
+                                  color: const Color.fromARGB(
+                                    100,
+                                    100,
+                                    100,
+                                    100,
+                                  ),
+                                ),
+                                child: Image.file(
+                                  File(imagePreviewPath!),
+                                  cacheWidth: 192,
+                                  fit: BoxFit.cover,
+                                  color: Color.fromARGB(
+                                    fastBasename(
+                                          widget.entry.path,
+                                        ).toLowerCase().startsWith('disabled')
+                                        ? 127
+                                        : 255,
+                                    255,
+                                    255,
+                                    255,
+                                  ),
+                                  colorBlendMode: BlendMode.modulate,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   Text(
-                    fastBasename(widget.entry.path),
+                    modOrGroupName != null
+                        ? modOrGroupName!
+                        : fastBasename(widget.entry.path),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
@@ -195,10 +308,22 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
                               : fastBasename(
                                 widget.entry.path,
                               ).toLowerCase().startsWith('disabled')
-                              ? const Color.fromARGB(255, 169, 169, 169)
+                              ? const Color.fromARGB(127, 169, 169, 169)
                               : const Color.fromARGB(169, 255, 255, 255),
                     ),
                   ),
+                  if (modOrGroupName != null)
+                    Text(
+                      fastBasename(widget.entry.path),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        fontSize: 9 * sss,
+                        fontWeight: FontWeight.w400,
+                        color: const Color.fromARGB(100, 255, 255, 255),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -363,7 +488,7 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final itemWidth = 120 * sss;
-        final itemHeight = 170 * sss;
+        final itemHeight = 180 * sss;
         final spacing = 10 * sss;
 
         final itemsPerRow =
