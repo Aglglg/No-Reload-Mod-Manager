@@ -235,6 +235,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
       isSyntaxErrorRemoved: oldMod.isSyntaxErrorRemoved,
       isUnoptimized: oldMod.isUnoptimized,
       isNamespaced: oldMod.isNamespaced,
+      isDisabled: oldMod.isDisabled,
     );
 
     // Clone the ModGroupData with updated mod list
@@ -256,14 +257,6 @@ class _ModContainerState extends ConsumerState<ModContainer>
     ref.read(modGroupDataProvider.notifier).state = updatedGroups;
 
     await setModNameOnDisk(oldMod.modDir, _modNameTextFieldController.text);
-  }
-
-  bool isModDisabled(String modPath) {
-    if (p.basename(modPath).toLowerCase().startsWith('disabled')) {
-      return true;
-    } else {
-      return false;
-    }
   }
 
   @override
@@ -635,13 +628,10 @@ class _ModContainerState extends ConsumerState<ModContainer>
                                       !ref.watch(wasUsingKeyboard)) ||
                                   (widget.isActiveInGrid && widget.isGrid)
                               ? Colors.white
-                              : isModDisabled(
-                                widget
-                                    .currentGroupData
-                                    .modsInGroup[widget.index]
-                                    .modDir
-                                    .path,
-                              )
+                              : widget
+                                  .currentGroupData
+                                  .modsInGroup[widget.index]
+                                  .isDisabled
                               ? Colors.red
                               : widget.isSelected
                               ? getAccentColor(ref)

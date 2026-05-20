@@ -133,6 +133,7 @@ void _addGroupToRiverpod(WidgetRef ref, Directory groupDir, int index) {
         isSyntaxErrorRemoved: false,
         isUnoptimized: false,
         isNamespaced: false,
+        isDisabled: false,
       ),
     ],
     realIndex: index + 1,
@@ -558,6 +559,7 @@ void _updateModIconProvider(
                     isSyntaxErrorRemoved: mod.isSyntaxErrorRemoved,
                     isUnoptimized: mod.isUnoptimized,
                     isNamespaced: mod.isNamespaced,
+                    isDisabled: mod.isDisabled,
                   );
                 }
                 return mod;
@@ -614,9 +616,15 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
           isSyntaxErrorRemoved: await checkModSyntaxErrorRemoved(modDir),
           isUnoptimized: await checkModWasMarkedAsUnoptimized(modDir),
           isNamespaced: await checkModWasMarkedAsNamespaced(modDir),
+          isDisabled: isModDisabled(modDir.path),
         );
       }).toList(),
     );
+
+    modDatas.sort((a, b) {
+      if (a.isDisabled == b.isDisabled) return 0;
+      return a.isDisabled ? 1 : -1;
+    });
 
     modDatas.insert(
       0,
@@ -629,6 +637,7 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
         isSyntaxErrorRemoved: false,
         isUnoptimized: false,
         isNamespaced: false,
+        isDisabled: false,
       ),
     );
 
@@ -686,6 +695,14 @@ Future<bool> checkModWasMarkedAsNamespaced(Directory modDir) async {
       return false;
     }
   } catch (_) {
+    return false;
+  }
+}
+
+bool isModDisabled(String modPath) {
+  if (p.basename(modPath).toLowerCase().startsWith('disabled')) {
+    return true;
+  } else {
     return false;
   }
 }
@@ -1230,7 +1247,7 @@ Future<List<TextSpan>> updateModData(
                 _manageMod(
                   modDatas[j].modDir.path,
                   'group_$groupIndex',
-                  j,
+                  modDatas[j].realIndex,
                   groupIndex,
                   operationLogs,
                   errorReport,

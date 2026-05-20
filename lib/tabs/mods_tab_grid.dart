@@ -310,10 +310,8 @@ class _ModAreaGridState extends ConsumerState<ModAreaGrid>
                           unawaited(
                             setSelectedModIndex(
                               ref,
-                              widget
-                                  .currentGroupData
-                                  .modsInGroup[modData.key]
-                                  .realIndex,
+                              modData
+                                  .key, //just view index, not actual mod index
                               widget.currentGroupData.groupDir,
                             ),
                           );
@@ -324,10 +322,7 @@ class _ModAreaGridState extends ConsumerState<ModAreaGrid>
                             widget
                                 .currentGroupData
                                 .previousSelectedModOnGroup ==
-                            widget
-                                .currentGroupData
-                                .modsInGroup[modData.key]
-                                .realIndex,
+                            modData.key,
                         currentGroupData: widget.currentGroupData,
                       );
                     }).toList(),

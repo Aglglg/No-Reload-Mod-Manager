@@ -886,11 +886,7 @@ class _ModAreaState extends ConsumerState<ModAreaCarousel>
             isRealIndex: true,
           );
           _carouselSliderModController.animateToPage(
-            widget.currentGroupData.modsInGroup.indexWhere(
-              (mod) =>
-                  mod.realIndex ==
-                  widget.currentGroupData.previousSelectedModOnGroup,
-            ),
+            widget.currentGroupData.previousSelectedModOnGroup,
             duration: Duration(milliseconds: 250),
             curve: Curves.easeOut,
           );
@@ -969,8 +965,7 @@ class _ModAreaState extends ConsumerState<ModAreaCarousel>
               double itemHeight = isCentered ? 217.8 * sss : 156.816 * sss;
               return ModContainer(
                 isSelected:
-                    widget.currentGroupData.previousSelectedModOnGroup ==
-                    widget.currentGroupData.modsInGroup[index].realIndex,
+                    widget.currentGroupData.previousSelectedModOnGroup == index,
                 index: index,
                 currentGroupData: widget.currentGroupData,
                 itemHeight: itemHeight,
@@ -987,7 +982,7 @@ class _ModAreaState extends ConsumerState<ModAreaCarousel>
                   unawaited(
                     setSelectedModIndex(
                       ref,
-                      widget.currentGroupData.modsInGroup[index].realIndex,
+                      index, //just view index, not actual mod index
                       widget.currentGroupData.groupDir,
                     ),
                   );

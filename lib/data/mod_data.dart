@@ -29,6 +29,7 @@ class ModData {
   final bool isSyntaxErrorRemoved;
   final bool isUnoptimized;
   final bool isNamespaced;
+  final bool isDisabled;
 
   ModData({
     required this.modDir,
@@ -39,5 +40,6 @@ class ModData {
     required this.isSyntaxErrorRemoved,
     required this.isUnoptimized,
     required this.isNamespaced,
+    required this.isDisabled,
   });
 }
