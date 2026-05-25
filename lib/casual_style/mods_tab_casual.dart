@@ -8,10 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/main.dart';
+import 'package:no_reload_mod_manager/custom_icons.dart';
 import 'package:no_reload_mod_manager/utils/archive_manager.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
-import 'package:no_reload_mod_manager/utils/force_read_as_utf8.dart';
-import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
@@ -97,6 +96,9 @@ class ExplorerItem extends ConsumerStatefulWidget {
 
 class _ExplorerItemState extends ConsumerState<ExplorerItem> {
   bool hovered = false;
+  bool isManagedFolder = false;
+  bool isRemovedManagedFolder = false;
+  bool isModsFolder = false;
   String? imagePreviewPath;
   String? modOrGroupName;
 
@@ -106,6 +108,7 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       checkForImagePreview();
       checkForModOrGroupName();
+      checkForSpecialItem();
     });
   }
 
@@ -115,8 +118,12 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
     if (oldWidget.entry.path != widget.entry.path) {
       setState(() => imagePreviewPath = null);
       setState(() => modOrGroupName = null);
+      setState(() => isManagedFolder = false);
+      setState(() => isRemovedManagedFolder = false);
+      setState(() => isModsFolder = false);
       checkForImagePreview();
       checkForModOrGroupName();
+      checkForSpecialItem();
     }
   }
 
@@ -164,6 +171,41 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
     } catch (_) {}
   }
 
+  Future<void> checkForSpecialItem() async {
+    if (widget.entry is! Directory) return;
+    final modsPath = ref.read(validModsPath);
+    if (modsPath == null) return;
+    String managedPath = p.join(modsPath, ConstantVar.managedFolderName);
+    String removedPath = p.join(modsPath, ConstantVar.managedRemovedFolderName);
+
+    bool isManaged = false;
+    bool isRemoved = false;
+    bool isMods = false;
+
+    try {
+      isManaged = await FileSystemEntity.identical(
+        managedPath,
+        widget.entry.path,
+      );
+    } catch (_) {}
+    try {
+      isRemoved = await FileSystemEntity.identical(
+        removedPath,
+        widget.entry.path,
+      );
+    } catch (_) {}
+    try {
+      isMods = await FileSystemEntity.identical(modsPath, widget.entry.path);
+    } catch (_) {}
+
+    if (!mounted) return;
+    setState(() {
+      isManagedFolder = isManaged;
+      isRemovedManagedFolder = isRemoved;
+      isModsFolder = isMods;
+    });
+  }
+
   String fastBasename(String path) {
     final idx = path.lastIndexOf(Platform.pathSeparator);
     return idx == -1 ? path : path.substring(idx + 1);
@@ -193,138 +235,199 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
               (_) => setState(() {
                 hovered = false;
               }),
-          child: Container(
-            width: widget.width,
-            height: widget.height,
-            margin: EdgeInsets.only(
-              right: widget.spacing,
-              bottom: widget.spacing,
-            ),
-            decoration:
-                widget.isSelected
-                    ? BoxDecoration(
-                      color: Color.fromARGB(100, 127, 127, 127),
-                      borderRadius: BorderRadius.all(Radius.circular(5 * sss)),
-                      border: Border.all(
-                        color: Color.fromARGB(
-                          hovered ? 100 : 50,
-                          255,
-                          255,
-                          255,
+          child: Tooltip(
+            richMessage:
+                modOrGroupName != null
+                    ? TextSpan(
+                      children: [
+                        TextSpan(
+                          text: "$modOrGroupName\n",
+                          style: GoogleFonts.poppins(
+                            fontSize: 12 * sss,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
                         ),
-                        strokeAlign: BorderSide.strokeAlignInside,
-                        width: 1.5 * sss,
-                      ),
+                        TextSpan(
+                          text: fastBasename(widget.entry.path),
+                          style: GoogleFonts.poppins(
+                            fontSize: 12 * sss,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ],
                     )
-                    : BoxDecoration(
-                      color: Color.fromARGB(0, 127, 127, 127),
-                      borderRadius: BorderRadius.all(Radius.circular(5 * sss)),
-                      border: Border.all(
-                        color: Color.fromARGB(hovered ? 100 : 0, 255, 255, 255),
-                        strokeAlign: BorderSide.strokeAlignInside,
-                        width: 1.5 * sss,
-                      ),
-                    ),
-            child: Padding(
-              padding: EdgeInsets.all(8.0 * sss),
-              child: Column(
-                children: [
-                  Stack(
-                    children: [
-                      Center(
-                        child: Icon(
-                          widget.entry is Directory
-                              ? Icons.folder_rounded
-                              : widget.entry is File
-                              ? SevenZip.isSupported(widget.entry.path)
-                                  ? Icons.folder_zip_rounded
-                                  : widget.entry.path.endsWith('.ini')
-                                  ? Icons.text_snippet_rounded
-                                  : Icons.insert_drive_file_rounded
-                              : Icons.file_present_rounded,
-                          size: 85 * sss,
-                          color:
-                              hovered
-                                  ? getAccentColor(ref)
-                                  : fastBasename(
-                                    widget.entry.path,
-                                  ).toLowerCase().startsWith('disabled')
-                                  ? const Color.fromARGB(100, 169, 169, 169)
-                                  : const Color.fromARGB(169, 255, 255, 255),
+                    : null,
+            message:
+                modOrGroupName == null
+                    ? isManagedFolder
+                        ? "Contains mods that's added to No-Reload Style and some required mod manager files"
+                        : isRemovedManagedFolder
+                        ? "Contains mods that's removed from No-Reload Style, safe to be deleted if it's unused mod"
+                        : isModsFolder
+                        ? "Contains your mods"
+                        : fastBasename(widget.entry.path)
+                    : null,
+            textStyle: GoogleFonts.poppins(
+              fontSize: 12 * sss,
+              fontWeight: FontWeight.w500,
+              color: Colors.black,
+            ),
+            constraints: BoxConstraints(maxWidth: 300 * sss),
+            waitDuration: Duration(milliseconds: 1000),
+
+            child: Container(
+              width: widget.width,
+              height: widget.height,
+              margin: EdgeInsets.only(
+                right: widget.spacing,
+                bottom: widget.spacing,
+              ),
+              decoration:
+                  widget.isSelected
+                      ? BoxDecoration(
+                        color: Color.fromARGB(100, 127, 127, 127),
+                        borderRadius: BorderRadius.all(
+                          Radius.circular(5 * sss),
+                        ),
+                        border: Border.all(
+                          color: Color.fromARGB(
+                            hovered ? 100 : 50,
+                            255,
+                            255,
+                            255,
+                          ),
+                          strokeAlign: BorderSide.strokeAlignInside,
+                          width: 1.5 * sss,
+                        ),
+                      )
+                      : BoxDecoration(
+                        color: Color.fromARGB(0, 127, 127, 127),
+                        borderRadius: BorderRadius.all(
+                          Radius.circular(5 * sss),
+                        ),
+                        border: Border.all(
+                          color: Color.fromARGB(
+                            hovered ? 100 : 0,
+                            255,
+                            255,
+                            255,
+                          ),
+                          strokeAlign: BorderSide.strokeAlignInside,
+                          width: 1.5 * sss,
                         ),
                       ),
-                      if (widget.entry is Directory && imagePreviewPath != null)
+              child: Padding(
+                padding: EdgeInsets.all(8.0 * sss),
+                child: Column(
+                  children: [
+                    Stack(
+                      children: [
                         Center(
-                          child: Padding(
-                            padding: EdgeInsets.only(top: 25 * sss),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(6 * sss),
-                              child: Container(
-                                width: 64 * sss,
-                                height: 43 * sss,
-                                decoration: BoxDecoration(
-                                  color: const Color.fromARGB(
-                                    100,
-                                    100,
-                                    100,
-                                    100,
+                          child: Icon(
+                            widget.entry is Directory
+                                ? isManagedFolder || isRemovedManagedFolder
+                                    ? CustomIcons.folder_bolt_rounded
+                                    : isModsFolder
+                                    ? CustomIcons.folder_home_rounded
+                                    : Icons.folder_rounded
+                                : widget.entry is File
+                                ? SevenZip.isSupported(widget.entry.path)
+                                    ? Icons.folder_zip_rounded
+                                    : widget.entry.path.endsWith('.ini')
+                                    ? Icons.text_snippet_rounded
+                                    : Icons.insert_drive_file_rounded
+                                : Icons.file_present_rounded,
+                            size: 85 * sss,
+                            color:
+                                hovered
+                                    ? getAccentColor(ref)
+                                    : fastBasename(
+                                      widget.entry.path,
+                                    ).toLowerCase().startsWith('disabled')
+                                    ? const Color.fromARGB(255, 90, 90, 90)
+                                    : const Color.fromARGB(255, 169, 169, 169),
+                          ),
+                        ),
+                        if (widget.entry is Directory &&
+                            imagePreviewPath != null &&
+                            !isManagedFolder &&
+                            !isRemovedManagedFolder)
+                          Center(
+                            child: Padding(
+                              padding: EdgeInsets.only(top: 25 * sss),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(6 * sss),
+                                child: Container(
+                                  width: 64 * sss,
+                                  height: 43 * sss,
+                                  decoration: BoxDecoration(
+                                    color: const Color.fromARGB(
+                                      100,
+                                      100,
+                                      100,
+                                      100,
+                                    ),
                                   ),
-                                ),
-                                child: Image.file(
-                                  File(imagePreviewPath!),
-                                  cacheWidth: 192,
-                                  fit: BoxFit.cover,
-                                  color: Color.fromARGB(
-                                    fastBasename(
-                                          widget.entry.path,
-                                        ).toLowerCase().startsWith('disabled')
-                                        ? 127
-                                        : 255,
-                                    255,
-                                    255,
-                                    255,
+                                  child: Image.file(
+                                    File(imagePreviewPath!),
+                                    cacheWidth: 192,
+                                    fit: BoxFit.cover,
+                                    color: Color.fromARGB(
+                                      hovered
+                                          ? 255
+                                          : fastBasename(
+                                            widget.entry.path,
+                                          ).toLowerCase().startsWith('disabled')
+                                          ? 127
+                                          : 255,
+                                      255,
+                                      255,
+                                      255,
+                                    ),
+                                    colorBlendMode: BlendMode.modulate,
                                   ),
-                                  colorBlendMode: BlendMode.modulate,
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                    ],
-                  ),
-                  Text(
-                    modOrGroupName != null
-                        ? modOrGroupName!
-                        : fastBasename(widget.entry.path),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12 * sss,
-                      fontWeight: FontWeight.w500,
-                      color:
-                          hovered
-                              ? getAccentColor(ref)
-                              : fastBasename(
-                                widget.entry.path,
-                              ).toLowerCase().startsWith('disabled')
-                              ? const Color.fromARGB(127, 169, 169, 169)
-                              : const Color.fromARGB(169, 255, 255, 255),
+                      ],
                     ),
-                  ),
-                  if (modOrGroupName != null)
                     Text(
-                      fastBasename(widget.entry.path),
-                      maxLines: 1,
+                      modOrGroupName != null
+                          ? modOrGroupName!
+                          : fastBasename(widget.entry.path),
+                      maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
-                        fontSize: 9 * sss,
-                        fontWeight: FontWeight.w400,
-                        color: const Color.fromARGB(100, 255, 255, 255),
+                        fontSize: 12 * sss,
+                        fontWeight: FontWeight.w500,
+                        color:
+                            hovered
+                                ? getAccentColor(ref)
+                                : fastBasename(
+                                  widget.entry.path,
+                                ).toLowerCase().startsWith('disabled')
+                                ? const Color.fromARGB(255, 90, 90, 90)
+                                : const Color.fromARGB(255, 169, 169, 169),
                       ),
                     ),
-                ],
+                    if (modOrGroupName != null)
+                      Text(
+                        fastBasename(widget.entry.path),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(
+                          fontSize: 10 * sss,
+                          fontWeight: FontWeight.w500,
+                          color: const Color.fromARGB(255, 127, 127, 127),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -345,6 +448,7 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
   List<FileSystemEntity> _entries = [];
   Set<int> selectedItems = {};
   int lastSelectedItem = 0;
+  final scrollController = ScrollController();
 
   @override
   void initState() {
@@ -449,10 +553,26 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
               bool isModsFolder =
                   e.path.toLowerCase() ==
                   ref.read(validModsPath)?.toLowerCase();
+              bool isManagedFolder =
+                  e.path.toLowerCase() ==
+                  p
+                      .join(
+                        ref.read(validModsPath)!,
+                        ConstantVar.managedFolderName,
+                      )
+                      .toLowerCase();
+              bool isManagedRemovedFolder =
+                  e.path.toLowerCase() ==
+                  p
+                      .join(
+                        ref.read(validModsPath)!,
+                        ConstantVar.managedRemovedFolderName,
+                      )
+                      .toLowerCase();
               return _SortableEntry(
                 entity: e,
                 typeOrder:
-                    isModsFolder
+                    isModsFolder || isManagedFolder || isManagedRemovedFolder
                         ? -1
                         : e is Directory
                         ? disabled
@@ -476,7 +596,7 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
     sortable.sort((a, b) {
       final typeDiff = a.typeOrder - b.typeOrder;
       if (typeDiff != 0) return typeDiff;
-      return compareAsciiLowerCaseNatural(a.lowerName, b.lowerName);
+      return compareNatural(a.lowerName, b.lowerName);
     });
 
     return sortable.map((e) => e.entity).toList();
@@ -503,60 +623,79 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
               PointerDeviceKind.mouse,
               PointerDeviceKind.trackpad,
             },
-            scrollbars: true,
+            scrollbars: false,
           ),
-          child: ListView.builder(
-            itemExtent: itemHeight,
-            itemCount: rowCount,
-            itemBuilder: (context, rowIndex) {
-              final start = rowIndex * itemsPerRow;
-              final end = min(start + itemsPerRow, _entries.length);
+          child: ScrollbarTheme(
+            data: ScrollbarThemeData(
+              thickness: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.hovered)) {
+                  return 8 * sss;
+                }
+                return 3 * sss;
+              }),
+            ),
+            child: Scrollbar(
+              controller: scrollController,
+              radius: const Radius.circular(999),
+              child: ListView.builder(
+                controller: scrollController,
+                itemExtent: itemHeight,
+                itemCount: rowCount,
+                itemBuilder: (context, rowIndex) {
+                  final start = rowIndex * itemsPerRow;
+                  final end = min(start + itemsPerRow, _entries.length);
 
-              return Row(
-                children: [
-                  for (int i = start; i < end; i++)
-                    ExplorerItem(
-                      index: i,
-                      entry: _entries[i],
-                      width: itemWidth,
-                      height: itemHeight,
-                      spacing: spacing,
-                      isSelected: selectedItems.contains(i),
-                      onSingleTap: () {
-                        setState(() {
-                          if (ref.read(isShiftPressed)) {
-                            int greaterNumber =
-                                lastSelectedItem > i ? lastSelectedItem : i;
-                            int leastNumber =
-                                lastSelectedItem < i ? lastSelectedItem : i;
-                            Set<int> selections = {};
-                            if (ref.read(isCtrlPressed)) {
-                              selections = selectedItems;
-                            }
-                            for (var i = leastNumber; i <= greaterNumber; i++) {
-                              selections.add(i);
-                            }
-                            selectedItems = selections;
-                            return;
-                          } else if (ref.read(isCtrlPressed)) {
-                            final temp = selectedItems;
-                            if (temp.contains(i)) {
-                              temp.remove(i);
-                            } else {
-                              temp.add(i);
-                            }
-                            selectedItems = temp;
-                          } else {
-                            selectedItems = {i};
-                          }
+                  return Row(
+                    children: [
+                      for (int i = start; i < end; i++)
+                        ExplorerItem(
+                          index: i,
+                          entry: _entries[i],
+                          width: itemWidth,
+                          height: itemHeight,
+                          spacing: spacing,
+                          isSelected: selectedItems.contains(i),
+                          onSingleTap: () {
+                            setState(() {
+                              if (ref.read(isShiftPressed)) {
+                                int greaterNumber =
+                                    lastSelectedItem > i ? lastSelectedItem : i;
+                                int leastNumber =
+                                    lastSelectedItem < i ? lastSelectedItem : i;
+                                Set<int> selections = {};
+                                if (ref.read(isCtrlPressed)) {
+                                  selections = selectedItems;
+                                }
+                                for (
+                                  var i = leastNumber;
+                                  i <= greaterNumber;
+                                  i++
+                                ) {
+                                  selections.add(i);
+                                }
+                                selectedItems = selections;
+                                return;
+                              } else if (ref.read(isCtrlPressed)) {
+                                final temp = selectedItems;
+                                if (temp.contains(i)) {
+                                  temp.remove(i);
+                                } else {
+                                  temp.add(i);
+                                }
+                                selectedItems = temp;
+                              } else {
+                                selectedItems = {i};
+                              }
 
-                          lastSelectedItem = i;
-                        });
-                      },
-                    ),
-                ],
-              );
-            },
+                              lastSelectedItem = i;
+                            });
+                          },
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ),
           ),
         );
       },

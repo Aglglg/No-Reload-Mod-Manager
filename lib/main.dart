@@ -953,7 +953,10 @@ class _MainViewState extends ConsumerState<MainView>
         tray.MenuItem(
           key: 'Hide',
           label: 'Hide'.tr(),
-          onClick: (menuItem) => bitsdojo.appWindow.hide(),
+          onClick: (menuItem) {
+            bitsdojo.appWindow.hide();
+            DynamicDirectoryWatcher.stop();
+          },
         ),
         tray.MenuItem.separator(),
         tray.MenuItem(

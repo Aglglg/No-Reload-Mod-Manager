@@ -941,6 +941,11 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                           textAlign: TextAlign.center,
                           message:
                               "${ref.read(modGroupDataProvider)[index].groupName}\n${p.basename(ref.read(modGroupDataProvider)[index].groupDir.path)}",
+                          textStyle: GoogleFonts.poppins(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12 * sss,
+                          ),
                           waitDuration: Duration(milliseconds: 500),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,

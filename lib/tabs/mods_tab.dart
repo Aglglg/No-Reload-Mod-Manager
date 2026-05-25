@@ -611,6 +611,11 @@ class _ModContainerState extends ConsumerState<ModContainer>
                 message: p.basename(
                   widget.currentGroupData.modsInGroup[widget.index].modDir.path,
                 ),
+                textStyle: GoogleFonts.poppins(
+                  color: Colors.black,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12 * sss,
+                ),
                 waitDuration: Duration(milliseconds: 500),
                 child: AnimatedContainer(
                   duration: Duration(milliseconds: !widget.isGrid ? 250 : 0),
