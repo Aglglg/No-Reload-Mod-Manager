@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -622,8 +623,8 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
     );
 
     modDatas.sort((a, b) {
-      if (a.isDisabled == b.isDisabled) return 0;
-      return a.isDisabled ? 1 : -1;
+      if (a.isDisabled != b.isDisabled) return a.isDisabled ? 1 : -1;
+      return compareNatural(a.modName.toLowerCase(), b.modName.toLowerCase());
     });
 
     modDatas.insert(

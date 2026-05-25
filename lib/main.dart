@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:auto_updater/auto_updater.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
@@ -1337,8 +1338,10 @@ class _MainViewState extends ConsumerState<MainView>
 
         if (ref.read(sortGroupMethod) == 1) {
           datas.sort(
-            (a, b) =>
-                a.groupName.toLowerCase().compareTo(b.groupName.toLowerCase()),
+            (a, b) => compareNatural(
+              a.groupName.toLowerCase(),
+              b.groupName.toLowerCase(),
+            ),
           );
         }
 
