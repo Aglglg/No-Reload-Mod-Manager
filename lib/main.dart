@@ -1323,6 +1323,10 @@ class _MainViewState extends ConsumerState<MainView>
 
         ref.read(validModsPath.notifier).state = modsPath;
 
+        ref.read(validModsPath.notifier).state = modsPath;
+        int groupIndex = await getSelectedGroupIndex(managedPath, 500);
+        ref.read(currentGroupIndexProvider.notifier).state = groupIndex;
+
         DynamicDirectoryWatcher.watch(
           r"\\?\" + modsPath.replaceFirst(r"\\?\", ''),
           ref: ref,
