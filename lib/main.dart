@@ -1257,9 +1257,10 @@ class _MainViewState extends ConsumerState<MainView>
     setState(() {
       _views = [TabKeybinds(), TabModsLoading(), TabSettings()];
     });
-    ref.read(currentGroupIndexProvider.notifier).state = 0;
     TargetGame targetGame = ref.read(targetGameProvider);
     if (targetGame == TargetGame.none) return;
+
+    ref.read(currentGroupIndexProvider.notifier).state = 0;
 
     String modsPath = getCurrentModsPath(targetGame);
     String managedPath = p.join(modsPath, ConstantVar.managedFolderName);
