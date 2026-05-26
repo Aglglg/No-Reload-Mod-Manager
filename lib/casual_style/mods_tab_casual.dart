@@ -550,25 +550,24 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
               bool ini = e.path.endsWith('.ini');
               String lowerName = fastBasename(e.path).toLowerCase();
               bool disabled = lowerName.startsWith('disabled');
+
+              final modsPath = ref.read(validModsPath);
               bool isModsFolder =
-                  e.path.toLowerCase() ==
-                  ref.read(validModsPath)?.toLowerCase();
+                  modsPath != null &&
+                  e.path.toLowerCase() == modsPath.toLowerCase();
               bool isManagedFolder =
+                  modsPath != null &&
                   e.path.toLowerCase() ==
-                  p
-                      .join(
-                        ref.read(validModsPath)!,
-                        ConstantVar.managedFolderName,
-                      )
-                      .toLowerCase();
+                      p
+                          .join(modsPath, ConstantVar.managedFolderName)
+                          .toLowerCase();
               bool isManagedRemovedFolder =
+                  modsPath != null &&
                   e.path.toLowerCase() ==
-                  p
-                      .join(
-                        ref.read(validModsPath)!,
-                        ConstantVar.managedRemovedFolderName,
-                      )
-                      .toLowerCase();
+                      p
+                          .join(modsPath, ConstantVar.managedRemovedFolderName)
+                          .toLowerCase();
+
               return _SortableEntry(
                 entity: e,
                 typeOrder:
