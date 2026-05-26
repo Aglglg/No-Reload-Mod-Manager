@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
 import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
@@ -1072,9 +1071,7 @@ Future<List<TextSpan>> updateModData(
     );
 
     //Get errored lines from xxmi ini handler
-    errorReport = await Isolate.run(() {
-      return getErroredLines(d3dxIni, basePath, knownModdingLibraries);
-    });
+    errorReport = getErroredLines(d3dxIni, basePath, knownModdingLibraries);
 
     //Show duplicate known libs, libDisplayName <> files of the lib
     for (var entry in errorReport.duplicateLibs.entries) {
@@ -1848,33 +1845,31 @@ Future<void> _tryRenameOldManagedFolder(String modsPath) async {
 }
 
 Future<bool> _isDllForNrmm(String dllPath) async {
-  return Isolate.run(() {
-    final file = File(dllPath);
-    // Sanity check — a real d3d11.dll is between 1MB and 150MB
-    final size = file.lengthSync();
-    if (size < 1024 * 1024 || size > 150 * 1024 * 1024) return false;
+  final file = File(dllPath);
+  // Sanity check — a real d3d11.dll is between 1MB and 150MB
+  final size = file.lengthSync();
+  if (size < 1024 * 1024 || size > 150 * 1024 * 1024) return false;
 
-    final bytes = file.readAsBytesSync();
-    final needle = ascii.encode('"Manager" key supported in [Loader] section');
-    final nLen = needle.length;
+  final bytes = file.readAsBytesSync();
+  final needle = ascii.encode('"Manager" key supported in [Loader] section');
+  final nLen = needle.length;
 
-    final skip = List<int>.filled(256, nLen);
-    for (int i = 0; i < nLen - 1; i++) {
-      skip[needle[i]] = nLen - 1 - i;
+  final skip = List<int>.filled(256, nLen);
+  for (int i = 0; i < nLen - 1; i++) {
+    skip[needle[i]] = nLen - 1 - i;
+  }
+
+  int i = nLen - 1;
+  while (i < bytes.length) {
+    int j = nLen - 1, k = i;
+    while (j >= 0 && bytes[k] == needle[j]) {
+      k--;
+      j--;
     }
-
-    int i = nLen - 1;
-    while (i < bytes.length) {
-      int j = nLen - 1, k = i;
-      while (j >= 0 && bytes[k] == needle[j]) {
-        k--;
-        j--;
-      }
-      if (j == -1) return true;
-      i += skip[bytes[i]];
-    }
-    return false;
-  });
+    if (j == -1) return true;
+    i += skip[bytes[i]];
+  }
+  return false;
 }
 
 Future<void> _createBackgroundKeypressIni(
