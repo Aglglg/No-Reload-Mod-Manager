@@ -1,3 +1,7 @@
+//TODO: Show dds file
+//TODO: Proper info on files that cannot be double click open, for security reason
+//TODO: Navigation, backward and forward
+
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
@@ -99,6 +103,9 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
   bool isManagedFolder = false;
   bool isRemovedManagedFolder = false;
   bool isModsFolder = false;
+  bool isImageFile = false;
+  bool isIniFile = false;
+  bool isDisabledItem = false;
   String? imagePreviewPath;
   String? modOrGroupName;
 
@@ -121,6 +128,9 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
       setState(() => isManagedFolder = false);
       setState(() => isRemovedManagedFolder = false);
       setState(() => isModsFolder = false);
+      setState(() => isImageFile = false);
+      setState(() => isIniFile = false);
+      setState(() => isDisabledItem = false);
       checkForImagePreview();
       checkForModOrGroupName();
       checkForSpecialItem();
@@ -172,44 +182,103 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
   }
 
   Future<void> checkForSpecialItem() async {
-    if (widget.entry is! Directory) return;
+    if (!mounted) return;
     final modsPath = ref.read(validModsPath);
     if (modsPath == null) return;
+
     String managedPath = p.join(modsPath, ConstantVar.managedFolderName);
     String removedPath = p.join(modsPath, ConstantVar.managedRemovedFolderName);
 
-    bool isManaged = false;
-    bool isRemoved = false;
-    bool isMods = false;
+    if (widget.entry is Directory) {
+      bool isManaged = false;
+      bool isRemoved = false;
+      bool isMods = false;
+      bool isDisabled = false;
 
-    try {
-      isManaged = await FileSystemEntity.identical(
-        managedPath,
-        widget.entry.path,
-      );
-    } catch (_) {}
-    try {
-      isRemoved = await FileSystemEntity.identical(
-        removedPath,
-        widget.entry.path,
-      );
-    } catch (_) {}
-    try {
-      isMods = await FileSystemEntity.identical(modsPath, widget.entry.path);
-    } catch (_) {}
+      isDisabled = fastBasename(
+        widget.entry.path.toLowerCase(),
+      ).startsWith('disabled');
 
-    if (!mounted) return;
-    setState(() {
-      isManagedFolder = isManaged;
-      isRemovedManagedFolder = isRemoved;
-      isModsFolder = isMods;
-    });
+      try {
+        isManaged = await FileSystemEntity.identical(
+          managedPath,
+          widget.entry.path,
+        );
+      } catch (_) {}
+      try {
+        isRemoved = await FileSystemEntity.identical(
+          removedPath,
+          widget.entry.path,
+        );
+      } catch (_) {}
+      try {
+        isMods = await FileSystemEntity.identical(modsPath, widget.entry.path);
+      } catch (_) {}
+
+      if (!mounted) return;
+      setState(() {
+        isManagedFolder = isManaged;
+        isRemovedManagedFolder = isRemoved;
+        isModsFolder = isMods;
+        isDisabledItem = isDisabled;
+      });
+    } else if (widget.entry is File) {
+      bool isDisabled = false;
+      bool isImage = false;
+      bool isIni = false;
+
+      final ext = p.extension(widget.entry.path).toLowerCase();
+      isIni = ext == '.ini';
+      isImage = _imageExtensions.contains(ext);
+      isDisabled =
+          isIni &&
+          fastBasename(widget.entry.path).toLowerCase().startsWith('disabled');
+
+      if (isImage) {
+        await ResizeImage(
+          FileImage(File(widget.entry.path)),
+          width: 192,
+        ).evict();
+      }
+      if (!mounted) return;
+      setState(() {
+        isDisabledItem = isDisabled;
+        isIniFile = isIni;
+        isImageFile = isImage;
+      });
+    }
   }
 
   String fastBasename(String path) {
     final idx = path.lastIndexOf(Platform.pathSeparator);
     return idx == -1 ? path : path.substring(idx + 1);
   }
+
+  static const _openableExtensions = {
+    '.ini',
+    '.txt',
+    '.json',
+    '.xml',
+    '.md',
+    '.log',
+    '.csv',
+    '.hlsl',
+    '.hlsli',
+    '.py',
+    '.png',
+    '.jpg',
+    '.jpeg',
+    '.bmp',
+    '.dds',
+    '.tga',
+    '.gif',
+    '.webp',
+    '.buf',
+    '.ib',
+    '.vb',
+  };
+
+  static const _imageExtensions = {'.png', '.jpg', '.jpeg', '.webp', '.gif'};
 
   @override
   Widget build(BuildContext context) {
@@ -219,11 +288,19 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
         widget.onSingleTap();
       },
       child: GestureDetector(
-        onDoubleTapDown: (_) {
+        onDoubleTapDown: (_) async {
           if (widget.entry is Directory &&
               !ref.read(isCtrlPressed) &&
               !ref.read(isShiftPressed)) {
             setCurrentPath(ref, widget.entry.path);
+          }
+          if (widget.entry is File &&
+              !ref.read(isCtrlPressed) &&
+              !ref.read(isShiftPressed)) {
+            final ext = p.extension(widget.entry.path).toLowerCase();
+            if (_openableExtensions.contains(ext)) {
+              await Process.run('explorer', [widget.entry.path]);
+            }
           }
         },
         child: MouseRegion(
@@ -324,32 +401,79 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
                   children: [
                     Stack(
                       children: [
-                        Center(
-                          child: Icon(
-                            widget.entry is Directory
-                                ? isManagedFolder || isRemovedManagedFolder
-                                    ? CustomIcons.folder_bolt_rounded
-                                    : isModsFolder
-                                    ? CustomIcons.folder_home_rounded
-                                    : Icons.folder_rounded
-                                : widget.entry is File
-                                ? SevenZip.isSupported(widget.entry.path)
-                                    ? Icons.folder_zip_rounded
-                                    : widget.entry.path.endsWith('.ini')
-                                    ? Icons.text_snippet_rounded
-                                    : Icons.insert_drive_file_rounded
-                                : Icons.file_present_rounded,
-                            size: 85 * sss,
-                            color:
-                                hovered
-                                    ? getAccentColor(ref)
-                                    : fastBasename(
-                                      widget.entry.path,
-                                    ).toLowerCase().startsWith('disabled')
-                                    ? const Color.fromARGB(255, 90, 90, 90)
-                                    : const Color.fromARGB(255, 169, 169, 169),
-                          ),
-                        ),
+                        isImageFile
+                            ? Padding(
+                              padding: EdgeInsets.only(bottom: 5 * sss),
+                              child: SizedBox(
+                                height: 80 * sss,
+                                child: Image.file(
+                                  File(widget.entry.path),
+                                  errorBuilder:
+                                      (context, error, stackTrace) => Icon(
+                                        Icons.image_rounded,
+                                        size: 85 * sss,
+                                        color:
+                                            hovered
+                                                ? getAccentColor(ref)
+                                                : isDisabledItem
+                                                ? const Color.fromARGB(
+                                                  255,
+                                                  90,
+                                                  90,
+                                                  90,
+                                                )
+                                                : const Color.fromARGB(
+                                                  255,
+                                                  169,
+                                                  169,
+                                                  169,
+                                                ),
+                                      ),
+                                  cacheWidth: 192,
+                                  fit: BoxFit.contain,
+                                  color: Color.fromARGB(
+                                    hovered
+                                        ? 255
+                                        : isDisabledItem
+                                        ? 127
+                                        : 255,
+                                    255,
+                                    255,
+                                    255,
+                                  ),
+                                  colorBlendMode: BlendMode.modulate,
+                                ),
+                              ),
+                            )
+                            : Center(
+                              child: Icon(
+                                widget.entry is Directory
+                                    ? isManagedFolder || isRemovedManagedFolder
+                                        ? CustomIcons.folder_bolt_rounded
+                                        : isModsFolder
+                                        ? CustomIcons.folder_home_rounded
+                                        : Icons.folder_rounded
+                                    : widget.entry is File
+                                    ? SevenZip.isSupported(widget.entry.path)
+                                        ? Icons.folder_zip_rounded
+                                        : isIniFile
+                                        ? Icons.text_snippet_rounded
+                                        : Icons.insert_drive_file_rounded
+                                    : Icons.file_present_rounded,
+                                size: 85 * sss,
+                                color:
+                                    hovered
+                                        ? getAccentColor(ref)
+                                        : isDisabledItem
+                                        ? const Color.fromARGB(255, 90, 90, 90)
+                                        : const Color.fromARGB(
+                                          255,
+                                          169,
+                                          169,
+                                          169,
+                                        ),
+                              ),
+                            ),
                         if (widget.entry is Directory &&
                             imagePreviewPath != null &&
                             !isManagedFolder &&
@@ -372,14 +496,15 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
                                   ),
                                   child: Image.file(
                                     File(imagePreviewPath!),
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            SizedBox(),
                                     cacheWidth: 192,
                                     fit: BoxFit.cover,
                                     color: Color.fromARGB(
                                       hovered
                                           ? 255
-                                          : fastBasename(
-                                            widget.entry.path,
-                                          ).toLowerCase().startsWith('disabled')
+                                          : isDisabledItem
                                           ? 127
                                           : 255,
                                       255,
@@ -407,9 +532,7 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
                         color:
                             hovered
                                 ? getAccentColor(ref)
-                                : fastBasename(
-                                  widget.entry.path,
-                                ).toLowerCase().startsWith('disabled')
+                                : isDisabledItem
                                 ? const Color.fromARGB(255, 90, 90, 90)
                                 : const Color.fromARGB(255, 169, 169, 169),
                       ),
