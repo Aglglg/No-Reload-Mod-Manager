@@ -1,4 +1,3 @@
-//TODO: Show dds file
 //TODO: Proper info on files that cannot be double click open, for security reason
 //TODO: Navigation, backward and forward
 
@@ -11,6 +10,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:no_reload_mod_manager/casual_style/dds_image_widget.dart';
 import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/custom_icons.dart';
 import 'package:no_reload_mod_manager/utils/archive_manager.dart';
@@ -104,6 +104,7 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
   bool isRemovedManagedFolder = false;
   bool isModsFolder = false;
   bool isImageFile = false;
+  bool isDdsFile = false;
   bool isIniFile = false;
   bool isDisabledItem = false;
   String? imagePreviewPath;
@@ -129,6 +130,7 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
       setState(() => isRemovedManagedFolder = false);
       setState(() => isModsFolder = false);
       setState(() => isImageFile = false);
+      setState(() => isDdsFile = false);
       setState(() => isIniFile = false);
       setState(() => isDisabledItem = false);
       checkForImagePreview();
@@ -226,9 +228,11 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
       bool isDisabled = false;
       bool isImage = false;
       bool isIni = false;
+      bool isDds = false;
 
       final ext = p.extension(widget.entry.path).toLowerCase();
       isIni = ext == '.ini';
+      isDds = ext == '.dds';
       isImage = _imageExtensions.contains(ext);
       isDisabled =
           isIni &&
@@ -245,6 +249,7 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
         isDisabledItem = isDisabled;
         isIniFile = isIni;
         isImageFile = isImage;
+        isDdsFile = isDds;
       });
     }
   }
@@ -415,13 +420,6 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
                                         color:
                                             hovered
                                                 ? getAccentColor(ref)
-                                                : isDisabledItem
-                                                ? const Color.fromARGB(
-                                                  255,
-                                                  90,
-                                                  90,
-                                                  90,
-                                                )
                                                 : const Color.fromARGB(
                                                   255,
                                                   169,
@@ -444,6 +442,12 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
                                   colorBlendMode: BlendMode.modulate,
                                 ),
                               ),
+                            )
+                            : isDdsFile
+                            ? DdsImage(
+                              height: 85 * sss,
+                              width: 85 * sss,
+                              path: widget.entry.path,
                             )
                             : Center(
                               child: Icon(

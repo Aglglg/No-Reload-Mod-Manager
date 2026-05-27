@@ -71,6 +71,7 @@ dependencies:
   flutter_local_notifications: ^19.4.2
   charset_converter: ^2.3.0
   collection: ^1.19.1
+  pool: ^1.5.2
   
 dev_dependencies:
   flutter_test:
