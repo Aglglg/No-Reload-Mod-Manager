@@ -20,14 +20,28 @@ class DdsImage extends StatefulWidget {
 class _DdsImageState extends State<DdsImage> {
   ui.Image? _image;
 
-  @override
-  void initState() {
-    super.initState();
+  void _loadImage() {
     decodeDdsToImage(widget.path).then((img) {
       if (mounted && img != null) {
         setState(() => _image = img);
       }
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadImage();
+  }
+
+  @override
+  void didUpdateWidget(DdsImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.path != widget.path) {
+      _image?.dispose();
+      _image = null;
+      _loadImage();
+    }
   }
 
   @override
