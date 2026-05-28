@@ -15,7 +15,6 @@ import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
 import 'package:no_reload_mod_manager/utils/force_read_as_utf8.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/mod_navigator.dart';
-import 'package:no_reload_mod_manager/utils/refreshable_image.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:no_reload_mod_manager/utils/ui_dialogues.dart';
@@ -142,15 +141,26 @@ class _GroupContainerState extends ConsumerState<GroupContainer> {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(999),
-            child: RefreshableLocalImage(
-              imageWidget:
-                  ref.watch(modGroupDataProvider)[widget.index].groupIcon,
-              errorWidget: Icon(
-                size: 35 * sss,
-                Icons.image_outlined,
-                color: const Color.fromARGB(127, 255, 255, 255),
-              ),
-            ),
+            child:
+                ref.watch(modGroupDataProvider)[widget.index].iconPath == null
+                    ? Icon(
+                      size: 35 * sss,
+                      Icons.image_outlined,
+                      color: const Color.fromARGB(127, 255, 255, 255),
+                    )
+                    : Image.file(
+                      File(
+                        ref.watch(modGroupDataProvider)[widget.index].iconPath!,
+                      ),
+                      fit: BoxFit.cover,
+                      cacheWidth: ConstantVar.groupImageCacheWidth,
+                      errorBuilder:
+                          (context, error, stackTrace) => Icon(
+                            size: 35 * sss,
+                            Icons.image_outlined,
+                            color: const Color.fromARGB(127, 255, 255, 255),
+                          ),
+                    ),
           ),
         ),
       ),
@@ -227,8 +237,8 @@ class _ModContainerState extends ConsumerState<ModContainer>
     final updatedMods = widget.currentGroupData.modsInGroup;
     final oldMod = updatedMods[widget.index];
     updatedMods[widget.index] = ModData(
-      modDir: oldMod.modDir,
-      modIcon: oldMod.modIcon,
+      modPath: oldMod.modPath,
+      iconPath: oldMod.iconPath,
       realIndex: oldMod.realIndex,
       modName: _modNameTextFieldController.text,
       isOldAutoFixed: oldMod.isOldAutoFixed,
@@ -240,8 +250,8 @@ class _ModContainerState extends ConsumerState<ModContainer>
 
     // Clone the ModGroupData with updated mod list
     final updatedGroup = ModGroupData(
-      groupDir: widget.currentGroupData.groupDir,
-      groupIcon: widget.currentGroupData.groupIcon,
+      groupPath: widget.currentGroupData.groupPath,
+      iconPath: widget.currentGroupData.iconPath,
       groupName: widget.currentGroupData.groupName,
       modsInGroup: updatedMods,
       realIndex: widget.currentGroupData.realIndex,
@@ -256,7 +266,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
     // Save to provider
     ref.read(modGroupDataProvider.notifier).state = updatedGroups;
 
-    await setModNameOnDisk(oldMod.modDir, _modNameTextFieldController.text);
+    await setModNameOnDisk(oldMod.modPath, _modNameTextFieldController.text);
   }
 
   @override
@@ -264,7 +274,6 @@ class _ModContainerState extends ConsumerState<ModContainer>
     final sss = ref.watch(zoomScaleProvider);
     final currentMod = widget.currentGroupData.modsInGroup[widget.index];
     final isNoneModSlot = widget.index == 0;
-    final hasNoneModCustomIcon = isNoneModSlot && currentMod.modIcon != null;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -298,12 +307,12 @@ class _ModContainerState extends ConsumerState<ModContainer>
                     if (!context.mounted) return;
                     await setGroupOrModIcon(
                       ref,
-                      widget.currentGroupData.groupDir,
-                      currentMod.modIcon,
+                      widget.currentGroupData.groupPath,
+                      currentMod.iconPath,
                       fromClipboard: true,
                       isGroup: false,
                       isNoneMod: isNoneModSlot,
-                      modDir: currentMod.modDir,
+                      modPath: currentMod.modPath,
                     );
                   },
                   label: 'Clipboard icon'.tr(),
@@ -314,12 +323,12 @@ class _ModContainerState extends ConsumerState<ModContainer>
                     if (!context.mounted) return;
                     await setGroupOrModIcon(
                       ref,
-                      widget.currentGroupData.groupDir,
-                      currentMod.modIcon,
+                      widget.currentGroupData.groupPath,
+                      currentMod.iconPath,
                       fromClipboard: false,
                       isGroup: false,
                       isNoneMod: isNoneModSlot,
-                      modDir: currentMod.modDir,
+                      modPath: currentMod.modPath,
                     );
                   },
                   label: 'Custom icon'.tr(),
@@ -330,10 +339,10 @@ class _ModContainerState extends ConsumerState<ModContainer>
                     if (!context.mounted) return;
                     await unsetGroupOrModIcon(
                       ref,
-                      widget.currentGroupData.groupDir,
-                      currentMod.modIcon,
+                      widget.currentGroupData.groupPath,
+                      currentMod.iconPath,
                       isNoneMod: isNoneModSlot,
-                      modDir: currentMod.modDir,
+                      modPath: currentMod.modPath,
                     );
                   },
                   label: 'Remove icon'.tr(),
@@ -388,8 +397,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                               widget
                                   .currentGroupData
                                   .modsInGroup[widget.index]
-                                  .modDir
-                                  .path,
+                                  .modPath,
                         ),
                   );
                 },
@@ -401,18 +409,14 @@ class _ModContainerState extends ConsumerState<ModContainer>
                 onSelected: () {
                   if (!context.mounted) return;
                   openFileExplorerToSpecifiedPath(
-                    widget
-                        .currentGroupData
-                        .modsInGroup[widget.index]
-                        .modDir
-                        .path,
+                    widget.currentGroupData.modsInGroup[widget.index].modPath,
                   );
                 },
                 label: 'Open in File Explorer'.tr(),
               ),
             if (widget.index != 0 &&
                 !isModDisabled(
-                  widget.currentGroupData.modsInGroup[widget.index].modDir.path,
+                  widget.currentGroupData.modsInGroup[widget.index].modPath,
                 ))
               CustomMenuItem(
                 scale: sss,
@@ -420,7 +424,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                   if (!context.mounted) return;
 
                   bool success = await completeDisableMod(
-                    widget.currentGroupData.modsInGroup[widget.index].modDir,
+                    widget.currentGroupData.modsInGroup[widget.index].modPath,
                   );
 
                   if (!context.mounted) return;
@@ -464,7 +468,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
               ),
             if (widget.index != 0 &&
                 isModDisabled(
-                  widget.currentGroupData.modsInGroup[widget.index].modDir.path,
+                  widget.currentGroupData.modsInGroup[widget.index].modPath,
                 ))
               CustomMenuItem(
                 scale: sss,
@@ -472,7 +476,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                   if (!context.mounted) return;
 
                   bool success = await enableMod(
-                    widget.currentGroupData.modsInGroup[widget.index].modDir,
+                    widget.currentGroupData.modsInGroup[widget.index].modPath,
                   );
 
                   if (!context.mounted) return;
@@ -527,8 +531,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                             widget
                                 .currentGroupData
                                 .modsInGroup[widget.index]
-                                .modDir
-                                .path,
+                                .modPath,
                             'modlink',
                           );
                           String url = await forceReadAsStringUtf8(
@@ -548,8 +551,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                           widget
                               .currentGroupData
                               .modsInGroup[widget.index]
-                              .modDir
-                              .path,
+                              .modPath,
                           'modlink',
                         );
                         ref.read(alertDialogShownProvider.notifier).state =
@@ -581,11 +583,11 @@ class _ModContainerState extends ConsumerState<ModContainer>
                         (context) => RemoveModGroupDialog(
                           name: _modNameTextFieldController.text,
                           validModsPath: ref.read(validModsPath)!,
-                          modOrGroupDir:
+                          modOrGroupPath:
                               widget
                                   .currentGroupData
                                   .modsInGroup[widget.index]
-                                  .modDir,
+                                  .modPath,
                           isGroup: false,
                         ),
                   );
@@ -609,7 +611,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                   }),
               child: Tooltip(
                 message: p.basename(
-                  widget.currentGroupData.modsInGroup[widget.index].modDir.path,
+                  widget.currentGroupData.modsInGroup[widget.index].modPath,
                 ),
                 textStyle: GoogleFonts.poppins(
                   color: Colors.black,
@@ -658,40 +660,69 @@ class _ModContainerState extends ConsumerState<ModContainer>
                       children: [
                         widget.index != 0
                             ? SizedBox.expand(
-                              child: RefreshableLocalImage(
-                                imageWidget:
-                                    widget
-                                        .currentGroupData
-                                        .modsInGroup[widget.index]
-                                        .modIcon,
-                                errorWidget: Icon(
-                                  size: 40 * sss,
-                                  Icons.image_outlined,
-                                  color: const Color.fromARGB(
-                                    127,
-                                    255,
-                                    255,
-                                    255,
-                                  ),
-                                ),
-                              ),
+                              child:
+                                  currentMod.iconPath == null
+                                      ? Icon(
+                                        size: 40 * sss,
+                                        Icons.image_outlined,
+                                        color: const Color.fromARGB(
+                                          127,
+                                          255,
+                                          255,
+                                          255,
+                                        ),
+                                      )
+                                      : Image.file(
+                                        File(currentMod.iconPath!),
+                                        fit: BoxFit.cover,
+                                        cacheWidth:
+                                            ConstantVar.modImageCacheWidth,
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                Icon(
+                                                  size: 40 * sss,
+                                                  Icons.image_outlined,
+                                                  color: const Color.fromARGB(
+                                                    127,
+                                                    255,
+                                                    255,
+                                                    255,
+                                                  ),
+                                                ),
+                                      ),
                             )
-                            : hasNoneModCustomIcon
-                            ? SizedBox.expand(
-                              child: RefreshableLocalImage(
-                                imageWidget: currentMod.modIcon,
-                                errorWidget: Icon(
-                                  size: 45 * sss,
-                                  Icons.close,
-                                  color: const Color.fromARGB(
-                                    127,
-                                    255,
-                                    255,
-                                    255,
+                            : isNoneModSlot
+                            ? currentMod.iconPath == null
+                                ? SizedBox.expand(
+                                  child: Icon(
+                                    size: 45 * sss,
+                                    Icons.close,
+                                    color: const Color.fromARGB(
+                                      127,
+                                      255,
+                                      255,
+                                      255,
+                                    ),
                                   ),
-                                ),
-                              ),
-                            )
+                                )
+                                : SizedBox.expand(
+                                  child: Image.file(
+                                    File(currentMod.iconPath!),
+                                    fit: BoxFit.cover,
+                                    cacheWidth: ConstantVar.modImageCacheWidth,
+                                    errorBuilder:
+                                        (context, error, stackTrace) => Icon(
+                                          size: 45 * sss,
+                                          Icons.close,
+                                          color: const Color.fromARGB(
+                                            127,
+                                            255,
+                                            255,
+                                            255,
+                                          ),
+                                        ),
+                                  ),
+                                )
                             : SizedBox.expand(
                               child: Icon(
                                 size: 45 * sss,

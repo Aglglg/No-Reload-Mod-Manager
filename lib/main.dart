@@ -18,7 +18,6 @@ import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/mod_navigator.dart';
 import 'package:no_reload_mod_manager/utils/mods_dropzone.dart';
 import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
-import 'package:no_reload_mod_manager/utils/refreshable_image.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:no_reload_mod_manager/utils/ui_dialogues.dart';
@@ -351,8 +350,7 @@ class _BackgroundState extends ConsumerState<Background> {
                       .read(modGroupDataProvider)[ref.read(
                         currentGroupIndexProvider,
                       )]
-                      .groupDir
-                      .path,
+                      .groupPath,
             ),
       );
     }
@@ -399,8 +397,7 @@ class _BackgroundState extends ConsumerState<Background> {
                             .watch(modGroupDataProvider)[ref.watch(
                               currentGroupIndexProvider,
                             )]
-                            .groupDir
-                            .path,
+                            .groupPath,
                   ),
                 RightClickMenuRegion(
                   menuItems: <ContextMenuEntry>[
@@ -537,6 +534,7 @@ class _BackgroundState extends ConsumerState<Background> {
                         ref.read(targetGameProvider.notifier).state =
                             TargetGame.none;
                         await windowManager.hide();
+                        clearImagesCache();
                         DynamicDirectoryWatcher.stop();
                       },
                       label: 'Hide window'.tr(),
@@ -954,6 +952,7 @@ class _MainViewState extends ConsumerState<MainView>
           label: 'Hide'.tr(),
           onClick: (menuItem) {
             bitsdojo.appWindow.hide();
+            clearImagesCache();
             DynamicDirectoryWatcher.stop();
           },
         ),
@@ -1249,8 +1248,6 @@ class _MainViewState extends ConsumerState<MainView>
       );
     }
 
-    ImageRefreshListener.refreshImages(ref.read(modGroupDataProvider));
-
     ref.read(validModsPath.notifier).state = null;
     ref.read(searchBarShownProvider.notifier).state = false;
 
@@ -1387,6 +1384,7 @@ class _MainViewState extends ConsumerState<MainView>
         changeWindowTitleName("");
       }
       await windowManager.hide();
+      clearImagesCache();
       DynamicDirectoryWatcher.stop();
     } else {
       String foregroundProcessName = getForegroundWindowProcessName();
@@ -1454,6 +1452,7 @@ class _MainViewState extends ConsumerState<MainView>
         ref.read(targetGameProvider.notifier).state = TargetGame.none;
       }
       await windowManager.hide();
+      clearImagesCache();
       DynamicDirectoryWatcher.stop();
     }
   }

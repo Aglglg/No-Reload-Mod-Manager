@@ -284,8 +284,8 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
 
     // 1. Copy the existing ModGroupData but with a new groupName
     final updatedGroup = ModGroupData(
-      groupDir: oldList[currentPageIndex].groupDir,
-      groupIcon: oldList[currentPageIndex].groupIcon,
+      groupPath: oldList[currentPageIndex].groupPath,
+      iconPath: oldList[currentPageIndex].iconPath,
       groupName: _groupNameTextFieldController.text,
       modsInGroup: oldList[currentPageIndex].modsInGroup,
       realIndex: oldList[currentPageIndex].realIndex,
@@ -302,7 +302,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
 
     // 4. Write to the groupname file in disk
     setGroupNameOnDisk(
-      ref.read(modGroupDataProvider)[currentPageIndex].groupDir,
+      ref.read(modGroupDataProvider)[currentPageIndex].groupPath,
       ref.read(modGroupDataProvider)[currentPageIndex].groupName,
     );
   }
@@ -523,10 +523,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                             onSelected: () async {
                               if (!context.mounted) return;
                               bool success = await tryGetIcon(
-                                ref
-                                    .read(modGroupDataProvider)[index]
-                                    .groupDir
-                                    .path,
+                                ref.read(modGroupDataProvider)[index].groupPath,
                                 ref.read(targetGameProvider),
                               );
                               if (!context.mounted) return;
@@ -586,13 +583,13 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                                   ref,
                                   ref
                                       .read(modGroupDataProvider)[index]
-                                      .groupDir,
+                                      .groupPath,
                                   ref
                                       .read(modGroupDataProvider)[index]
-                                      .groupIcon,
+                                      .iconPath,
                                   fromClipboard: true,
                                   isGroup: true,
-                                  modDir: null,
+                                  modPath: null,
                                 );
                               },
                               label: 'Clipboard icon'.tr(),
@@ -606,13 +603,13 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                                   ref,
                                   ref
                                       .read(modGroupDataProvider)[index]
-                                      .groupDir,
+                                      .groupPath,
                                   ref
                                       .read(modGroupDataProvider)[index]
-                                      .groupIcon,
+                                      .iconPath,
                                   fromClipboard: false,
                                   isGroup: true,
-                                  modDir: null,
+                                  modPath: null,
                                 );
                               },
                               label: 'Custom icon'.tr(),
@@ -626,10 +623,10 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                                   ref,
                                   ref
                                       .read(modGroupDataProvider)[index]
-                                      .groupDir,
+                                      .groupPath,
                                   ref
                                       .read(modGroupDataProvider)[index]
-                                      .groupIcon,
+                                      .iconPath,
                                 );
                               },
                               label: 'Remove icon'.tr(),
@@ -644,7 +641,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                         onSelected: () {
                           if (!context.mounted) return;
                           openFileExplorerToSpecifiedPath(
-                            ref.read(modGroupDataProvider)[index].groupDir.path,
+                            ref.read(modGroupDataProvider)[index].groupPath,
                           );
                         },
                         label: 'Open in File Explorer'.tr(),
@@ -657,7 +654,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                           final mods =
                               ref.read(modGroupDataProvider)[index].modsInGroup;
                           for (var mod in mods) {
-                            await completeDisableMod(mod.modDir);
+                            await completeDisableMod(mod.modPath);
                           }
                           if (!context.mounted) return;
                           showUpdateModSnackbar(
@@ -675,7 +672,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                           final mods =
                               ref.read(modGroupDataProvider)[index].modsInGroup;
                           for (var mod in mods) {
-                            await enableMod(mod.modDir);
+                            await enableMod(mod.modPath);
                           }
                           if (!context.mounted) return;
                           showUpdateModSnackbar(
@@ -699,10 +696,10 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                                 (context) => RemoveModGroupDialog(
                                   name: _groupNameTextFieldController.text,
                                   validModsPath: ref.read(validModsPath)!,
-                                  modOrGroupDir:
+                                  modOrGroupPath:
                                       ref
                                           .read(modGroupDataProvider)[index]
-                                          .groupDir,
+                                          .groupPath,
                                   isGroup: true,
                                 ),
                           );
@@ -713,7 +710,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                   child: Tooltip(
                     textAlign: TextAlign.center,
                     message:
-                        "${ref.read(modGroupDataProvider)[index].groupName}\n${p.basename(ref.read(modGroupDataProvider)[index].groupDir.path)}",
+                        "${ref.read(modGroupDataProvider)[index].groupName}\n${p.basename(ref.read(modGroupDataProvider)[index].groupPath)}",
                     textStyle: GoogleFonts.poppins(
                       color: Colors.black,
                       fontWeight: FontWeight.w500,
@@ -988,7 +985,7 @@ class _ModAreaState extends ConsumerState<ModAreaCarousel>
                     setSelectedModIndex(
                       ref,
                       index, //just view index, not actual mod index
-                      widget.currentGroupData.groupDir,
+                      widget.currentGroupData.groupPath,
                     ),
                   );
                 },

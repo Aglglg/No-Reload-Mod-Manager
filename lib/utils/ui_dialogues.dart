@@ -96,9 +96,7 @@ class _GenerateGroupIcoFileDialogState
         contents = [
           ...contents,
           TextSpan(
-            text: "Generating folder icon".tr(
-              args: [p.basename(group.$1.path)],
-            ),
+            text: "Generating folder icon".tr(args: [p.basename(group.$1)]),
             style: GoogleFonts.poppins(
               color: Colors.white,
               fontSize: 14,
@@ -108,14 +106,14 @@ class _GenerateGroupIcoFileDialogState
         ];
       });
 
-      await setFolderIcon(group.$1.path, p.join(group.$1.path, 'icon.png'));
+      await setFolderIcon(group.$1, p.join(group.$1, 'icon.png'));
 
       setState(() {
         final newContents = List<TextSpan>.from(contents);
         newContents.removeLast();
         newContents.add(
           TextSpan(
-            text: "Generated folder icon".tr(args: [p.basename(group.$1.path)]),
+            text: "Generated folder icon".tr(args: [p.basename(group.$1)]),
             style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
           ),
         );
@@ -1541,12 +1539,12 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
     final futures = <Future>[];
 
     for (var group in groupFolders) {
-      final iconPath = p.join(group.$1.path, 'icon.png');
+      final iconPath = p.join(group.$1, 'icon.png');
       final iconFile = File(iconPath);
 
       if (!await iconFile.exists()) {
         if (!context.mounted) return;
-        futures.add(tryGetIcon(group.$1.path, ref.read(targetGameProvider)));
+        futures.add(tryGetIcon(group.$1, ref.read(targetGameProvider)));
       }
     }
 
@@ -1846,13 +1844,13 @@ class _DuplicatedUtilitiesDialogState
 class RemoveModGroupDialog extends ConsumerStatefulWidget {
   final String name;
   final String validModsPath;
-  final Directory modOrGroupDir;
+  final String modOrGroupPath;
   final bool isGroup;
   const RemoveModGroupDialog({
     super.key,
     required this.name,
     required this.validModsPath,
-    required this.modOrGroupDir,
+    required this.modOrGroupPath,
     required this.isGroup,
   });
 
@@ -1924,7 +1922,7 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
         ),
       ];
     });
-    String baseFolderName = p.basename(widget.modOrGroupDir.path);
+    String baseFolderName = p.basename(widget.modOrGroupPath);
     String managedPath = p.join(
       widget.validModsPath,
       ConstantVar.managedRemovedFolderName,
@@ -1942,7 +1940,9 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
         ); // workaround \\?\ for long paths, only for Windows
       }
 
-      Directory movedDir = await widget.modOrGroupDir.rename(destPath);
+      Directory movedDir = await Directory(
+        widget.modOrGroupPath,
+      ).rename(destPath);
       List<TextSpan> operationLogs = await restoreManagedMod([movedDir]);
       operationLogs.insert(
         0,
@@ -2729,16 +2729,16 @@ class _BatchDisableOrEnableModsDialogState
     // Pre-filter mods once
     _filteredMods = {
       for (final group in widget.groupAndModsPair)
-        group: group.modsInGroup.where((m) => m.modDir.path != 'None').toList(),
+        group: group.modsInGroup.where((m) => m.modPath != 'None').toList(),
     };
 
     // Initialize checkbox state
     _modChecked = {
       for (final group in _filteredMods.entries)
         for (final mod in group.value)
-          mod.modDir.path: (
+          mod.modPath: (
             mod,
-            !p.basename(mod.modDir.path).toLowerCase().startsWith('disabled'),
+            !p.basename(mod.modPath).toLowerCase().startsWith('disabled'),
           ),
     };
   }
@@ -2787,7 +2787,7 @@ class _BatchDisableOrEnableModsDialogState
 
     int checkedCount = 0;
     for (final mod in mods) {
-      if (_modChecked[mod.modDir.path]!.$2 == true) {
+      if (_modChecked[mod.modPath]!.$2 == true) {
         checkedCount++;
       }
     }
@@ -2803,10 +2803,7 @@ class _BatchDisableOrEnableModsDialogState
 
     setState(() {
       for (final mod in mods) {
-        _modChecked[mod.modDir.path] = (
-          _modChecked[mod.modDir.path]!.$1,
-          target,
-        );
+        _modChecked[mod.modPath] = (_modChecked[mod.modPath]!.$1, target);
       }
     });
   }
@@ -2842,7 +2839,7 @@ class _BatchDisableOrEnableModsDialogState
       //Unchecked and not starts with Disabled, disable it
       if (mod.value.$2 == false &&
           !p.basename(mod.key).toLowerCase().startsWith('disabled')) {
-        bool success = await completeDisableMod(Directory(mod.key));
+        bool success = await completeDisableMod(mod.key);
         if (!success) {
           failedEnableDisableMod.add((
             Directory(p.dirname(mod.key)),
@@ -2853,7 +2850,7 @@ class _BatchDisableOrEnableModsDialogState
       //Checked and starts with Disabled, enable it
       else if (mod.value.$2 == true &&
           p.basename(mod.key).toLowerCase().startsWith('disabled')) {
-        bool success = await enableMod(Directory(mod.key));
+        bool success = await enableMod(mod.key);
         if (!success) {
           failedEnableDisableMod.add((
             Directory(p.dirname(mod.key)),
@@ -2874,7 +2871,7 @@ class _BatchDisableOrEnableModsDialogState
       //
       failedEnableInfo.add(
         TextSpan(
-          text: "$groupName - ${mod.$2.modName}\n${mod.$2.modDir.path}\n\n",
+          text: "$groupName - ${mod.$2.modName}\n${mod.$2.modPath}\n\n",
           style: GoogleFonts.poppins(
             color: Colors.white,
             fontSize: 14,
@@ -3025,9 +3022,7 @@ class _BatchDisableOrEnableModsDialogState
                                                 const SizedBox(width: 8),
                                                 Flexible(
                                                   child: Text(
-                                                    p.basename(
-                                                      group.groupDir.path,
-                                                    ),
+                                                    p.basename(group.groupPath),
                                                     overflow:
                                                         TextOverflow.ellipsis,
                                                     style: _groupPathStyle,
@@ -3044,7 +3039,7 @@ class _BatchDisableOrEnableModsDialogState
                                     body: Column(
                                       children:
                                           mods.map((mod) {
-                                            final path = mod.modDir.path;
+                                            final path = mod.modPath;
 
                                             return Row(
                                               children: [

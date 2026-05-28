@@ -115,6 +115,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                       ref.read(targetGameProvider.notifier).state =
                           TargetGame.none;
                       await windowManager.hide();
+                      clearImagesCache();
                       DynamicDirectoryWatcher.stop();
                     },
                     label: 'Hide window'.tr(),

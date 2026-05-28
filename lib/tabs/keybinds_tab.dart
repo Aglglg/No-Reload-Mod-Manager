@@ -113,7 +113,9 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
       await Future.delayed(Duration(milliseconds: 10));
 
       if (ref.read(modKeybindProvider) != null) {
-        if (await ref.read(modKeybindProvider)!.$1.modDir.exists() &&
+        if (await Directory(
+              ref.read(modKeybindProvider)!.$1.modPath,
+            ).exists() &&
             ref.read(modKeybindProvider)!.$3 == ref.read(targetGameProvider)) {
           setState(() {
             modData = ref.read(modKeybindProvider)!.$1;
@@ -131,7 +133,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
 
   Future<void> loadKeys() async {
     final iniFiles = await findIniFilesRecursiveExcludeDisabled(
-      modData!.modDir.path,
+      modData!.modPath,
     );
 
     final data = await Future.wait(
@@ -439,6 +441,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                         ref.read(targetGameProvider.notifier).state =
                             TargetGame.none;
                         await windowManager.hide();
+                        clearImagesCache();
                         DynamicDirectoryWatcher.stop();
                       },
                       label: 'Hide window'.tr(),

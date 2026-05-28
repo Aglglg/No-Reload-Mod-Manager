@@ -312,7 +312,7 @@ class _ModAreaGridState extends ConsumerState<ModAreaGrid>
                               ref,
                               modData
                                   .key, //just view index, not actual mod index
-                              widget.currentGroupData.groupDir,
+                              widget.currentGroupData.groupPath,
                             ),
                           );
                         },
@@ -460,8 +460,8 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
 
     // 1. Copy the existing ModGroupData but with a new groupName
     final updatedGroup = ModGroupData(
-      groupDir: oldList[currentPageIndex].groupDir,
-      groupIcon: oldList[currentPageIndex].groupIcon,
+      groupPath: oldList[currentPageIndex].groupPath,
+      iconPath: oldList[currentPageIndex].iconPath,
       groupName: _groupNameTextFieldController.text,
       modsInGroup: oldList[currentPageIndex].modsInGroup,
       realIndex: oldList[currentPageIndex].realIndex,
@@ -478,7 +478,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
 
     // 4. Write to the groupname file in disk
     setGroupNameOnDisk(
-      ref.read(modGroupDataProvider)[currentPageIndex].groupDir,
+      ref.read(modGroupDataProvider)[currentPageIndex].groupPath,
       ref.read(modGroupDataProvider)[currentPageIndex].groupName,
     );
   }
@@ -738,8 +738,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                                   bool success = await tryGetIcon(
                                     ref
                                         .read(modGroupDataProvider)[index]
-                                        .groupDir
-                                        .path,
+                                        .groupPath,
                                     ref.read(targetGameProvider),
                                   );
                                   if (!context.mounted) return;
@@ -802,13 +801,13 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                                     ref,
                                     ref
                                         .read(modGroupDataProvider)[index]
-                                        .groupDir,
+                                        .groupPath,
                                     ref
                                         .read(modGroupDataProvider)[index]
-                                        .groupIcon,
+                                        .iconPath,
                                     fromClipboard: true,
                                     isGroup: true,
-                                    modDir: null,
+                                    modPath: null,
                                   );
                                 },
                                 label: 'Clipboard icon'.tr(),
@@ -821,13 +820,13 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                                     ref,
                                     ref
                                         .read(modGroupDataProvider)[index]
-                                        .groupDir,
+                                        .groupPath,
                                     ref
                                         .read(modGroupDataProvider)[index]
-                                        .groupIcon,
+                                        .iconPath,
                                     fromClipboard: false,
                                     isGroup: true,
-                                    modDir: null,
+                                    modPath: null,
                                   );
                                 },
                                 label: 'Custom icon'.tr(),
@@ -840,10 +839,10 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                                     ref,
                                     ref
                                         .read(modGroupDataProvider)[index]
-                                        .groupDir,
+                                        .groupPath,
                                     ref
                                         .read(modGroupDataProvider)[index]
-                                        .groupIcon,
+                                        .iconPath,
                                   );
                                 },
                                 label: 'Remove icon'.tr(),
@@ -857,10 +856,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                             onSelected: () {
                               if (!context.mounted) return;
                               openFileExplorerToSpecifiedPath(
-                                ref
-                                    .read(modGroupDataProvider)[index]
-                                    .groupDir
-                                    .path,
+                                ref.read(modGroupDataProvider)[index].groupPath,
                               );
                             },
                             label: 'Open in File Explorer'.tr(),
@@ -874,7 +870,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                                       .read(modGroupDataProvider)[index]
                                       .modsInGroup;
                               for (var mod in mods) {
-                                await completeDisableMod(mod.modDir);
+                                await completeDisableMod(mod.modPath);
                               }
                               if (!context.mounted) return;
                               showUpdateModSnackbar(
@@ -896,7 +892,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                                       .read(modGroupDataProvider)[index]
                                       .modsInGroup;
                               for (var mod in mods) {
-                                await enableMod(mod.modDir);
+                                await enableMod(mod.modPath);
                               }
                               if (!context.mounted) return;
                               showUpdateModSnackbar(
@@ -926,10 +922,10 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                                               .read(modGroupDataProvider)[index]
                                               .groupName,
                                       validModsPath: ref.read(validModsPath)!,
-                                      modOrGroupDir:
+                                      modOrGroupPath:
                                           ref
                                               .read(modGroupDataProvider)[index]
-                                              .groupDir,
+                                              .groupPath,
                                       isGroup: true,
                                     ),
                               );
@@ -940,7 +936,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                         child: Tooltip(
                           textAlign: TextAlign.center,
                           message:
-                              "${ref.read(modGroupDataProvider)[index].groupName}\n${p.basename(ref.read(modGroupDataProvider)[index].groupDir.path)}",
+                              "${ref.read(modGroupDataProvider)[index].groupName}\n${p.basename(ref.read(modGroupDataProvider)[index].groupPath)}",
                           textStyle: GoogleFonts.poppins(
                             color: Colors.black,
                             fontWeight: FontWeight.w500,
