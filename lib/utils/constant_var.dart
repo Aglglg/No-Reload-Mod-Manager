@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 
 class ConstantVar {
+  static const int explorerViewImageCacheWidth = 192;
   static const int minWindowWidth = 750;
   static const int minWindowHeight = 412;
   static const String thisProcessName = "No_Reload_Mod_Manager.exe";

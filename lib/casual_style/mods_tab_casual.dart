@@ -124,15 +124,17 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
   void didUpdateWidget(ExplorerItem oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.entry.path != widget.entry.path) {
-      setState(() => imagePreviewPath = null);
-      setState(() => modOrGroupName = null);
-      setState(() => isManagedFolder = false);
-      setState(() => isRemovedManagedFolder = false);
-      setState(() => isModsFolder = false);
-      setState(() => isImageFile = false);
-      setState(() => isDdsFile = false);
-      setState(() => isIniFile = false);
-      setState(() => isDisabledItem = false);
+      setState(() {
+        imagePreviewPath = null;
+        modOrGroupName = null;
+        isManagedFolder = false;
+        isRemovedManagedFolder = false;
+        isModsFolder = false;
+        isImageFile = false;
+        isDdsFile = false;
+        isIniFile = false;
+        isDisabledItem = false;
+      });
       checkForImagePreview();
       checkForModOrGroupName();
       checkForSpecialItem();
@@ -144,7 +146,10 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
     for (var name in ConstantVar.modIconFilenames) {
       final path = p.join(widget.entry.path, name);
       if (await File(path).exists()) {
-        await ResizeImage(FileImage(File(path)), width: 192).evict();
+        await ResizeImage(
+          FileImage(File(path)),
+          width: ConstantVar.explorerViewImageCacheWidth,
+        ).evict();
         if (!mounted) return;
         setState(() {
           imagePreviewPath = p.join(widget.entry.path, name);
@@ -156,14 +161,14 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
 
   Future<void> checkForModOrGroupName() async {
     if (widget.entry is! Directory) return;
-    final dir = Directory(widget.entry.path);
+    final dirPath = widget.entry.path;
     String dirNameLower = fastBasename(widget.entry.path).toLowerCase();
     if (dirNameLower.startsWith('disabled')) {
       dirNameLower = dirNameLower.replaceFirst('disabled', '');
     }
     try {
-      final fileModname = File(p.join(dir.path, 'modname'));
-      final fileGroupname = File(p.join(dir.path, 'groupname'));
+      final fileModname = File(p.join(dirPath, 'modname'));
+      final fileGroupname = File(p.join(dirPath, 'groupname'));
 
       if (await fileModname.exists()) {
         final name = await fileModname.readAsString();
@@ -241,7 +246,7 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
       if (isImage) {
         await ResizeImage(
           FileImage(File(widget.entry.path)),
-          width: 192,
+          width: ConstantVar.explorerViewImageCacheWidth,
         ).evict();
       }
       if (!mounted) return;
@@ -252,11 +257,6 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
         isDdsFile = isDds;
       });
     }
-  }
-
-  String fastBasename(String path) {
-    final idx = path.lastIndexOf(Platform.pathSeparator);
-    return idx == -1 ? path : path.substring(idx + 1);
   }
 
   static const _openableExtensions = {
@@ -427,7 +427,8 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
                                                   169,
                                                 ),
                                       ),
-                                  cacheWidth: 192,
+                                  cacheWidth:
+                                      ConstantVar.explorerViewImageCacheWidth,
                                   fit: BoxFit.contain,
                                   color: Color.fromARGB(
                                     hovered
@@ -503,7 +504,8 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
                                     errorBuilder:
                                         (context, error, stackTrace) =>
                                             SizedBox(),
-                                    cacheWidth: 192,
+                                    cacheWidth:
+                                        ConstantVar.explorerViewImageCacheWidth,
                                     fit: BoxFit.cover,
                                     color: Color.fromARGB(
                                       hovered
@@ -592,6 +594,12 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
     });
   }
 
+  @override
+  void dispose() {
+    scrollController.dispose();
+    super.dispose();
+  }
+
   Future<void> initCurrentPath() async {
     final modsPath = ref.read(validModsPath);
     if (modsPath != null) {
@@ -609,11 +617,6 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
 
       await _loadEntries(currentPath);
     }
-  }
-
-  String fastBasename(String path) {
-    final idx = path.lastIndexOf(Platform.pathSeparator);
-    return idx == -1 ? path : path.substring(idx + 1);
   }
 
   int _loadGeneration = 0;
@@ -669,6 +672,7 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
   }
 
   List<FileSystemEntity> _sortEntries(List<FileSystemEntity> entries) {
+    final modsPath = ref.read(validModsPath);
     final sortable =
         entries
             .where((e) => fastBasename(e.path).toLowerCase() != 'desktop.ini')
@@ -678,7 +682,6 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
               String lowerName = fastBasename(e.path).toLowerCase();
               bool disabled = lowerName.startsWith('disabled');
 
-              final modsPath = ref.read(validModsPath);
               bool isModsFolder =
                   modsPath != null &&
                   e.path.toLowerCase() == modsPath.toLowerCase();
@@ -856,6 +859,13 @@ class _TopBarCasualState extends ConsumerState<TopBarCasual> {
         extentOffset: pathTextfieldController.text.length,
       );
     });
+  }
+
+  @override
+  void dispose() {
+    pathTextfieldController.dispose();
+    pathTextfieldFocusNode.dispose();
+    super.dispose();
   }
 
   Future<String> getTextFieldPath() async {
@@ -1112,6 +1122,13 @@ class _PathBreadcrumbsState extends ConsumerState<PathBreadcrumbs>
   }
 
   @override
+  void dispose() {
+    scrollController.dispose();
+    windowManager.removeListener(this);
+    super.dispose();
+  }
+
+  @override
   void onWindowResize() {
     _scrollToEnd();
   }
@@ -1130,7 +1147,7 @@ class _PathBreadcrumbsState extends ConsumerState<PathBreadcrumbs>
 
   Future<void> prepareScrollToEnd() async {
     await Future.delayed(Duration(seconds: 2));
-    if (!widget.isHovered) {
+    if (!widget.isHovered && mounted) {
       await _scrollToEnd();
     }
   }
@@ -1376,4 +1393,9 @@ Future<int> isValidCurrentPath(String currentFullPath, String modsPath) async {
   } else {
     return -1;
   }
+}
+
+String fastBasename(String path) {
+  final idx = path.lastIndexOf(Platform.pathSeparator);
+  return idx == -1 ? path : path.substring(idx + 1);
 }

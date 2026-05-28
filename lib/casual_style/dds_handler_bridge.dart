@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:ui' as ui;
+import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:pool/pool.dart';
 
 import 'package:ffi/ffi.dart';
@@ -40,7 +41,13 @@ final _freeBuf = _dll.lookupFunction<_FreeNative, _Free>('FreeDdsBuffer');
   final wPtr = malloc<Int32>();
   final hPtr = malloc<Int32>();
 
-  final result = _decodeDdsScaled(pathPtr, 192, 192, wPtr, hPtr);
+  final result = _decodeDdsScaled(
+    pathPtr,
+    ConstantVar.explorerViewImageCacheWidth,
+    ConstantVar.explorerViewImageCacheWidth,
+    wPtr,
+    hPtr,
+  );
   malloc.free(pathPtr);
 
   if (result == nullptr) {
@@ -64,7 +71,7 @@ String _cacheKey(String path) {
   return '$path@$modified';
 }
 
-final _pool = Pool(1);
+final _pool = Pool(5);
 
 final _cache = <String, ({Uint8List pixels, int width, int height})>{};
 
