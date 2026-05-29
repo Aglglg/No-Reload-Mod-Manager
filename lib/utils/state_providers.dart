@@ -5,6 +5,7 @@ import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
+import 'package:no_reload_mod_manager/utils/stack_collection.dart';
 
 final StateProvider<bool> isCasualStyle = StateProvider<bool>((ref) {
   SharedPrefUtils().tryInit();
@@ -147,3 +148,30 @@ final randomTipsProvider = StateProvider<String>((ref) {
 
 final isShiftPressed = StateProvider<bool>((ref) => false);
 final isCtrlPressed = StateProvider<bool>((ref) => false);
+
+final explorerViewOpenedPathsWuwa = StateProvider<StackCollection<String>>(
+  (ref) => StackCollection(),
+);
+final explorerViewOpenedPathsGenshin = StateProvider<StackCollection<String>>(
+  (ref) => StackCollection(),
+);
+final explorerViewOpenedPathsHsr = StateProvider<StackCollection<String>>(
+  (ref) => StackCollection(),
+);
+final explorerViewOpenedPathsZzz = StateProvider<StackCollection<String>>(
+  (ref) => StackCollection(),
+);
+final explorerViewOpenedPathsEndfield = StateProvider<StackCollection<String>>(
+  (ref) => StackCollection(),
+);
+
+final explorerViewOpenedForwardPathsWuwa =
+    StateProvider<StackCollection<String>>((ref) => StackCollection());
+final explorerViewOpenedForwardPathsGenshin =
+    StateProvider<StackCollection<String>>((ref) => StackCollection());
+final explorerViewOpenedForwardPathsHsr =
+    StateProvider<StackCollection<String>>((ref) => StackCollection());
+final explorerViewOpenedForwardPathsZzz =
+    StateProvider<StackCollection<String>>((ref) => StackCollection());
+final explorerViewOpenedForwardPathsEndfield =
+    StateProvider<StackCollection<String>>((ref) => StackCollection());

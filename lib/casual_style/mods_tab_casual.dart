@@ -7,6 +7,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:collection/collection.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -17,6 +18,7 @@ import 'package:no_reload_mod_manager/utils/archive_manager.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
+import 'package:no_reload_mod_manager/utils/stack_collection.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:path/path.dart' as p;
 import 'package:window_manager/window_manager.dart';
@@ -259,52 +261,89 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
     }
   }
 
-  static const _openableExtensions = {
-    '.ini',
-    '.txt',
-    '.json',
-    '.xml',
-    '.md',
-    '.log',
-    '.csv',
-    '.hlsl',
-    '.hlsli',
+  static const _executableExtensions = {
+    '.exe',
+    '.com',
+    '.scr',
+    '.cpl',
+    '.efi',
+    '.mui',
+    '.sys',
+    '.drv',
+    '.ocx',
+    '.dll',
+    '.bat',
+    '.cmd',
+    '.ps1',
+    '.vbs',
+    '.vbe',
+    '.js',
+    '.jse',
+    '.wsf',
+    '.wsh',
+    '.msc',
+    '.hta',
     '.py',
-    '.png',
-    '.jpg',
-    '.jpeg',
-    '.bmp',
-    '.dds',
-    '.tga',
-    '.gif',
-    '.webp',
-    '.buf',
-    '.ib',
-    '.vb',
+    '.pyw',
+    '.rb',
+    '.pl',
+    '.php',
+    '.jar',
+    '.sh',
+    '.lnk',
+    '.url',
+    '.pif',
   };
 
   static const _imageExtensions = {'.png', '.jpg', '.jpeg', '.webp', '.gif'};
+
+  void showSnackbar(double sss, String message) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: const Color(0xFF2B2930),
+        margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
+        duration: Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        closeIconColor: getAccentColor(ref),
+        showCloseIcon: true,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: Text(
+          message,
+          style: GoogleFonts.poppins(color: Colors.white, fontSize: 13 * sss),
+        ),
+        dismissDirection: DismissDirection.down,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
     return Listener(
-      onPointerDown: (_) {
-        widget.onSingleTap();
+      onPointerDown: (event) {
+        if (event.buttons == kPrimaryMouseButton) {
+          widget.onSingleTap();
+        }
       },
       child: GestureDetector(
         onDoubleTapDown: (_) async {
           if (widget.entry is Directory &&
               !ref.read(isCtrlPressed) &&
               !ref.read(isShiftPressed)) {
-            setCurrentPath(ref, widget.entry.path);
+            await setCurrentPath(ref, widget.entry.path);
           }
           if (widget.entry is File &&
               !ref.read(isCtrlPressed) &&
               !ref.read(isShiftPressed)) {
             final ext = p.extension(widget.entry.path).toLowerCase();
-            if (_openableExtensions.contains(ext)) {
+            if (!_executableExtensions.contains(ext)) {
               await Process.run('explorer', [widget.entry.path]);
+            } else {
+              showSnackbar(
+                sss,
+                'Right-click and select Open if you insist to open this executable file',
+              );
             }
           }
         },
@@ -608,12 +647,12 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
         final validatedPath = await getValidCurrentPath(currentPath, modsPath);
         if (validatedPath != currentPath) {
           currentPath = validatedPath;
-          setCurrentPath(ref, currentPath);
         }
       } else {
         currentPath = modsPath;
-        setCurrentPath(ref, currentPath);
       }
+
+      await setCurrentPath(ref, currentPath);
 
       await _loadEntries(currentPath);
     }
@@ -731,103 +770,164 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
     return sortable.map((e) => e.entity).toList();
   }
 
+  Future<void> handleForwardAndBackwardNavigation(
+    PointerDownEvent event,
+  ) async {
+    StateProvider<StackCollection<String>>? explorerViewOpenedPaths;
+    StateProvider<StackCollection<String>>? explorerViewOpenedForwardPaths;
+
+    switch (ref.read(targetGameProvider)) {
+      case TargetGame.Arknights_Endfield:
+        explorerViewOpenedPaths = explorerViewOpenedPathsEndfield;
+        explorerViewOpenedForwardPaths = explorerViewOpenedForwardPathsEndfield;
+        break;
+      case TargetGame.Genshin_Impact:
+        explorerViewOpenedPaths = explorerViewOpenedPathsGenshin;
+        explorerViewOpenedForwardPaths = explorerViewOpenedForwardPathsGenshin;
+        break;
+      case TargetGame.Honkai_Star_Rail:
+        explorerViewOpenedPaths = explorerViewOpenedPathsHsr;
+        explorerViewOpenedForwardPaths = explorerViewOpenedForwardPathsHsr;
+        break;
+      case TargetGame.Wuthering_Waves:
+        explorerViewOpenedPaths = explorerViewOpenedPathsWuwa;
+        explorerViewOpenedForwardPaths = explorerViewOpenedForwardPathsWuwa;
+        break;
+      case TargetGame.Zenless_Zone_Zero:
+        explorerViewOpenedPaths = explorerViewOpenedPathsZzz;
+        explorerViewOpenedForwardPaths = explorerViewOpenedForwardPathsZzz;
+        break;
+      default:
+    }
+
+    if (event.buttons == kBackMouseButton && explorerViewOpenedPaths != null) {
+      final pathHistory = ref.read(explorerViewOpenedPaths);
+      final lastPath = pathHistory.pop();
+      if (lastPath != null) {
+        await setCurrentPath(
+          ref,
+          lastPath,
+          addToHistory: false,
+          addToForwardHistory: true,
+        );
+      }
+    } else if (event.buttons == kForwardMouseButton &&
+        explorerViewOpenedForwardPaths != null) {
+      final pathHistory = ref.read(explorerViewOpenedForwardPaths);
+      final lastPath = pathHistory.pop();
+      if (lastPath != null) {
+        await setCurrentPath(ref, lastPath, clearForwardHistory: false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final itemWidth = 120 * sss;
-        final itemHeight = 180 * sss;
-        final spacing = 10 * sss;
+    return Listener(
+      onPointerDown: (event) async {
+        await handleForwardAndBackwardNavigation(event);
+      },
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final itemWidth = 120 * sss;
+          final itemHeight = 180 * sss;
+          final spacing = 10 * sss;
 
-        final itemsPerRow =
-            ((constraints.maxWidth + spacing) / (itemWidth + spacing)).floor();
+          final itemsPerRow =
+              ((constraints.maxWidth + spacing) / (itemWidth + spacing))
+                  .floor();
 
-        final rowCount = (_entries.length / itemsPerRow).ceil();
+          final rowCount = (_entries.length / itemsPerRow).ceil();
 
-        return ScrollConfiguration(
-          behavior: ScrollConfiguration.of(context).copyWith(
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.mouse,
-              PointerDeviceKind.trackpad,
-            },
-            scrollbars: false,
-          ),
-          child: ScrollbarTheme(
-            data: ScrollbarThemeData(
-              thickness: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.hovered)) {
-                  return 8 * sss;
-                }
-                return 3 * sss;
-              }),
+          return ScrollConfiguration(
+            behavior: ScrollConfiguration.of(context).copyWith(
+              dragDevices: {
+                PointerDeviceKind.touch,
+                PointerDeviceKind.mouse,
+                PointerDeviceKind.trackpad,
+              },
+              scrollbars: false,
             ),
-            child: Scrollbar(
-              controller: scrollController,
-              radius: const Radius.circular(999),
-              child: ListView.builder(
+            child: ScrollbarTheme(
+              data: ScrollbarThemeData(
+                thickness: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.hovered)) {
+                    return 8 * sss;
+                  }
+                  return 3 * sss;
+                }),
+              ),
+              child: Scrollbar(
                 controller: scrollController,
-                itemExtent: itemHeight,
-                itemCount: rowCount,
-                itemBuilder: (context, rowIndex) {
-                  final start = rowIndex * itemsPerRow;
-                  final end = min(start + itemsPerRow, _entries.length);
+                radius: const Radius.circular(999),
+                child: ListView.builder(
+                  controller: scrollController,
+                  itemExtent: itemHeight,
+                  itemCount: rowCount,
+                  itemBuilder: (context, rowIndex) {
+                    final start = rowIndex * itemsPerRow;
+                    final end = min(start + itemsPerRow, _entries.length);
 
-                  return Row(
-                    children: [
-                      for (int i = start; i < end; i++)
-                        ExplorerItem(
-                          index: i,
-                          entry: _entries[i],
-                          width: itemWidth,
-                          height: itemHeight,
-                          spacing: spacing,
-                          isSelected: selectedItems.contains(i),
-                          onSingleTap: () {
-                            setState(() {
-                              if (ref.read(isShiftPressed)) {
-                                int greaterNumber =
-                                    lastSelectedItem > i ? lastSelectedItem : i;
-                                int leastNumber =
-                                    lastSelectedItem < i ? lastSelectedItem : i;
-                                Set<int> selections = {};
-                                if (ref.read(isCtrlPressed)) {
-                                  selections = selectedItems;
-                                }
-                                for (
-                                  var i = leastNumber;
-                                  i <= greaterNumber;
-                                  i++
-                                ) {
-                                  selections.add(i);
-                                }
-                                selectedItems = selections;
-                                return;
-                              } else if (ref.read(isCtrlPressed)) {
-                                final temp = selectedItems;
-                                if (temp.contains(i)) {
-                                  temp.remove(i);
+                    return Row(
+                      children: [
+                        for (int i = start; i < end; i++)
+                          ExplorerItem(
+                            index: i,
+                            entry: _entries[i],
+                            width: itemWidth,
+                            height: itemHeight,
+                            spacing: spacing,
+                            isSelected: selectedItems.contains(i),
+                            onSingleTap: () {
+                              setState(() {
+                                if (ref.read(isShiftPressed)) {
+                                  int greaterNumber =
+                                      lastSelectedItem > i
+                                          ? lastSelectedItem
+                                          : i;
+                                  int leastNumber =
+                                      lastSelectedItem < i
+                                          ? lastSelectedItem
+                                          : i;
+                                  Set<int> selections = {};
+                                  if (ref.read(isCtrlPressed)) {
+                                    selections = selectedItems;
+                                  }
+                                  for (
+                                    var i = leastNumber;
+                                    i <= greaterNumber;
+                                    i++
+                                  ) {
+                                    selections.add(i);
+                                  }
+                                  selectedItems = selections;
+                                  return;
+                                } else if (ref.read(isCtrlPressed)) {
+                                  final temp = selectedItems;
+                                  if (temp.contains(i)) {
+                                    temp.remove(i);
+                                  } else {
+                                    temp.add(i);
+                                  }
+                                  selectedItems = temp;
                                 } else {
-                                  temp.add(i);
+                                  selectedItems = {i};
                                 }
-                                selectedItems = temp;
-                              } else {
-                                selectedItems = {i};
-                              }
 
-                              lastSelectedItem = i;
-                            });
-                          },
-                        ),
-                    ],
-                  );
-                },
+                                lastSelectedItem = i;
+                              });
+                            },
+                          ),
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
@@ -844,6 +944,10 @@ class _TopBarCasualState extends ConsumerState<TopBarCasual> {
   final pathTextfieldFocusNode = FocusNode();
   bool hoveredPathTextfield = false;
   bool pathTextfieldFocused = false;
+
+  bool backwardHovered = false;
+  bool forwardHovered = false;
+  bool searchHovered = false;
 
   @override
   void initState() {
@@ -876,7 +980,7 @@ class _TopBarCasualState extends ConsumerState<TopBarCasual> {
         final validatedPath = await getValidCurrentPath(currentPath, modsPath);
         if (validatedPath != currentPath) {
           currentPath = validatedPath;
-          setCurrentPath(ref, currentPath);
+          await setCurrentPath(ref, currentPath);
         }
       } else {
         currentPath = modsPath;
@@ -890,6 +994,109 @@ class _TopBarCasualState extends ConsumerState<TopBarCasual> {
     return "";
   }
 
+  Future<void> handleForwardAndBackwardNavigation(
+    PointerDownEvent event,
+  ) async {
+    StateProvider<StackCollection<String>>? explorerViewOpenedPaths;
+    StateProvider<StackCollection<String>>? explorerViewOpenedForwardPaths;
+
+    switch (ref.read(targetGameProvider)) {
+      case TargetGame.Arknights_Endfield:
+        explorerViewOpenedPaths = explorerViewOpenedPathsEndfield;
+        explorerViewOpenedForwardPaths = explorerViewOpenedForwardPathsEndfield;
+        break;
+      case TargetGame.Genshin_Impact:
+        explorerViewOpenedPaths = explorerViewOpenedPathsGenshin;
+        explorerViewOpenedForwardPaths = explorerViewOpenedForwardPathsGenshin;
+        break;
+      case TargetGame.Honkai_Star_Rail:
+        explorerViewOpenedPaths = explorerViewOpenedPathsHsr;
+        explorerViewOpenedForwardPaths = explorerViewOpenedForwardPathsHsr;
+        break;
+      case TargetGame.Wuthering_Waves:
+        explorerViewOpenedPaths = explorerViewOpenedPathsWuwa;
+        explorerViewOpenedForwardPaths = explorerViewOpenedForwardPathsWuwa;
+        break;
+      case TargetGame.Zenless_Zone_Zero:
+        explorerViewOpenedPaths = explorerViewOpenedPathsZzz;
+        explorerViewOpenedForwardPaths = explorerViewOpenedForwardPathsZzz;
+        break;
+      default:
+    }
+
+    if (event.buttons == kBackMouseButton && explorerViewOpenedPaths != null) {
+      final pathHistory = ref.read(explorerViewOpenedPaths);
+      final lastPath = pathHistory.pop();
+      if (lastPath != null) {
+        await setCurrentPath(
+          ref,
+          lastPath,
+          addToHistory: false,
+          addToForwardHistory: true,
+        );
+      }
+    } else if (event.buttons == kForwardMouseButton &&
+        explorerViewOpenedForwardPaths != null) {
+      final pathHistory = ref.read(explorerViewOpenedForwardPaths);
+      final lastPath = pathHistory.pop();
+      if (lastPath != null) {
+        await setCurrentPath(ref, lastPath, clearForwardHistory: false);
+      }
+    }
+  }
+
+  bool backwardButtonEmpty() {
+    StateProvider<StackCollection<String>>? provider;
+    switch (ref.watch(targetGameProvider)) {
+      case TargetGame.Arknights_Endfield:
+        provider = explorerViewOpenedPathsEndfield;
+        break;
+      case TargetGame.Genshin_Impact:
+        provider = explorerViewOpenedPathsGenshin;
+        break;
+      case TargetGame.Honkai_Star_Rail:
+        provider = explorerViewOpenedPathsHsr;
+        break;
+      case TargetGame.Wuthering_Waves:
+        provider = explorerViewOpenedPathsWuwa;
+        break;
+      case TargetGame.Zenless_Zone_Zero:
+        provider = explorerViewOpenedPathsZzz;
+        break;
+      default:
+    }
+    if (provider != null) {
+      return ref.watch(provider).isEmpty;
+    }
+    return false;
+  }
+
+  bool forwardButtonEmpty() {
+    StateProvider<StackCollection<String>>? provider;
+    switch (ref.watch(targetGameProvider)) {
+      case TargetGame.Arknights_Endfield:
+        provider = explorerViewOpenedForwardPathsEndfield;
+        break;
+      case TargetGame.Genshin_Impact:
+        provider = explorerViewOpenedForwardPathsGenshin;
+        break;
+      case TargetGame.Honkai_Star_Rail:
+        provider = explorerViewOpenedForwardPathsHsr;
+        break;
+      case TargetGame.Wuthering_Waves:
+        provider = explorerViewOpenedForwardPathsWuwa;
+        break;
+      case TargetGame.Zenless_Zone_Zero:
+        provider = explorerViewOpenedForwardPathsZzz;
+        break;
+      default:
+    }
+    if (provider != null) {
+      return ref.watch(provider).isEmpty;
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
@@ -898,6 +1105,92 @@ class _TopBarCasualState extends ConsumerState<TopBarCasual> {
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        MouseRegion(
+          onEnter:
+              (_) => setState(() {
+                backwardHovered = true;
+              }),
+          onExit:
+              (_) => setState(() {
+                backwardHovered = false;
+              }),
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            child: Tooltip(
+              message: "Backward (side mouse button)",
+              textStyle: GoogleFonts.poppins(
+                fontSize: 12 * sss,
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+              ),
+              constraints: BoxConstraints(maxWidth: 300 * sss),
+              waitDuration: Duration(milliseconds: 1000),
+              child: Icon(
+                Icons.keyboard_backspace_rounded,
+                size: 24 * sss,
+                color:
+                    backwardHovered
+                        ? getAccentColor(ref)
+                        : Color.fromARGB(
+                          backwardButtonEmpty() ? 90 : 169,
+                          255,
+                          255,
+                          255,
+                        ),
+              ),
+            ),
+            onTap:
+                () => handleForwardAndBackwardNavigation(
+                  PointerDownEvent(buttons: kBackMouseButton),
+                ),
+          ),
+        ),
+        SizedBox(width: 7 * sss),
+        MouseRegion(
+          onEnter:
+              (_) => setState(() {
+                forwardHovered = true;
+              }),
+          onExit:
+              (_) => setState(() {
+                forwardHovered = false;
+              }),
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            child: Tooltip(
+              message: "Forward (side mouse button)",
+              textStyle: GoogleFonts.poppins(
+                fontSize: 12 * sss,
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+              ),
+              constraints: BoxConstraints(maxWidth: 300 * sss),
+              waitDuration: Duration(milliseconds: 1000),
+              child: Transform.flip(
+                flipX: true,
+                child: Icon(
+                  Icons.keyboard_backspace_rounded,
+                  size: 23 * sss,
+                  color:
+                      forwardHovered
+                          ? getAccentColor(ref)
+                          : Color.fromARGB(
+                            forwardButtonEmpty() ? 90 : 169,
+                            255,
+                            255,
+                            255,
+                          ),
+                ),
+              ),
+            ),
+            onTap:
+                () => handleForwardAndBackwardNavigation(
+                  PointerDownEvent(buttons: kForwardMouseButton),
+                ),
+          ),
+        ),
+        SizedBox(width: 10 * sss),
+
         Icon(
           Icons.folder_rounded,
           size: 24 * sss,
@@ -1005,6 +1298,9 @@ class _PathTextFieldState extends ConsumerState<PathTextField> {
   Future<void> inputPath(double sss, String path) async {
     final modsPath = ref.read(validModsPath);
     if (modsPath != null) {
+      if (path.isEmpty) {
+        path = p.dirname(modsPath);
+      }
       //example D:\XXMI Launcher, not D:\XXMI Launcher\GIMI (not the MI path)
       final basePath = p.dirname(p.dirname(modsPath));
       String? fullPath;
@@ -1027,6 +1323,7 @@ class _PathTextFieldState extends ConsumerState<PathTextField> {
       }
 
       fullPath = ModsPathValidator.sanitizePath(fullPath);
+      final currentPath = ref.read(currentFullPathCasualStyle);
 
       if (fullPath == null) {
         showSnackbar(sss, "The specified path doesn't exist");
@@ -1043,10 +1340,14 @@ class _PathTextFieldState extends ConsumerState<PathTextField> {
             showSnackbar(sss, "The specified path doesn't exist");
             break;
           case 1:
-            setCurrentPath(ref, fullPath);
+            if (currentPath != fullPath) {
+              await setCurrentPath(ref, fullPath);
+            }
             break;
           case 2:
-            setCurrentPath(ref, p.dirname(fullPath));
+            if (currentPath != p.dirname(fullPath)) {
+              await setCurrentPath(ref, p.dirname(fullPath));
+            }
             break;
           default:
         }
@@ -1178,7 +1479,7 @@ class _PathBreadcrumbsState extends ConsumerState<PathBreadcrumbs>
         final validatedPath = await getValidCurrentPath(currentPath, modsPath);
         if (validatedPath != currentPath) {
           currentPath = validatedPath;
-          setCurrentPath(ref, currentPath);
+          await setCurrentPath(ref, currentPath);
         }
       } else {
         currentPath = modsPath;
@@ -1227,8 +1528,8 @@ class _PathBreadcrumbsState extends ConsumerState<PathBreadcrumbs>
                       ? getAccentColor(ref)
                       : const Color.fromARGB(169, 255, 255, 255),
               hoverColor: Colors.white,
-              onTap: () {
-                setCurrentPath(ref, fullPath);
+              onTap: () async {
+                await setCurrentPath(ref, fullPath);
               },
             ),
 
@@ -1334,18 +1635,127 @@ class _ClickableTextState extends State<ClickableText> {
   }
 }
 
+Future<void> addOpenedPathHistory(WidgetRef ref, String fullPath) async {
+  StateProvider<StackCollection<String>>? prov;
+
+  switch (ref.read(targetGameProvider)) {
+    case TargetGame.Arknights_Endfield:
+      prov = explorerViewOpenedPathsEndfield;
+      break;
+    case TargetGame.Genshin_Impact:
+      prov = explorerViewOpenedPathsGenshin;
+      break;
+    case TargetGame.Honkai_Star_Rail:
+      prov = explorerViewOpenedPathsHsr;
+      break;
+    case TargetGame.Wuthering_Waves:
+      prov = explorerViewOpenedPathsWuwa;
+      break;
+    case TargetGame.Zenless_Zone_Zero:
+      prov = explorerViewOpenedPathsZzz;
+      break;
+    default:
+  }
+
+  if (prov != null) {
+    final addedPaths = ref.read(prov);
+    final lastAddedPath = addedPaths.peek;
+    if (lastAddedPath == null) {
+      final newAddedPaths = addedPaths;
+      newAddedPaths.push(fullPath);
+      ref.read(prov.notifier).state = newAddedPaths;
+    } else if (!await FileSystemEntity.identical(lastAddedPath, fullPath)) {
+      final newAddedPaths = addedPaths;
+      newAddedPaths.push(fullPath);
+      ref.read(prov.notifier).state = newAddedPaths;
+    }
+  }
+}
+
+Future<void> addOpenedForwardPathHistory(
+  WidgetRef ref,
+  String fullPath,
+  bool clear,
+) async {
+  StateProvider<StackCollection<String>>? prov;
+
+  switch (ref.read(targetGameProvider)) {
+    case TargetGame.Arknights_Endfield:
+      prov = explorerViewOpenedForwardPathsEndfield;
+      break;
+    case TargetGame.Genshin_Impact:
+      prov = explorerViewOpenedForwardPathsGenshin;
+      break;
+    case TargetGame.Honkai_Star_Rail:
+      prov = explorerViewOpenedForwardPathsHsr;
+      break;
+    case TargetGame.Wuthering_Waves:
+      prov = explorerViewOpenedForwardPathsWuwa;
+      break;
+    case TargetGame.Zenless_Zone_Zero:
+      prov = explorerViewOpenedForwardPathsZzz;
+      break;
+    default:
+  }
+
+  if (prov != null) {
+    if (clear) {
+      ref.read(prov.notifier).state = StackCollection();
+      return;
+    }
+    final addedPaths = ref.read(prov);
+    final lastAddedPath = addedPaths.peek;
+    if (lastAddedPath == null) {
+      final newAddedPaths = addedPaths;
+      newAddedPaths.push(fullPath);
+      ref.read(prov.notifier).state = newAddedPaths;
+    } else if (!await FileSystemEntity.identical(lastAddedPath, fullPath)) {
+      final newAddedPaths = addedPaths;
+      newAddedPaths.push(fullPath);
+      ref.read(prov.notifier).state = newAddedPaths;
+    }
+  }
+}
+
 String? getCurrentPath(WidgetRef ref) {
   final result = ref.read(currentFullPathCasualStyle);
   return result ??
       SharedPrefUtils().getCurrentPath(ref.read(targetGameProvider));
 }
 
-void setCurrentPath(WidgetRef ref, String currentFullPath) {
-  ref.read(currentFullPathCasualStyle.notifier).state = currentFullPath;
-  SharedPrefUtils().setCurrentPath(
+Future<void> setCurrentPath(
+  WidgetRef ref,
+  String currentFullPath, {
+  bool addToHistory = true,
+  bool addToForwardHistory = false,
+  bool clearForwardHistory = true,
+}) async {
+  if (addToHistory) {
+    if (ref.read(currentFullPathCasualStyle) != null) {
+      await addOpenedPathHistory(ref, ref.read(currentFullPathCasualStyle)!);
+      if (clearForwardHistory) {
+        await addOpenedForwardPathHistory(
+          ref,
+          ref.read(currentFullPathCasualStyle)!,
+          true,
+        );
+      }
+    }
+  } else if (addToForwardHistory) {
+    if (ref.read(currentFullPathCasualStyle) != null) {
+      await addOpenedForwardPathHistory(
+        ref,
+        ref.read(currentFullPathCasualStyle)!,
+        false,
+      );
+    }
+  }
+
+  await SharedPrefUtils().setCurrentPath(
     currentFullPath,
     ref.read(targetGameProvider),
   );
+  ref.read(currentFullPathCasualStyle.notifier).state = currentFullPath;
 }
 
 Future<String> getValidCurrentPath(
