@@ -1,5 +1,4 @@
-//TODO: Proper info on files that cannot be double click open, for security reason
-//TODO: Navigation, backward and forward
+//TODO: Right-click system
 
 import 'dart:async';
 import 'dart:io';
@@ -7,8 +6,10 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:collection/collection.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/casual_style/dds_image_widget.dart';
@@ -16,11 +17,16 @@ import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/custom_icons.dart';
 import 'package:no_reload_mod_manager/utils/archive_manager.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
+import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
+import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
+import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:no_reload_mod_manager/utils/stack_collection.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:path/path.dart' as p;
+import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 
 class TabModsCasual extends ConsumerStatefulWidget {
@@ -46,7 +52,7 @@ class _TabModsCasualState extends ConsumerState<TabModsCasual> {
     final sss = ref.watch(zoomScaleProvider);
     return Padding(
       padding: EdgeInsets.only(
-        top: ref.watch(windowIsPinnedProvider) ? 123 * sss : 98 * sss,
+        top: ref.watch(windowIsPinnedProvider) ? 123 * sss : 110 * sss,
         right: 45 * sss,
         left: 45 * sss,
         bottom: 40 * sss,
@@ -628,6 +634,7 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
 
     ref.listenManual(currentFullPathCasualStyle, (previous, next) {
       _loadEntries(next);
+      _scrollToStart();
 
       resetItemSelection();
     });
@@ -637,6 +644,18 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
   void dispose() {
     scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _scrollToStart() async {
+    // Wait until scrollController has a valid position
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (!scrollController.hasClients) return;
+
+    await scrollController.animateTo(
+      scrollController.position.minScrollExtent,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+    );
   }
 
   Future<void> initCurrentPath() async {
@@ -821,6 +840,66 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
     }
   }
 
+  void _onBackgroundTap() {
+    if (!ref.read(isShiftPressed) && !ref.read(isCtrlPressed)) {
+      setState(() => selectedItems = {});
+    }
+  }
+
+  Widget backgroundRightClickMenu(double sss, Widget child) {
+    return RightClickMenuRegion(
+      menuItems: <ContextMenuEntry>[
+        if (ref.watch(tabIndexProvider) != 2)
+          CustomMenuItem(
+            scale: sss,
+            onSelected: () async {
+              triggerRefresh(ref);
+            },
+            label: 'Refresh'.tr(),
+          ),
+        ref.watch(windowIsPinnedProvider)
+            ? CustomMenuItem(
+              scale: sss,
+              onSelected:
+                  () => ref.read(windowIsPinnedProvider.notifier).state = false,
+              label: 'Unpin window'.tr(),
+            )
+            : CustomMenuItem(
+              scale: sss,
+              onSelected:
+                  () => ref.read(windowIsPinnedProvider.notifier).state = true,
+              label: 'Pin window'.tr(),
+            ),
+        CustomMenuItem(
+          scale: sss,
+          onSelected: () async {
+            try {
+              if (!await launchUrl(
+                Uri.parse(ref.read(tutorialLinkProvider)),
+              )) {}
+            } catch (_) {}
+          },
+          label: 'Tutorial'.tr(),
+        ),
+        CustomMenuItem(
+          scale: sss,
+          onSelected: () async {
+            ref.read(targetGameProvider.notifier).state = TargetGame.none;
+            await windowManager.hide();
+            clearImagesCache();
+            DynamicDirectoryWatcher.stop();
+          },
+          label: 'Hide window'.tr(),
+        ),
+      ],
+      additionalCalledFunction: _onBackgroundTap,
+      child: GestureDetector(
+        onTap: _onBackgroundTap,
+        child: Container(color: Colors.transparent, child: child),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
@@ -861,67 +940,99 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
               child: Scrollbar(
                 controller: scrollController,
                 radius: const Radius.circular(999),
-                child: ListView.builder(
+                child: CustomScrollView(
                   controller: scrollController,
-                  itemExtent: itemHeight,
-                  itemCount: rowCount,
-                  itemBuilder: (context, rowIndex) {
-                    final start = rowIndex * itemsPerRow;
-                    final end = min(start + itemsPerRow, _entries.length);
+                  slivers: [
+                    SliverFixedExtentList(
+                      itemExtent: itemHeight + spacing, // was itemHeight
+                      delegate: SliverChildBuilderDelegate((context, rowIndex) {
+                        final start = rowIndex * itemsPerRow;
+                        final end = min(start + itemsPerRow, _entries.length);
+                        return Column(
+                          children: [
+                            SizedBox(
+                              height: itemHeight,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  for (int i = start; i < end; i++) ...[
+                                    ExplorerItem(
+                                      index: i,
+                                      entry: _entries[i],
+                                      width: itemWidth,
+                                      height: itemHeight,
+                                      spacing: 0, // margin externalized
+                                      isSelected: selectedItems.contains(i),
+                                      onSingleTap: () {
+                                        setState(() {
+                                          if (ref.read(isShiftPressed)) {
+                                            int greaterNumber =
+                                                lastSelectedItem > i
+                                                    ? lastSelectedItem
+                                                    : i;
+                                            int leastNumber =
+                                                lastSelectedItem < i
+                                                    ? lastSelectedItem
+                                                    : i;
+                                            Set<int> selections = {};
+                                            if (ref.read(isCtrlPressed)) {
+                                              selections = selectedItems;
+                                            }
+                                            for (
+                                              var i = leastNumber;
+                                              i <= greaterNumber;
+                                              i++
+                                            ) {
+                                              selections.add(i);
+                                            }
+                                            selectedItems = selections;
+                                            return;
+                                          } else if (ref.read(isCtrlPressed)) {
+                                            final temp = selectedItems;
+                                            if (temp.contains(i)) {
+                                              temp.remove(i);
+                                            } else {
+                                              temp.add(i);
+                                            }
+                                            selectedItems = temp;
+                                          } else {
+                                            selectedItems = {i};
+                                          }
 
-                    return Row(
-                      children: [
-                        for (int i = start; i < end; i++)
-                          ExplorerItem(
-                            index: i,
-                            entry: _entries[i],
-                            width: itemWidth,
-                            height: itemHeight,
-                            spacing: spacing,
-                            isSelected: selectedItems.contains(i),
-                            onSingleTap: () {
-                              setState(() {
-                                if (ref.read(isShiftPressed)) {
-                                  int greaterNumber =
-                                      lastSelectedItem > i
-                                          ? lastSelectedItem
-                                          : i;
-                                  int leastNumber =
-                                      lastSelectedItem < i
-                                          ? lastSelectedItem
-                                          : i;
-                                  Set<int> selections = {};
-                                  if (ref.read(isCtrlPressed)) {
-                                    selections = selectedItems;
-                                  }
-                                  for (
-                                    var i = leastNumber;
-                                    i <= greaterNumber;
-                                    i++
-                                  ) {
-                                    selections.add(i);
-                                  }
-                                  selectedItems = selections;
-                                  return;
-                                } else if (ref.read(isCtrlPressed)) {
-                                  final temp = selectedItems;
-                                  if (temp.contains(i)) {
-                                    temp.remove(i);
-                                  } else {
-                                    temp.add(i);
-                                  }
-                                  selectedItems = temp;
-                                } else {
-                                  selectedItems = {i};
-                                }
-
-                                lastSelectedItem = i;
-                              });
-                            },
-                          ),
-                      ],
-                    );
-                  },
+                                          lastSelectedItem = i;
+                                        });
+                                      },
+                                    ),
+                                    backgroundRightClickMenu(
+                                      sss,
+                                      SizedBox(
+                                        width: spacing,
+                                        height: itemHeight,
+                                      ),
+                                    ),
+                                  ],
+                                  Expanded(
+                                    child: backgroundRightClickMenu(
+                                      sss,
+                                      SizedBox(),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            backgroundRightClickMenu(
+                              sss,
+                              SizedBox(height: spacing, width: double.infinity),
+                            ),
+                          ],
+                        );
+                      }, childCount: rowCount),
+                    ),
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: backgroundRightClickMenu(sss, SizedBox.expand()),
+                    ),
+                  ],
                 ),
               ),
             ),

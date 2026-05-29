@@ -403,7 +403,8 @@ class _BackgroundState extends ConsumerState<Background> {
                   menuItems: <ContextMenuEntry>[
                     if (ref.watch(tabIndexProvider) == 1 &&
                         ref.watch(modGroupDataProvider).isEmpty &&
-                        ref.watch(validModsPath) != null)
+                        ref.watch(validModsPath) != null &&
+                        !ref.watch(isCasualStyle))
                       CustomMenuItem(
                         scale: sss,
                         onSelected: () async {
@@ -435,7 +436,8 @@ class _BackgroundState extends ConsumerState<Background> {
                         },
                         label: 'Search'.tr(),
                       ),
-                    if (ref.watch(tabIndexProvider) == 1)
+                    if (ref.watch(tabIndexProvider) == 1 &&
+                        !ref.watch(isCasualStyle))
                       CustomMenuItem.submenu(
                         scale: sss,
                         items: [
@@ -1723,7 +1725,7 @@ void changeWindowTitleName(String gameName) {
 
 Color getAccentColor(WidgetRef ref, {int alpha = 255}) {
   return ref.watch(isCasualStyle)
-      ? Color.fromARGB(alpha, 77, 182, 172)
+      ? Color.fromARGB(alpha, 164, 229, 196)
       : Color.fromARGB(alpha, 33, 149, 243);
 }
 
