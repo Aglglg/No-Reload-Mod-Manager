@@ -491,7 +491,7 @@ class SharedPrefUtils {
 
   bool isAutoPinWindow() {
     bool? result = _prefs?.getBool(keyAutoPinWindow);
-    return result ??= false;
+    return result ??= true;
   }
 
   Future<void> setShowMenuOutsideGame(bool value) async {
@@ -564,7 +564,7 @@ class SharedPrefUtils {
 
   static const String keyAutoGenerateFolderIcon = "autoFolderIco";
 
-  static const String keyAutoPinWindow = "autoPinWindow";
+  static const String keyAutoPinWindow = "autoPinWindoww";
   static const String keyShowMenuOutsideGame = "showMenuOutsideGame";
 
   static const String keyKeybindSimulateKeypress = "keybindSimulateKeypress";
