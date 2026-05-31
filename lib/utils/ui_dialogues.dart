@@ -1722,6 +1722,398 @@ class _RestoreModDialogState extends ConsumerState<RestoreModDialog> {
   }
 }
 
+class ExtractModCasualDialog extends ConsumerStatefulWidget {
+  final String archivePath;
+  const ExtractModCasualDialog({super.key, required this.archivePath});
+
+  @override
+  ConsumerState<ExtractModCasualDialog> createState() =>
+      _ExtractModCasualDialogState();
+}
+
+class _ExtractModCasualDialogState
+    extends ConsumerState<ExtractModCasualDialog> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showConfirm = false;
+  bool _showConfirmExtract = true;
+  bool _showClose = false;
+  bool _showPasswordTextfield = true;
+  List<TextSpan> contents = [];
+  Map<String, String> passwordedArchives = {};
+
+  @override
+  void initState() {
+    super.initState();
+    setState(() {
+      contents = [
+        TextSpan(
+          text: 'Extract this archive here?'.tr(),
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ];
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<String> getSafeTarget(String target) async {
+    if (!await Directory(target).exists()) return target;
+
+    int i = 1;
+    while (true) {
+      final candidate = "${target}_$i";
+      if (!await Directory(candidate).exists()) return candidate;
+      i++;
+    }
+  }
+
+  Future<void> unwrapSingleFolderNesting(String path) async {
+    final dir = Directory(path);
+
+    try {
+      while (true) {
+        final entries = await dir.list().toList();
+
+        // Exclude specific filenames
+        final relevant =
+            entries.where((e) {
+              final basename = p.basename(e.path).toLowerCase();
+              const excluded = {
+                'modname',
+                'modforced',
+                'modsyntaxerrorremoved',
+                'modunoptimized',
+                'modnamespaced',
+                'modlink',
+                '.nahidamd',
+              };
+              return !excluded.contains(basename) &&
+                  !ConstantVar.modIconFilenames.contains(basename) &&
+                  !basename.startsWith('jasm_') &&
+                  !basename.startsWith('.jasm') &&
+                  !basename.startsWith('.imm') &&
+                  !basename.endsWith('.txt') &&
+                  !basename.endsWith('.json');
+            }).toList();
+
+        // Stop if more than 1 relevant entry, or it's empty
+        if (relevant.length != 1) break;
+
+        // Stop if the single relevant entry is a file (any type except Directory)
+        final single = relevant.first;
+        final isDir = await FileSystemEntity.isDirectory(single.path);
+        if (!isDir) break;
+
+        final singleSubDir = Directory(single.path);
+
+        // Move contents of singleSubDir up to dir
+        final children = await singleSubDir.list().toList();
+
+        for (final entity in children) {
+          final target = p.join(dir.path, p.basename(entity.path));
+          if (entity is File) {
+            await entity.rename(target); //auto overwritten
+          } else if (entity is Directory) {
+            // cannot overwrite folder, rename to non existing folder name
+            await entity.rename(await getSafeTarget(target));
+          }
+        }
+
+        // Remove the now-empty wrapper folder
+        await singleSubDir.delete();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> extractFile({bool proceed = false}) async {
+    setState(() {
+      _showConfirmExtract = false;
+      contents = [];
+    });
+    //ARCHIVE CHECK PASSWORD
+    if (!proceed) {
+      bool isPassworded = await SevenZip.instance.isEncrypted(
+        widget.archivePath,
+      );
+      if (isPassworded) {
+        setState(() {
+          passwordedArchives = {...passwordedArchives, widget.archivePath: ''};
+        });
+      }
+
+      if (passwordedArchives.isNotEmpty) {
+        setState(() {
+          _showConfirm = true;
+        });
+        return;
+      } else {
+        proceed = true;
+      }
+    }
+
+    if (proceed) {
+      setState(() {
+        contents = [];
+        _showPasswordTextfield = false;
+        contents.add(
+          TextSpan(
+            text: 'Extracting file...'.tr(),
+            style: GoogleFonts.poppins(color: Colors.white),
+          ),
+        );
+      });
+    }
+
+    List<TextSpan> operationLogs = [];
+
+    //MOD ARCHIVEs
+    String destFolderName = p.basenameWithoutExtension(widget.archivePath);
+    String destPath = p.dirname(widget.archivePath);
+    try {
+      //group_x/archiveName
+      String destDirPath = p.join(destPath, destFolderName);
+      destDirPath = await checkForDuplicateFolderName(destDirPath);
+
+      //extract
+      final extractResult = await SevenZip.instance.extract(
+        widget.archivePath,
+        outputDir: destDirPath,
+        password: passwordedArchives[widget.archivePath] ?? '',
+      );
+
+      if (extractResult.success) {
+        //make sure the mod folder directly contains files not another nested folder
+        await unwrapSingleFolderNesting(destDirPath);
+      } else {
+        try {
+          await Directory(
+            r"\\?\" + destDirPath.replaceFirst(r"\\?\", ''),
+          ).delete(
+            recursive: true,
+          ); // workaround \\?\ for long paths, only for Windows
+        } catch (_) {}
+        if (extractResult.wrongPassword) {
+          throw Exception("Wrong password");
+        } else {
+          throw Exception("Failed to extract");
+        }
+      }
+
+      operationLogs.add(
+        TextSpan(
+          text: 'Archive extracted'.tr(args: [p.basename(widget.archivePath)]),
+          style: GoogleFonts.poppins(
+            color: Colors.green,
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (e.toString().contains("Wrong password")) {
+        operationLogs.add(
+          TextSpan(
+            text: 'Archive wrong password'.tr(
+              args: [p.basename(widget.archivePath)],
+            ),
+            style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
+          ),
+        );
+      } else if (e.toString().contains("Failed to extract")) {
+        operationLogs.add(
+          TextSpan(
+            text: 'Error! Archive not supported'.tr(
+              args: [p.basename(widget.archivePath)],
+            ),
+            style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
+          ),
+        );
+      } else {
+        operationLogs.add(
+          TextSpan(
+            text:
+                '${'Error! Cannot extract mod archive'.tr(args: [p.basename(widget.archivePath)])}.\n${ConstantVar.defaultErrorInfo}\n\n',
+            style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
+          ),
+        );
+      }
+    }
+
+    setState(() {
+      _showClose = true;
+      contents = operationLogs;
+    });
+
+    await _scrollToBottom();
+  }
+
+  Future<String> checkForDuplicateFolderName(String destPath) async {
+    String fixedDestPath = destPath;
+    while (await Directory(fixedDestPath).exists()) {
+      fixedDestPath = '${fixedDestPath}_';
+    }
+    return fixedDestPath;
+  }
+
+  Future<void> _scrollToBottom() async {
+    // Wait until scrollController has a valid position
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (!_scrollController.hasClients) return;
+
+    await _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  void _onCloseClicked() {
+    triggerRefresh(ref);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        'Extract file'.tr(),
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
+      ),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.trackpad,
+            },
+          ),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (_showPasswordTextfield)
+                  ...passwordedArchives.entries.map((e) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          p.basename(e.key),
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w400,
+                            color: Colors.grey,
+                            fontSize: 12,
+                          ),
+                          textAlign: TextAlign.start,
+                        ),
+                        SizedBox(height: 3),
+                        TextField(
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            isDense: true,
+                            disabledBorder: InputBorder.none,
+                            hintText: 'Archive password'.tr(),
+                            hintStyle: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w300,
+                              color: const Color.fromARGB(80, 255, 255, 255),
+                              fontSize: 13,
+                            ),
+                          ),
+                          maxLines: 1,
+                          keyboardType: TextInputType.none,
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white,
+                            fontSize: 13,
+                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.deny(
+                              RegExp(r'[\n\r\u0085\u2028\u2029]'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            passwordedArchives[e.key] = value;
+                          },
+                          onSubmitted: (value) {
+                            passwordedArchives[e.key] = value;
+                          },
+                        ),
+                        SizedBox(height: 16),
+                      ],
+                    );
+                  }),
+
+                RichText(text: TextSpan(children: contents)),
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions:
+          _showClose
+              ? [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    ref.read(alertDialogShownProvider.notifier).state = false;
+                    _onCloseClicked();
+                  },
+                  child: Text(
+                    'Close'.tr(),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                  ),
+                ),
+              ]
+              : _showConfirmExtract
+              ? [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    ref.read(alertDialogShownProvider.notifier).state = false;
+                  },
+                  child: Text(
+                    'Close'.tr(),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    extractFile(proceed: false);
+                  },
+                  child: Text(
+                    'Confirm'.tr(),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                  ),
+                ),
+              ]
+              : _showConfirm
+              ? [
+                TextButton(
+                  onPressed: () {
+                    extractFile(proceed: true);
+                  },
+                  child: Text(
+                    'Confirm'.tr(),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                  ),
+                ),
+              ]
+              : [],
+    );
+  }
+}
+
 class DuplicatedUtilitiesDialog extends ConsumerStatefulWidget {
   final List<String> utilityPaths;
   const DuplicatedUtilitiesDialog({super.key, required this.utilityPaths});

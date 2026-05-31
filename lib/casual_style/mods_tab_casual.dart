@@ -27,6 +27,7 @@ import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:no_reload_mod_manager/utils/stack_collection.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
+import 'package:no_reload_mod_manager/utils/ui_dialogues.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
@@ -434,7 +435,15 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
     }
   }
 
-  void extractArchive() {}
+  void extractArchive() {
+    ref.read(alertDialogShownProvider.notifier).state = true;
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder:
+          (context) => ExtractModCasualDialog(archivePath: widget.entry.path),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
