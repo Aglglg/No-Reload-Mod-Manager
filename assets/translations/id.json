@@ -137,7 +137,7 @@
   "Failed to disable mod": "Gagal menonaktifkan mod.\nRename mod folder secara manual di File Explorer. Kemudian 'Update Mod Data' di Setelan.",
   "Disable mod completely": "Nonaktifkan mod",
   "Enable mod": "Aktifkan mod",
-  "Each section name must be unique (case-insensitive), cannot save.": "Setiap section harus punya nama yang berbeda (kapital diabaikan), gagal menyimpan.",
+  "Each section name must be unique (case-insensitive), to ensure all keys are working.": "Setiap nama section harus berbeda (kapital diabaikan) untuk memastikan semua key berfungsi.",
   "Sort group by": "Urutan grup",
   "Name": "Nama",
   "Index": "Indeks",

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:flutter/widgets.dart' as w;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -71,70 +72,118 @@ class TabKeybinds extends ConsumerStatefulWidget {
   ConsumerState<TabKeybinds> createState() => _TabKeybindsState();
 }
 
-class _TabKeybindsState extends ConsumerState<TabKeybinds> {
+class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
   ModData? modData;
   String groupName = "";
   bool isEditing = false;
 
   List<IniFileAsLines> iniFilesAsLines = [];
   List<KeybindData> keys = [];
-  final Map<KeybindData, GlobalKey<_KeyCardState>> childKeys = {};
+
+  List<String> editSectionNames = [];
+  List<List<String>> editKeyValues = [];
+
+  List<List<int>> _rows = [];
+  double _lastComputedWidth = 0;
+  double _lastComputedSss = 0;
+
+  bool _rowsComputePending = false;
+  int _rowComputeGeneration = 0;
 
   @override
   void initState() {
     super.initState();
+    windowManager.addListener(this);
 
-    //When going to Keybind
     ref.listenManual(tabIndexProvider, (previous, next) async {
       await setModDir();
     });
 
-    //In case auto refresh was triggered
-    ref.listenManual(targetGameProvider, (previous, next) async {
-      if (next != TargetGame.none) {
-        await setModDir();
-      }
+    ref.listenManual(isCasualStyle, (previous, next) async {
+      await setModDir();
     });
+
+    ref.listenManual(targetGameProvider, (previous, next) async {
+      await setModDir();
+    });
+  }
+
+  bool recalculate = true;
+  @override
+  void onWindowResize() {
+    _rowComputeGeneration++;
+    setState(() {
+      recalculate = false;
+      _rowsComputePending = false;
+    });
+    super.onWindowResize();
+  }
+
+  @override
+  void onWindowResized() {
+    setState(() {
+      recalculate = true;
+    });
+    super.onWindowResized();
+  }
+
+  @override
+  void dispose() {
+    windowManager.removeListener(this);
+    super.dispose();
   }
 
   Future<void> setModDir() async {
     int tabIndex = ref.read(tabIndexProvider);
     if (tabIndex == 0) {
-      //RESET
+      _rowComputeGeneration++;
       setState(() {
         modData = null;
         groupName = "";
         isEditing = false;
         iniFilesAsLines = [];
         keys = [];
+        editSectionNames = [];
+        editKeyValues = [];
+        _rows = [];
+        _lastComputedWidth = 0;
+        _lastComputedSss = 0;
+        _rowsComputePending = false;
       });
 
-      //Sometimes widget don't rebuild/don't show loading screen because loading time was too fast
-      await Future.delayed(Duration(milliseconds: 10));
-
-      if (ref.read(modKeybindProvider) != null) {
-        if (await Directory(
-              ref.read(modKeybindProvider)!.$1.modPath,
-            ).exists() &&
-            ref.read(modKeybindProvider)!.$3 == ref.read(targetGameProvider)) {
-          setState(() {
-            modData = ref.read(modKeybindProvider)!.$1;
-            groupName = ref.read(modKeybindProvider)!.$2;
-          });
-          await loadKeys();
-        } else {
-          setState(() {
-            modData = null;
-          });
+      if (mounted) {
+        final modKeybind = ref.read(modKeybindProvider);
+        if (modKeybind != null) {
+          final exist =
+              modKeybind.$5
+                  ? await File(modKeybind.$1.modPath).exists()
+                  : await Directory(modKeybind.$1.modPath).exists();
+          if (exist &&
+              modKeybind.$3 == ref.read(targetGameProvider) &&
+              modKeybind.$4 == ref.read(isCasualStyle)) {
+            setState(() {
+              modData = modKeybind.$1;
+              groupName = modKeybind.$2;
+            });
+            await loadKeys(modKeybind.$5);
+            return;
+          }
         }
       }
     }
+
+    setState(() {
+      modData = null;
+    });
   }
 
-  Future<void> loadKeys() async {
-    final iniFiles = await findIniFilesRecursiveExcludeDisabled(
-      modData!.modPath,
-    );
+  Future<void> loadKeys(bool isIniFile) async {
+    if (!mounted || modData == null) return;
+
+    final iniFiles =
+        isIniFile
+            ? [modData!.modPath]
+            : await findIniFilesRecursiveExcludeDisabled(modData!.modPath);
 
     final data = await Future.wait(
       iniFiles.map((filePath) async {
@@ -146,9 +195,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
       }).toList(),
     );
 
-    setState(() {
-      iniFilesAsLines = data;
-    });
+    if (!mounted) return;
 
     List<KeybindData> resultKeys = [];
 
@@ -163,7 +210,8 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
       caseSensitive: false,
     );
 
-    for (var ini in iniFilesAsLines) {
+    int totalLinesProcessed = 0;
+    for (var ini in data) {
       String? currentSection;
       int? sectionLineIndex;
       List<KeyData>? currentKeys;
@@ -173,7 +221,6 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
 
         final sectionMatch = keySectionRegExp.firstMatch(line);
         if (sectionMatch != null) {
-          //to get previous key
           if (currentKeys != null && currentKeys.isNotEmpty) {
             if (currentSection != null && sectionLineIndex != null) {
               resultKeys.add(
@@ -186,7 +233,6 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
               );
             }
           }
-          //
           currentSection = sectionMatch.group(1);
           sectionLineIndex = i;
           currentKeys = [];
@@ -214,9 +260,14 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
             KeyData(key: keyValue, lineIndex: i, isMainKey: false),
           );
         }
+
+        totalLinesProcessed++;
+        if (totalLinesProcessed % 500 == 0) {
+          await Future.delayed(Duration.zero);
+          if (!mounted) return;
+        }
       }
 
-      // to get the last key
       if (currentKeys != null && currentKeys.isNotEmpty) {
         if (currentSection != null && sectionLineIndex != null) {
           resultKeys.add(
@@ -229,16 +280,103 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
           );
         }
       }
-      //
     }
+
+    if (!mounted) return;
 
     setState(() {
+      iniFilesAsLines = data;
       keys = resultKeys;
+      editSectionNames = resultKeys.map((k) => k.section).toList();
+      editKeyValues =
+          resultKeys.map((k) => k.key.map((kd) => kd.key).toList()).toList();
+      _rows = [];
+      _lastComputedWidth = 0;
+      _lastComputedSss = 0;
+      _rowsComputePending = false;
     });
 
-    for (var key in keys) {
-      childKeys[key] = GlobalKey<_KeyCardState>();
+    for (final ini in iniFilesAsLines) {
+      ini.lines = const [];
     }
+  }
+
+  static const int _kRowChunk = 15;
+
+  Future<void> _recomputeRowsAsync(double availableWidth, double sss) async {
+    final myGeneration = ++_rowComputeGeneration;
+    final spacing = 9.0 * sss;
+    final List<double> widths = [];
+
+    final boldStyle = GoogleFonts.poppins(
+      fontSize: 13 * sss,
+      fontWeight: FontWeight.bold,
+    );
+    final normalStyle = GoogleFonts.poppins(
+      fontSize: 13 * sss,
+      fontWeight: FontWeight.w400,
+    );
+
+    for (int i = 0; i < keys.length; i++) {
+      if (myGeneration != _rowComputeGeneration) return;
+
+      double maxW = 0;
+
+      final sectionP = TextPainter(
+        text: TextSpan(text: editSectionNames[i], style: boldStyle),
+        textDirection: w.TextDirection.ltr,
+      )..layout();
+      maxW = sectionP.width;
+      sectionP.dispose();
+
+      for (final val in editKeyValues[i]) {
+        final keyP = TextPainter(
+          text: TextSpan(text: val, style: normalStyle),
+          textDirection: w.TextDirection.ltr,
+        )..layout();
+        if (keyP.width > maxW) maxW = keyP.width;
+        keyP.dispose();
+      }
+
+      widths.add(maxW + 40.0 * sss);
+
+      if ((i + 1) % _kRowChunk == 0 || i == keys.length - 1) {
+        final rows = _packRows(widths, availableWidth, spacing);
+        if (!mounted || myGeneration != _rowComputeGeneration) return;
+        setState(() => _rows = rows);
+        await Future.delayed(Duration.zero);
+      }
+    }
+
+    if (!mounted || myGeneration != _rowComputeGeneration) return;
+    setState(() {
+      _lastComputedWidth = availableWidth;
+      _lastComputedSss = sss;
+      _rowsComputePending = false;
+    });
+  }
+
+  static List<List<int>> _packRows(
+    List<double> widths,
+    double availableWidth,
+    double spacing,
+  ) {
+    final rows = <List<int>>[];
+    var row = <int>[];
+    var rowW = 0.0;
+    for (var i = 0; i < widths.length; i++) {
+      final needed = row.isEmpty ? widths[i] : rowW + spacing + widths[i];
+      if (row.isNotEmpty && needed > availableWidth) {
+        rows.add(row);
+        row = [i];
+        rowW = widths[i];
+      } else {
+        row.add(i);
+        rowW = needed;
+      }
+    }
+    if (row.isNotEmpty) rows.add(row);
+    return rows;
   }
 
   String _getNamespaceLowercase(List<String> lines, String path) {
@@ -263,40 +401,65 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
 
   Future<void> saveKeys() async {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Future.wait(
+        iniFilesAsLines.map((ini) async {
+          try {
+            ini.lines = await forceReadAsLinesUtf8(ini.iniFile);
+          } catch (_) {
+            ini.lines = [];
+          }
+        }).toList(),
+      );
+
       List<String> lowerCasedSections = [];
       Map<String, String> pathToNamespaceMap = {};
-      for (var childKey in childKeys.entries) {
-        final keyCard = childKey.value;
-        final keybindData = childKey.key;
-        if (keyCard.currentState != null) {
-          //
-          if (!pathToNamespaceMap.containsKey(
-            keybindData.iniFileAsLines.iniFile.path,
-          )) {
-            pathToNamespaceMap[keybindData
-                .iniFileAsLines
-                .iniFile
-                .path] = _getNamespaceLowercase(
-              keybindData.iniFileAsLines.lines,
-              keybindData.iniFileAsLines.iniFile.path,
-            );
-          }
 
-          lowerCasedSections.add(
-            "${keyCard.currentState!.updateKeybindAndGetSectionNameLowerCased()}${pathToNamespaceMap[keybindData.iniFileAsLines.iniFile.path]}",
+      for (var i = 0; i < keys.length; i++) {
+        final keybindData = keys[i];
+
+        keybindData.iniFileAsLines.lines[keybindData.sectionLineIndex] =
+            "[Key${editSectionNames[i]}]";
+
+        for (var ki = 0; ki < keybindData.key.length; ki++) {
+          final keyData = keybindData.key[ki];
+          keybindData.iniFileAsLines.lines[keyData.lineIndex] =
+              keyData.isMainKey
+                  ? "key = ${editKeyValues[i][ki]}"
+                  : "back = ${editKeyValues[i][ki]}";
+        }
+
+        if (!pathToNamespaceMap.containsKey(
+          keybindData.iniFileAsLines.iniFile.path,
+        )) {
+          pathToNamespaceMap[keybindData
+              .iniFileAsLines
+              .iniFile
+              .path] = _getNamespaceLowercase(
+            keybindData.iniFileAsLines.lines,
+            keybindData.iniFileAsLines.iniFile.path,
           );
         }
+
+        lowerCasedSections.add(
+          "${editSectionNames[i].toLowerCase()}${pathToNamespaceMap[keybindData.iniFileAsLines.iniFile.path]}",
+        );
       }
-      //Check for duplicate sections
-      if (lowerCasedSections.length == lowerCasedSections.toSet().length) {
-        for (var iniFileAsline in iniFilesAsLines) {
-          await iniFileAsline.saveKeybind();
-        }
-        await simulateKeyF10();
-        setState(() {
-          isEditing = false;
-        });
-      } else {
+
+      for (var iniFileAsline in iniFilesAsLines) {
+        await iniFileAsline.saveKeybind();
+      }
+      await simulateKeyF10();
+
+      for (final ini in iniFilesAsLines) {
+        ini.lines = const [];
+      }
+
+      setState(() {
+        isEditing = false;
+      });
+
+      if (lowerCasedSections.length != lowerCasedSections.toSet().length) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -310,7 +473,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
               borderRadius: BorderRadius.circular(20),
             ),
             content: Text(
-              'Each section name must be unique (case-insensitive), cannot save.'
+              'Each section name must be unique (case-insensitive), to ensure all keys are working.'
                   .tr(),
               style: GoogleFonts.poppins(
                 color: Colors.yellow,
@@ -339,7 +502,9 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                 child: Column(
                   children: [
                     Text(
-                      "$groupName - ${modData!.modName}",
+                      groupName == "casual"
+                          ? modData!.modName
+                          : "$groupName - ${modData!.modName}",
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
@@ -469,22 +634,48 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
                       label: 'Tutorial'.tr(),
                     ),
                   ],
-                  child: SingleChildScrollView(
-                    child: Wrap(
-                      spacing: 9 * sss,
-                      runSpacing: 9 * sss,
-                      children:
-                          keys.map((keyData) {
-                            return _KeyCard(
-                              key: childKeys[keyData],
-                              sectionName: keyData.section,
-                              keybindKey: keyData.key,
-                              iniFileAsLines: keyData.iniFileAsLines,
-                              sectionLineIndex: keyData.sectionLineIndex,
-                              isEditing: isEditing,
-                            );
-                          }).toList(),
-                    ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final available = constraints.maxWidth - (45 * sss);
+                      if (recalculate &&
+                          !_rowsComputePending &&
+                          ((_rows.isEmpty && keys.isNotEmpty) ||
+                              _lastComputedWidth != available ||
+                              _lastComputedSss != sss)) {
+                        _rowsComputePending = true;
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) _recomputeRowsAsync(available, sss);
+                        });
+                      }
+                      return ListView.builder(
+                        itemCount: _rows.length,
+                        itemBuilder: (context, rowIndex) {
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: 9 * sss),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children:
+                                  _rows[rowIndex].map((i) {
+                                    return Padding(
+                                      padding: EdgeInsets.only(right: 9 * sss),
+                                      child: _KeyCard(
+                                        key: ValueKey(i),
+                                        sectionName: editSectionNames[i],
+                                        keyValues: editKeyValues[i],
+                                        isEditing: isEditing,
+                                        onSectionChanged:
+                                            (val) => editSectionNames[i] = val,
+                                        onKeyChanged:
+                                            (ki, val) =>
+                                                editKeyValues[i][ki] = val,
+                                      ),
+                                    );
+                                  }).toList(),
+                            ),
+                          );
+                        },
+                      );
+                    },
                   ),
                 ),
               ),
@@ -549,18 +740,18 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> {
 
 class _KeyCard extends ConsumerStatefulWidget {
   final String sectionName;
-  final List<KeyData> keybindKey;
-  final IniFileAsLines iniFileAsLines;
-  final int sectionLineIndex;
+  final List<String> keyValues;
   final bool isEditing;
+  final void Function(String) onSectionChanged;
+  final void Function(int, String) onKeyChanged;
 
   const _KeyCard({
     super.key,
     required this.sectionName,
-    required this.keybindKey,
-    required this.iniFileAsLines,
-    required this.sectionLineIndex,
+    required this.keyValues,
     required this.isEditing,
+    required this.onSectionChanged,
+    required this.onKeyChanged,
   });
 
   @override
@@ -576,8 +767,8 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
     super.initState();
     textSectionController.text = widget.sectionName;
     controllers =
-        widget.keybindKey
-            .map((keybind) => TextEditingController(text: keybind.key))
+        widget.keyValues
+            .map((val) => TextEditingController(text: val))
             .toList();
   }
 
@@ -588,21 +779,6 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
       controller.dispose();
     }
     super.dispose();
-  }
-
-  String updateKeybindAndGetSectionNameLowerCased() {
-    //sectionName
-    widget.iniFileAsLines.lines[widget.sectionLineIndex] =
-        "[Key${textSectionController.text}]";
-
-    //keys
-    for (var index = 0; index < controllers.length; index++) {
-      widget.iniFileAsLines.lines[widget.keybindKey[index].lineIndex] =
-          widget.keybindKey[index].isMainKey
-              ? "key = ${controllers[index].text}"
-              : "back = ${controllers[index].text}";
-    }
-    return textSectionController.text.toLowerCase();
   }
 
   Future<void> _simulateKey(int index, double sss) async {
@@ -696,6 +872,7 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
                 child: TextField(
                   controller: textSectionController,
                   enabled: widget.isEditing,
+                  onChanged: widget.onSectionChanged,
                   decoration: InputDecoration(
                     isDense: true,
                     disabledBorder: InputBorder.none,
@@ -749,6 +926,8 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
                               child: TextField(
                                 controller: controllers[index],
                                 enabled: widget.isEditing,
+                                onChanged:
+                                    (val) => widget.onKeyChanged(index, val),
                                 decoration: InputDecoration(
                                   isDense: true,
                                   contentPadding: EdgeInsets.symmetric(
@@ -774,6 +953,8 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
                             : TextField(
                               controller: controllers[index],
                               enabled: widget.isEditing,
+                              onChanged:
+                                  (val) => widget.onKeyChanged(index, val),
                               decoration: InputDecoration(
                                 isDense: true,
                                 disabledBorder: InputBorder.none,

@@ -86,10 +86,15 @@ final modsPathStatusProvider = StateProvider<ModsPathStatus>(
   (ref) => ModsPathStatus.invalidNotExist,
 );
 
-final modKeybindProvider =
-    StateProvider<(ModData, String groupName, TargetGame targetGame)?>(
-      (ref) => null,
-    );
+final modKeybindProvider = StateProvider<
+  (
+    ModData,
+    String groupName,
+    TargetGame targetGame,
+    bool isCasualStyle,
+    bool isIniFile,
+  )?
+>((ref) => null);
 
 final leftThumbWasTriggered = StateProvider<bool>((ref) => false);
 

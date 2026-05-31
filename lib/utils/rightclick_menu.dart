@@ -6,13 +6,11 @@ import 'package:no_reload_mod_manager/utils/state_providers.dart';
 class RightClickMenuRegion extends ConsumerStatefulWidget {
   final Widget child;
   final List<ContextMenuEntry<dynamic>> menuItems;
-  final Function? additionalCalledFunction;
 
   const RightClickMenuRegion({
     super.key,
     required this.child,
     required this.menuItems,
-    this.additionalCalledFunction,
   });
 
   @override
@@ -52,9 +50,6 @@ class _RightClickMenuRegionState extends ConsumerState<RightClickMenuRegion> {
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onSecondaryTapUp: (TapUpDetails details) {
-        if (widget.additionalCalledFunction != null) {
-          widget.additionalCalledFunction!();
-        }
         _showContextMenu(context, details.globalPosition);
       },
       child: widget.child,

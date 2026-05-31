@@ -377,6 +377,8 @@ class _ModContainerState extends ConsumerState<ModContainer>
                     widget.currentGroupData.modsInGroup[widget.index],
                     widget.currentGroupData.groupName,
                     ref.read(targetGameProvider),
+                    false,
+                    false,
                   );
                 },
                 label: 'Keybinds'.tr(),
@@ -928,6 +930,8 @@ class _ModContainerState extends ConsumerState<ModContainer>
             widget.currentGroupData.modsInGroup[widget.index],
             widget.currentGroupData.groupName,
             ref.read(targetGameProvider),
+            false,
+            false,
           );
         }
       }

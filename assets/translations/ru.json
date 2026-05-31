@@ -137,7 +137,7 @@
   "Failed to disable mod": "Не удалось отключить мод.\nПожалуйста, переименуйте папку мода вручную через Проводник. Затем нажмите 'Обновить данные модов' в Настройках.",
   "Disable mod completely": "Полностью отключить мод",
   "Enable mod": "Включить мод",
-  "Each section name must be unique (case-insensitive), cannot save.": "Каждое имя секции должно быть уникальным (без учета регистра), сохранение невозможно.",
+  "Each section name must be unique (case-insensitive), to ensure all keys are working.": "Каждое имя секции должно быть уникальным (без учета регистра), чтобы все клавиши работали.",
   "Sort group by": "Сортировать группы по",
   "Name": "Имени",
   "Index": "Индексу",

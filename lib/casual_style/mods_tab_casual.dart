@@ -7,12 +7,14 @@ import 'dart:ui';
 
 import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:no_reload_mod_manager/casual_style/dds_image_widget.dart';
+import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/custom_icons.dart';
 import 'package:no_reload_mod_manager/utils/archive_manager.dart';
@@ -25,6 +27,7 @@ import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:no_reload_mod_manager/utils/stack_collection.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
+import 'package:pasteboard/pasteboard.dart';
 import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
@@ -90,6 +93,7 @@ class ExplorerItem extends ConsumerStatefulWidget {
   final double spacing;
   final bool isSelected;
   final void Function() onSingleTap;
+  final Set<int> selectedItems;
 
   const ExplorerItem({
     super.key,
@@ -100,6 +104,7 @@ class ExplorerItem extends ConsumerStatefulWidget {
     required this.spacing,
     required this.isSelected,
     required this.onSingleTap,
+    required this.selectedItems,
   });
 
   @override
@@ -114,7 +119,9 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
   bool isImageFile = false;
   bool isDdsFile = false;
   bool isIniFile = false;
+  bool isArchiveFile = false;
   bool isDisabledItem = false;
+  bool canBeDisabled = false;
   String? imagePreviewPath;
   String? modOrGroupName;
 
@@ -141,7 +148,9 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
         isImageFile = false;
         isDdsFile = false;
         isIniFile = false;
+        isArchiveFile = false;
         isDisabledItem = false;
+        canBeDisabled = false;
       });
       checkForImagePreview();
       checkForModOrGroupName();
@@ -236,13 +245,16 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
         isRemovedManagedFolder = isRemoved;
         isModsFolder = isMods;
         isDisabledItem = isDisabled;
+        canBeDisabled = true;
       });
     } else if (widget.entry is File) {
       bool isDisabled = false;
       bool isImage = false;
       bool isIni = false;
       bool isDds = false;
+      bool isArchive = false;
 
+      isArchive = SevenZip.isSupported(widget.entry.path);
       final ext = p.extension(widget.entry.path).toLowerCase();
       isIni = ext == '.ini';
       isDds = ext == '.dds';
@@ -263,45 +275,11 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
         isIniFile = isIni;
         isImageFile = isImage;
         isDdsFile = isDds;
+        canBeDisabled = isIni;
+        isArchiveFile = isArchive;
       });
     }
   }
-
-  static const _executableExtensions = {
-    '.exe',
-    '.com',
-    '.scr',
-    '.cpl',
-    '.efi',
-    '.mui',
-    '.sys',
-    '.drv',
-    '.ocx',
-    '.dll',
-    '.bat',
-    '.cmd',
-    '.ps1',
-    '.vbs',
-    '.vbe',
-    '.js',
-    '.jse',
-    '.wsf',
-    '.wsh',
-    '.msc',
-    '.hta',
-    '.py',
-    '.pyw',
-    '.rb',
-    '.pl',
-    '.php',
-    '.jar',
-    '.sh',
-    '.lnk',
-    '.url',
-    '.pif',
-  };
-
-  static const _imageExtensions = {'.png', '.jpg', '.jpeg', '.webp', '.gif'};
 
   void showSnackbar(double sss, String message) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -316,242 +294,290 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         content: Text(
           message,
-          style: GoogleFonts.poppins(color: Colors.white, fontSize: 13 * sss),
+          style: GoogleFonts.poppins(color: Colors.yellow, fontSize: 13 * sss),
         ),
         dismissDirection: DismissDirection.down,
       ),
     );
   }
 
+  Widget backgroundRightClickMenu(double sss, Widget child) {
+    return RightClickMenuRegion(
+      menuItems: <ContextMenuEntry>[
+        if (widget.selectedItems.length == 1)
+          CustomMenuItem(
+            scale: sss,
+            onSelected: () async {
+              if (isArchiveFile) {
+                extractArchive();
+              } else {
+                await openFileAndFolder(sss, fromRightClick: true);
+              }
+            },
+            label: isArchiveFile ? 'Extract'.tr() : 'Open'.tr(),
+          ),
+        if (widget.selectedItems.length == 1 &&
+            (isIniFile || widget.entry is Directory))
+          CustomMenuItem(
+            scale: sss,
+            onSelected: () {
+              if (!context.mounted) return;
+              ref.read(modKeybindProvider.notifier).state = null;
+              ref.read(modKeybindProvider.notifier).state = (
+                ModData(
+                  modPath: widget.entry.path,
+                  iconPath: widget.entry.path,
+                  modName: fastBasename(widget.entry.path),
+                  realIndex: 0,
+                  isOldAutoFixed: false,
+                  isSyntaxErrorRemoved: false,
+                  isUnoptimized: false,
+                  isNamespaced: false,
+                  isDisabled: false,
+                ),
+                "casual",
+                ref.read(targetGameProvider),
+                true,
+                isIniFile,
+              );
+            },
+            label: 'Keybinds'.tr(),
+          ),
+        if (widget.selectedItems.length == 1 &&
+            widget.entry is Directory &&
+            !isManagedFolder &&
+            !isRemovedManagedFolder &&
+            !isModsFolder)
+          CustomMenuItem.submenu(
+            label: 'Icon'.tr(),
+            scale: sss,
+            items: [
+              CustomMenuItem(
+                scale: sss,
+                onSelected: () async {
+                  if (!context.mounted) return;
+                  final success = await setFolderIcon(
+                    ref,
+                    widget.entry.path,
+                    fromClipboard: true,
+                  );
+                  if (!success) return;
+                  setState(() {
+                    imagePreviewPath = p.join(widget.entry.path, 'icon.png');
+                  });
+                },
+                label: 'Clipboard icon'.tr(),
+              ),
+              CustomMenuItem(
+                scale: sss,
+                onSelected: () async {
+                  if (!context.mounted) return;
+                  final success = await setFolderIcon(
+                    ref,
+                    widget.entry.path,
+                    fromClipboard: false,
+                  );
+                  if (!success) return;
+                  setState(() {
+                    imagePreviewPath = p.join(widget.entry.path, 'icon.png');
+                  });
+                },
+                label: 'Custom icon'.tr(),
+              ),
+              CustomMenuItem(
+                scale: sss,
+                onSelected: () async {
+                  if (!context.mounted) return;
+                  final success = await unsetFolderIcon(ref, widget.entry.path);
+                  if (!success) return;
+                  setState(() {
+                    imagePreviewPath = null;
+                  });
+                },
+                label: 'Remove icon'.tr(),
+              ),
+            ],
+          ),
+
+        // CustomMenuItem(scale: sss, onSelected: () {}, label: 'Enable mod'.tr()),
+        // CustomMenuItem(
+        //   scale: sss,
+        //   onSelected: () {},
+        //   label: 'Disable mod'.tr(),
+        // ),
+      ],
+      child: child,
+    );
+  }
+
+  Future<void> openFileAndFolder(
+    double sss, {
+    bool fromRightClick = false,
+  }) async {
+    if (widget.entry is Directory &&
+        !ref.read(isCtrlPressed) &&
+        !ref.read(isShiftPressed)) {
+      await setCurrentPath(ref, widget.entry.path);
+    }
+    if (widget.entry is File &&
+        !ref.read(isCtrlPressed) &&
+        !ref.read(isShiftPressed)) {
+      final ext = p.extension(widget.entry.path).toLowerCase();
+      if (!_executableExtensions.contains(ext) || fromRightClick) {
+        await Process.run('explorer', [widget.entry.path]);
+      } else {
+        showSnackbar(
+          sss,
+          'Right-click and select Open if you insist to open this executable file',
+        );
+      }
+    }
+  }
+
+  void extractArchive() {}
+
   @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
-    return Listener(
-      onPointerDown: (event) {
-        if (event.buttons == kPrimaryMouseButton) {
-          widget.onSingleTap();
-        }
-      },
-      child: GestureDetector(
-        onDoubleTapDown: (_) async {
-          if (widget.entry is Directory &&
-              !ref.read(isCtrlPressed) &&
-              !ref.read(isShiftPressed)) {
-            await setCurrentPath(ref, widget.entry.path);
-          }
-          if (widget.entry is File &&
-              !ref.read(isCtrlPressed) &&
-              !ref.read(isShiftPressed)) {
-            final ext = p.extension(widget.entry.path).toLowerCase();
-            if (!_executableExtensions.contains(ext)) {
-              await Process.run('explorer', [widget.entry.path]);
-            } else {
-              showSnackbar(
-                sss,
-                'Right-click and select Open if you insist to open this executable file',
-              );
-            }
+    return backgroundRightClickMenu(
+      sss,
+      Listener(
+        onPointerDown: (event) {
+          if (event.buttons == kPrimaryMouseButton ||
+              (event.buttons == kSecondaryMouseButton && !widget.isSelected)) {
+            widget.onSingleTap();
           }
         },
-        child: MouseRegion(
-          onEnter:
-              (_) => setState(() {
-                hovered = true;
-              }),
-          onExit:
-              (_) => setState(() {
-                hovered = false;
-              }),
-          child: Tooltip(
-            richMessage:
-                modOrGroupName != null
-                    ? TextSpan(
-                      children: [
-                        TextSpan(
-                          text: "$modOrGroupName\n",
-                          style: GoogleFonts.poppins(
-                            fontSize: 12 * sss,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                        TextSpan(
-                          text: fastBasename(widget.entry.path),
-                          style: GoogleFonts.poppins(
-                            fontSize: 12 * sss,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ],
-                    )
-                    : null,
-            message:
-                modOrGroupName == null
-                    ? isManagedFolder
-                        ? "Contains mods that's added to No-Reload Style and some required mod manager files"
-                        : isRemovedManagedFolder
-                        ? "Contains mods that's removed from No-Reload Style, safe to be deleted if it's unused mod"
-                        : isModsFolder
-                        ? "Contains your mods"
-                        : fastBasename(widget.entry.path)
-                    : null,
-            textStyle: GoogleFonts.poppins(
-              fontSize: 12 * sss,
-              fontWeight: FontWeight.w500,
-              color: Colors.black,
-            ),
-            constraints: BoxConstraints(maxWidth: 300 * sss),
-            waitDuration: Duration(milliseconds: 1000),
-
-            child: Container(
-              width: widget.width,
-              height: widget.height,
-              margin: EdgeInsets.only(
-                right: widget.spacing,
-                bottom: widget.spacing,
-              ),
-              decoration:
-                  widget.isSelected
-                      ? BoxDecoration(
-                        color: Color.fromARGB(100, 127, 127, 127),
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(5 * sss),
-                        ),
-                        border: Border.all(
-                          color: Color.fromARGB(
-                            hovered ? 100 : 50,
-                            255,
-                            255,
-                            255,
-                          ),
-                          strokeAlign: BorderSide.strokeAlignInside,
-                          width: 1.5 * sss,
-                        ),
-                      )
-                      : BoxDecoration(
-                        color: Color.fromARGB(0, 127, 127, 127),
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(5 * sss),
-                        ),
-                        border: Border.all(
-                          color: Color.fromARGB(
-                            hovered ? 100 : 0,
-                            255,
-                            255,
-                            255,
-                          ),
-                          strokeAlign: BorderSide.strokeAlignInside,
-                          width: 1.5 * sss,
-                        ),
-                      ),
-              child: Padding(
-                padding: EdgeInsets.all(8.0 * sss),
-                child: Column(
-                  children: [
-                    Stack(
-                      children: [
-                        isImageFile
-                            ? Padding(
-                              padding: EdgeInsets.only(bottom: 5 * sss),
-                              child: SizedBox(
-                                height: 80 * sss,
-                                child: Image.file(
-                                  File(widget.entry.path),
-                                  errorBuilder:
-                                      (context, error, stackTrace) => Icon(
-                                        Icons.image_rounded,
-                                        size: 85 * sss,
-                                        color:
-                                            hovered
-                                                ? getAccentColor(ref)
-                                                : const Color.fromARGB(
-                                                  255,
-                                                  169,
-                                                  169,
-                                                  169,
-                                                ),
-                                      ),
-                                  cacheWidth:
-                                      ConstantVar.explorerViewImageCacheWidth,
-                                  fit: BoxFit.contain,
-                                  color: Color.fromARGB(
-                                    hovered
-                                        ? 255
-                                        : isDisabledItem
-                                        ? 127
-                                        : 255,
-                                    255,
-                                    255,
-                                    255,
-                                  ),
-                                  colorBlendMode: BlendMode.modulate,
-                                ),
-                              ),
-                            )
-                            : isDdsFile
-                            ? DdsImage(
-                              height: 85 * sss,
-                              width: 85 * sss,
-                              path: widget.entry.path,
-                            )
-                            : Center(
-                              child: Icon(
-                                widget.entry is Directory
-                                    ? isManagedFolder || isRemovedManagedFolder
-                                        ? CustomIcons.folder_bolt_rounded
-                                        : isModsFolder
-                                        ? CustomIcons.folder_home_rounded
-                                        : Icons.folder_rounded
-                                    : widget.entry is File
-                                    ? SevenZip.isSupported(widget.entry.path)
-                                        ? Icons.folder_zip_rounded
-                                        : isIniFile
-                                        ? Icons.text_snippet_rounded
-                                        : Icons.insert_drive_file_rounded
-                                    : Icons.file_present_rounded,
-                                size: 85 * sss,
-                                color:
-                                    hovered
-                                        ? getAccentColor(ref)
-                                        : isDisabledItem
-                                        ? const Color.fromARGB(255, 90, 90, 90)
-                                        : const Color.fromARGB(
-                                          255,
-                                          169,
-                                          169,
-                                          169,
-                                        ),
-                              ),
+        child: GestureDetector(
+          onDoubleTapDown: (_) async {
+            if (isArchiveFile) {
+              extractArchive();
+            } else {
+              await openFileAndFolder(sss, fromRightClick: false);
+            }
+          },
+          child: MouseRegion(
+            onEnter:
+                (_) => setState(() {
+                  hovered = true;
+                }),
+            onExit:
+                (_) => setState(() {
+                  hovered = false;
+                }),
+            child: Tooltip(
+              richMessage:
+                  modOrGroupName != null
+                      ? TextSpan(
+                        children: [
+                          TextSpan(
+                            text: "$modOrGroupName\n",
+                            style: GoogleFonts.poppins(
+                              fontSize: 12 * sss,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
                             ),
-                        if (widget.entry is Directory &&
-                            imagePreviewPath != null &&
-                            !isManagedFolder &&
-                            !isRemovedManagedFolder)
-                          Center(
-                            child: Padding(
-                              padding: EdgeInsets.only(top: 25 * sss),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(6 * sss),
-                                child: Container(
-                                  width: 64 * sss,
-                                  height: 43 * sss,
-                                  decoration: BoxDecoration(
-                                    color: const Color.fromARGB(
-                                      100,
-                                      100,
-                                      100,
-                                      100,
-                                    ),
-                                  ),
+                          ),
+                          TextSpan(
+                            text: fastBasename(widget.entry.path),
+                            style: GoogleFonts.poppins(
+                              fontSize: 12 * sss,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
+                      )
+                      : null,
+              message:
+                  modOrGroupName == null
+                      ? isManagedFolder
+                          ? "Contains mods that's added to No-Reload Style and some required mod manager files"
+                          : isRemovedManagedFolder
+                          ? "Contains mods that's removed from No-Reload Style, safe to be deleted if it's unused mod"
+                          : isModsFolder
+                          ? "Contains your mods"
+                          : fastBasename(widget.entry.path)
+                      : null,
+              textStyle: GoogleFonts.poppins(
+                fontSize: 12 * sss,
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+              ),
+              constraints: BoxConstraints(maxWidth: 300 * sss),
+              waitDuration: Duration(milliseconds: 1000),
+
+              child: Container(
+                width: widget.width,
+                height: widget.height,
+                margin: EdgeInsets.only(
+                  right: widget.spacing,
+                  bottom: widget.spacing,
+                ),
+                decoration:
+                    widget.isSelected
+                        ? BoxDecoration(
+                          color: Color.fromARGB(100, 127, 127, 127),
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(5 * sss),
+                          ),
+                          border: Border.all(
+                            color: Color.fromARGB(
+                              hovered ? 100 : 50,
+                              255,
+                              255,
+                              255,
+                            ),
+                            strokeAlign: BorderSide.strokeAlignInside,
+                            width: 1.5 * sss,
+                          ),
+                        )
+                        : BoxDecoration(
+                          color: Color.fromARGB(0, 127, 127, 127),
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(5 * sss),
+                          ),
+                          border: Border.all(
+                            color: Color.fromARGB(
+                              hovered ? 100 : 0,
+                              255,
+                              255,
+                              255,
+                            ),
+                            strokeAlign: BorderSide.strokeAlignInside,
+                            width: 1.5 * sss,
+                          ),
+                        ),
+                child: Padding(
+                  padding: EdgeInsets.all(8.0 * sss),
+                  child: Column(
+                    children: [
+                      Stack(
+                        children: [
+                          isImageFile
+                              ? Padding(
+                                padding: EdgeInsets.only(bottom: 5 * sss),
+                                child: SizedBox(
+                                  height: 80 * sss,
                                   child: Image.file(
-                                    File(imagePreviewPath!),
+                                    File(widget.entry.path),
                                     errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            SizedBox(),
+                                        (context, error, stackTrace) => Icon(
+                                          Icons.image_rounded,
+                                          size: 85 * sss,
+                                          color:
+                                              hovered
+                                                  ? getAccentColor(ref)
+                                                  : const Color.fromARGB(
+                                                    255,
+                                                    169,
+                                                    169,
+                                                    169,
+                                                  ),
+                                        ),
                                     cacheWidth:
                                         ConstantVar.explorerViewImageCacheWidth,
-                                    fit: BoxFit.cover,
+                                    fit: BoxFit.contain,
                                     color: Color.fromARGB(
                                       hovered
                                           ? 255
@@ -565,42 +591,128 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
                                     colorBlendMode: BlendMode.modulate,
                                   ),
                                 ),
+                              )
+                              : isDdsFile
+                              ? DdsImage(
+                                height: 85 * sss,
+                                width: 85 * sss,
+                                path: widget.entry.path,
+                              )
+                              : Center(
+                                child: Icon(
+                                  widget.entry is Directory
+                                      ? isManagedFolder ||
+                                              isRemovedManagedFolder
+                                          ? CustomIcons.folder_bolt_rounded
+                                          : isModsFolder
+                                          ? CustomIcons.folder_home_rounded
+                                          : Icons.folder_rounded
+                                      : widget.entry is File
+                                      ? isArchiveFile
+                                          ? Icons.folder_zip_rounded
+                                          : isIniFile
+                                          ? Icons.text_snippet_rounded
+                                          : Icons.insert_drive_file_rounded
+                                      : Icons.file_present_rounded,
+                                  size: 85 * sss,
+                                  color:
+                                      hovered
+                                          ? getAccentColor(ref)
+                                          : isDisabledItem
+                                          ? const Color.fromARGB(
+                                            255,
+                                            90,
+                                            90,
+                                            90,
+                                          )
+                                          : const Color.fromARGB(
+                                            255,
+                                            169,
+                                            169,
+                                            169,
+                                          ),
+                                ),
+                              ),
+                          if (widget.entry is Directory &&
+                              imagePreviewPath != null &&
+                              !isManagedFolder &&
+                              !isRemovedManagedFolder &&
+                              !isModsFolder)
+                            Center(
+                              child: Padding(
+                                padding: EdgeInsets.only(top: 25 * sss),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(6 * sss),
+                                  child: Container(
+                                    width: 64 * sss,
+                                    height: 43 * sss,
+                                    decoration: BoxDecoration(
+                                      color: const Color.fromARGB(
+                                        100,
+                                        100,
+                                        100,
+                                        100,
+                                      ),
+                                    ),
+                                    child: Image.file(
+                                      File(imagePreviewPath!),
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              SizedBox(),
+                                      cacheWidth:
+                                          ConstantVar
+                                              .explorerViewImageCacheWidth,
+                                      fit: BoxFit.cover,
+                                      color: Color.fromARGB(
+                                        hovered
+                                            ? 255
+                                            : isDisabledItem
+                                            ? 127
+                                            : 255,
+                                        255,
+                                        255,
+                                        255,
+                                      ),
+                                      colorBlendMode: BlendMode.modulate,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                      ],
-                    ),
-                    Text(
-                      modOrGroupName != null
-                          ? modOrGroupName!
-                          : fastBasename(widget.entry.path),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12 * sss,
-                        fontWeight: FontWeight.w500,
-                        color:
-                            hovered
-                                ? getAccentColor(ref)
-                                : isDisabledItem
-                                ? const Color.fromARGB(255, 90, 90, 90)
-                                : const Color.fromARGB(255, 169, 169, 169),
+                        ],
                       ),
-                    ),
-                    if (modOrGroupName != null)
                       Text(
-                        fastBasename(widget.entry.path),
-                        maxLines: 1,
+                        modOrGroupName != null
+                            ? modOrGroupName!
+                            : fastBasename(widget.entry.path),
+                        maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
                         style: GoogleFonts.poppins(
-                          fontSize: 10 * sss,
+                          fontSize: 12 * sss,
                           fontWeight: FontWeight.w500,
-                          color: const Color.fromARGB(255, 127, 127, 127),
+                          color:
+                              hovered
+                                  ? getAccentColor(ref)
+                                  : isDisabledItem
+                                  ? const Color.fromARGB(255, 90, 90, 90)
+                                  : const Color.fromARGB(255, 169, 169, 169),
                         ),
                       ),
-                  ],
+                      if (modOrGroupName != null)
+                        Text(
+                          fastBasename(widget.entry.path),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.poppins(
+                            fontSize: 10 * sss,
+                            fontWeight: FontWeight.w500,
+                            color: const Color.fromARGB(255, 127, 127, 127),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -847,54 +959,57 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
   }
 
   Widget backgroundRightClickMenu(double sss, Widget child) {
-    return RightClickMenuRegion(
-      menuItems: <ContextMenuEntry>[
-        if (ref.watch(tabIndexProvider) != 2)
+    return Listener(
+      onPointerDown: (event) {
+        _onBackgroundTap();
+      },
+      child: RightClickMenuRegion(
+        menuItems: <ContextMenuEntry>[
+          if (ref.watch(tabIndexProvider) != 2)
+            CustomMenuItem(
+              scale: sss,
+              onSelected: () async {
+                triggerRefresh(ref);
+              },
+              label: 'Refresh'.tr(),
+            ),
+          ref.watch(windowIsPinnedProvider)
+              ? CustomMenuItem(
+                scale: sss,
+                onSelected:
+                    () =>
+                        ref.read(windowIsPinnedProvider.notifier).state = false,
+                label: 'Unpin window'.tr(),
+              )
+              : CustomMenuItem(
+                scale: sss,
+                onSelected:
+                    () =>
+                        ref.read(windowIsPinnedProvider.notifier).state = true,
+                label: 'Pin window'.tr(),
+              ),
           CustomMenuItem(
             scale: sss,
             onSelected: () async {
-              triggerRefresh(ref);
+              try {
+                if (!await launchUrl(
+                  Uri.parse(ref.read(tutorialLinkProvider)),
+                )) {}
+              } catch (_) {}
             },
-            label: 'Refresh'.tr(),
+            label: 'Tutorial'.tr(),
           ),
-        ref.watch(windowIsPinnedProvider)
-            ? CustomMenuItem(
-              scale: sss,
-              onSelected:
-                  () => ref.read(windowIsPinnedProvider.notifier).state = false,
-              label: 'Unpin window'.tr(),
-            )
-            : CustomMenuItem(
-              scale: sss,
-              onSelected:
-                  () => ref.read(windowIsPinnedProvider.notifier).state = true,
-              label: 'Pin window'.tr(),
-            ),
-        CustomMenuItem(
-          scale: sss,
-          onSelected: () async {
-            try {
-              if (!await launchUrl(
-                Uri.parse(ref.read(tutorialLinkProvider)),
-              )) {}
-            } catch (_) {}
-          },
-          label: 'Tutorial'.tr(),
-        ),
-        CustomMenuItem(
-          scale: sss,
-          onSelected: () async {
-            ref.read(targetGameProvider.notifier).state = TargetGame.none;
-            await windowManager.hide();
-            clearImagesCache();
-            DynamicDirectoryWatcher.stop();
-          },
-          label: 'Hide window'.tr(),
-        ),
-      ],
-      additionalCalledFunction: _onBackgroundTap,
-      child: GestureDetector(
-        onTap: _onBackgroundTap,
+          CustomMenuItem(
+            scale: sss,
+            onSelected: () async {
+              ref.read(targetGameProvider.notifier).state = TargetGame.none;
+              await windowManager.hide();
+              clearImagesCache();
+              DynamicDirectoryWatcher.stop();
+            },
+            label: 'Hide window'.tr(),
+          ),
+        ],
         child: Container(color: Colors.transparent, child: child),
       ),
     );
@@ -957,6 +1072,7 @@ class ExplorerViewState extends ConsumerState<ExplorerView> {
                                 children: [
                                   for (int i = start; i < end; i++) ...[
                                     ExplorerItem(
+                                      selectedItems: selectedItems,
                                       index: i,
                                       entry: _entries[i],
                                       width: itemWidth,
@@ -1616,6 +1732,7 @@ class _PathBreadcrumbsState extends ConsumerState<PathBreadcrumbs>
         ));
       }
 
+      if (!mounted) return;
       setState(() {
         splittedPaths = result;
       });
@@ -1919,4 +2036,111 @@ Future<int> isValidCurrentPath(String currentFullPath, String modsPath) async {
 String fastBasename(String path) {
   final idx = path.lastIndexOf(Platform.pathSeparator);
   return idx == -1 ? path : path.substring(idx + 1);
+}
+
+const _executableExtensions = {
+  '.exe',
+  '.com',
+  '.scr',
+  '.cpl',
+  '.efi',
+  '.mui',
+  '.sys',
+  '.drv',
+  '.ocx',
+  '.dll',
+  '.bat',
+  '.cmd',
+  '.ps1',
+  '.vbs',
+  '.vbe',
+  '.js',
+  '.jse',
+  '.wsf',
+  '.wsh',
+  '.msc',
+  '.hta',
+  '.py',
+  '.pyw',
+  '.rb',
+  '.pl',
+  '.php',
+  '.jar',
+  '.sh',
+  '.lnk',
+  '.url',
+  '.pif',
+};
+
+const _imageExtensions = {'.png', '.jpg', '.jpeg', '.webp', '.gif'};
+
+Future<bool> setFolderIcon(
+  WidgetRef ref,
+  String folderPath, {
+  bool fromClipboard = false,
+}) async {
+  bool success = false;
+  String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
+  DynamicDirectoryWatcher.stop();
+
+  final imagePath = p.join(folderPath, 'icon.png');
+
+  await ResizeImage(
+    FileImage(File(imagePath)),
+    width: ConstantVar.explorerViewImageCacheWidth,
+  ).evict();
+
+  if (fromClipboard == false) {
+    bool windowWasPinned = ref.read(windowIsPinnedProvider);
+    ref.read(windowIsPinnedProvider.notifier).state = true;
+    final pickResult = await FilePicker.platform.pickFiles(
+      lockParentWindow: true,
+      dialogTitle: "Select an image file".tr(),
+      type: FileType.image,
+    );
+    if (pickResult != null) {
+      try {
+        File sourceFile = File(pickResult.files[0].path!);
+        await sourceFile.copy(imagePath);
+        success = true;
+      } catch (_) {}
+    }
+    ref.read(windowIsPinnedProvider.notifier).state = windowWasPinned;
+  } else {
+    try {
+      final imgBytes = await Pasteboard.image;
+      if (imgBytes != null) {
+        await File(imagePath).writeAsBytes(imgBytes.toList());
+        success = true;
+      }
+    } catch (_) {}
+  }
+
+  if (watchedPath != null) {
+    DynamicDirectoryWatcher.watch(watchedPath);
+  }
+  return success;
+}
+
+Future<bool> unsetFolderIcon(WidgetRef ref, String folderPath) async {
+  bool success = false;
+  String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
+  DynamicDirectoryWatcher.stop();
+
+  final imagePath = p.join(folderPath, 'icon.png');
+  await ResizeImage(
+    FileImage(File(imagePath)),
+    width: ConstantVar.explorerViewImageCacheWidth,
+  ).evict();
+
+  try {
+    File sourceFile = File(imagePath);
+    await sourceFile.delete();
+    success = true;
+  } catch (_) {}
+
+  if (watchedPath != null) {
+    DynamicDirectoryWatcher.watch(watchedPath);
+  }
+  return success;
 }
