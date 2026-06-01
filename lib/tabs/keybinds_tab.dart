@@ -57,11 +57,13 @@ class KeybindData {
   List<KeyData> key;
   IniFileAsLines iniFileAsLines;
   int sectionLineIndex;
+  bool isDisabled;
   KeybindData({
     required this.section,
     required this.key,
     required this.iniFileAsLines,
     required this.sectionLineIndex,
+    required this.isDisabled,
   });
 }
 
@@ -81,6 +83,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
   List<KeybindData> keys = [];
 
   List<String> editSectionNames = [];
+  List<bool> disabledKeys = [];
   List<List<String>> editKeyValues = [];
 
   List<List<int>> _rows = [];
@@ -144,6 +147,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
         iniFilesAsLines = [];
         keys = [];
         editSectionNames = [];
+        disabledKeys = [];
         editKeyValues = [];
         _rows = [];
         _lastComputedWidth = 0;
@@ -216,10 +220,13 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
       int? sectionLineIndex;
       List<KeyData>? currentKeys;
 
+      bool? currentSectionIsDisabled;
+
       for (int i = 0; i < ini.lines.length; i++) {
         final line = ini.lines[i];
+        final effectiveLine = line.startsWith(';+;') ? line.substring(3) : line;
 
-        final sectionMatch = keySectionRegExp.firstMatch(line);
+        final sectionMatch = keySectionRegExp.firstMatch(effectiveLine);
         if (sectionMatch != null) {
           if (currentKeys != null && currentKeys.isNotEmpty) {
             if (currentSection != null && sectionLineIndex != null) {
@@ -229,17 +236,19 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
                   key: currentKeys,
                   iniFileAsLines: ini,
                   sectionLineIndex: sectionLineIndex,
+                  isDisabled: currentSectionIsDisabled ?? false,
                 ),
               );
             }
           }
           currentSection = sectionMatch.group(1);
           sectionLineIndex = i;
+          currentSectionIsDisabled = line != effectiveLine;
           currentKeys = [];
           continue;
         }
 
-        final keyMatch = keyValueRegExp.firstMatch(line);
+        final keyMatch = keyValueRegExp.firstMatch(effectiveLine);
         if (keyMatch != null &&
             currentSection != null &&
             sectionLineIndex != null &&
@@ -250,7 +259,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
           );
         }
 
-        final backMatch = backValueRegExp.firstMatch(line);
+        final backMatch = backValueRegExp.firstMatch(effectiveLine);
         if (backMatch != null &&
             currentSection != null &&
             sectionLineIndex != null &&
@@ -276,6 +285,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
               key: currentKeys,
               iniFileAsLines: ini,
               sectionLineIndex: sectionLineIndex,
+              isDisabled: currentSectionIsDisabled ?? false,
             ),
           );
         }
@@ -288,6 +298,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
       iniFilesAsLines = data;
       keys = resultKeys;
       editSectionNames = resultKeys.map((k) => k.section).toList();
+      disabledKeys = resultKeys.map((k) => k.isDisabled).toList();
       editKeyValues =
           resultKeys.map((k) => k.key.map((kd) => kd.key).toList()).toList();
       _rows = [];
@@ -399,7 +410,21 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
     return namespace.toLowerCase();
   }
 
-  Future<void> saveKeys() async {
+  Future<void> saveKeys({
+    bool disableAll = false,
+    bool enableAll = false,
+  }) async {
+    if (disableAll) {
+      final disableKeys = List<bool>.filled(disabledKeys.length, true);
+      setState(() {
+        disabledKeys = disableKeys;
+      });
+    } else if (enableAll) {
+      final enableKeys = List<bool>.filled(disabledKeys.length, false);
+      setState(() {
+        disabledKeys = enableKeys;
+      });
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await Future.wait(
         iniFilesAsLines.map((ini) async {
@@ -418,14 +443,39 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
         final keybindData = keys[i];
 
         keybindData.iniFileAsLines.lines[keybindData.sectionLineIndex] =
-            "[Key${editSectionNames[i]}]";
+            disabledKeys[i]
+                ? ";+;[Key${editSectionNames[i]}]"
+                : "[Key${editSectionNames[i]}]";
 
         for (var ki = 0; ki < keybindData.key.length; ki++) {
           final keyData = keybindData.key[ki];
           keybindData.iniFileAsLines.lines[keyData.lineIndex] =
               keyData.isMainKey
-                  ? "key = ${editKeyValues[i][ki]}"
+                  ? disabledKeys[i]
+                      ? ";+;key = ${editKeyValues[i][ki]}"
+                      : "key = ${editKeyValues[i][ki]}"
+                  : disabledKeys[i]
+                  ? ";+;back = ${editKeyValues[i][ki]}"
                   : "back = ${editKeyValues[i][ki]}";
+        }
+
+        final keyLineIndices = keybindData.key.map((k) => k.lineIndex).toSet();
+        int sectionEnd = keybindData.iniFileAsLines.lines.length;
+        for (int j = keybindData.sectionLineIndex + 1; j < sectionEnd; j++) {
+          final l = keybindData.iniFileAsLines.lines[j];
+          final effective = l.startsWith(';+;') ? l.substring(3) : l;
+          if (effective.trimLeft().startsWith('[')) {
+            sectionEnd = j;
+            break;
+          }
+        }
+        for (int j = keybindData.sectionLineIndex + 1; j < sectionEnd; j++) {
+          if (keyLineIndices.contains(j)) continue;
+          final raw = keybindData.iniFileAsLines.lines[j];
+          keybindData.iniFileAsLines.lines[j] =
+              disabledKeys[i]
+                  ? (raw.startsWith(';+;') ? raw : ';+;$raw')
+                  : (raw.startsWith(';+;') ? raw.substring(3) : raw);
         }
 
         if (!pathToNamespaceMap.containsKey(
@@ -448,7 +498,6 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
       for (var iniFileAsline in iniFilesAsLines) {
         await iniFileAsline.saveKeybind();
       }
-      await simulateKeyF10();
 
       for (final ini in iniFilesAsLines) {
         ini.lines = const [];
@@ -484,6 +533,36 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
           ),
         );
       }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: const Color(0xFF2B2930),
+          margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
+          duration: Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          closeIconColor: getAccentColor(ref),
+          showCloseIcon: true,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          content: Text(
+            "Don't forget to reload the mod with F10.".tr(),
+            style: GoogleFonts.poppins(
+              color: Colors.yellow,
+              fontSize: 13 * ref.read(zoomScaleProvider),
+            ),
+          ),
+          action: SnackBarAction(
+            textColor: getAccentColor(ref),
+            label: "Reload".tr(),
+            onPressed: () async {
+              await simulateKeyF10();
+            },
+          ),
+          dismissDirection: DismissDirection.down,
+        ),
+      );
     });
   }
 
@@ -661,6 +740,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
                                       child: _KeyCard(
                                         key: ValueKey(i),
                                         sectionName: editSectionNames[i],
+                                        isDisabled: disabledKeys[i],
                                         keyValues: editKeyValues[i],
                                         isEditing: isEditing,
                                         onSectionChanged:
@@ -687,23 +767,59 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
                 child: Transform.scale(
                   alignment: Alignment.bottomCenter,
                   scale: sss,
-                  child: TextButton(
-                    onPressed: () async {
-                      if (isEditing) {
-                        await saveKeys();
-                      } else {
-                        setState(() {
-                          isEditing = true;
-                        });
-                      }
-                    },
-                    child: Text(
-                      isEditing ? "Save Keybinds".tr() : "Edit Keybinds".tr(),
-                      style: GoogleFonts.poppins(
-                        color: getAccentColor(ref),
-                        fontSize: 13,
+                  child: w.Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton(
+                        onPressed: () async {
+                          if (isEditing) {
+                            await saveKeys();
+                          } else {
+                            setState(() {
+                              isEditing = true;
+                            });
+                          }
+                        },
+                        child: Text(
+                          isEditing
+                              ? "Save Keybinds".tr()
+                              : "Edit Keybinds".tr(),
+                          style: GoogleFonts.poppins(
+                            color: getAccentColor(ref),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
-                    ),
+                      if (!isEditing && disabledKeys.contains(true))
+                        TextButton(
+                          onPressed: () async {
+                            await saveKeys(enableAll: true);
+                          },
+                          child: Text(
+                            "Enable All Keybinds".tr(),
+                            style: GoogleFonts.poppins(
+                              color: getAccentColor(ref),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      if (!isEditing && !disabledKeys.contains(true))
+                        TextButton(
+                          onPressed: () async {
+                            await saveKeys(disableAll: true);
+                          },
+                          child: Text(
+                            "Disable All Keybinds".tr(),
+                            style: GoogleFonts.poppins(
+                              color: getAccentColor(ref),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
@@ -740,6 +856,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
 
 class _KeyCard extends ConsumerStatefulWidget {
   final String sectionName;
+  final bool isDisabled;
   final List<String> keyValues;
   final bool isEditing;
   final void Function(String) onSectionChanged;
@@ -748,6 +865,7 @@ class _KeyCard extends ConsumerStatefulWidget {
   const _KeyCard({
     super.key,
     required this.sectionName,
+    required this.isDisabled,
     required this.keyValues,
     required this.isEditing,
     required this.onSectionChanged,
@@ -782,6 +900,7 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
   }
 
   Future<void> _simulateKey(int index, double sss) async {
+    if (widget.isDisabled) return;
     bool success = false;
     final messenger = ScaffoldMessenger.of(context);
 
@@ -834,6 +953,8 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
         overlayColor: WidgetStatePropertyAll(
           controllers.length > 1
               ? Colors.transparent
+              : widget.isDisabled
+              ? const Color.fromARGB(30, 244, 67, 54)
               : getAccentColor(ref, alpha: 50),
         ),
         shadowColor: WidgetStatePropertyAll(Colors.transparent),
@@ -842,7 +963,9 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
           return RoundedRectangleBorder(
             side: BorderSide(
               color:
-                  state.contains(WidgetState.hovered)
+                  widget.isDisabled
+                      ? const Color.fromARGB(127, 244, 67, 54)
+                      : state.contains(WidgetState.hovered)
                       ? getAccentColor(ref)
                       : const Color.fromARGB(127, 255, 255, 255),
               width: 3 * sss,
@@ -917,7 +1040,9 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
                                   Colors.transparent,
                                 ),
                                 overlayColor: WidgetStatePropertyAll(
-                                  getAccentColor(ref, alpha: 50),
+                                  widget.isDisabled
+                                      ? const Color.fromARGB(30, 244, 67, 54)
+                                      : getAccentColor(ref, alpha: 50),
                                 ),
                                 shadowColor: WidgetStatePropertyAll(
                                   Colors.transparent,
