@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,6 +21,7 @@ import 'package:no_reload_mod_manager/utils/stack_collection.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:path/path.dart' as p;
+import 'package:url_launcher/url_launcher.dart';
 
 bool _hasIndex(int index, int listLength) {
   return index >= 0 && index < listLength;
@@ -1317,6 +1319,27 @@ Future<List<TextSpan>> updateModData(
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
                   ),
+                ),
+              if (!usingCustomXxmiDll.value)
+                TextSpan(
+                  text: '\n\n${'Learn more'.tr()}',
+                  style: GoogleFonts.poppins(
+                    color: Colors.green,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    decoration: TextDecoration.underline,
+                  ),
+                  recognizer:
+                      TapGestureRecognizer()
+                        ..onTap = () async {
+                          try {
+                            if (!await launchUrl(
+                              Uri.parse(
+                                "https://github.com/Aglglg/xxmi-libs-package/releases",
+                              ),
+                            )) {}
+                          } catch (_) {}
+                        },
                 ),
             ],
           )
