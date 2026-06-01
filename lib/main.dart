@@ -1338,14 +1338,34 @@ class _MainViewState extends ConsumerState<MainView>
         ref.read(sortGroupMethod.notifier).state =
             SharedPrefUtils().getGroupSort();
 
-        if (ref.read(sortGroupMethod) == 1) {
-          datas.sort(
-            (a, b) => compareNatural(
+        final method = ref.read(sortGroupMethod);
+
+        datas.sort((a, b) {
+          final aFavorite = a.favoriteDateTime != null;
+          final bFavorite = b.favoriteDateTime != null;
+
+          // Favorites always first
+          if (aFavorite != bFavorite) {
+            return aFavorite ? -1 : 1;
+          }
+
+          // If both are favorites, always sort by newest first
+          if (aFavorite) {
+            final dateCmp = b.favoriteDateTime!.compareTo(a.favoriteDateTime!);
+            if (dateCmp != 0) return dateCmp;
+          }
+
+          // Non-favorites handling based on method
+          if (method == 1) {
+            // Sort alphabetically by name
+            return compareNatural(
               a.groupName.toLowerCase(),
               b.groupName.toLowerCase(),
-            ),
-          );
-        }
+            );
+          }
+
+          return a.realIndex.compareTo(b.realIndex);
+        });
 
         ref.read(modGroupDataProvider.notifier).state = datas;
 

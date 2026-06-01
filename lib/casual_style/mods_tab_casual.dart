@@ -335,6 +335,7 @@ class _ExplorerItemState extends ConsumerState<ExplorerItem> {
                   isUnoptimized: false,
                   isNamespaced: false,
                   isDisabled: false,
+                  favoriteDateTime: null,
                 ),
                 "casual",
                 ref.read(targetGameProvider),

@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,6 +16,7 @@ import 'package:no_reload_mod_manager/utils/auto_group_icon.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
 import 'package:no_reload_mod_manager/utils/keypress_simulator_manager.dart';
+import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/mod_navigator.dart';
 import 'package:no_reload_mod_manager/utils/mod_searcher.dart';
@@ -245,6 +248,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
   bool groupTextFieldEnabled = false;
   final FocusNode groupTextFieldFocusNode = FocusNode();
   int currentPageIndex = 0;
+  int? hoveredIndex;
 
   @override
   void initState() {
@@ -287,6 +291,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
       groupPath: oldList[currentPageIndex].groupPath,
       iconPath: oldList[currentPageIndex].iconPath,
       groupName: _groupNameTextFieldController.text,
+      favoriteDateTime: oldList[currentPageIndex].favoriteDateTime,
       modsInGroup: oldList[currentPageIndex].modsInGroup,
       realIndex: oldList[currentPageIndex].realIndex,
       previousSelectedModOnGroup:
@@ -405,330 +410,487 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
             child: CarouselSlider.builder(
               itemCount: ref.watch(modGroupDataProvider).length,
               itemBuilder: (context, index, realIndex) {
-                return RightClickMenuRegion(
-                  menuItems: [
-                    CustomMenuItem(
-                      scale: sss,
-                      onSelected: () async {
-                        if (!context.mounted) return;
-                        int? groupIndex = await addGroup(
-                          ref,
-                          p.join(
-                            getCurrentModsPath(ref.read(targetGameProvider)),
-                            ConstantVar.managedFolderName,
-                          ),
-                        );
-                        if (!context.mounted) return;
-                        if (groupIndex != null) {
-                          getCurrentGroupName(groupIndex - 1);
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            _carouselSliderGroupController.animateToPage(
-                              groupIndex - 1,
-                              duration: Duration(milliseconds: 250),
-                              curve: Curves.easeOut,
-                            );
-                          });
-                        } else {
-                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              backgroundColor: const Color(0xFF2B2930),
-                              margin: EdgeInsets.only(
-                                left: 20,
-                                right: 20,
-                                bottom: 20,
-                              ),
-                              duration: Duration(seconds: 3),
-                              behavior: SnackBarBehavior.floating,
-                              closeIconColor: getAccentColor(ref),
-                              showCloseIcon: true,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              content: Text(
-                                'Max group reached (500 Groups). Unable to add more group.'
-                                    .tr(),
-                                style: GoogleFonts.poppins(
-                                  color: Colors.yellow,
-                                  fontSize: 13 * sss,
+                final groupData = ref.watch(modGroupDataProvider)[index];
+                return Stack(
+                  children: [
+                    RightClickMenuRegion(
+                      menuItems: [
+                        CustomMenuItem(
+                          scale: sss,
+                          onSelected: () async {
+                            if (!context.mounted) return;
+                            int? groupIndex = await addGroup(
+                              ref,
+                              p.join(
+                                getCurrentModsPath(
+                                  ref.read(targetGameProvider),
                                 ),
+                                ConstantVar.managedFolderName,
                               ),
-                              dismissDirection: DismissDirection.down,
+                            );
+                            if (!context.mounted) return;
+                            if (groupIndex != null) {
+                              getCurrentGroupName(groupIndex - 1);
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                _carouselSliderGroupController.animateToPage(
+                                  groupIndex - 1,
+                                  duration: Duration(milliseconds: 250),
+                                  curve: Curves.easeOut,
+                                );
+                              });
+                            } else {
+                              ScaffoldMessenger.of(
+                                context,
+                              ).hideCurrentSnackBar();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  backgroundColor: const Color(0xFF2B2930),
+                                  margin: EdgeInsets.only(
+                                    left: 20,
+                                    right: 20,
+                                    bottom: 20,
+                                  ),
+                                  duration: Duration(seconds: 3),
+                                  behavior: SnackBarBehavior.floating,
+                                  closeIconColor: getAccentColor(ref),
+                                  showCloseIcon: true,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  content: Text(
+                                    'Max group reached (500 Groups). Unable to add more group.'
+                                        .tr(),
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.yellow,
+                                      fontSize: 13 * sss,
+                                    ),
+                                  ),
+                                  dismissDirection: DismissDirection.down,
+                                ),
+                              );
+                            }
+                          },
+                          label: 'Add group'.tr(),
+                        ),
+                        CustomMenuItem.submenu(
+                          label: 'Sort group by'.tr(),
+                          scale: sss,
+                          items: [
+                            CustomMenuItem(
+                              label: 'Index'.tr(),
+                              scale: sss,
+                              rightIcon:
+                                  ref.read(sortGroupMethod) == 0
+                                      ? Icons.check
+                                      : null,
+                              onSelected: () async {
+                                if (!context.mounted) return;
+                                await SharedPrefUtils().setGroupSort(0);
+                                if (!context.mounted) return;
+                                triggerRefresh(ref);
+                              },
                             ),
-                          );
-                        }
-                      },
-                      label: 'Add group'.tr(),
-                    ),
-                    CustomMenuItem.submenu(
-                      label: 'Sort group by'.tr(),
-                      scale: sss,
-                      items: [
-                        CustomMenuItem(
-                          label: 'Index'.tr(),
-                          scale: sss,
-                          rightIcon:
-                              ref.read(sortGroupMethod) == 0
-                                  ? Icons.check
-                                  : null,
-                          onSelected: () async {
-                            if (!context.mounted) return;
-                            await SharedPrefUtils().setGroupSort(0);
-                            if (!context.mounted) return;
-                            triggerRefresh(ref);
-                          },
+                            CustomMenuItem(
+                              label: 'Name'.tr(),
+                              scale: sss,
+                              rightIcon:
+                                  ref.read(sortGroupMethod) == 1
+                                      ? Icons.check
+                                      : null,
+                              onSelected: () async {
+                                if (!context.mounted) return;
+                                await SharedPrefUtils().setGroupSort(1);
+                                if (!context.mounted) return;
+                                triggerRefresh(ref);
+                              },
+                            ),
+                          ],
                         ),
-                        CustomMenuItem(
-                          label: 'Name'.tr(),
-                          scale: sss,
-                          rightIcon:
-                              ref.read(sortGroupMethod) == 1
-                                  ? Icons.check
-                                  : null,
-                          onSelected: () async {
-                            if (!context.mounted) return;
-                            await SharedPrefUtils().setGroupSort(1);
-                            if (!context.mounted) return;
-                            triggerRefresh(ref);
-                          },
-                        ),
-                      ],
-                    ),
-                    if (index == currentPageIndex)
-                      CustomMenuItem(
-                        scale: sss,
-                        onSelected: () {
-                          if (!context.mounted) return;
-                          setState(() {
-                            groupTextFieldEnabled = true;
-                          });
-                          _groupNameTextFieldController
-                              .selection = TextSelection(
-                            baseOffset: 0,
-                            extentOffset:
-                                _groupNameTextFieldController.text.length,
-                          );
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            groupTextFieldFocusNode.requestFocus();
-                          });
-                        },
-                        label: 'Rename'.tr(),
-                      ),
-                    if (index == currentPageIndex)
-                      CustomMenuItem.submenu(
-                        items: [
+                        if (index == currentPageIndex)
                           CustomMenuItem(
                             scale: sss,
+                            onSelected: () {
+                              if (!context.mounted) return;
+                              setState(() {
+                                groupTextFieldEnabled = true;
+                              });
+                              _groupNameTextFieldController
+                                  .selection = TextSelection(
+                                baseOffset: 0,
+                                extentOffset:
+                                    _groupNameTextFieldController.text.length,
+                              );
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                groupTextFieldFocusNode.requestFocus();
+                              });
+                            },
+                            label: 'Rename'.tr(),
+                          ),
+                        if (index == currentPageIndex)
+                          CustomMenuItem.submenu(
+                            items: [
+                              CustomMenuItem(
+                                scale: sss,
 
+                                onSelected: () async {
+                                  if (!context.mounted) return;
+                                  bool success = await tryGetIcon(
+                                    groupData.groupPath,
+                                    ref.read(targetGameProvider),
+                                  );
+                                  if (!context.mounted) return;
+                                  if (!success) {
+                                    ScaffoldMessenger.of(
+                                      context,
+                                    ).hideCurrentSnackBar();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        backgroundColor: const Color(
+                                          0xFF2B2930,
+                                        ),
+                                        margin: EdgeInsets.only(
+                                          left: 20,
+                                          right: 20,
+                                          bottom: 20,
+                                        ),
+                                        duration: Duration(seconds: 3),
+                                        behavior: SnackBarBehavior.floating,
+                                        closeIconColor: getAccentColor(ref),
+                                        showCloseIcon: true,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                        ),
+                                        content: Text(
+                                          'Auto group icon failed. No matching character hash.'
+                                              .tr(),
+                                          style: GoogleFonts.poppins(
+                                            color: Colors.yellow,
+                                            fontSize: 13 * sss,
+                                          ),
+                                        ),
+                                        action: SnackBarAction(
+                                          textColor: getAccentColor(ref),
+                                          label: "Contribute".tr(),
+                                          onPressed: () async {
+                                            try {
+                                              if (!await launchUrl(
+                                                Uri.parse(
+                                                  ConstantVar.urlAutoIconInfo,
+                                                ),
+                                              )) {}
+                                            } catch (_) {}
+                                          },
+                                        ),
+                                        dismissDirection: DismissDirection.down,
+                                      ),
+                                    );
+                                  }
+                                },
+                                label: 'Try auto icon'.tr(),
+                              ),
+                              if (index == currentPageIndex)
+                                CustomMenuItem(
+                                  scale: sss,
+                                  onSelected: () async {
+                                    if (!context.mounted) return;
+                                    await setGroupOrModIcon(
+                                      ref,
+                                      groupData.groupPath,
+                                      groupData.iconPath,
+                                      fromClipboard: true,
+                                      isGroup: true,
+                                      modPath: null,
+                                    );
+                                  },
+                                  label: 'Clipboard icon'.tr(),
+                                ),
+                              if (index == currentPageIndex)
+                                CustomMenuItem(
+                                  scale: sss,
+                                  onSelected: () async {
+                                    if (!context.mounted) return;
+                                    await setGroupOrModIcon(
+                                      ref,
+                                      groupData.groupPath,
+                                      groupData.iconPath,
+                                      fromClipboard: false,
+                                      isGroup: true,
+                                      modPath: null,
+                                    );
+                                  },
+                                  label: 'Custom icon'.tr(),
+                                ),
+                              if (index == currentPageIndex)
+                                CustomMenuItem(
+                                  scale: sss,
+                                  onSelected: () async {
+                                    if (!context.mounted) return;
+                                    await unsetGroupOrModIcon(
+                                      ref,
+                                      groupData.groupPath,
+                                      groupData.iconPath,
+                                    );
+                                  },
+                                  label: 'Remove icon'.tr(),
+                                ),
+                            ],
+                            scale: sss,
+                            label: 'Group icon'.tr(),
+                          ),
+                        if (index == currentPageIndex)
+                          CustomMenuItem(
+                            scale: sss,
+                            onSelected: () {
+                              if (!context.mounted) return;
+                              openFileExplorerToSpecifiedPath(
+                                groupData.groupPath,
+                              );
+                            },
+                            label: 'Open in File Explorer'.tr(),
+                          ),
+                        if (index == currentPageIndex)
+                          CustomMenuItem(
+                            scale: sss,
                             onSelected: () async {
                               if (!context.mounted) return;
-                              bool success = await tryGetIcon(
-                                ref.read(modGroupDataProvider)[index].groupPath,
-                                ref.read(targetGameProvider),
-                              );
-                              if (!context.mounted) return;
-                              if (!success) {
-                                ScaffoldMessenger.of(
-                                  context,
-                                ).hideCurrentSnackBar();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    backgroundColor: const Color(0xFF2B2930),
-                                    margin: EdgeInsets.only(
-                                      left: 20,
-                                      right: 20,
-                                      bottom: 20,
-                                    ),
-                                    duration: Duration(seconds: 3),
-                                    behavior: SnackBarBehavior.floating,
-                                    closeIconColor: getAccentColor(ref),
-                                    showCloseIcon: true,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    content: Text(
-                                      'Auto group icon failed. No matching character hash.'
-                                          .tr(),
-                                      style: GoogleFonts.poppins(
-                                        color: Colors.yellow,
-                                        fontSize: 13 * sss,
-                                      ),
-                                    ),
-                                    action: SnackBarAction(
-                                      textColor: getAccentColor(ref),
-                                      label: "Contribute".tr(),
-                                      onPressed: () async {
-                                        try {
-                                          if (!await launchUrl(
-                                            Uri.parse(
-                                              ConstantVar.urlAutoIconInfo,
-                                            ),
-                                          )) {}
-                                        } catch (_) {}
-                                      },
-                                    ),
-                                    dismissDirection: DismissDirection.down,
-                                  ),
-                                );
+                              final mods = groupData.modsInGroup;
+                              for (var mod in mods) {
+                                await completeDisableMod(mod.modPath);
                               }
-                            },
-                            label: 'Try auto icon'.tr(),
-                          ),
-                          if (index == currentPageIndex)
-                            CustomMenuItem(
-                              scale: sss,
-                              onSelected: () async {
-                                if (!context.mounted) return;
-                                await setGroupOrModIcon(
-                                  ref,
-                                  ref
-                                      .read(modGroupDataProvider)[index]
-                                      .groupPath,
-                                  ref
-                                      .read(modGroupDataProvider)[index]
-                                      .iconPath,
-                                  fromClipboard: true,
-                                  isGroup: true,
-                                  modPath: null,
-                                );
-                              },
-                              label: 'Clipboard icon'.tr(),
-                            ),
-                          if (index == currentPageIndex)
-                            CustomMenuItem(
-                              scale: sss,
-                              onSelected: () async {
-                                if (!context.mounted) return;
-                                await setGroupOrModIcon(
-                                  ref,
-                                  ref
-                                      .read(modGroupDataProvider)[index]
-                                      .groupPath,
-                                  ref
-                                      .read(modGroupDataProvider)[index]
-                                      .iconPath,
-                                  fromClipboard: false,
-                                  isGroup: true,
-                                  modPath: null,
-                                );
-                              },
-                              label: 'Custom icon'.tr(),
-                            ),
-                          if (index == currentPageIndex)
-                            CustomMenuItem(
-                              scale: sss,
-                              onSelected: () async {
-                                if (!context.mounted) return;
-                                await unsetGroupOrModIcon(
-                                  ref,
-                                  ref
-                                      .read(modGroupDataProvider)[index]
-                                      .groupPath,
-                                  ref
-                                      .read(modGroupDataProvider)[index]
-                                      .iconPath,
-                                );
-                              },
-                              label: 'Remove icon'.tr(),
-                            ),
-                        ],
-                        scale: sss,
-                        label: 'Group icon'.tr(),
-                      ),
-                    if (index == currentPageIndex)
-                      CustomMenuItem(
-                        scale: sss,
-                        onSelected: () {
-                          if (!context.mounted) return;
-                          openFileExplorerToSpecifiedPath(
-                            ref.read(modGroupDataProvider)[index].groupPath,
-                          );
-                        },
-                        label: 'Open in File Explorer'.tr(),
-                      ),
-                    if (index == currentPageIndex)
-                      CustomMenuItem(
-                        scale: sss,
-                        onSelected: () async {
-                          if (!context.mounted) return;
-                          final mods =
-                              ref.read(modGroupDataProvider)[index].modsInGroup;
-                          for (var mod in mods) {
-                            await completeDisableMod(mod.modPath);
-                          }
-                          if (!context.mounted) return;
-                          showUpdateModSnackbar(
-                            context,
-                            ProviderScope.containerOf(context, listen: false),
-                          );
-                        },
-                        label: 'Disable all mods'.tr(),
-                      ),
-                    if (index == currentPageIndex)
-                      CustomMenuItem(
-                        scale: sss,
-                        onSelected: () async {
-                          if (!context.mounted) return;
-                          final mods =
-                              ref.read(modGroupDataProvider)[index].modsInGroup;
-                          for (var mod in mods) {
-                            await enableMod(mod.modPath);
-                          }
-                          if (!context.mounted) return;
-                          showUpdateModSnackbar(
-                            context,
-                            ProviderScope.containerOf(context, listen: false),
-                          );
-                        },
-                        label: 'Enable all mods'.tr(),
-                      ),
-                    if (index == currentPageIndex)
-                      CustomMenuItem(
-                        scale: sss,
-                        onSelected: () {
-                          if (!context.mounted) return;
-                          ref.read(alertDialogShownProvider.notifier).state =
-                              true;
-                          showDialog(
-                            barrierDismissible: false,
-                            context: context,
-                            builder:
-                                (context) => RemoveModGroupDialog(
-                                  name: _groupNameTextFieldController.text,
-                                  validModsPath: ref.read(validModsPath)!,
-                                  modOrGroupPath:
-                                      ref
-                                          .read(modGroupDataProvider)[index]
-                                          .groupPath,
-                                  isGroup: true,
+                              if (!context.mounted) return;
+                              showUpdateModSnackbar(
+                                context,
+                                ProviderScope.containerOf(
+                                  context,
+                                  listen: false,
                                 ),
-                          );
-                        },
-                        label: 'Remove group'.tr(),
+                              );
+                            },
+                            label: 'Disable all mods'.tr(),
+                          ),
+                        if (index == currentPageIndex)
+                          CustomMenuItem(
+                            scale: sss,
+                            onSelected: () async {
+                              if (!context.mounted) return;
+                              final mods = groupData.modsInGroup;
+                              for (var mod in mods) {
+                                await enableMod(mod.modPath);
+                              }
+                              if (!context.mounted) return;
+                              showUpdateModSnackbar(
+                                context,
+                                ProviderScope.containerOf(
+                                  context,
+                                  listen: false,
+                                ),
+                              );
+                            },
+                            label: 'Enable all mods'.tr(),
+                          ),
+                        if (index == currentPageIndex)
+                          CustomMenuItem(
+                            scale: sss,
+                            onSelected: () {
+                              if (!context.mounted) return;
+                              ref
+                                  .read(alertDialogShownProvider.notifier)
+                                  .state = true;
+                              showDialog(
+                                barrierDismissible: false,
+                                context: context,
+                                builder:
+                                    (context) => RemoveModGroupDialog(
+                                      name: _groupNameTextFieldController.text,
+                                      validModsPath: ref.read(validModsPath)!,
+                                      modOrGroupPath: groupData.groupPath,
+                                      isGroup: true,
+                                    ),
+                              );
+                            },
+                            label: 'Remove group'.tr(),
+                          ),
+                      ],
+                      child: Tooltip(
+                        textAlign: TextAlign.center,
+                        preferBelow: true,
+                        verticalOffset: 60 * sss,
+                        message:
+                            "${groupData.groupName}\n${p.basename(groupData.groupPath)}",
+                        textStyle: GoogleFonts.poppins(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12 * sss,
+                        ),
+                        waitDuration: Duration(milliseconds: 500),
+                        child: GroupContainer(
+                          index: index,
+                          size: 93.6,
+                          onTap:
+                              () =>
+                                  _carouselSliderGroupController.animateToPage(
+                                    index,
+                                    duration: Duration(milliseconds: 250),
+                                    curve: Curves.easeOut,
+                                  ),
+                          onMouseEnter:
+                              () => setState(() {
+                                hoveredIndex = index;
+                              }),
+                          onMouseExit:
+                              () => setState(() {
+                                hoveredIndex = null;
+                              }),
+                        ),
+                      ),
+                    ),
+                    if (index == currentPageIndex && hoveredIndex == index)
+                      SizedBox(
+                        width: 93.6 * sss,
+                        height: 93.6 * sss,
+                        child: Align(
+                          alignment: Alignment.bottomCenter,
+                          child: Transform.translate(
+                            offset: Offset(0, 15 * sss),
+                            child: Padding(
+                              padding: EdgeInsets.all(5.0 * sss),
+                              child: Icon(
+                                Icons.star_rounded,
+                                color: Colors.black,
+                                size: 30 * sss,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (index == currentPageIndex && hoveredIndex == index)
+                      Transform.translate(
+                        offset: Offset(0, 15 * sss),
+                        child: SizedBox(
+                          width: 93.6 * sss,
+                          height: 93.6 * sss,
+                          child: Align(
+                            alignment: Alignment.bottomCenter,
+                            child: GestureDetector(
+                              onTap: () async {
+                                final bool wasFavorite =
+                                    groupData.favoriteDateTime != null;
+                                final currentGroups = ref.read(
+                                  modGroupDataProvider,
+                                );
+
+                                final visualOnlyGroups =
+                                    currentGroups.map((group) {
+                                      if (group.groupPath ==
+                                          groupData.groupPath) {
+                                        return ModGroupData(
+                                          groupPath: group.groupPath,
+                                          iconPath: group.iconPath,
+                                          groupName: group.groupName,
+                                          favoriteDateTime:
+                                              wasFavorite
+                                                  ? null
+                                                  : DateTime.now(),
+                                          modsInGroup: group.modsInGroup,
+                                          realIndex: group.realIndex,
+                                          previousSelectedModOnGroup:
+                                              group.previousSelectedModOnGroup,
+                                        );
+                                      }
+                                      return group;
+                                    }).toList();
+
+                                ref.read(modGroupDataProvider.notifier).state =
+                                    visualOnlyGroups;
+
+                                String? watchedPath =
+                                    DynamicDirectoryWatcher.watcher?.path;
+                                DynamicDirectoryWatcher.stop();
+                                try {
+                                  final favFile = File(
+                                    p.join(groupData.groupPath, 'fav'),
+                                  );
+                                  if (wasFavorite) {
+                                    await favFile.delete();
+                                  } else {
+                                    await favFile.create();
+                                  }
+                                } catch (_) {}
+                                if (watchedPath != null) {
+                                  DynamicDirectoryWatcher.watch(watchedPath);
+                                }
+
+                                await Future.delayed(
+                                  const Duration(milliseconds: 150),
+                                );
+
+                                //SORT
+                                final finalGroups = [
+                                  ...ref.read(modGroupDataProvider),
+                                ];
+                                final method = ref.read(sortGroupMethod);
+
+                                finalGroups.sort((a, b) {
+                                  final aFavorite = a.favoriteDateTime != null;
+                                  final bFavorite = b.favoriteDateTime != null;
+
+                                  if (aFavorite != bFavorite) {
+                                    return aFavorite ? -1 : 1;
+                                  }
+
+                                  if (aFavorite) {
+                                    final dateCmp = b.favoriteDateTime!
+                                        .compareTo(a.favoriteDateTime!);
+                                    if (dateCmp != 0) return dateCmp;
+                                  }
+
+                                  if (method == 1) {
+                                    return compareNatural(
+                                      a.groupName.toLowerCase(),
+                                      b.groupName.toLowerCase(),
+                                    );
+                                  }
+
+                                  return a.realIndex.compareTo(b.realIndex);
+                                });
+
+                                ref.read(modGroupDataProvider.notifier).state =
+                                    finalGroups;
+                                ref
+                                    .read(currentGroupIndexProvider.notifier)
+                                    .state = 0;
+                                getCurrentGroupName(
+                                  index,
+                                  calledFromInitState: true,
+                                );
+                              },
+                              child: MouseRegion(
+                                onEnter:
+                                    (_) => setState(() {
+                                      hoveredIndex = index;
+                                    }),
+                                onExit:
+                                    (_) => setState(() {
+                                      hoveredIndex = null;
+                                    }),
+                                child: Padding(
+                                  padding: EdgeInsets.all(5.0 * sss),
+                                  child: Icon(
+                                    groupData.favoriteDateTime != null
+                                        ? Icons.star_rounded
+                                        : Icons.star_outline_rounded,
+                                    color: Colors.amber,
+                                    size: 30 * sss,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                   ],
-                  child: Tooltip(
-                    textAlign: TextAlign.center,
-                    message:
-                        "${ref.read(modGroupDataProvider)[index].groupName}\n${p.basename(ref.read(modGroupDataProvider)[index].groupPath)}",
-                    textStyle: GoogleFonts.poppins(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 12 * sss,
-                    ),
-                    waitDuration: Duration(milliseconds: 500),
-                    child: GroupContainer(
-                      index: index,
-                      currentIndex: currentPageIndex,
-                      size: 93.6,
-                      onTap:
-                          () => _carouselSliderGroupController.animateToPage(
-                            index,
-                            duration: Duration(milliseconds: 250),
-                            curve: Curves.easeOut,
-                          ),
-                    ),
-                  ),
                 );
               },
               carouselController: _carouselSliderGroupController,

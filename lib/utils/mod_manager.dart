@@ -54,6 +54,7 @@ Future<List<ModGroupData>> refreshModData(Directory managedDir) async {
         iconPath: await getModOrGroupIconPath(group.$1),
 
         groupName: await getGroupName(group.$1),
+        favoriteDateTime: await isFavorite(group.$1),
         modsInGroup: modsInGroup,
         realIndex: group.$2,
         previousSelectedModOnGroup: await getSelectedModInGroup(
@@ -136,6 +137,7 @@ Future<void> _addGroupToRiverpod(
     groupPath: groupPath,
     iconPath: await getModOrGroupIconPath(groupPath),
     groupName: p.basename(groupPath),
+    favoriteDateTime: await isFavorite(groupPath),
     modsInGroup: [
       ModData(
         modPath: "None",
@@ -147,6 +149,7 @@ Future<void> _addGroupToRiverpod(
         isUnoptimized: false,
         isNamespaced: false,
         isDisabled: false,
+        favoriteDateTime: null,
       ),
     ],
     realIndex: index + 1,
@@ -485,6 +488,7 @@ void _updateGroupIconProvider(
             groupPath: group.groupPath,
             iconPath: newIconPath,
             groupName: group.groupName,
+            favoriteDateTime: group.favoriteDateTime,
             modsInGroup: group.modsInGroup,
             realIndex: group.realIndex,
             previousSelectedModOnGroup: group.previousSelectedModOnGroup,
@@ -520,6 +524,7 @@ void _updateModIconProvider(
                     isUnoptimized: mod.isUnoptimized,
                     isNamespaced: mod.isNamespaced,
                     isDisabled: mod.isDisabled,
+                    favoriteDateTime: mod.favoriteDateTime,
                   );
                 }
                 return mod;
@@ -529,6 +534,7 @@ void _updateModIconProvider(
             groupPath: group.groupPath,
             iconPath: group.iconPath,
             groupName: group.groupName,
+            favoriteDateTime: group.favoriteDateTime,
             modsInGroup: updatedMods,
             realIndex: group.realIndex,
             previousSelectedModOnGroup: group.previousSelectedModOnGroup,
@@ -577,12 +583,31 @@ Future<List<ModData>> getModsOnGroup(String groupPath, bool limited) async {
           isUnoptimized: await checkModWasMarkedAsUnoptimized(modPath),
           isNamespaced: await checkModWasMarkedAsNamespaced(modPath),
           isDisabled: isModDisabled(modPath),
+          favoriteDateTime: await isFavorite(modPath),
         );
       }).toList(),
     );
 
     modDatas.sort((a, b) {
-      if (a.isDisabled != b.isDisabled) return a.isDisabled ? 1 : -1;
+      // Disabled always last
+      if (a.isDisabled != b.isDisabled) {
+        return a.isDisabled ? 1 : -1;
+      }
+
+      final aFavorite = a.favoriteDateTime != null;
+      final bFavorite = b.favoriteDateTime != null;
+
+      // Favorites first
+      if (aFavorite != bFavorite) {
+        return aFavorite ? -1 : 1;
+      }
+
+      // Among favorites, newest favorite first
+      if (aFavorite) {
+        final cmp = b.favoriteDateTime!.compareTo(a.favoriteDateTime!);
+        if (cmp != 0) return cmp;
+      }
+
       return compareNatural(a.modName.toLowerCase(), b.modName.toLowerCase());
     });
 
@@ -598,6 +623,7 @@ Future<List<ModData>> getModsOnGroup(String groupPath, bool limited) async {
         isUnoptimized: false,
         isNamespaced: false,
         isDisabled: false,
+        favoriteDateTime: null,
       ),
     );
 
@@ -667,6 +693,18 @@ bool isModDisabled(String modPath) {
   }
 }
 
+Future<DateTime?> isFavorite(String folderPath) async {
+  try {
+    if (await File(p.join(folderPath, 'fav')).exists()) {
+      return await File(p.join(folderPath, 'fav')).lastModified();
+    } else {
+      return null;
+    }
+  } catch (_) {
+    return null;
+  }
+}
+
 Future<String> getModName(String modPath) async {
   try {
     final fileGroupName = File(p.join(modPath, 'modname'));
@@ -701,6 +739,7 @@ Future<void> setSelectedModIndex(
             groupPath: group.groupPath,
             iconPath: group.iconPath,
             groupName: group.groupName,
+            favoriteDateTime: group.favoriteDateTime,
             modsInGroup: group.modsInGroup,
             realIndex: group.realIndex,
             previousSelectedModOnGroup: index,
@@ -3167,4 +3206,74 @@ Future<bool> enableMod(String modPath) async {
 class Ref<T> {
   T value;
   Ref(this.value);
+}
+
+Future<void> unwrapSingleFolderNesting(String path) async {
+  final dir = Directory(path);
+
+  try {
+    while (true) {
+      final entries = await dir.list().toList();
+
+      // Exclude specific filenames
+      final relevant =
+          entries.where((e) {
+            final basename = p.basename(e.path).toLowerCase();
+            const excluded = {
+              'modname',
+              'modforced',
+              'modsyntaxerrorremoved',
+              'modunoptimized',
+              'modnamespaced',
+              'modlink',
+              'fav',
+              '.nahidamd',
+            };
+            return !excluded.contains(basename) &&
+                !ConstantVar.modIconFilenames.contains(basename) &&
+                !basename.startsWith('jasm_') &&
+                !basename.startsWith('.jasm') &&
+                !basename.startsWith('.imm') &&
+                !basename.endsWith('.txt') &&
+                !basename.endsWith('.json');
+          }).toList();
+
+      // Stop if more than 1 relevant entry, or it's empty
+      if (relevant.length != 1) break;
+
+      // Stop if the single relevant entry is a file (any type except Directory)
+      final single = relevant.first;
+      final isDir = await FileSystemEntity.isDirectory(single.path);
+      if (!isDir) break;
+
+      final singleSubDir = Directory(single.path);
+
+      // Move contents of singleSubDir up to dir
+      final children = await singleSubDir.list().toList();
+
+      for (final entity in children) {
+        final target = p.join(dir.path, p.basename(entity.path));
+        if (entity is File) {
+          await entity.rename(target); //auto overwritten
+        } else if (entity is Directory) {
+          // cannot overwrite folder, rename to non existing folder name
+          await entity.rename(await getSafeTarget(target));
+        }
+      }
+
+      // Remove the now-empty wrapper folder
+      await singleSubDir.delete();
+    }
+  } catch (_) {}
+}
+
+Future<String> getSafeTarget(String target) async {
+  if (!await Directory(target).exists()) return target;
+
+  int i = 1;
+  while (true) {
+    final candidate = "${target}_$i";
+    if (!await Directory(candidate).exists()) return candidate;
+    i++;
+  }
 }
