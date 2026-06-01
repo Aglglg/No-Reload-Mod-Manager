@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_group_folder_icon.dart';
 import 'package:no_reload_mod_manager/utils/get_cloud_data.dart';
+import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:path/path.dart' as p;
@@ -15,12 +16,28 @@ Map<String, String> _iconDataHsr = {};
 Map<String, String> _iconDataZzz = {};
 Map<String, String> _iconDataEndfield = {};
 
+DateTime? _lastIconDataWuwa;
+DateTime? _lastIconDataGenshin;
+DateTime? _lastIconDataHsr;
+DateTime? _lastIconDataZzz;
+DateTime? _lastIconDataEndfield;
+
+bool _shouldFetch(Map<String, String> currentData, DateTime? lastFetchTime) {
+  if (currentData.isEmpty) return true;
+  if (lastFetchTime == null) return true;
+
+  return DateTime.now().difference(lastFetchTime).inMinutes >= 5;
+}
+
 Future<Map<String, String>> fetchGroupIconData(TargetGame targetGame) async {
   try {
     http.Response response;
     switch (targetGame) {
       case TargetGame.Wuthering_Waves:
-        if (_iconDataWuwa.isNotEmpty) return _iconDataWuwa;
+        if (!_shouldFetch(_iconDataWuwa, _lastIconDataWuwa)) {
+          return _iconDataWuwa;
+        }
+
         response = await httpClient.client.get(
           Uri.parse(ConstantVar.urlJsonAutoIconWuwa),
         );
@@ -29,10 +46,15 @@ Future<Map<String, String>> fetchGroupIconData(TargetGame targetGame) async {
           _iconDataWuwa = raw.map(
             (key, value) => MapEntry(key.toString(), value.toString()),
           );
+          _lastIconDataWuwa = DateTime.now();
         }
         return _iconDataWuwa;
+
       case TargetGame.Genshin_Impact:
-        if (_iconDataGenshin.isNotEmpty) return _iconDataGenshin;
+        if (!_shouldFetch(_iconDataGenshin, _lastIconDataGenshin)) {
+          return _iconDataGenshin;
+        }
+
         response = await httpClient.client.get(
           Uri.parse(ConstantVar.urlJsonAutoIconGenshin),
         );
@@ -41,10 +63,15 @@ Future<Map<String, String>> fetchGroupIconData(TargetGame targetGame) async {
           _iconDataGenshin = raw.map(
             (key, value) => MapEntry(key.toString(), value.toString()),
           );
+          _lastIconDataGenshin = DateTime.now();
         }
         return _iconDataGenshin;
+
       case TargetGame.Honkai_Star_Rail:
-        if (_iconDataHsr.isNotEmpty) return _iconDataHsr;
+        if (!_shouldFetch(_iconDataHsr, _lastIconDataHsr)) {
+          return _iconDataHsr;
+        }
+
         response = await httpClient.client.get(
           Uri.parse(ConstantVar.urlJsonAutoIconHsr),
         );
@@ -53,10 +80,15 @@ Future<Map<String, String>> fetchGroupIconData(TargetGame targetGame) async {
           _iconDataHsr = raw.map(
             (key, value) => MapEntry(key.toString(), value.toString()),
           );
+          _lastIconDataHsr = DateTime.now();
         }
         return _iconDataHsr;
+
       case TargetGame.Zenless_Zone_Zero:
-        if (_iconDataZzz.isNotEmpty) return _iconDataZzz;
+        if (!_shouldFetch(_iconDataZzz, _lastIconDataZzz)) {
+          return _iconDataZzz;
+        }
+
         response = await httpClient.client.get(
           Uri.parse(ConstantVar.urlJsonAutoIconZzz),
         );
@@ -65,10 +97,15 @@ Future<Map<String, String>> fetchGroupIconData(TargetGame targetGame) async {
           _iconDataZzz = raw.map(
             (key, value) => MapEntry(key.toString(), value.toString()),
           );
+          _lastIconDataZzz = DateTime.now();
         }
         return _iconDataZzz;
+
       case TargetGame.Arknights_Endfield:
-        if (_iconDataEndfield.isNotEmpty) return _iconDataEndfield;
+        if (!_shouldFetch(_iconDataEndfield, _lastIconDataEndfield)) {
+          return _iconDataEndfield;
+        }
+
         response = await httpClient.client.get(
           Uri.parse(ConstantVar.urlJsonAutoIconEndfield),
         );
@@ -77,8 +114,10 @@ Future<Map<String, String>> fetchGroupIconData(TargetGame targetGame) async {
           _iconDataEndfield = raw.map(
             (key, value) => MapEntry(key.toString(), value.toString()),
           );
+          _lastIconDataEndfield = DateTime.now();
         }
         return _iconDataEndfield;
+
       default:
         return {};
     }
@@ -87,20 +126,23 @@ Future<Map<String, String>> fetchGroupIconData(TargetGame targetGame) async {
   }
 }
 
-const int maxIniFiles = 6;
+const int maxIniFiles = 10;
 
 Future<bool> tryGetIcon(String rootPath, TargetGame targetGame) async {
-  final totalSw = Stopwatch()..start();
-
   final iconData = await fetchGroupIconData(targetGame);
 
-  final iniFilePaths = await findIniFilesRecursiveExcludeDisabled(rootPath);
-  final targets = iniFilePaths.take(maxIniFiles).toList();
+  final List<String> iniFilePaths = [];
+  final modPaths = await getModsOnGroup(rootPath, true, limit: 10);
+  for (var mod in modPaths) {
+    final ini = await findIniFilesRecursiveExcludeDisabled(mod.modPath);
+    iniFilePaths.addAll(ini);
+    if (iniFilePaths.length >= maxIniFiles) break;
+  }
 
   final cancelToken = _CancelToken();
 
   final results = await Future.wait(
-    targets.map(
+    iniFilePaths.map(
       (path) => _searchAndDownload(path, iconData, rootPath, cancelToken),
     ),
   );
@@ -108,7 +150,6 @@ Future<bool> tryGetIcon(String rootPath, TargetGame targetGame) async {
   cancelToken.cancel();
 
   final success = results.contains(true);
-  totalSw.stop();
   return success;
 }
 
@@ -148,8 +189,15 @@ Future<bool> _searchAndDownload(
     //Signal cancellation before doing disk I/O so other workers stop
     cancelToken.cancel();
 
+    String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
+    DynamicDirectoryWatcher.stop();
+
     final savePath = p.join(rootPath, 'icon.png');
     await File(savePath).writeAsBytes(response.bodyBytes, flush: true);
+
+    if (watchedPath != null) {
+      DynamicDirectoryWatcher.watch(watchedPath);
+    }
 
     if (SharedPrefUtils().isAutoGenerateFolderIcon()) {
       await setFolderIcon(p.dirname(savePath), savePath);

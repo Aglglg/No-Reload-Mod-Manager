@@ -533,7 +533,6 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                                 scale: sss,
 
                                 onSelected: () async {
-                                  if (!context.mounted) return;
                                   bool success = await tryGetIcon(
                                     groupData.groupPath,
                                     ref.read(targetGameProvider),
@@ -586,6 +585,44 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                                         dismissDirection: DismissDirection.down,
                                       ),
                                     );
+                                  } else {
+                                    if (groupData.iconPath != null) {
+                                      await ResizeImage(
+                                        FileImage(File(groupData.iconPath!)),
+                                        width: ConstantVar.groupImageCacheWidth,
+                                      ).evict();
+                                    }
+
+                                    final currentGroups = ref.read(
+                                      modGroupDataProvider,
+                                    );
+
+                                    final updatedGroups =
+                                        currentGroups.map((group) {
+                                          if (group.groupPath ==
+                                              groupData.groupPath) {
+                                            return ModGroupData(
+                                              groupPath: group.groupPath,
+                                              iconPath: p.join(
+                                                groupData.groupPath,
+                                                'icon.png',
+                                              ),
+                                              groupName: group.groupName,
+                                              favoriteDateTime:
+                                                  group.favoriteDateTime,
+                                              modsInGroup: group.modsInGroup,
+                                              realIndex: group.realIndex,
+                                              previousSelectedModOnGroup:
+                                                  group
+                                                      .previousSelectedModOnGroup,
+                                            );
+                                          }
+                                          return group;
+                                        }).toList();
+
+                                    ref
+                                        .read(modGroupDataProvider.notifier)
+                                        .state = updatedGroups;
                                   }
                                 },
                                 label: 'Try auto icon'.tr(),

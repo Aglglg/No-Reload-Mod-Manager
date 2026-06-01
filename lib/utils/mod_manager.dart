@@ -548,7 +548,11 @@ void _updateModIconProvider(
 
 //////////////////////////////
 
-Future<List<ModData>> getModsOnGroup(String groupPath, bool limited) async {
+Future<List<ModData>> getModsOnGroup(
+  String groupPath,
+  bool limited, {
+  int? limit,
+}) async {
   try {
     final List<String> modPaths = [];
 
@@ -564,7 +568,7 @@ Future<List<ModData>> getModsOnGroup(String groupPath, bool limited) async {
     List<String> limitedModPaths;
 
     if (limited) {
-      limitedModPaths = modPaths.take(500).toList();
+      limitedModPaths = modPaths.take(limit ?? 500).toList();
     } else {
       limitedModPaths = modPaths;
     }
