@@ -1291,15 +1291,15 @@ Future<List<TextSpan>> updateModData(
                   fontWeight: FontWeight.w400,
                 ),
               ),
-              if (elapsed.inSeconds > 3)
+              if (elapsed.inSeconds >= 3)
                 TextSpan(
                   text:
                       'To get faster mod reload, consider disabling mods you rarely use.'
                           .tr(),
                   style: GoogleFonts.poppins(
-                    color: Colors.grey,
+                    color: Colors.white,
                     fontSize: 13,
-                    fontWeight: FontWeight.w400,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               if (usingCustomXxmiDll.value)
@@ -1326,8 +1326,9 @@ Future<List<TextSpan>> updateModData(
                   style: GoogleFonts.poppins(
                     color: Colors.green,
                     fontSize: 13,
-                    fontWeight: FontWeight.w400,
+                    fontWeight: FontWeight.w600,
                     decoration: TextDecoration.underline,
+                    decorationThickness: 2,
                   ),
                   recognizer:
                       TapGestureRecognizer()
