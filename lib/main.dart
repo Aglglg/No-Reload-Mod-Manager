@@ -1663,9 +1663,9 @@ class _UpdateModDataSnackbarButtonState
               child: Text(
                 'Do not forget to press Update Mod Data'.tr(),
                 style: GoogleFonts.poppins(
-                  color: Colors.red,
+                  color: Colors.yellow,
                   fontStyle: FontStyle.normal,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                   fontSize: 14 * ref.read(zoomScaleProvider),
                   decoration: TextDecoration.none,
                 ),
@@ -1698,7 +1698,7 @@ class _UpdateModDataSnackbarButtonState
                 'Update Mod Data'.tr(),
                 style: GoogleFonts.poppins(
                   color: getAccentColor(ref),
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                   fontSize: 14 * ref.read(zoomScaleProvider),
                 ),
               ),
@@ -1935,7 +1935,7 @@ class _RandomTipsState extends ConsumerState<RandomTips>
                       style: GoogleFonts.poppins(
                         color: const Color.fromARGB(200, 33, 149, 243),
                         fontSize: 11 * sss,
-                        fontWeight: FontWeight.w400,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
@@ -1951,6 +1951,8 @@ class _RandomTipsState extends ConsumerState<RandomTips>
 
 String getRandomTips(String previousTips) {
   final tips = <String>[
+    "Press Space to search mods".tr(),
+    "Press Space to search mods".tr(),
     "Press Space to search mods".tr(),
     "Press Space to search mods".tr(),
     "Press Space to search mods".tr(),

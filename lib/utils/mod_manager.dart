@@ -1322,7 +1322,7 @@ Future<List<TextSpan>> updateModData(
                 ),
               if (!usingCustomXxmiDll.value)
                 TextSpan(
-                  text: '\n\n${'Learn more'.tr()}',
+                  text: '\n${'Learn more'.tr()}',
                   style: GoogleFonts.poppins(
                     color: Colors.green,
                     fontSize: 13,
