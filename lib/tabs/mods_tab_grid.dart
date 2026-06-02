@@ -1014,23 +1014,15 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                             ),
                           ),
 
-                          if (hoveredIndex == index)
+                          if (hoveredIndex == index &&
+                              index == currentPageIndex)
                             Transform.translate(
-                              offset: Offset(
-                                0,
-                                index == currentPageIndex ? 16 * sss : 23 * sss,
-                              ),
+                              offset: Offset(-3 * sss, 4 * sss),
                               child: SizedBox(
-                                width:
-                                    index == currentPageIndex
-                                        ? 80 * sss
-                                        : 65 * sss,
-                                height:
-                                    index == currentPageIndex
-                                        ? 80 * sss
-                                        : 65 * sss,
+                                width: 80 * sss,
+                                height: 80 * sss,
                                 child: Align(
-                                  alignment: Alignment.bottomCenter,
+                                  alignment: Alignment.topLeft,
                                   child: GestureDetector(
                                     onTap: () async {
                                       final bool wasFavorite =
@@ -1085,7 +1077,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                                       }
 
                                       await Future.delayed(
-                                        const Duration(milliseconds: 150),
+                                        const Duration(milliseconds: 500),
                                       );
 
                                       //SORT

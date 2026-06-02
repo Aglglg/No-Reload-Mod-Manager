@@ -798,120 +798,113 @@ class _ModContainerState extends ConsumerState<ModContainer>
                               Align(
                                 alignment: Alignment.bottomCenter,
                                 child: Container(
-                                  height: isHovering ? 45 * sss : 30 * sss,
+                                  height: 30 * sss,
                                   width: 156.816 * sss,
                                   color: const Color.fromARGB(150, 0, 0, 0),
-                                  child: Padding(
-                                    padding:
-                                        isHovering
-                                            ? EdgeInsets.only(bottom: 15 * sss)
-                                            : EdgeInsets.zero,
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      spacing: 8 * sss,
-                                      children: [
-                                        if (widget
-                                            .currentGroupData
-                                            .modsInGroup[widget.index]
-                                            .isNamespaced)
-                                          Tooltip(
-                                            preferBelow: true,
-                                            verticalOffset: 50 * sss,
-                                            richMessage: TextSpan(
-                                              text: "Mod uses namespaces".tr(),
-                                              style: GoogleFonts.poppins(
-                                                color: Colors.black,
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 12 * sss,
-                                              ),
-                                            ),
-                                            child: HoverableIcon(
-                                              iconData: Icons.device_hub,
-                                              scaleFactor: sss,
-                                              idleColor: Colors.white,
-                                              activeColor: Colors.grey,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    spacing: 8 * sss,
+                                    children: [
+                                      if (widget
+                                          .currentGroupData
+                                          .modsInGroup[widget.index]
+                                          .isNamespaced)
+                                        Tooltip(
+                                          preferBelow: true,
+                                          verticalOffset: 50 * sss,
+                                          richMessage: TextSpan(
+                                            text: "Mod uses namespaces".tr(),
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 12 * sss,
                                             ),
                                           ),
-                                        if (widget
-                                            .currentGroupData
-                                            .modsInGroup[widget.index]
-                                            .isOldAutoFixed)
-                                          Tooltip(
-                                            preferBelow: true,
-                                            verticalOffset: 50 * sss,
-                                            richMessage: TextSpan(
-                                              text:
-                                                  'Mod syntax errors were auto-fixed by earlier NRMM versions.'
-                                                      .tr(),
-                                              style: GoogleFonts.poppins(
-                                                color: Colors.black,
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 12 * sss,
-                                              ),
+                                          child: HoverableIcon(
+                                            iconData: Icons.device_hub,
+                                            scaleFactor: sss,
+                                            idleColor: Colors.white,
+                                            activeColor: Colors.grey,
+                                          ),
+                                        ),
+                                      if (widget
+                                          .currentGroupData
+                                          .modsInGroup[widget.index]
+                                          .isOldAutoFixed)
+                                        Tooltip(
+                                          preferBelow: true,
+                                          verticalOffset: 50 * sss,
+                                          richMessage: TextSpan(
+                                            text:
+                                                'Mod syntax errors were auto-fixed by earlier NRMM versions.'
+                                                    .tr(),
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 12 * sss,
                                             ),
+                                          ),
+                                          child: HoverableIcon(
+                                            iconData:
+                                                Icons
+                                                    .running_with_errors_rounded,
+                                            scaleFactor: sss,
+                                            idleColor: Colors.yellow,
+                                            activeColor: Colors.white,
+                                          ),
+                                        ),
+                                      if (widget
+                                          .currentGroupData
+                                          .modsInGroup[widget.index]
+                                          .isSyntaxErrorRemoved)
+                                        Tooltip(
+                                          preferBelow: true,
+                                          verticalOffset: 50 * sss,
+                                          richMessage: TextSpan(
+                                            text:
+                                                'Mod syntax errors are automatically removed.'
+                                                    .tr(),
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 12 * sss,
+                                            ),
+                                          ),
+                                          child: HoverableIcon(
+                                            iconData: Icons.rule_rounded,
+                                            scaleFactor: sss,
+                                            idleColor: Colors.white,
+                                            activeColor: Colors.grey,
+                                          ),
+                                        ),
+                                      if (widget
+                                          .currentGroupData
+                                          .modsInGroup[widget.index]
+                                          .isUnoptimized)
+                                        Tooltip(
+                                          preferBelow: true,
+                                          verticalOffset: 50 * sss,
+                                          richMessage: TextSpan(
+                                            text:
+                                                'Mod is unoptimized and might slow down performance or even break other mods.'
+                                                    .tr(),
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 12 * sss,
+                                            ),
+                                          ),
+                                          child: Transform.scale(
+                                            scaleX: -1,
                                             child: HoverableIcon(
-                                              iconData:
-                                                  Icons
-                                                      .running_with_errors_rounded,
+                                              iconData: Icons.speed_rounded,
                                               scaleFactor: sss,
                                               idleColor: Colors.yellow,
                                               activeColor: Colors.white,
                                             ),
                                           ),
-                                        if (widget
-                                            .currentGroupData
-                                            .modsInGroup[widget.index]
-                                            .isSyntaxErrorRemoved)
-                                          Tooltip(
-                                            preferBelow: true,
-                                            verticalOffset: 50 * sss,
-                                            richMessage: TextSpan(
-                                              text:
-                                                  'Mod syntax errors are automatically removed.'
-                                                      .tr(),
-                                              style: GoogleFonts.poppins(
-                                                color: Colors.black,
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 12 * sss,
-                                              ),
-                                            ),
-                                            child: HoverableIcon(
-                                              iconData: Icons.rule_rounded,
-                                              scaleFactor: sss,
-                                              idleColor: Colors.white,
-                                              activeColor: Colors.grey,
-                                            ),
-                                          ),
-                                        if (widget
-                                            .currentGroupData
-                                            .modsInGroup[widget.index]
-                                            .isUnoptimized)
-                                          Tooltip(
-                                            preferBelow: true,
-                                            verticalOffset: 50 * sss,
-                                            richMessage: TextSpan(
-                                              text:
-                                                  'Mod is unoptimized and might slow down performance or even break other mods.'
-                                                      .tr(),
-                                              style: GoogleFonts.poppins(
-                                                color: Colors.black,
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 12 * sss,
-                                              ),
-                                            ),
-                                            child: Transform.scale(
-                                              scaleX: -1,
-                                              child: HoverableIcon(
-                                                iconData: Icons.speed_rounded,
-                                                scaleFactor: sss,
-                                                idleColor: Colors.yellow,
-                                                activeColor: Colors.white,
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
+                                        ),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -925,12 +918,12 @@ class _ModContainerState extends ConsumerState<ModContainer>
             ),
             if (widget.index != 0 && isHovering)
               Transform.translate(
-                offset: Offset(0, 8 * sss),
+                offset: Offset(7 * sss, 7 * sss),
                 child: SizedBox(
                   width: 156.816 * sss,
                   height: widget.itemHeight,
                   child: Align(
-                    alignment: Alignment.bottomCenter,
+                    alignment: Alignment.topLeft,
                     child: GestureDetector(
                       onTap: () async {
                         final container = ProviderScope.containerOf(
@@ -1002,7 +995,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                           DynamicDirectoryWatcher.watch(watchedPath);
                         }
 
-                        await Future.delayed(const Duration(milliseconds: 150));
+                        await Future.delayed(const Duration(milliseconds: 500));
 
                         //SORT
                         final sortedGroups =

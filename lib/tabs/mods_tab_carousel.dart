@@ -785,12 +785,12 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                     ),
                     if (index == currentPageIndex && hoveredIndex == index)
                       Transform.translate(
-                        offset: Offset(0, 15 * sss),
+                        offset: Offset(-5 * sss, -5 * sss),
                         child: SizedBox(
                           width: 93.6 * sss,
                           height: 93.6 * sss,
                           child: Align(
-                            alignment: Alignment.bottomCenter,
+                            alignment: Alignment.topLeft,
                             child: GestureDetector(
                               onTap: () async {
                                 final bool wasFavorite =
@@ -841,7 +841,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                                 }
 
                                 await Future.delayed(
-                                  const Duration(milliseconds: 150),
+                                  const Duration(milliseconds: 500),
                                 );
 
                                 //SORT
