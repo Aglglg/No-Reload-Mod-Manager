@@ -533,6 +533,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                                 scale: sss,
 
                                 onSelected: () async {
+                                  if (!context.mounted) return;
                                   bool success = await tryGetIcon(
                                     groupData.groupPath,
                                     ref.read(targetGameProvider),
@@ -692,10 +693,130 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                             scale: sss,
                             onSelected: () async {
                               if (!context.mounted) return;
+
+                              String? watchedPath =
+                                  DynamicDirectoryWatcher.watcher?.path;
+                              DynamicDirectoryWatcher.stop();
+
                               final mods = groupData.modsInGroup;
+                              final modPathsSuccess = <String>[];
                               for (var mod in mods) {
-                                await completeDisableMod(mod.modPath);
+                                final success = await completeDisableMod(
+                                  mod.modPath,
+                                );
+                                if (success) {
+                                  modPathsSuccess.add(mod.modPath);
+                                }
                               }
+
+                              if (watchedPath != null) {
+                                DynamicDirectoryWatcher.watch(watchedPath);
+                              }
+
+                              //UPDATE RIVERPOD
+                              final currentGroups = ref.read(
+                                modGroupDataProvider,
+                              );
+
+                              final updatedGroups =
+                                  currentGroups.map((group) {
+                                    if (group.groupPath ==
+                                        groupData.groupPath) {
+                                      final updatedMods =
+                                          group.modsInGroup.map((mod) {
+                                            if (modPathsSuccess.contains(
+                                              mod.modPath,
+                                            )) {
+                                              return ModData(
+                                                modPath: p.join(
+                                                  p.dirname(mod.modPath),
+                                                  "DISABLED${p.basename(mod.modPath)}",
+                                                ),
+                                                iconPath: mod.iconPath,
+                                                modName: mod.modName,
+                                                realIndex: mod.realIndex,
+                                                isOldAutoFixed:
+                                                    mod.isOldAutoFixed,
+                                                isSyntaxErrorRemoved:
+                                                    mod.isSyntaxErrorRemoved,
+                                                isUnoptimized:
+                                                    mod.isUnoptimized,
+                                                isNamespaced: mod.isNamespaced,
+                                                isDisabled: true,
+                                                favoriteDateTime:
+                                                    mod.favoriteDateTime,
+                                              );
+                                            }
+                                            return mod;
+                                          }).toList();
+
+                                      updatedMods.removeWhere(
+                                        (element) => element.realIndex == 0,
+                                      );
+
+                                      updatedMods.sort((a, b) {
+                                        if (a.isDisabled != b.isDisabled) {
+                                          return a.isDisabled ? 1 : -1;
+                                        }
+
+                                        final aFavorite =
+                                            a.favoriteDateTime != null;
+                                        final bFavorite =
+                                            b.favoriteDateTime != null;
+
+                                        if (aFavorite != bFavorite) {
+                                          return aFavorite ? -1 : 1;
+                                        }
+
+                                        if (aFavorite) {
+                                          final cmp = b.favoriteDateTime!
+                                              .compareTo(a.favoriteDateTime!);
+                                          if (cmp != 0) return cmp;
+                                        }
+
+                                        return compareNatural(
+                                          a.modName.toLowerCase(),
+                                          b.modName.toLowerCase(),
+                                        );
+                                      });
+
+                                      updatedMods.insert(
+                                        0,
+                                        ModData(
+                                          modPath: "None",
+                                          iconPath: p.join(
+                                            group.groupPath,
+                                            ConstantVar.noneSlotIconFileName,
+                                          ),
+                                          modName: "None".tr(),
+                                          realIndex: 0,
+                                          isOldAutoFixed: false,
+                                          isSyntaxErrorRemoved: false,
+                                          isUnoptimized: false,
+                                          isNamespaced: false,
+                                          isDisabled: false,
+                                          favoriteDateTime: null,
+                                        ),
+                                      );
+
+                                      return ModGroupData(
+                                        groupPath: group.groupPath,
+                                        iconPath: group.iconPath,
+                                        groupName: group.groupName,
+                                        favoriteDateTime:
+                                            group.favoriteDateTime,
+                                        modsInGroup: updatedMods,
+                                        realIndex: group.realIndex,
+                                        previousSelectedModOnGroup:
+                                            group.previousSelectedModOnGroup,
+                                      );
+                                    }
+                                    return group;
+                                  }).toList();
+
+                              ref.read(modGroupDataProvider.notifier).state =
+                                  updatedGroups;
+
                               if (!context.mounted) return;
                               showUpdateModSnackbar(
                                 context,
@@ -712,10 +833,132 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                             scale: sss,
                             onSelected: () async {
                               if (!context.mounted) return;
+
+                              String? watchedPath =
+                                  DynamicDirectoryWatcher.watcher?.path;
+                              DynamicDirectoryWatcher.stop();
+
                               final mods = groupData.modsInGroup;
+                              final modPathsSuccess = <String>[];
                               for (var mod in mods) {
-                                await enableMod(mod.modPath);
+                                final success = await enableMod(mod.modPath);
+                                if (success) {
+                                  modPathsSuccess.add(mod.modPath);
+                                }
                               }
+
+                              if (watchedPath != null) {
+                                DynamicDirectoryWatcher.watch(watchedPath);
+                              }
+
+                              //UPDATE RIVERPOD
+                              final currentGroups = ref.read(
+                                modGroupDataProvider,
+                              );
+
+                              final updatedGroups =
+                                  currentGroups.map((group) {
+                                    if (group.groupPath ==
+                                        groupData.groupPath) {
+                                      final updatedMods =
+                                          group.modsInGroup.map((mod) {
+                                            if (modPathsSuccess.contains(
+                                              mod.modPath,
+                                            )) {
+                                              return ModData(
+                                                modPath: mod.modPath
+                                                    .replaceFirst(
+                                                      RegExp(
+                                                        r'disabled',
+                                                        caseSensitive: false,
+                                                      ),
+                                                      '',
+                                                    ),
+                                                iconPath: mod.iconPath,
+                                                modName: mod.modName,
+                                                realIndex: mod.realIndex,
+                                                isOldAutoFixed:
+                                                    mod.isOldAutoFixed,
+                                                isSyntaxErrorRemoved:
+                                                    mod.isSyntaxErrorRemoved,
+                                                isUnoptimized:
+                                                    mod.isUnoptimized,
+                                                isNamespaced: mod.isNamespaced,
+                                                isDisabled: false,
+                                                favoriteDateTime:
+                                                    mod.favoriteDateTime,
+                                              );
+                                            }
+                                            return mod;
+                                          }).toList();
+
+                                      updatedMods.removeWhere(
+                                        (element) => element.realIndex == 0,
+                                      );
+
+                                      updatedMods.sort((a, b) {
+                                        if (a.isDisabled != b.isDisabled) {
+                                          return a.isDisabled ? 1 : -1;
+                                        }
+
+                                        final aFavorite =
+                                            a.favoriteDateTime != null;
+                                        final bFavorite =
+                                            b.favoriteDateTime != null;
+
+                                        if (aFavorite != bFavorite) {
+                                          return aFavorite ? -1 : 1;
+                                        }
+
+                                        if (aFavorite) {
+                                          final cmp = b.favoriteDateTime!
+                                              .compareTo(a.favoriteDateTime!);
+                                          if (cmp != 0) return cmp;
+                                        }
+
+                                        return compareNatural(
+                                          a.modName.toLowerCase(),
+                                          b.modName.toLowerCase(),
+                                        );
+                                      });
+
+                                      updatedMods.insert(
+                                        0,
+                                        ModData(
+                                          modPath: "None",
+                                          iconPath: p.join(
+                                            group.groupPath,
+                                            ConstantVar.noneSlotIconFileName,
+                                          ),
+                                          modName: "None".tr(),
+                                          realIndex: 0,
+                                          isOldAutoFixed: false,
+                                          isSyntaxErrorRemoved: false,
+                                          isUnoptimized: false,
+                                          isNamespaced: false,
+                                          isDisabled: false,
+                                          favoriteDateTime: null,
+                                        ),
+                                      );
+
+                                      return ModGroupData(
+                                        groupPath: group.groupPath,
+                                        iconPath: group.iconPath,
+                                        groupName: group.groupName,
+                                        favoriteDateTime:
+                                            group.favoriteDateTime,
+                                        modsInGroup: updatedMods,
+                                        realIndex: group.realIndex,
+                                        previousSelectedModOnGroup:
+                                            group.previousSelectedModOnGroup,
+                                      );
+                                    }
+                                    return group;
+                                  }).toList();
+
+                              ref.read(modGroupDataProvider.notifier).state =
+                                  updatedGroups;
+
                               if (!context.mounted) return;
                               showUpdateModSnackbar(
                                 context,

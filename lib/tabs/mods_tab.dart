@@ -450,13 +450,18 @@ class _ModContainerState extends ConsumerState<ModContainer>
                     label: 'Open in File Explorer'.tr(),
                   ),
                 if (widget.index != 0 &&
-                    !isModDisabled(
-                      widget.currentGroupData.modsInGroup[widget.index].modPath,
-                    ))
+                    !widget
+                        .currentGroupData
+                        .modsInGroup[widget.index]
+                        .isDisabled)
                   CustomMenuItem(
                     scale: sss,
                     onSelected: () async {
                       if (!context.mounted) return;
+
+                      String? watchedPath =
+                          DynamicDirectoryWatcher.watcher?.path;
+                      DynamicDirectoryWatcher.stop();
 
                       bool success = await completeDisableMod(
                         widget
@@ -465,6 +470,10 @@ class _ModContainerState extends ConsumerState<ModContainer>
                             .modPath,
                       );
 
+                      if (watchedPath != null) {
+                        DynamicDirectoryWatcher.watch(watchedPath);
+                      }
+
                       if (!context.mounted) return;
 
                       if (success) {
@@ -472,7 +481,106 @@ class _ModContainerState extends ConsumerState<ModContainer>
                           context,
                           ProviderScope.containerOf(context, listen: false),
                         );
-                        triggerRefresh(ref);
+
+                        //UPDATE RIVERPOD
+                        final currentGroups = ref.read(modGroupDataProvider);
+
+                        final updatedGroups =
+                            currentGroups.map((group) {
+                              if (group.groupPath ==
+                                  widget.currentGroupData.groupPath) {
+                                final updatedMods =
+                                    group.modsInGroup.map((mod) {
+                                      if (mod.modPath ==
+                                          widget
+                                              .currentGroupData
+                                              .modsInGroup[widget.index]
+                                              .modPath) {
+                                        return ModData(
+                                          modPath: p.join(
+                                            p.dirname(mod.modPath),
+                                            "DISABLED${p.basename(mod.modPath)}",
+                                          ),
+                                          iconPath: mod.iconPath,
+                                          modName: mod.modName,
+                                          realIndex: mod.realIndex,
+                                          isOldAutoFixed: mod.isOldAutoFixed,
+                                          isSyntaxErrorRemoved:
+                                              mod.isSyntaxErrorRemoved,
+                                          isUnoptimized: mod.isUnoptimized,
+                                          isNamespaced: mod.isNamespaced,
+                                          isDisabled: true,
+                                          favoriteDateTime:
+                                              mod.favoriteDateTime,
+                                        );
+                                      }
+                                      return mod;
+                                    }).toList();
+
+                                updatedMods.removeWhere(
+                                  (element) => element.realIndex == 0,
+                                );
+
+                                updatedMods.sort((a, b) {
+                                  if (a.isDisabled != b.isDisabled) {
+                                    return a.isDisabled ? 1 : -1;
+                                  }
+
+                                  final aFavorite = a.favoriteDateTime != null;
+                                  final bFavorite = b.favoriteDateTime != null;
+
+                                  if (aFavorite != bFavorite) {
+                                    return aFavorite ? -1 : 1;
+                                  }
+
+                                  if (aFavorite) {
+                                    final cmp = b.favoriteDateTime!.compareTo(
+                                      a.favoriteDateTime!,
+                                    );
+                                    if (cmp != 0) return cmp;
+                                  }
+
+                                  return compareNatural(
+                                    a.modName.toLowerCase(),
+                                    b.modName.toLowerCase(),
+                                  );
+                                });
+
+                                updatedMods.insert(
+                                  0,
+                                  ModData(
+                                    modPath: "None",
+                                    iconPath: p.join(
+                                      group.groupPath,
+                                      ConstantVar.noneSlotIconFileName,
+                                    ),
+                                    modName: "None".tr(),
+                                    realIndex: 0,
+                                    isOldAutoFixed: false,
+                                    isSyntaxErrorRemoved: false,
+                                    isUnoptimized: false,
+                                    isNamespaced: false,
+                                    isDisabled: false,
+                                    favoriteDateTime: null,
+                                  ),
+                                );
+
+                                return ModGroupData(
+                                  groupPath: group.groupPath,
+                                  iconPath: group.iconPath,
+                                  groupName: group.groupName,
+                                  favoriteDateTime: group.favoriteDateTime,
+                                  modsInGroup: updatedMods,
+                                  realIndex: group.realIndex,
+                                  previousSelectedModOnGroup:
+                                      group.previousSelectedModOnGroup,
+                                );
+                              }
+                              return group;
+                            }).toList();
+
+                        ref.read(modGroupDataProvider.notifier).state =
+                            updatedGroups;
                       } else {
                         ScaffoldMessenger.of(context).hideCurrentSnackBar();
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -505,13 +613,18 @@ class _ModContainerState extends ConsumerState<ModContainer>
                     label: 'Disable mod completely'.tr(),
                   ),
                 if (widget.index != 0 &&
-                    isModDisabled(
-                      widget.currentGroupData.modsInGroup[widget.index].modPath,
-                    ))
+                    widget
+                        .currentGroupData
+                        .modsInGroup[widget.index]
+                        .isDisabled)
                   CustomMenuItem(
                     scale: sss,
                     onSelected: () async {
                       if (!context.mounted) return;
+
+                      String? watchedPath =
+                          DynamicDirectoryWatcher.watcher?.path;
+                      DynamicDirectoryWatcher.stop();
 
                       bool success = await enableMod(
                         widget
@@ -520,6 +633,10 @@ class _ModContainerState extends ConsumerState<ModContainer>
                             .modPath,
                       );
 
+                      if (watchedPath != null) {
+                        DynamicDirectoryWatcher.watch(watchedPath);
+                      }
+
                       if (!context.mounted) return;
 
                       if (success) {
@@ -527,7 +644,109 @@ class _ModContainerState extends ConsumerState<ModContainer>
                           context,
                           ProviderScope.containerOf(context, listen: false),
                         );
-                        triggerRefresh(ref);
+
+                        //UPDATE RIVERPOD
+                        final currentGroups = ref.read(modGroupDataProvider);
+
+                        final updatedGroups =
+                            currentGroups.map((group) {
+                              if (group.groupPath ==
+                                  widget.currentGroupData.groupPath) {
+                                final updatedMods =
+                                    group.modsInGroup.map((mod) {
+                                      if (mod.modPath ==
+                                          widget
+                                              .currentGroupData
+                                              .modsInGroup[widget.index]
+                                              .modPath) {
+                                        return ModData(
+                                          modPath: mod.modPath.replaceFirst(
+                                            RegExp(
+                                              r'disabled',
+                                              caseSensitive: false,
+                                            ),
+                                            '',
+                                          ),
+                                          iconPath: mod.iconPath,
+                                          modName: mod.modName,
+                                          realIndex: mod.realIndex,
+                                          isOldAutoFixed: mod.isOldAutoFixed,
+                                          isSyntaxErrorRemoved:
+                                              mod.isSyntaxErrorRemoved,
+                                          isUnoptimized: mod.isUnoptimized,
+                                          isNamespaced: mod.isNamespaced,
+                                          isDisabled: false,
+                                          favoriteDateTime:
+                                              mod.favoriteDateTime,
+                                        );
+                                      }
+                                      return mod;
+                                    }).toList();
+
+                                updatedMods.removeWhere(
+                                  (element) => element.realIndex == 0,
+                                );
+
+                                updatedMods.sort((a, b) {
+                                  if (a.isDisabled != b.isDisabled) {
+                                    return a.isDisabled ? 1 : -1;
+                                  }
+
+                                  final aFavorite = a.favoriteDateTime != null;
+                                  final bFavorite = b.favoriteDateTime != null;
+
+                                  if (aFavorite != bFavorite) {
+                                    return aFavorite ? -1 : 1;
+                                  }
+
+                                  if (aFavorite) {
+                                    final cmp = b.favoriteDateTime!.compareTo(
+                                      a.favoriteDateTime!,
+                                    );
+                                    if (cmp != 0) return cmp;
+                                  }
+
+                                  return compareNatural(
+                                    a.modName.toLowerCase(),
+                                    b.modName.toLowerCase(),
+                                  );
+                                });
+
+                                updatedMods.insert(
+                                  0,
+                                  ModData(
+                                    modPath: "None",
+                                    iconPath: p.join(
+                                      group.groupPath,
+                                      ConstantVar.noneSlotIconFileName,
+                                    ),
+                                    modName: "None".tr(),
+                                    realIndex: 0,
+                                    isOldAutoFixed: false,
+                                    isSyntaxErrorRemoved: false,
+                                    isUnoptimized: false,
+                                    isNamespaced: false,
+                                    isDisabled: false,
+                                    favoriteDateTime: null,
+                                  ),
+                                );
+
+                                return ModGroupData(
+                                  groupPath: group.groupPath,
+                                  iconPath: group.iconPath,
+                                  groupName: group.groupName,
+                                  favoriteDateTime: group.favoriteDateTime,
+                                  modsInGroup: updatedMods,
+                                  realIndex: group.realIndex,
+                                  previousSelectedModOnGroup:
+                                      group.previousSelectedModOnGroup,
+                                );
+                              }
+                              return group;
+                            }).toList();
+
+                        ref.read(modGroupDataProvider.notifier).state =
+                            updatedGroups;
                       } else {
                         ScaffoldMessenger.of(context).hideCurrentSnackBar();
                         ScaffoldMessenger.of(context).showSnackBar(
