@@ -1119,9 +1119,20 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
 
                                 ref.read(modGroupDataProvider.notifier).state =
                                     finalGroups;
+
+                                //Force current group index update
+                                final length =
+                                    ref.read(modGroupDataProvider).length;
+                                final current = ref.read(
+                                  currentGroupIndexProvider,
+                                );
+
                                 ref
                                     .read(currentGroupIndexProvider.notifier)
-                                    .state = 0;
+                                    .state = length > 1
+                                        ? (current + 1) % length
+                                        : current;
+
                                 getCurrentGroupName(
                                   index,
                                   calledFromInitState: true,
