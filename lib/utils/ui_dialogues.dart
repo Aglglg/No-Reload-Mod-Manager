@@ -2943,6 +2943,19 @@ class _SaveModCustomizationsDialogState
   }
 }
 
+sealed class _FlatItem {}
+
+final class _GroupRow extends _FlatItem {
+  final ModGroupData group;
+  final int groupIndex;
+  _GroupRow(this.group, this.groupIndex);
+}
+
+final class _ModRow extends _FlatItem {
+  final ModData mod;
+  _ModRow(this.mod);
+}
+
 class BatchDisableOrEnableModsDialog extends ConsumerStatefulWidget {
   final List<ModGroupData> groupAndModsPair;
   const BatchDisableOrEnableModsDialog({
@@ -2961,15 +2974,14 @@ class _BatchDisableOrEnableModsDialogState
 
   bool _showConfirm = true;
   bool _isLoading = false;
-
   List<TextSpan> contents = [];
 
-  late Map<String, (ModData, bool)> _modChecked;
+  late final Map<String, (ModData, bool)> _modChecked;
+  late final Map<ModGroupData, List<ModData>> _filteredMods;
 
-  // Pre-filtered mods (no repeated where/toList calls)
-  late Map<ModGroupData, List<ModData>> _filteredMods;
+  int? _expandedIndex;
+  late List<_FlatItem> _flatItems;
 
-  // Cached text styles (avoid rebuilding fonts every frame)
   late final TextStyle _groupTitleStyle;
   late final TextStyle _groupPathStyle;
   late final TextStyle _modNameStyle;
@@ -2980,52 +2992,42 @@ class _BatchDisableOrEnableModsDialogState
   void initState() {
     super.initState();
 
-    // Pre-filter mods once
     _filteredMods = {
       for (final group in widget.groupAndModsPair)
         group: group.modsInGroup.where((m) => m.modPath != 'None').toList(),
     };
 
-    // Initialize checkbox state
     _modChecked = {
-      for (final group in _filteredMods.entries)
-        for (final mod in group.value)
+      for (final e in _filteredMods.entries)
+        for (final mod in e.value)
           mod.modPath: (
             mod,
             !p.basename(mod.modPath).toLowerCase().startsWith('disabled'),
           ),
     };
-  }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+    _rebuildFlatItems();
 
-    // Cache styles once (after context is available)
     _groupTitleStyle = GoogleFonts.poppins(
       color: Colors.white,
       fontSize: 14,
       fontWeight: FontWeight.w600,
     );
-
     _groupPathStyle = GoogleFonts.poppins(
       color: Colors.grey,
       fontSize: 12,
       fontWeight: FontWeight.w400,
     );
-
     _modNameStyle = GoogleFonts.poppins(
       color: const Color.fromARGB(230, 255, 255, 255),
       fontSize: 13,
       fontWeight: FontWeight.w400,
     );
-
     _modPathStyle = GoogleFonts.poppins(
       color: Colors.grey,
       fontSize: 12,
       fontWeight: FontWeight.w400,
     );
-
     _infoStyle = GoogleFonts.poppins(
       color: Colors.grey,
       fontSize: 13,
@@ -3033,30 +3035,47 @@ class _BatchDisableOrEnableModsDialogState
     );
   }
 
-  // ─────────────────────────────────────────────
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _rebuildFlatItems() {
+    final groups = widget.groupAndModsPair;
+    _flatItems = [
+      for (int i = 0; i < groups.length; i++) ...[
+        _GroupRow(groups[i], i),
+        if (_expandedIndex == i)
+          for (final mod in _filteredMods[groups[i]]!) _ModRow(mod),
+      ],
+    ];
+  }
 
   bool? _groupValue(ModGroupData group) {
     final mods = _filteredMods[group]!;
     if (mods.isEmpty) return false;
 
-    int checkedCount = 0;
+    var count = 0;
     for (final mod in mods) {
-      if (_modChecked[mod.modPath]!.$2 == true) {
-        checkedCount++;
-      }
+      if (_modChecked[mod.modPath]!.$2) count++;
     }
-
-    if (checkedCount == mods.length) return true;
-    if (checkedCount == 0) return false;
+    if (count == mods.length) return true;
+    if (count == 0) return false;
     return null;
+  }
+
+  void _toggleExpansion(int index) {
+    setState(() {
+      _expandedIndex = _expandedIndex == index ? null : index;
+      _rebuildFlatItems();
+    });
   }
 
   void _toggleGroup(ModGroupData group, bool? value) {
     final target = value ?? false;
-    final mods = _filteredMods[group]!;
-
     setState(() {
-      for (final mod in mods) {
+      for (final mod in _filteredMods[group]!) {
         _modChecked[mod.modPath] = (_modChecked[mod.modPath]!.$1, target);
       }
     });
@@ -3070,15 +3089,10 @@ class _BatchDisableOrEnableModsDialogState
     });
   }
 
-  // ─────────────────────────────────────────────
-
   Future<void> batchDisableEnableMods() async {
     setState(() {
       _isLoading = true;
       _showConfirm = false;
-    });
-
-    setState(() {
       contents = [
         TextSpan(
           text: "Enabling/disabling mods...".tr(),
@@ -3087,45 +3101,35 @@ class _BatchDisableOrEnableModsDialogState
       ];
     });
 
-    List<(Directory groupDir, ModData modData)> failedEnableDisableMod = [];
+    final failed = <(Directory, ModData)>[];
 
-    for (var mod in _modChecked.entries) {
-      //Unchecked and not starts with Disabled, disable it
-      if (mod.value.$2 == false &&
-          !p.basename(mod.key).toLowerCase().startsWith('disabled')) {
-        bool success = await completeDisableMod(mod.key);
-        if (!success) {
-          failedEnableDisableMod.add((
-            Directory(p.dirname(mod.key)),
-            _modChecked[mod.key]!.$1,
-          ));
+    for (final entry in _modChecked.entries) {
+      final baseName = p.basename(entry.key).toLowerCase();
+      final isDisabled = baseName.startsWith('disabled');
+      final wantEnabled = entry.value.$2;
+
+      if (!wantEnabled && !isDisabled) {
+        if (!await completeDisableMod(entry.key)) {
+          failed.add((Directory(p.dirname(entry.key)), entry.value.$1));
         }
-      }
-      //Checked and starts with Disabled, enable it
-      else if (mod.value.$2 == true &&
-          p.basename(mod.key).toLowerCase().startsWith('disabled')) {
-        bool success = await enableMod(mod.key);
-        if (!success) {
-          failedEnableDisableMod.add((
-            Directory(p.dirname(mod.key)),
-            _modChecked[mod.key]!.$1,
-          ));
+      } else if (wantEnabled && isDisabled) {
+        if (!await enableMod(entry.key)) {
+          failed.add((Directory(p.dirname(entry.key)), entry.value.$1));
         }
       }
     }
 
-    List<TextSpan> failedEnableInfo = [];
-    for (var mod in failedEnableDisableMod) {
+    final failSpans = <TextSpan>[];
+    for (final item in failed) {
       String groupName = '';
       try {
         groupName = await forceReadAsStringUtf8(
-          File(p.join(mod.$1.path, 'groupname')),
+          File(p.join(item.$1.path, 'groupname')),
         );
       } catch (_) {}
-      //
-      failedEnableInfo.add(
+      failSpans.add(
         TextSpan(
-          text: "$groupName - ${mod.$2.modName}\n${mod.$2.modPath}\n\n",
+          text: "$groupName - ${item.$2.modName}\n${item.$2.modPath}\n\n",
           style: GoogleFonts.poppins(
             color: Colors.white,
             fontSize: 14,
@@ -3137,33 +3141,31 @@ class _BatchDisableOrEnableModsDialogState
 
     setState(() {
       _isLoading = false;
-
-      if (failedEnableDisableMod.isEmpty) {
-        contents = [
-          TextSpan(
-            text: "Managed mods have been disabled/enabled".tr(),
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ];
-      } else {
-        contents = [
-          ...failedEnableInfo,
-          TextSpan(
-            text:
-                "Some mods can't be enabled/disabled, please rename these mods manually with File Explorer."
-                    .tr(),
-            style: GoogleFonts.poppins(
-              color: const Color.fromARGB(255, 189, 170, 0),
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ];
-      }
+      contents =
+          failed.isEmpty
+              ? [
+                TextSpan(
+                  text: "Managed mods have been disabled/enabled".tr(),
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ]
+              : [
+                ...failSpans,
+                TextSpan(
+                  text:
+                      "Some mods can't be enabled/disabled, please rename these mods manually with File Explorer."
+                          .tr(),
+                  style: GoogleFonts.poppins(
+                    color: const Color.fromARGB(255, 189, 170, 0),
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ];
     });
 
     await _scrollToBottom();
@@ -3172,7 +3174,6 @@ class _BatchDisableOrEnableModsDialogState
   Future<void> _scrollToBottom() async {
     await Future.delayed(const Duration(milliseconds: 100));
     if (!_scrollController.hasClients) return;
-
     await _scrollController.animateTo(
       _scrollController.position.maxScrollExtent,
       duration: const Duration(milliseconds: 300),
@@ -3180,8 +3181,104 @@ class _BatchDisableOrEnableModsDialogState
     );
   }
 
+  Widget _buildGroupHeader(_GroupRow item) {
+    final isExpanded = _expandedIndex == item.groupIndex;
+    return InkWell(
+      onTap: () => _toggleExpansion(item.groupIndex),
+      child: Row(
+        children: [
+          Checkbox(
+            activeColor: getAccentColor(ref),
+            tristate: true,
+            value: _groupValue(item.group),
+            onChanged: (v) => _toggleGroup(item.group, v),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          Expanded(
+            child: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    item.group.groupName,
+                    overflow: TextOverflow.ellipsis,
+                    style: _groupTitleStyle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    p.basename(item.group.groupPath),
+                    overflow: TextOverflow.ellipsis,
+                    style: _groupPathStyle,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            isExpanded ? Icons.expand_less : Icons.expand_more,
+            color: Colors.grey,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModRow(_ModRow item) {
+    final path = item.mod.modPath;
+    return Row(
+      children: [
+        const SizedBox(width: 25),
+        Checkbox(
+          activeColor: getAccentColor(ref),
+          value: _modChecked[path]!.$2,
+          onChanged:
+              (v) => setState(() {
+                _modChecked[path] = (_modChecked[path]!.$1, v!);
+              }),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+        ),
+        Expanded(
+          child: Row(
+            children: [
+              Flexible(
+                child: Text(
+                  item.mod.modName,
+                  overflow: TextOverflow.ellipsis,
+                  style: _modNameStyle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  p.basename(path),
+                  overflow: TextOverflow.ellipsis,
+                  style: _modPathStyle,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final scrollBehavior = ScrollConfiguration.of(context).copyWith(
+      dragDevices: {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.trackpad,
+      },
+    );
+
     return AlertDialog(
       title: Text(
         "Enable/disable mods".tr(),
@@ -3189,179 +3286,40 @@ class _BatchDisableOrEnableModsDialogState
       ),
       content: ConstrainedBox(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
-          minWidth: !_showConfirm ? 0 : MediaQuery.of(context).size.width * 0.6,
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
+          minWidth: !_showConfirm ? 0 : MediaQuery.of(context).size.width * 0.8,
         ),
         child:
             !_showConfirm
                 ? ScrollConfiguration(
-                  behavior: ScrollConfiguration.of(context).copyWith(
-                    dragDevices: {
-                      PointerDeviceKind.touch,
-                      PointerDeviceKind.mouse,
-                      PointerDeviceKind.trackpad,
-                    },
-                  ),
+                  behavior: scrollBehavior,
                   child: SingleChildScrollView(
                     controller: _scrollController,
                     child: RichText(text: TextSpan(children: contents)),
                   ),
                 )
-                : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // -- Mod List --
-                    Expanded(
-                      child: ScrollConfiguration(
-                        behavior: ScrollConfiguration.of(context).copyWith(
-                          dragDevices: {
-                            PointerDeviceKind.touch,
-                            PointerDeviceKind.mouse,
-                            PointerDeviceKind.trackpad,
-                          },
-                        ),
-                        child: SingleChildScrollView(
-                          controller: _scrollController,
-                          child: ExpansionPanelList.radio(
-                            elevation: 0,
-                            dividerColor: Colors.transparent,
-                            expandedHeaderPadding: EdgeInsets.zero,
-                            animationDuration: const Duration(
-                              milliseconds: 250,
-                            ),
-                            materialGapSize: 0,
-                            children:
-                                widget.groupAndModsPair.asMap().entries.map((
-                                  e,
-                                ) {
-                                  final group = e.value;
-                                  final mods = _filteredMods[group]!;
-
-                                  return ExpansionPanelRadio(
-                                    value: e.key,
-                                    canTapOnHeader: true,
-                                    backgroundColor: Colors.transparent,
-
-                                    // -- Group Header --
-                                    headerBuilder: (context, isExpanded) {
-                                      final groupVal = _groupValue(group);
-
-                                      return Row(
-                                        children: [
-                                          Checkbox(
-                                            activeColor: getAccentColor(ref),
-                                            tristate: true,
-                                            value: groupVal,
-                                            onChanged:
-                                                (v) => _toggleGroup(group, v),
-                                            materialTapTargetSize:
-                                                MaterialTapTargetSize
-                                                    .shrinkWrap,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            child: Row(
-                                              children: [
-                                                Flexible(
-                                                  child: Text(
-                                                    group.groupName,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    style: _groupTitleStyle,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Flexible(
-                                                  child: Text(
-                                                    p.basename(group.groupPath),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    style: _groupPathStyle,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      );
-                                    },
-
-                                    // -- Mods Body --
-                                    body: Column(
-                                      children:
-                                          mods.map((mod) {
-                                            final path = mod.modPath;
-
-                                            return Row(
-                                              children: [
-                                                const SizedBox(width: 25),
-                                                Checkbox(
-                                                  activeColor: getAccentColor(
-                                                    ref,
-                                                  ),
-                                                  value: _modChecked[path]!.$2,
-                                                  onChanged:
-                                                      (v) => setState(
-                                                        () =>
-                                                            _modChecked[path] = (
-                                                              _modChecked[path]!
-                                                                  .$1,
-                                                              v!,
-                                                            ),
-                                                      ),
-                                                  materialTapTargetSize:
-                                                      MaterialTapTargetSize
-                                                          .shrinkWrap,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          4,
-                                                        ),
-                                                  ),
-                                                ),
-                                                Expanded(
-                                                  child: Row(
-                                                    children: [
-                                                      Flexible(
-                                                        child: Text(
-                                                          mod.modName,
-                                                          overflow:
-                                                              TextOverflow
-                                                                  .ellipsis,
-                                                          style: _modNameStyle,
-                                                        ),
-                                                      ),
-                                                      const SizedBox(width: 8),
-                                                      Flexible(
-                                                        child: Text(
-                                                          p.basename(path),
-                                                          overflow:
-                                                              TextOverflow
-                                                                  .ellipsis,
-                                                          style: _modPathStyle,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ],
-                                            );
-                                          }).toList(),
-                                    ),
-                                  );
-                                }).toList(),
+                : SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.6,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: ScrollConfiguration(
+                          behavior: scrollBehavior,
+                          child: ListView.builder(
+                            controller: _scrollController,
+                            itemCount: _flatItems.length,
+                            itemBuilder:
+                                (_, i) => switch (_flatItems[i]) {
+                                  _GroupRow item => _buildGroupHeader(item),
+                                  _ModRow item => _buildModRow(item),
+                                },
                           ),
                         ),
                       ),
-                    ),
 
-                    if (_showConfirm) const SizedBox(height: 10),
+                      const SizedBox(height: 10),
 
-                    // -- Legend --
-                    if (_showConfirm)
                       Row(
                         children: [
                           SizedBox(
@@ -3397,18 +3355,18 @@ class _BatchDisableOrEnableModsDialogState
                           Text("Disabled".tr(), style: _infoStyle),
                         ],
                       ),
-                    if (_showConfirm) const SizedBox(height: 10),
-                    if (_showConfirm)
+
+                      const SizedBox(height: 10),
                       Text(
                         "Before disabling the mods, click Save Mod Customizations to save your changes to the mod toggles/states."
                             .tr(),
                         style: _infoStyle.copyWith(color: Colors.white),
                       ),
-                  ],
+                    ],
+                  ),
                 ),
       ),
 
-      // -- Actions --
       actions:
           _showConfirm
               ? [
@@ -3437,9 +3395,7 @@ class _BatchDisableOrEnableModsDialogState
                   ),
                 ),
                 TextButton(
-                  onPressed: () async {
-                    await batchDisableEnableMods();
-                  },
+                  onPressed: batchDisableEnableMods,
                   child: Text(
                     'Confirm'.tr(),
                     style: GoogleFonts.poppins(color: getAccentColor(ref)),
@@ -3447,7 +3403,7 @@ class _BatchDisableOrEnableModsDialogState
                 ),
               ]
               : _isLoading
-              ? []
+              ? const []
               : [
                 TextButton(
                   onPressed: () async {
