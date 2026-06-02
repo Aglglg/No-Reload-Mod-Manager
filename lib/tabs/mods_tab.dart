@@ -1100,7 +1100,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
                               currentMod.favoriteDateTime != null
                                   ? Icons.star_rounded
                                   : Icons.star_outline_rounded,
-                              color: Colors.white,
+                              color: Colors.amber,
                               size: 23 * sss,
                             ),
                           ),

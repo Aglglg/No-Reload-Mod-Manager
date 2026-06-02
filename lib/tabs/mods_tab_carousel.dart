@@ -907,7 +907,7 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                                         groupData.favoriteDateTime != null
                                             ? Icons.star_rounded
                                             : Icons.star_outline_rounded,
-                                        color: Colors.white,
+                                        color: Colors.amber,
                                         size: 23 * sss,
                                       ),
                                     ),
