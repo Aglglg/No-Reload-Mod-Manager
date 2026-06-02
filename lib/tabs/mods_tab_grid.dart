@@ -5,7 +5,6 @@ import 'dart:ui';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -219,10 +218,10 @@ class ModAreaGrid extends ConsumerStatefulWidget {
 
 class _ModAreaGridState extends ConsumerState<ModAreaGrid>
     with ModNavigationListener {
-  late List<GlobalKey> _itemKeys;
   int indexOfActiveGridMod = -1;
   double widgetWidth = 0;
   bool mouseWasMoved = false;
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -241,28 +240,45 @@ class _ModAreaGridState extends ConsumerState<ModAreaGrid>
   @override
   void dispose() {
     ModNavigationListener.removeListener(this);
+    _scrollController.dispose();
     super.dispose();
   }
 
   void _scrollToItem(int index) {
-    final context = _itemKeys[index].currentContext;
-    if (context != null) {
-      Scrollable.ensureVisible(
-        context,
-        duration: Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-        alignment: 0.5, // 0.0 = top, 1.0 = bottom
-      );
-    }
+    if (!_scrollController.hasClients) return;
+    final sss = ref.read(zoomScaleProvider);
+    final itemsPerRow = ((widgetWidth + 8 * sss) / (156.816 * sss + 8 * sss))
+        .floor()
+        .clamp(1, 999);
+    final rowHeight =
+        217.8 * sss + 3 * sss + _getModTextFieldHeight(sss) + 15 * sss;
+    final rowIndex = index ~/ itemsPerRow;
+    _scrollController.animateTo(
+      rowIndex * rowHeight,
+      duration: Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+    );
+  }
+
+  List<List<MapEntry<int, ModData>>> _buildRows(double width, double sss) {
+    final itemsPerRow = ((width + 8 * sss) / (156.816 * sss + 8 * sss))
+        .floor()
+        .clamp(1, 999);
+    final entries =
+        widget.currentGroupData.modsInGroup.asMap().entries.toList();
+    return [
+      for (int i = 0; i < entries.length; i += itemsPerRow)
+        entries.sublist(i, (i + itemsPerRow).clamp(0, entries.length)),
+    ];
+  }
+
+  double _getModTextFieldHeight(double sss) {
+    return 36 * sss;
   }
 
   @override
   Widget build(BuildContext context) {
     double sss = ref.watch(zoomScaleProvider);
-    _itemKeys = List.generate(
-      widget.currentGroupData.modsInGroup.length,
-      (_) => GlobalKey(),
-    );
     return MouseRegion(
       onHover: (_) {
         if (!mouseWasMoved) {
@@ -276,6 +292,10 @@ class _ModAreaGridState extends ConsumerState<ModAreaGrid>
       child: LayoutBuilder(
         builder: (context, constraints) {
           widgetWidth = constraints.maxWidth;
+          final rows = _buildRows(widgetWidth, sss);
+          final textFieldH = _getModTextFieldHeight(sss);
+          final itemTotalHeight = 217.8 * sss + 3 * sss + textFieldH;
+          final rowHeight = itemTotalHeight + 15 * sss; // + runSpacing
           return ScrollConfiguration(
             behavior: ScrollConfiguration.of(context).copyWith(
               dragDevices: {
@@ -285,51 +305,66 @@ class _ModAreaGridState extends ConsumerState<ModAreaGrid>
               },
               scrollbars: false,
             ),
-            child: SingleChildScrollView(
-              child: Wrap(
-                spacing: 8 * sss,
-                runSpacing: 15 * sss,
-                children:
-                    widget.currentGroupData.modsInGroup.asMap().entries.map((
-                      modData,
-                    ) {
-                      return ModContainer(
-                        key: _itemKeys[modData.key],
-                        itemHeight: 217.8 * sss,
-                        isCentered: false,
-                        isActiveInGrid: modData.key == indexOfActiveGridMod,
-                        isGrid: true,
-                        onSelected: () async {
-                          _scrollToItem(modData.key);
-                          unawaited(
-                            simulateKeySelectMod(
-                              widget.currentGroupData.realIndex,
+            child: ListView.builder(
+              controller: _scrollController,
+              itemExtent: rowHeight,
+              itemCount: rows.length,
+              itemBuilder: (context, rowIndex) {
+                final ghostCount = rows[0].length - rows[rowIndex].length;
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ...rows[rowIndex].map(
+                      (modData) => Padding(
+                        padding: EdgeInsets.only(right: 8 * sss),
+                        child: ModContainer(
+                          itemHeight: 217.8 * sss,
+                          isCentered: false,
+                          isActiveInGrid: modData.key == indexOfActiveGridMod,
+                          isGrid: true,
+                          onSelected: () async {
+                            _scrollToItem(modData.key);
+                            unawaited(
+                              simulateKeySelectMod(
+                                widget.currentGroupData.realIndex,
+                                widget
+                                    .currentGroupData
+                                    .modsInGroup[modData.key]
+                                    .realIndex,
+                              ),
+                            );
+                            unawaited(
+                              setSelectedModIndex(
+                                ref,
+                                modData.key,
+                                widget.currentGroupData.groupPath,
+                              ),
+                            );
+                          },
+                          onTap: () {},
+                          index: modData.key,
+                          isSelected:
                               widget
                                   .currentGroupData
-                                  .modsInGroup[modData.key]
-                                  .realIndex,
-                            ),
-                          );
-                          unawaited(
-                            setSelectedModIndex(
-                              ref,
-                              modData
-                                  .key, //just view index, not actual mod index
-                              widget.currentGroupData.groupPath,
-                            ),
-                          );
-                        },
-                        onTap: () {},
-                        index: modData.key,
-                        isSelected:
-                            widget
-                                .currentGroupData
-                                .previousSelectedModOnGroup ==
-                            modData.key,
-                        currentGroupData: widget.currentGroupData,
-                      );
-                    }).toList(),
-              ),
+                                  .previousSelectedModOnGroup ==
+                              modData.key,
+                          currentGroupData: widget.currentGroupData,
+                        ),
+                      ),
+                    ),
+                    ...List.generate(
+                      ghostCount,
+                      (_) => Padding(
+                        padding: EdgeInsets.only(right: 8 * sss),
+                        child: SizedBox(
+                          width: 156.816 * sss,
+                          height: 217.8 * sss,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           );
         },

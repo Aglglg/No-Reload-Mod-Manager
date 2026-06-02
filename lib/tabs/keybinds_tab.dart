@@ -732,6 +732,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
                           return Padding(
                             padding: EdgeInsets.only(bottom: 9 * sss),
                             child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children:
                                   _rows[rowIndex].map((i) {
