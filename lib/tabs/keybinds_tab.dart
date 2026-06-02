@@ -954,7 +954,7 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
           controllers.length > 1
               ? Colors.transparent
               : widget.isDisabled
-              ? const Color.fromARGB(30, 244, 67, 54)
+              ? const Color.fromARGB(43, 43, 43, 43)
               : getAccentColor(ref, alpha: 50),
         ),
         shadowColor: WidgetStatePropertyAll(Colors.transparent),
@@ -964,7 +964,7 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
             side: BorderSide(
               color:
                   widget.isDisabled
-                      ? const Color.fromARGB(127, 244, 67, 54)
+                      ? const Color.fromARGB(80, 244, 67, 54)
                       : state.contains(WidgetState.hovered)
                       ? getAccentColor(ref)
                       : const Color.fromARGB(127, 255, 255, 255),
@@ -1041,7 +1041,7 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
                                 ),
                                 overlayColor: WidgetStatePropertyAll(
                                   widget.isDisabled
-                                      ? const Color.fromARGB(30, 244, 67, 54)
+                                      ? const Color.fromARGB(43, 43, 43, 43)
                                       : getAccentColor(ref, alpha: 50),
                                 ),
                                 shadowColor: WidgetStatePropertyAll(

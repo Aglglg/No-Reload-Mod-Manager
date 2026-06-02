@@ -153,10 +153,10 @@ class _GroupContainerState extends ConsumerState<GroupContainer> {
             border: Border.all(
               width: 3 * sss,
               color:
-                  widget.selectedColor != null
-                      ? widget.selectedColor!
-                      : isHovering
+                  isHovering
                       ? Colors.white
+                      : widget.selectedColor != null
+                      ? widget.selectedColor!
                       : const Color.fromARGB(127, 255, 255, 255),
               strokeAlign: BorderSide.strokeAlignInside,
             ),
@@ -685,17 +685,11 @@ class _ModContainerState extends ConsumerState<ModContainer>
                                       .currentGroupData
                                       .modsInGroup[widget.index]
                                       .isDisabled
-                                  ? Colors.red
+                                  ? const Color.fromARGB(169, 244, 67, 54)
                                   : widget.isSelected
                                   ? getAccentColor(ref)
                                   : const Color.fromARGB(127, 255, 255, 255),
-                          width:
-                              (isHovering &&
-                                          widget.isGrid &&
-                                          !ref.watch(wasUsingKeyboard)) ||
-                                      (widget.isActiveInGrid && widget.isGrid)
-                                  ? 4 * sss
-                                  : 3 * sss,
+                          width: 3 * sss,
                         ),
                         borderRadius: BorderRadius.circular(17 * sss),
                       ),
@@ -822,6 +816,8 @@ class _ModContainerState extends ConsumerState<ModContainer>
                                             .modsInGroup[widget.index]
                                             .isNamespaced)
                                           Tooltip(
+                                            preferBelow: true,
+                                            verticalOffset: 50 * sss,
                                             richMessage: TextSpan(
                                               text: "Mod uses namespaces".tr(),
                                               style: GoogleFonts.poppins(
@@ -842,6 +838,8 @@ class _ModContainerState extends ConsumerState<ModContainer>
                                             .modsInGroup[widget.index]
                                             .isOldAutoFixed)
                                           Tooltip(
+                                            preferBelow: true,
+                                            verticalOffset: 50 * sss,
                                             richMessage: TextSpan(
                                               text:
                                                   'Mod syntax errors were auto-fixed by earlier NRMM versions.'
@@ -866,6 +864,8 @@ class _ModContainerState extends ConsumerState<ModContainer>
                                             .modsInGroup[widget.index]
                                             .isSyntaxErrorRemoved)
                                           Tooltip(
+                                            preferBelow: true,
+                                            verticalOffset: 50 * sss,
                                             richMessage: TextSpan(
                                               text:
                                                   'Mod syntax errors are automatically removed.'
@@ -888,6 +888,8 @@ class _ModContainerState extends ConsumerState<ModContainer>
                                             .modsInGroup[widget.index]
                                             .isUnoptimized)
                                           Tooltip(
+                                            preferBelow: true,
+                                            verticalOffset: 50 * sss,
                                             richMessage: TextSpan(
                                               text:
                                                   'Mod is unoptimized and might slow down performance or even break other mods.'
@@ -921,26 +923,9 @@ class _ModContainerState extends ConsumerState<ModContainer>
                 ),
               ),
             ),
-
-            if (widget.index != 0 && isHovering)
-              SizedBox(
-                width: 156.816 * sss,
-                height: widget.itemHeight,
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Transform.translate(
-                    offset: Offset(0, 10 * sss),
-                    child: Icon(
-                      Icons.star_rounded,
-                      color: Colors.black,
-                      size: 35 * sss,
-                    ),
-                  ),
-                ),
-              ),
             if (widget.index != 0 && isHovering)
               Transform.translate(
-                offset: Offset(0, 10 * sss),
+                offset: Offset(0, 8 * sss),
                 child: SizedBox(
                   width: 156.816 * sss,
                   height: widget.itemHeight,
@@ -1102,12 +1087,23 @@ class _ModContainerState extends ConsumerState<ModContainer>
                             (_) => setState(() {
                               isHovering = false;
                             }),
-                        child: Icon(
-                          currentMod.favoriteDateTime != null
-                              ? Icons.star_rounded
-                              : Icons.star_outline_rounded,
-                          color: Colors.amber,
-                          size: 35 * sss,
+                        cursor: SystemMouseCursors.click,
+
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color.fromARGB(100, 0, 0, 0),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.all(3.0 * sss),
+                            child: Icon(
+                              currentMod.favoriteDateTime != null
+                                  ? Icons.star_rounded
+                                  : Icons.star_outline_rounded,
+                              color: Colors.white,
+                              size: 23 * sss,
+                            ),
+                          ),
                         ),
                       ),
                     ),

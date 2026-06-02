@@ -1015,36 +1015,6 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                           ),
 
                           if (hoveredIndex == index)
-                            SizedBox(
-                              width:
-                                  index == currentPageIndex
-                                      ? 80 * sss
-                                      : 65 * sss,
-                              height:
-                                  index == currentPageIndex
-                                      ? 80 * sss
-                                      : 65 * sss,
-                              child: Align(
-                                alignment: Alignment.bottomCenter,
-                                child: Transform.translate(
-                                  offset: Offset(
-                                    0,
-                                    index == currentPageIndex
-                                        ? 16 * sss
-                                        : 23 * sss,
-                                  ),
-                                  child: Icon(
-                                    Icons.star_rounded,
-                                    color: Colors.black,
-                                    size:
-                                        index == currentPageIndex
-                                            ? 30 * sss
-                                            : 24 * sss,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          if (hoveredIndex == index)
                             Transform.translate(
                               offset: Offset(
                                 0,
@@ -1172,15 +1142,31 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                                           (_) => setState(() {
                                             hoveredIndex = null;
                                           }),
-                                      child: Icon(
-                                        groupData.favoriteDateTime != null
-                                            ? Icons.star_rounded
-                                            : Icons.star_outline_rounded,
-                                        color: Colors.amber,
-                                        size:
-                                            index == currentPageIndex
-                                                ? 30 * sss
-                                                : 24 * sss,
+                                      cursor: SystemMouseCursors.click,
+
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: const Color.fromARGB(
+                                            100,
+                                            0,
+                                            0,
+                                            0,
+                                          ),
+                                        ),
+                                        child: Padding(
+                                          padding: EdgeInsets.all(3.0 * sss),
+                                          child: Icon(
+                                            groupData.favoriteDateTime != null
+                                                ? Icons.star_rounded
+                                                : Icons.star_outline_rounded,
+                                            color: Colors.white,
+                                            size:
+                                                index == currentPageIndex
+                                                    ? 23 * sss
+                                                    : 18 * sss,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),

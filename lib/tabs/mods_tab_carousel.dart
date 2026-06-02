@@ -784,25 +784,6 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                       ),
                     ),
                     if (index == currentPageIndex && hoveredIndex == index)
-                      SizedBox(
-                        width: 93.6 * sss,
-                        height: 93.6 * sss,
-                        child: Align(
-                          alignment: Alignment.bottomCenter,
-                          child: Transform.translate(
-                            offset: Offset(0, 15 * sss),
-                            child: Padding(
-                              padding: EdgeInsets.all(5.0 * sss),
-                              child: Icon(
-                                Icons.star_rounded,
-                                color: Colors.black,
-                                size: 30 * sss,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    if (index == currentPageIndex && hoveredIndex == index)
                       Transform.translate(
                         offset: Offset(0, 15 * sss),
                         child: SizedBox(
@@ -912,14 +893,24 @@ class _GroupAreaState extends ConsumerState<GroupAreaCarousel>
                                     (_) => setState(() {
                                       hoveredIndex = null;
                                     }),
+                                cursor: SystemMouseCursors.click,
                                 child: Padding(
                                   padding: EdgeInsets.all(5.0 * sss),
-                                  child: Icon(
-                                    groupData.favoriteDateTime != null
-                                        ? Icons.star_rounded
-                                        : Icons.star_outline_rounded,
-                                    color: Colors.amber,
-                                    size: 30 * sss,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: const Color.fromARGB(100, 0, 0, 0),
+                                    ),
+                                    child: Padding(
+                                      padding: EdgeInsets.all(3.0 * sss),
+                                      child: Icon(
+                                        groupData.favoriteDateTime != null
+                                            ? Icons.star_rounded
+                                            : Icons.star_outline_rounded,
+                                        color: Colors.white,
+                                        size: 23 * sss,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
