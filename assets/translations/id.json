@@ -22,8 +22,8 @@
   "Mods path invalid.": "Mods path tidak valid.",
   "Mods path is correct, but the '_MANAGED_' folder is missing or outdated.": "Mods path sudah benar, tapi '_MANAGED_' folder tidak ada atau masih versi lama.",
   "Mods path is correct, but some requirements are missing.": "Mods path sudah benar, tapi beberapa file yang dibutuhkan untuk mod manager tidak ada.",
-  "Edit Keybinds": "Edit tombol mod",
-  "Save Keybinds": "Simpan tombol mod",
+  "Edit Keybinds": "Edit keybind",
+  "Save Keybinds": "Simpan keybind",
   "Right-click a mod and select Keybind.": "Klik kanan pada mod dan pilih Keybind.\nAtau tekan [R (keyboard)] / [X (gamepad)] saat kursor berada di atas mod.",
   "Right-click and add group, then you can add mods.": "Klik kanan kemudian tambah grup, lalu bisa tambah mod.",
   "Drag & Drop mod folders here to add mods to this group (1 folder = 1 mod).": "Drag & drop folder mod atau arsip ke sini (1 folder = 1 mod, 1 arsip = 1 mod).",
@@ -195,7 +195,7 @@
   "Error! Cannot extract mod archive": "Error! Gagal ekstrak: {}",
   "Invalid keys": "Tombol tidak valid",
   "Auto pin window": "Otomatis pin window",
-  "Click keybind to simulate keypress": "Simulasikan tombol saat diklik",
+  "Click keybind to simulate keypress": "Simulasikan keybind saat diklik",
   "Duplicate namespace that cannot be automatically fixed": "Error! Namespace duplikat yang tidak bisa diperbaiki otomatis di {} — {}.\n",
   "Namespace is already used by another slot in this mod.": "\nNamespace sudah digunakan di slot lain di mod ini.\n",
   "Mod syntax errors were auto-fixed by earlier NRMM versions.": "Syntax error di mod ini diperbaiki otomatis dengan versi lama dari NRMM.\nJika ada masalah, coba download ulang atau tambahkan ulang modnya.",
@@ -254,5 +254,10 @@
   "Did you actually read it?": "Kamu baca nggak sih?",
   "No need to rush": "Santai dulu gak sih",
   "The tips are only useful if you read it": "Tips ini hanya berguna kalau kamu membacanya",
-  "Slow down": "Pelan-pelan"
+  "Slow down": "Pelan-pelan",
+  "Learn more": "Pelajari lebih lanjut",
+  "Don't forget to reload the mod with F10.": "Jangan lupa reload mod dengan F10.",
+  "Reload": "Reload",
+  "Enable All Keybinds": "Aktifkan Semua Keybind",
+  "Disable All Keybinds": "Nonaktifkan Semua Keybind"
 }

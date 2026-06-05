@@ -254,5 +254,10 @@
   "Did you actually read it?": "Вы вообще читали?",
   "No need to rush": "Не нужно спешить",
   "The tips are only useful if you read it": "Советы полезны только если вы их читаете",
-  "Slow down": "Помедленнее"
+  "Slow down": "Помедленнее",
+  "Learn more": "Узнать больше",
+  "Don't forget to reload the mod with F10.": "Не забудьте перезагрузить мод с помощью F10.",
+  "Reload": "Перезагрузить",
+  "Enable All Keybinds": "Включить все привязки клавиш",
+  "Disable All Keybinds": "Отключить все привязки клавиш"
 }

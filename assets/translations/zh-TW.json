@@ -254,5 +254,10 @@
   "Did you actually read it?": "你真的有在看嗎？",
   "No need to rush": "不用著急",
   "The tips are only useful if you read it": "只有閱讀這些提示，它們才有用",
-  "Slow down": "慢一點"
+  "Slow down": "慢一點",
+  "Learn more": "了解更多",
+  "Don't forget to reload the mod with F10.": "別忘了按 F10 重新載入模組。",
+  "Reload": "重新載入",
+  "Enable All Keybinds": "啟用所有按鍵切換",
+  "Disable All Keybinds": "停用所有按鍵切換"
 }
