@@ -3,7 +3,9 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
+import 'package:no_reload_mod_manager/utils/stack_collection.dart';
 
 final StateProvider<TargetGame> targetGameProvider = StateProvider<TargetGame>(
   (ref) => TargetGame.none,
@@ -73,10 +75,21 @@ final focusedOnTextField = StateProvider<bool>((ref) => false);
 
 final validModsPath = StateProvider<String?>((ref) => null);
 
-final modKeybindProvider =
-    StateProvider<(ModData, String groupName, TargetGame targetGame)?>(
-      (ref) => null,
-    );
+final currentFullPathCasualStyle = StateProvider<String?>((ref) => null);
+
+final modsPathStatusProvider = StateProvider<ModsPathStatus>(
+  (ref) => ModsPathStatus.invalidNotExist,
+);
+
+final modKeybindProvider = StateProvider<
+  (
+    ModData,
+    String groupName,
+    TargetGame targetGame,
+    bool isCasualStyle,
+    bool isIniFile,
+  )?
+>((ref) => null);
 
 final leftThumbWasTriggered = StateProvider<bool>((ref) => false);
 
@@ -132,3 +145,33 @@ final keybindSimulateKeypressProvider = StateProvider<bool>((ref) {
 final randomTipsProvider = StateProvider<String>((ref) {
   return "Press Space to search mods".tr();
 });
+
+final isShiftPressed = StateProvider<bool>((ref) => false);
+final isCtrlPressed = StateProvider<bool>((ref) => false);
+
+final explorerViewOpenedPathsWuwa = StateProvider<StackCollection<String>>(
+  (ref) => StackCollection(),
+);
+final explorerViewOpenedPathsGenshin = StateProvider<StackCollection<String>>(
+  (ref) => StackCollection(),
+);
+final explorerViewOpenedPathsHsr = StateProvider<StackCollection<String>>(
+  (ref) => StackCollection(),
+);
+final explorerViewOpenedPathsZzz = StateProvider<StackCollection<String>>(
+  (ref) => StackCollection(),
+);
+final explorerViewOpenedPathsEndfield = StateProvider<StackCollection<String>>(
+  (ref) => StackCollection(),
+);
+
+final explorerViewOpenedForwardPathsWuwa =
+    StateProvider<StackCollection<String>>((ref) => StackCollection());
+final explorerViewOpenedForwardPathsGenshin =
+    StateProvider<StackCollection<String>>((ref) => StackCollection());
+final explorerViewOpenedForwardPathsHsr =
+    StateProvider<StackCollection<String>>((ref) => StackCollection());
+final explorerViewOpenedForwardPathsZzz =
+    StateProvider<StackCollection<String>>((ref) => StackCollection());
+final explorerViewOpenedForwardPathsEndfield =
+    StateProvider<StackCollection<String>>((ref) => StackCollection());

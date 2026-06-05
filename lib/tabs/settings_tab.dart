@@ -5,11 +5,13 @@ import 'package:auto_updater/auto_updater.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/services.dart';
+import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
 import 'package:no_reload_mod_manager/utils/languages_name.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mods_dropzone.dart';
+import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:no_reload_mod_manager/utils/ui_dialogues.dart';
@@ -113,6 +115,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                       ref.read(targetGameProvider.notifier).state =
                           TargetGame.none;
                       await windowManager.hide();
+                      clearImagesCache();
                       DynamicDirectoryWatcher.stop();
                     },
                     label: 'Hide window'.tr(),
@@ -137,7 +140,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
 
                       Container(height: 15 * sss),
                       Divider(
-                        color: const Color.fromARGB(127, 33, 149, 243),
+                        color: getAccentColor(ref, alpha: 127),
                         thickness: 1 * sss,
                       ),
                       Container(height: 10 * sss),
@@ -238,7 +241,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
 
                       Container(height: 15 * sss),
                       Divider(
-                        color: const Color.fromARGB(127, 33, 149, 243),
+                        color: getAccentColor(ref, alpha: 127),
                         thickness: 1 * sss,
                       ),
                       Container(height: 10 * sss),
@@ -325,12 +328,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                       )
                                       .state = value;
                                 },
-                                activeColor: const Color.fromARGB(
-                                  255,
-                                  33,
-                                  149,
-                                  243,
-                                ),
+                                activeColor: getAccentColor(ref),
                                 trackOutlineWidth: WidgetStatePropertyAll(0),
                                 trackOutlineColor: WidgetStatePropertyAll(
                                   Colors.transparent,
@@ -352,7 +350,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                       ),
                       Container(height: 15 * sss),
                       Divider(
-                        color: const Color.fromARGB(127, 33, 149, 243),
+                        color: getAccentColor(ref, alpha: 127),
                         thickness: 1 * sss,
                       ),
                       Container(height: 10 * sss),
@@ -375,7 +373,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                         child: Slider(
                           label:
                               "${ref.read(zoomScaleProvider).toStringAsFixed(2)}x",
-                          activeColor: const Color.fromARGB(255, 33, 149, 243),
+                          activeColor: getAccentColor(ref),
                           divisions: 23,
                           value: sss,
                           onChangeEnd: (value) {
@@ -417,7 +415,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           ),
                         ),
                         child: Slider(
-                          activeColor: const Color.fromARGB(255, 33, 149, 243),
+                          activeColor: getAccentColor(ref),
                           value: ref.watch(bgTransparencyProvider).toDouble(),
                           onChangeEnd: (value) {
                             SharedPrefUtils().setBgTransparency(value.round());
@@ -433,7 +431,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
 
                       Container(height: 15 * sss),
                       Divider(
-                        color: const Color.fromARGB(127, 33, 149, 243),
+                        color: getAccentColor(ref, alpha: 127),
                         thickness: 1 * sss,
                       ),
                       Container(height: 10 * sss),
@@ -731,12 +729,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                       .read(isAutoPinWindowProvider.notifier)
                                       .state = value;
                                 },
-                                activeColor: const Color.fromARGB(
-                                  255,
-                                  33,
-                                  149,
-                                  243,
-                                ),
+                                activeColor: getAccentColor(ref),
                                 trackOutlineWidth: WidgetStatePropertyAll(0),
                                 trackOutlineColor: WidgetStatePropertyAll(
                                   Colors.transparent,
@@ -774,12 +767,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                                       )
                                       .state = value;
                                 },
-                                activeColor: const Color.fromARGB(
-                                  255,
-                                  33,
-                                  149,
-                                  243,
-                                ),
+                                activeColor: getAccentColor(ref),
                                 trackOutlineWidth: WidgetStatePropertyAll(0),
                                 trackOutlineColor: WidgetStatePropertyAll(
                                   Colors.transparent,
@@ -802,7 +790,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
 
                       Container(height: 15 * sss),
                       Divider(
-                        color: const Color.fromARGB(127, 33, 149, 243),
+                        color: getAccentColor(ref, alpha: 127),
                         thickness: 1 * sss,
                       ),
                       Container(height: 10 * sss),
@@ -889,7 +877,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
 
                       Container(height: 15 * sss),
                       Divider(
-                        color: const Color.fromARGB(127, 33, 149, 243),
+                        color: getAccentColor(ref, alpha: 127),
                         thickness: 1 * sss,
                       ),
                       Container(height: 10 * sss),
@@ -1116,7 +1104,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                       ),
                       Container(height: 15 * sss),
                       Divider(
-                        color: const Color.fromARGB(127, 33, 149, 243),
+                        color: getAccentColor(ref, alpha: 127),
                         thickness: 1 * sss,
                       ),
                       Container(height: 15 * sss),
@@ -1152,7 +1140,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
 
                       Container(height: 15 * sss),
                       Divider(
-                        color: const Color.fromARGB(127, 33, 149, 243),
+                        color: getAccentColor(ref, alpha: 127),
                         thickness: 1 * sss,
                       ),
                       Container(height: 15 * sss),
@@ -1510,6 +1498,11 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
   }
 
   void _saveModsPath(String value) {
+    final sanitizedPath = ModsPathValidator.sanitizePath(value);
+    if (sanitizedPath == null) {
+      return;
+    }
+    value = sanitizedPath;
     switch (ref.read(targetGameProvider)) {
       case TargetGame.Wuthering_Waves:
         SharedPrefUtils().setWuwaModsPath(value);
@@ -1583,35 +1576,32 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
     isModsPathValid(_modsPathTextFieldController.text);
   }
 
-  Future<bool> isModsPathValid(String path) async {
-    bool valid = false;
+  Future<void> isModsPathValid(String path) async {
+    final modsPathStatus = await ModsPathValidator.validate(path);
 
-    try {
-      if (!await Directory(path).exists()) {
-        valid = false;
-        setState(() {
-          modsPathText = "Mods Path (path doesn't exist)".tr();
-        });
-      } else if (path.toLowerCase().endsWith('mods') ||
-          path.toLowerCase().endsWith('mods\\')) {
-        valid = true;
-        setState(() {
-          modsPathText = "Mods Path".tr();
-        });
-      } else {
-        valid = false;
-        setState(() {
-          modsPathText = "Mods Path (Invalid)".tr();
-        });
-      }
-    } catch (_) {
-      valid = false;
-      setState(() {
-        modsPathText = "Mods Path (Invalid)".tr();
-      });
+    if (modsPathStatus == ModsPathStatus.valid) {
+      ref.read(validModsPath.notifier).state = ModsPathValidator.sanitizePath(
+        path,
+      );
+    } else {
+      ref.read(validModsPath.notifier).state = null;
     }
 
-    return valid;
+    ref.read(modsPathStatusProvider.notifier).state = modsPathStatus;
+
+    if (modsPathStatus == ModsPathStatus.invalidNotExist) {
+      setState(() {
+        modsPathText = "Mods Path (path doesn't exist)".tr();
+      });
+    } else if (modsPathStatus.isFullyInvalid) {
+      setState(() {
+        modsPathText = "Mods Path (invalid)".tr();
+      });
+    } else {
+      setState(() {
+        modsPathText = "Mods Path".tr();
+      });
+    }
   }
 
   Future<void> _pickFolder() async {
@@ -1749,7 +1739,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                   child: Theme(
                     data: Theme.of(context).copyWith(
                       textSelectionTheme: TextSelectionThemeData(
-                        selectionColor: const Color.fromARGB(127, 33, 149, 243),
+                        selectionColor: getAccentColor(ref, alpha: 127),
                       ),
                     ),
                     child: ScrollConfiguration(
@@ -1757,7 +1747,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                         context,
                       ).copyWith(dragDevices: {}),
                       child: TextField(
-                        cursorColor: const Color.fromARGB(255, 33, 149, 243),
+                        cursorColor: getAccentColor(ref),
                         textAlign: TextAlign.center,
                         style: GoogleFonts.poppins(
                           color: Colors.white,
@@ -1785,7 +1775,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                             borderRadius: BorderRadius.circular(100 * sss),
                             borderSide: BorderSide(
                               width: 3 * sss,
-                              color: const Color.fromARGB(255, 33, 149, 243),
+                              color: getAccentColor(ref),
                             ),
                           ),
                         ),
@@ -1816,12 +1806,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                         Theme(
                           data: Theme.of(context).copyWith(
                             textSelectionTheme: TextSelectionThemeData(
-                              selectionColor: const Color.fromARGB(
-                                127,
-                                33,
-                                149,
-                                243,
-                              ),
+                              selectionColor: getAccentColor(ref, alpha: 127),
                             ),
                           ),
                           child: ScrollConfiguration(
@@ -1835,12 +1820,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                                 fontSize: 12 * sss,
                                 fontWeight: FontWeight.w400,
                               ),
-                              cursorColor: const Color.fromARGB(
-                                255,
-                                33,
-                                149,
-                                243,
-                              ),
+                              cursorColor: getAccentColor(ref),
                               decoration: InputDecoration(
                                 fillColor: Colors.white,
                                 hintText: _getModsPathHintText(),
@@ -1880,12 +1860,7 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                                   ),
                                   borderSide: BorderSide(
                                     width: 3 * sss,
-                                    color: const Color.fromARGB(
-                                      255,
-                                      33,
-                                      149,
-                                      243,
-                                    ),
+                                    color: getAccentColor(ref),
                                     strokeAlign: BorderSide.strokeAlignOutside,
                                   ),
                                 ),

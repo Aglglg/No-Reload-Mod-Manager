@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
+import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,12 +20,19 @@ import 'package:no_reload_mod_manager/utils/stack_collection.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:path/path.dart' as p;
+import 'package:url_launcher/url_launcher.dart';
 
 bool _hasIndex(int index, int listLength) {
   return index >= 0 && index < listLength;
 }
 
+void clearImagesCache() {
+  PaintingBinding.instance.imageCache.clear();
+  PaintingBinding.instance.imageCache.clearLiveImages();
+}
+
 void triggerRefresh(WidgetRef ref) {
+  clearImagesCache();
   try {
     TargetGame currentTargetGame = ref.read(targetGameProvider);
     ref.read(targetGameProvider.notifier).state = TargetGame.none;
@@ -42,9 +50,11 @@ Future<List<ModGroupData>> refreshModData(Directory managedDir) async {
     validGroupFolders.map((group) async {
       List<ModData> modsInGroup = await getModsOnGroup(group.$1, true);
       return ModGroupData(
-        groupDir: group.$1,
-        groupIcon: getModOrGroupIcon(group.$1),
+        groupPath: group.$1,
+        iconPath: await getModOrGroupIconPath(group.$1),
+
         groupName: await getGroupName(group.$1),
+        favoriteDateTime: await isFavorite(group.$1),
         modsInGroup: modsInGroup,
         realIndex: group.$2,
         previousSelectedModOnGroup: await getSelectedModInGroup(
@@ -59,12 +69,12 @@ Future<List<ModGroupData>> refreshModData(Directory managedDir) async {
 
 //////////////////////////
 
-Future<List<(Directory, int)>> getGroupFolders(
+Future<List<(String, int)>> getGroupFolders(
   String modsPath, {
   bool shouldThrowOnError = false,
 }) async {
   final directory = Directory(modsPath);
-  final List<(Directory, int)> matchingFolders = [];
+  final List<(String, int)> matchingFolders = [];
   final regexp = RegExp(
     r'^group_([1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)$',
     caseSensitive: true,
@@ -79,7 +89,7 @@ Future<List<(Directory, int)>> getGroupFolders(
 
           if (match != null) {
             final index = int.parse(match.group(1)!);
-            matchingFolders.add((entity, index));
+            matchingFolders.add((entity.path, index));
           }
         }
       }
@@ -103,8 +113,8 @@ Future<int?> addGroup(WidgetRef ref, String managedPath) async {
 
     if (!await folder.exists()) {
       await folder.create();
-      await getGroupName(folder);
-      _addGroupToRiverpod(ref, folder, i - 1);
+      await getGroupName(folder.path);
+      await _addGroupToRiverpod(ref, folder.path, i - 1);
       if (watchedPath != null) {
         DynamicDirectoryWatcher.watch(watchedPath);
       }
@@ -117,22 +127,29 @@ Future<int?> addGroup(WidgetRef ref, String managedPath) async {
   return null;
 }
 
-void _addGroupToRiverpod(WidgetRef ref, Directory groupDir, int index) {
+Future<void> _addGroupToRiverpod(
+  WidgetRef ref,
+  String groupPath,
+  int index,
+) async {
   final currentList = ref.read(modGroupDataProvider);
   final newGroup = ModGroupData(
-    groupDir: groupDir,
-    groupIcon: getModOrGroupIcon(groupDir),
-    groupName: p.basename(groupDir.path),
+    groupPath: groupPath,
+    iconPath: await getModOrGroupIconPath(groupPath),
+    groupName: p.basename(groupPath),
+    favoriteDateTime: await isFavorite(groupPath),
     modsInGroup: [
       ModData(
-        modDir: Directory("None"),
-        modIcon: getNoneModIcon(groupDir),
+        modPath: "None",
+        iconPath: p.join(groupPath, ConstantVar.noneSlotIconFileName),
         modName: "None".tr(),
         realIndex: 0,
         isOldAutoFixed: false,
         isSyntaxErrorRemoved: false,
         isUnoptimized: false,
         isNamespaced: false,
+        isDisabled: false,
+        favoriteDateTime: null,
       ),
     ],
     realIndex: index + 1,
@@ -150,14 +167,14 @@ void _addGroupToRiverpod(WidgetRef ref, Directory groupDir, int index) {
   ref.read(modGroupDataProvider.notifier).state = updatedList;
 }
 
-Future<String> getGroupName(Directory groupDir) async {
+Future<String> getGroupName(String groupPath) async {
   try {
-    final fileGroupName = File(p.join(groupDir.path, 'groupname'));
+    final fileGroupName = File(p.join(groupPath, 'groupname'));
 
     if (await fileGroupName.exists()) {
       return await forceReadAsStringUtf8(fileGroupName);
     } else {
-      final folderName = p.basename(groupDir.path);
+      final folderName = p.basename(groupPath);
       String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
       DynamicDirectoryWatcher.stop();
       await fileGroupName.writeAsString(folderName);
@@ -167,17 +184,17 @@ Future<String> getGroupName(Directory groupDir) async {
       return folderName;
     }
   } catch (_) {
-    final folderName = p.basename(groupDir.path);
+    final folderName = p.basename(groupPath);
     return folderName;
   }
 }
 
 Future<int> getSelectedModInGroup(
-  Directory groupDir,
+  String groupPath,
   int modsInGroupLength,
 ) async {
   try {
-    final fileSelectedIndex = File(p.join(groupDir.path, 'selectedindex'));
+    final fileSelectedIndex = File(p.join(groupPath, 'selectedindex'));
 
     if (await fileSelectedIndex.exists()) {
       int? result = int.tryParse(
@@ -251,11 +268,11 @@ Future<void> setSelectedGroupIndex(int index, String managedPath) async {
   }
 }
 
-Future<void> setGroupNameOnDisk(Directory groupDir, String groupName) async {
+Future<void> setGroupNameOnDisk(String groupPath, String groupName) async {
   String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
   DynamicDirectoryWatcher.stop();
   try {
-    final fileGroupName = File(p.join(groupDir.path, 'groupname'));
+    final fileGroupName = File(p.join(groupPath, 'groupname'));
 
     await fileGroupName.writeAsString(groupName);
   } catch (_) {}
@@ -264,11 +281,11 @@ Future<void> setGroupNameOnDisk(Directory groupDir, String groupName) async {
   }
 }
 
-Future<void> setModNameOnDisk(Directory modDir, String modName) async {
+Future<void> setModNameOnDisk(String modPath, String modName) async {
   String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
   DynamicDirectoryWatcher.stop();
   try {
-    final fileGroupName = File(p.join(modDir.path, 'modname'));
+    final fileGroupName = File(p.join(modPath, 'modname'));
 
     await fileGroupName.writeAsString(modName);
   } catch (_) {}
@@ -277,19 +294,12 @@ Future<void> setModNameOnDisk(Directory modDir, String modName) async {
   }
 }
 
-Image? getModOrGroupIcon(Directory dir) {
+Future<String?> getModOrGroupIconPath(String path) async {
   for (final name in ConstantVar.modIconFilenames) {
-    final img = getIconFromPath(p.join(dir.path, name));
-    if (img != null) return img;
+    final exist = await File(p.join(path, name)).exists();
+    if (exist) return p.join(path, name);
   }
-
   return null;
-}
-
-Image? getNoneModIcon(Directory groupDir) {
-  return getIconFromPath(
-    p.join(groupDir.path, ConstantVar.noneSlotIconFileName),
-  );
 }
 
 Image? getIconFromPath(String path) {
@@ -318,16 +328,26 @@ Image? getIconFromPath(String path) {
 
 Future<void> setGroupOrModIcon(
   WidgetRef ref,
-  Directory groupDir,
-  Image? oldImage, {
+  String groupPath,
+  String? oldImagePath, {
   bool fromClipboard = false,
   bool isGroup = true,
   bool isNoneMod = false,
-  Directory? modDir,
+  String? modPath,
 }) async {
   String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
   DynamicDirectoryWatcher.stop();
-  await oldImage?.image.evict();
+
+  if (oldImagePath != null) {
+    await ResizeImage(
+      FileImage(File(oldImagePath)),
+      width:
+          modPath == null
+              ? ConstantVar.groupImageCacheWidth
+              : ConstantVar.modImageCacheWidth,
+    ).evict();
+  }
+
   if (fromClipboard == false) {
     bool windowWasPinned = ref.read(windowIsPinnedProvider);
     ref.read(windowIsPinnedProvider.notifier).state = true;
@@ -338,48 +358,28 @@ Future<void> setGroupOrModIcon(
     );
     if (pickResult != null) {
       if (isGroup) {
-        Image imgResult = Image.file(
-          File(pickResult.files[0].path!),
-          cacheWidth: 108 * 2,
-          fit: BoxFit.cover,
-          errorBuilder:
-              (context, error, stackTrace) => Icon(
-                size: 35,
-                Icons.image_outlined,
-                color: const Color.fromARGB(127, 255, 255, 255),
-              ),
-        );
-        _updateGroupIconProvider(ref, groupDir, imgResult);
         try {
           File sourceFile = File(pickResult.files[0].path!);
-          String targetDest = p.join(groupDir.path, "icon.png");
+          String targetDest = p.join(groupPath, "icon.png");
           await sourceFile.copy(targetDest);
+
+          _updateGroupIconProvider(ref, groupPath, targetDest);
 
           //Set folder icon in Explorer
           if (SharedPrefUtils().isAutoGenerateFolderIcon()) {
-            await setFolderIcon(groupDir.path, targetDest);
+            await setFolderIcon(groupPath, targetDest);
           }
         } catch (_) {}
-      } else if (modDir != null) {
-        Image imgResult = Image.file(
-          File(pickResult.files[0].path!),
-          cacheWidth: 108 * 2,
-          fit: BoxFit.cover,
-          errorBuilder:
-              (context, error, stackTrace) => Icon(
-                size: 35,
-                Icons.image_outlined,
-                color: const Color.fromARGB(127, 255, 255, 255),
-              ),
-        );
-        _updateModIconProvider(ref, groupDir, modDir, imgResult);
+      } else if (modPath != null) {
         try {
           File sourceFile = File(pickResult.files[0].path!);
           String targetDest =
               isNoneMod
-                  ? p.join(groupDir.path, ConstantVar.noneSlotIconFileName)
-                  : p.join(modDir.path, "icon.png");
+                  ? p.join(groupPath, ConstantVar.noneSlotIconFileName)
+                  : p.join(modPath, "icon.png");
           await sourceFile.copy(targetDest);
+
+          _updateModIconProvider(ref, groupPath, modPath, targetDest);
         } catch (_) {}
       }
     }
@@ -389,47 +389,25 @@ Future<void> setGroupOrModIcon(
       final imgBytes = await Pasteboard.image;
       if (imgBytes != null) {
         if (isGroup) {
-          Image img = Image.memory(
-            imgBytes,
-            cacheWidth: 108 * 2,
-            fit: BoxFit.cover,
-            errorBuilder:
-                (context, error, stackTrace) => Icon(
-                  size: 35,
-                  Icons.image_outlined,
-                  color: const Color.fromARGB(127, 255, 255, 255),
-                ),
-          );
-          _updateGroupIconProvider(ref, groupDir, img);
-          await File(
-            p.join(groupDir.path, "icon.png"),
-          ).writeAsBytes(imgBytes.toList());
+          final targetDest = p.join(groupPath, "icon.png");
+
+          await File(targetDest).writeAsBytes(imgBytes.toList());
+
+          _updateGroupIconProvider(ref, groupPath, targetDest);
 
           //Set folder icon in Explorer
           if (SharedPrefUtils().isAutoGenerateFolderIcon()) {
-            await setFolderIcon(
-              groupDir.path,
-              p.join(groupDir.path, "icon.png"),
-            );
+            await setFolderIcon(groupPath, targetDest);
           }
-        } else if (modDir != null) {
-          Image img = Image.memory(
-            imgBytes,
-            cacheWidth: 108 * 2,
-            fit: BoxFit.cover,
-            errorBuilder:
-                (context, error, stackTrace) => Icon(
-                  size: 35,
-                  Icons.image_outlined,
-                  color: const Color.fromARGB(127, 255, 255, 255),
-                ),
-          );
-          _updateModIconProvider(ref, groupDir, modDir, img);
-          await File(
-            isNoneMod
-                ? p.join(groupDir.path, ConstantVar.noneSlotIconFileName)
-                : p.join(modDir.path, "icon.png"),
-          ).writeAsBytes(imgBytes.toList());
+        } else if (modPath != null) {
+          final targetDest =
+              isNoneMod
+                  ? p.join(groupPath, ConstantVar.noneSlotIconFileName)
+                  : p.join(modPath, "icon.png");
+
+          await File(targetDest).writeAsBytes(imgBytes.toList());
+
+          _updateModIconProvider(ref, groupPath, modPath, targetDest);
         }
       }
     } catch (_) {}
@@ -442,60 +420,46 @@ Future<void> setGroupOrModIcon(
 
 Future<void> unsetGroupOrModIcon(
   WidgetRef ref,
-  Directory groupDir,
-  Image? oldImage, {
+  String groupPath,
+  String? oldImagePath, {
   bool isNoneMod = false,
-  Directory? modDir,
+  String? modPath,
 }) async {
   String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
   DynamicDirectoryWatcher.stop();
-  await oldImage?.image.evict();
-  if (modDir == null) {
-    Image imgResult = Image.file(
-      File(''),
-      cacheWidth: 108 * 2,
-      fit: BoxFit.cover,
-      errorBuilder:
-          (context, error, stackTrace) => Icon(
-            size: 35,
-            Icons.image_outlined,
-            color: const Color.fromARGB(127, 255, 255, 255),
-          ),
-    );
-    _updateGroupIconProvider(ref, groupDir, imgResult);
+
+  if (oldImagePath != null) {
+    await ResizeImage(
+      FileImage(File(oldImagePath)),
+      width:
+          modPath == null
+              ? ConstantVar.groupImageCacheWidth
+              : ConstantVar.modImageCacheWidth,
+    ).evict();
+  }
+
+  if (modPath == null) {
+    _updateGroupIconProvider(ref, groupPath, null);
     try {
-      File sourceFile = File(p.join(groupDir.path, "icon.png"));
+      File sourceFile = File(p.join(groupPath, "icon.png"));
       await sourceFile.delete();
 
       //Unset folder icon in Explorer
       if (SharedPrefUtils().isAutoGenerateFolderIcon()) {
-        await unsetFolderIcon(groupDir.path);
+        await unsetFolderIcon(groupPath);
       }
     } catch (_) {}
   } else {
-    Image imgResult = Image.file(
-      File(''),
-      cacheWidth: 108 * 2,
-      fit: BoxFit.cover,
-      errorBuilder:
-          (context, error, stackTrace) => Icon(
-            size: 35,
-            Icons.image_outlined,
-            color: const Color.fromARGB(127, 255, 255, 255),
-          ),
-    );
-    _updateModIconProvider(ref, groupDir, modDir, imgResult);
+    _updateModIconProvider(ref, groupPath, modPath, null);
     try {
       if (isNoneMod) {
-        final file = File(
-          p.join(groupDir.path, ConstantVar.noneSlotIconFileName),
-        );
+        final file = File(p.join(groupPath, ConstantVar.noneSlotIconFileName));
         if (await file.exists()) {
           await file.delete();
         }
       } else {
         for (final name in ConstantVar.modIconFilenames) {
-          final file = File(p.join(modDir.path, name));
+          final file = File(p.join(modPath, name));
           if (await file.exists()) {
             await file.delete();
             break;
@@ -512,18 +476,19 @@ Future<void> unsetGroupOrModIcon(
 
 void _updateGroupIconProvider(
   WidgetRef ref,
-  Directory groupDir,
-  Image newIcon,
+  String groupPath,
+  String? newIconPath,
 ) {
   final currentGroups = ref.read(modGroupDataProvider);
 
   final updatedGroups =
       currentGroups.map((group) {
-        if (group.groupDir.path == groupDir.path) {
+        if (group.groupPath == groupPath) {
           return ModGroupData(
-            groupDir: group.groupDir,
-            groupIcon: newIcon,
+            groupPath: group.groupPath,
+            iconPath: newIconPath,
             groupName: group.groupName,
+            favoriteDateTime: group.favoriteDateTime,
             modsInGroup: group.modsInGroup,
             realIndex: group.realIndex,
             previousSelectedModOnGroup: group.previousSelectedModOnGroup,
@@ -537,36 +502,39 @@ void _updateGroupIconProvider(
 
 void _updateModIconProvider(
   WidgetRef ref,
-  Directory groupDir,
-  Directory modDir,
-  Image newIcon,
+  String groupPath,
+  String modPath,
+  String? newIconPath,
 ) {
   final currentGroups = ref.read(modGroupDataProvider);
 
   final updatedGroups =
       currentGroups.map((group) {
-        if (group.groupDir.path == groupDir.path) {
+        if (group.groupPath == groupPath) {
           final updatedMods =
               group.modsInGroup.map((mod) {
-                if (mod.modDir.path == modDir.path) {
+                if (mod.modPath == modPath) {
                   return ModData(
-                    modDir: mod.modDir,
-                    modIcon: newIcon,
+                    modPath: mod.modPath,
+                    iconPath: newIconPath,
                     modName: mod.modName,
                     realIndex: mod.realIndex,
                     isOldAutoFixed: mod.isOldAutoFixed,
                     isSyntaxErrorRemoved: mod.isSyntaxErrorRemoved,
                     isUnoptimized: mod.isUnoptimized,
                     isNamespaced: mod.isNamespaced,
+                    isDisabled: mod.isDisabled,
+                    favoriteDateTime: mod.favoriteDateTime,
                   );
                 }
                 return mod;
               }).toList();
 
           return ModGroupData(
-            groupDir: group.groupDir,
-            groupIcon: group.groupIcon,
+            groupPath: group.groupPath,
+            iconPath: group.iconPath,
             groupName: group.groupName,
+            favoriteDateTime: group.favoriteDateTime,
             modsInGroup: updatedMods,
             realIndex: group.realIndex,
             previousSelectedModOnGroup: group.previousSelectedModOnGroup,
@@ -580,55 +548,86 @@ void _updateModIconProvider(
 
 //////////////////////////////
 
-Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
+Future<List<ModData>> getModsOnGroup(
+  String groupPath,
+  bool limited, {
+  int? limit,
+}) async {
   try {
-    final List<Directory> modDirs = [];
+    final List<String> modPaths = [];
 
-    final contents = await groupDir.list().toList();
+    final contents = await Directory(groupPath).list().toList();
 
     for (var entity in contents) {
       if (entity is Directory) {
-        modDirs.add(entity);
+        modPaths.add(entity.path);
       }
     }
 
     // Limit to only 500 mod directories
-    List<Directory> limitedModDirs;
+    List<String> limitedModPaths;
 
     if (limited) {
-      limitedModDirs = modDirs.take(500).toList();
+      limitedModPaths = modPaths.take(limit ?? 500).toList();
     } else {
-      limitedModDirs = modDirs;
+      limitedModPaths = modPaths;
     }
 
     final List<ModData> modDatas = await Future.wait(
-      limitedModDirs.asMap().entries.map((entry) async {
+      limitedModPaths.asMap().entries.map((entry) async {
         final int index = entry.key;
-        final modDir = entry.value;
+        final modPath = entry.value;
         return ModData(
-          modDir: modDir,
-          modIcon: getModOrGroupIcon(modDir),
-          modName: await getModName(modDir),
+          modPath: modPath,
+          iconPath: await getModOrGroupIconPath(modPath),
+          modName: await getModName(modPath),
           realIndex: index + 1, //0 will be none
-          isOldAutoFixed: await checkModWasMarkedAsOldAutoFixed(modDir),
-          isSyntaxErrorRemoved: await checkModSyntaxErrorRemoved(modDir),
-          isUnoptimized: await checkModWasMarkedAsUnoptimized(modDir),
-          isNamespaced: await checkModWasMarkedAsNamespaced(modDir),
+          isOldAutoFixed: await checkModWasMarkedAsOldAutoFixed(modPath),
+          isSyntaxErrorRemoved: await checkModSyntaxErrorRemoved(modPath),
+          isUnoptimized: await checkModWasMarkedAsUnoptimized(modPath),
+          isNamespaced: await checkModWasMarkedAsNamespaced(modPath),
+          isDisabled: isModDisabled(modPath),
+          favoriteDateTime: await isFavorite(modPath),
         );
       }).toList(),
     );
 
+    modDatas.sort((a, b) {
+      // Disabled always last
+      if (a.isDisabled != b.isDisabled) {
+        return a.isDisabled ? 1 : -1;
+      }
+
+      final aFavorite = a.favoriteDateTime != null;
+      final bFavorite = b.favoriteDateTime != null;
+
+      // Favorites first
+      if (aFavorite != bFavorite) {
+        return aFavorite ? -1 : 1;
+      }
+
+      // Among favorites, newest favorite first
+      if (aFavorite) {
+        final cmp = b.favoriteDateTime!.compareTo(a.favoriteDateTime!);
+        if (cmp != 0) return cmp;
+      }
+
+      return compareNatural(a.modName.toLowerCase(), b.modName.toLowerCase());
+    });
+
     modDatas.insert(
       0,
       ModData(
-        modDir: Directory("None"),
-        modIcon: getNoneModIcon(groupDir),
+        modPath: "None",
+        iconPath: p.join(groupPath, ConstantVar.noneSlotIconFileName),
         modName: "None".tr(),
         realIndex: 0,
         isOldAutoFixed: false,
         isSyntaxErrorRemoved: false,
         isUnoptimized: false,
         isNamespaced: false,
+        isDisabled: false,
+        favoriteDateTime: null,
       ),
     );
 
@@ -638,9 +637,9 @@ Future<List<ModData>> getModsOnGroup(Directory groupDir, bool limited) async {
   }
 }
 
-Future<bool> checkModWasMarkedAsOldAutoFixed(Directory modDir) async {
+Future<bool> checkModWasMarkedAsOldAutoFixed(String modPath) async {
   try {
-    final fileForcedName = File(p.join(modDir.path, 'modforced'));
+    final fileForcedName = File(p.join(modPath, 'modforced'));
     if (await fileForcedName.exists()) {
       return true;
     } else {
@@ -651,9 +650,9 @@ Future<bool> checkModWasMarkedAsOldAutoFixed(Directory modDir) async {
   }
 }
 
-Future<bool> checkModSyntaxErrorRemoved(Directory modDir) async {
+Future<bool> checkModSyntaxErrorRemoved(String modPath) async {
   try {
-    final fileForcedName = File(p.join(modDir.path, 'modsyntaxerrorremoved'));
+    final fileForcedName = File(p.join(modPath, 'modsyntaxerrorremoved'));
     if (await fileForcedName.exists()) {
       return true;
     } else {
@@ -664,9 +663,9 @@ Future<bool> checkModSyntaxErrorRemoved(Directory modDir) async {
   }
 }
 
-Future<bool> checkModWasMarkedAsUnoptimized(Directory modDir) async {
+Future<bool> checkModWasMarkedAsUnoptimized(String modPath) async {
   try {
-    final fileForcedName = File(p.join(modDir.path, 'modunoptimized'));
+    final fileForcedName = File(p.join(modPath, 'modunoptimized'));
     if (await fileForcedName.exists()) {
       return true;
     } else {
@@ -677,9 +676,9 @@ Future<bool> checkModWasMarkedAsUnoptimized(Directory modDir) async {
   }
 }
 
-Future<bool> checkModWasMarkedAsNamespaced(Directory modDir) async {
+Future<bool> checkModWasMarkedAsNamespaced(String modPath) async {
   try {
-    final fileForcedName = File(p.join(modDir.path, 'modnamespaced'));
+    final fileForcedName = File(p.join(modPath, 'modnamespaced'));
     if (await fileForcedName.exists()) {
       return true;
     } else {
@@ -690,20 +689,40 @@ Future<bool> checkModWasMarkedAsNamespaced(Directory modDir) async {
   }
 }
 
-Future<String> getModName(Directory modDir) async {
+bool isModDisabled(String modPath) {
+  if (p.basename(modPath).toLowerCase().startsWith('disabled')) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+Future<DateTime?> isFavorite(String folderPath) async {
   try {
-    final fileGroupName = File(p.join(modDir.path, 'modname'));
+    if (await File(p.join(folderPath, 'fav')).exists()) {
+      return await File(p.join(folderPath, 'fav')).lastModified();
+    } else {
+      return null;
+    }
+  } catch (_) {
+    return null;
+  }
+}
+
+Future<String> getModName(String modPath) async {
+  try {
+    final fileGroupName = File(p.join(modPath, 'modname'));
 
     if (await fileGroupName.exists()) {
       return await forceReadAsStringUtf8(fileGroupName);
     } else {
-      final folderName = p.basename(modDir.path);
+      final folderName = p.basename(modPath);
       await fileGroupName.writeAsString(folderName);
 
       return folderName;
     }
   } catch (_) {
-    final folderName = p.basename(modDir.path);
+    final folderName = p.basename(modPath);
     return folderName;
   }
 }
@@ -711,7 +730,7 @@ Future<String> getModName(Directory modDir) async {
 Future<void> setSelectedModIndex(
   WidgetRef ref,
   int index,
-  Directory groupDir,
+  String groupPath,
 ) async {
   String? watchedPath = DynamicDirectoryWatcher.watcher?.path;
   DynamicDirectoryWatcher.stop();
@@ -719,11 +738,12 @@ Future<void> setSelectedModIndex(
 
   final updatedGroups =
       currentGroups.map((group) {
-        if (group.groupDir.path == groupDir.path) {
+        if (group.groupPath == groupPath) {
           return ModGroupData(
-            groupDir: group.groupDir,
-            groupIcon: group.groupIcon,
+            groupPath: group.groupPath,
+            iconPath: group.iconPath,
             groupName: group.groupName,
+            favoriteDateTime: group.favoriteDateTime,
             modsInGroup: group.modsInGroup,
             realIndex: group.realIndex,
             previousSelectedModOnGroup: index,
@@ -735,7 +755,7 @@ Future<void> setSelectedModIndex(
   ref.read(modGroupDataProvider.notifier).state = updatedGroups;
 
   try {
-    final fileSelectedIndex = File(p.join(groupDir.path, 'selectedindex'));
+    final fileSelectedIndex = File(p.join(groupPath, 'selectedindex'));
     await fileSelectedIndex.writeAsString(index.toString());
   } catch (_) {}
   if (watchedPath != null) {
@@ -888,7 +908,8 @@ Future<List<TextSpan>> restoreManagedMod(List<Directory> modDirs) async {
           //remove manager comment mark
           if (trimmedLineLower.startsWith(';') &&
                   (trimmedLineLower.contains('no reload mod manager') ||
-                      trimmedLineLower.contains('";-;" are errored')) ||
+                      trimmedLineLower.contains('";-;" are errored') ||
+                      trimmedLineLower.contains('";+;" are disabled keys')) ||
               trimmedLineLower.contains("errored conditional blocks")) {
             rawLines[i] = "-----";
             modified = true;
@@ -1034,13 +1055,13 @@ Future<List<TextSpan>> updateModData(
     //filepath <> libName
     final Map<String, String> filePathsWithKnownLibNamespace = {};
 
-    final Map<(Directory, int), List<ModData>> groupAndModsPair = {};
+    final Map<(String, int), List<ModData>> groupAndModsPair = {};
 
-    for (final (groupDir, groupIndex) in groupFullPathsAndIndexes) {
-      final normalizedDir = Directory(p.normalize(groupDir.path));
-      final key = (normalizedDir, groupIndex);
+    for (final (groupPath, groupIndex) in groupFullPathsAndIndexes) {
+      final normalizedPath = p.normalize(groupPath);
+      final key = (normalizedPath, groupIndex);
 
-      final mods = await getModsOnGroup(normalizedDir, false);
+      final mods = await getModsOnGroup(normalizedPath, false);
 
       groupAndModsPair[key] = mods;
     }
@@ -1054,9 +1075,7 @@ Future<List<TextSpan>> updateModData(
     );
 
     //Get errored lines from xxmi ini handler
-    errorReport = await Isolate.run(() {
-      return getErroredLines(d3dxIni, basePath, knownModdingLibraries);
-    });
+    errorReport = getErroredLines(d3dxIni, basePath, knownModdingLibraries);
 
     //Show duplicate known libs, libDisplayName <> files of the lib
     for (var entry in errorReport.duplicateLibs.entries) {
@@ -1199,16 +1218,16 @@ Future<List<TextSpan>> updateModData(
     await Future.wait([
       for (final entry in groupAndModsPair.entries)
         () async {
-          final (groupDir, groupIndex) = entry.key;
+          final (groupPath, groupIndex) = entry.key;
           final modDatas = entry.value;
 
           await _deleteGroupIniFiles(
-            groupDir.path,
+            groupPath,
             operationLogs,
             errorShouldTryAgain,
           );
           await _createGroupIni(
-            groupDir.path,
+            groupPath,
             groupIndex,
             operationLogs,
             errorShouldTryAgain,
@@ -1224,13 +1243,13 @@ Future<List<TextSpan>> updateModData(
             for (var j = 0; j < modDatas.length; j++)
               if (j != 0 &&
                   !p
-                      .basename(modDatas[j].modDir.path)
+                      .basename(modDatas[j].modPath)
                       .toLowerCase()
                       .startsWith('disabled'))
                 _manageMod(
-                  modDatas[j].modDir.path,
+                  modDatas[j].modPath,
                   'group_$groupIndex',
-                  j,
+                  modDatas[j].realIndex,
                   groupIndex,
                   operationLogs,
                   errorReport,
@@ -1270,15 +1289,15 @@ Future<List<TextSpan>> updateModData(
                   fontWeight: FontWeight.w400,
                 ),
               ),
-              if (elapsed.inSeconds > 3)
+              if (elapsed.inSeconds >= 3)
                 TextSpan(
                   text:
                       'To get faster mod reload, consider disabling mods you rarely use.'
                           .tr(),
                   style: GoogleFonts.poppins(
-                    color: Colors.grey,
+                    color: Colors.white,
                     fontSize: 13,
-                    fontWeight: FontWeight.w400,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               if (usingCustomXxmiDll.value)
@@ -1298,6 +1317,28 @@ Future<List<TextSpan>> updateModData(
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
                   ),
+                ),
+              if (!usingCustomXxmiDll.value)
+                TextSpan(
+                  text: '\n${'Learn more'.tr()}',
+                  style: GoogleFonts.poppins(
+                    color: Colors.green,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    decoration: TextDecoration.underline,
+                    decorationThickness: 2,
+                  ),
+                  recognizer:
+                      TapGestureRecognizer()
+                        ..onTap = () async {
+                          try {
+                            if (!await launchUrl(
+                              Uri.parse(
+                                "https://github.com/Aglglg/xxmi-libs-package/releases",
+                              ),
+                            )) {}
+                          } catch (_) {}
+                        },
                 ),
             ],
           )
@@ -1468,7 +1509,7 @@ Future<(String, bool)> _prepareManagedFolder(
 
   //if background keypress not exist, ask user to reload manually
   if (!await File(
-        p.join(managedPath, ConstantVar.backgroundKeypressFileName),
+        p.join(managedPath, ConstantVar.nrmmKeypressFileName),
       ).exists() ||
       !await File(
         p.join(managedPath, ConstantVar.nrmmIncluderFileName),
@@ -1701,7 +1742,7 @@ class NamespaceRewriteException implements Exception {
 }
 
 Future<void> _autoModifyDuplicateNamespaceInManagedMod(
-  Map<(Directory, int), List<ModData>> groupAndModsPair,
+  Map<(String, int), List<ModData>> groupAndModsPair,
   String managedPath,
   Map<String, String> filePathsWithKnownLibNamespace,
   Map<String, String> knownModdingLibraries,
@@ -1714,9 +1755,7 @@ Future<void> _autoModifyDuplicateNamespaceInManagedMod(
     final key = entry.key;
 
     for (final mod in mods) {
-      final iniFiles = await findIniFilesRecursiveExcludeDisabled(
-        mod.modDir.path,
-      );
+      final iniFiles = await findIniFilesRecursiveExcludeDisabled(mod.modPath);
 
       // Scan namespaces in this mod
       final namespacesInMod = <String>{};
@@ -1762,7 +1801,7 @@ Future<void> _autoModifyDuplicateNamespaceInManagedMod(
         final ok = await replaceNamespace(entry.key, entry.value, iniFiles);
 
         if (!ok) {
-          await _markAsNamespaced(mod.modDir.path, true);
+          await _markAsNamespaced(mod.modPath, true);
           final (groupName, _, _) = await _resolveGroupAndModName(
             iniFiles[0],
             managedPath,
@@ -1777,7 +1816,7 @@ Future<void> _autoModifyDuplicateNamespaceInManagedMod(
       // Commit mod namespaces into group state
       namespacesInGroup.addAll(futureNamespaces);
 
-      await _markAsNamespaced(mod.modDir.path, futureNamespaces.isNotEmpty);
+      await _markAsNamespaced(mod.modPath, futureNamespaces.isNotEmpty);
     }
 
     // Commit group namespaces into global state
@@ -1830,33 +1869,31 @@ Future<void> _tryRenameOldManagedFolder(String modsPath) async {
 }
 
 Future<bool> _isDllForNrmm(String dllPath) async {
-  return Isolate.run(() {
-    final file = File(dllPath);
-    // Sanity check — a real d3d11.dll is between 1MB and 150MB
-    final size = file.lengthSync();
-    if (size < 1024 * 1024 || size > 150 * 1024 * 1024) return false;
+  final file = File(dllPath);
+  // Sanity check — a real d3d11.dll is between 1MB and 150MB
+  final size = file.lengthSync();
+  if (size < 1024 * 1024 || size > 150 * 1024 * 1024) return false;
 
-    final bytes = file.readAsBytesSync();
-    final needle = ascii.encode('"Manager" key supported in [Loader] section');
-    final nLen = needle.length;
+  final bytes = file.readAsBytesSync();
+  final needle = ascii.encode('"Manager" key supported in [Loader] section');
+  final nLen = needle.length;
 
-    final skip = List<int>.filled(256, nLen);
-    for (int i = 0; i < nLen - 1; i++) {
-      skip[needle[i]] = nLen - 1 - i;
+  final skip = List<int>.filled(256, nLen);
+  for (int i = 0; i < nLen - 1; i++) {
+    skip[needle[i]] = nLen - 1 - i;
+  }
+
+  int i = nLen - 1;
+  while (i < bytes.length) {
+    int j = nLen - 1, k = i;
+    while (j >= 0 && bytes[k] == needle[j]) {
+      k--;
+      j--;
     }
-
-    int i = nLen - 1;
-    while (i < bytes.length) {
-      int j = nLen - 1, k = i;
-      while (j >= 0 && bytes[k] == needle[j]) {
-        k--;
-        j--;
-      }
-      if (j == -1) return true;
-      i += skip[bytes[i]];
-    }
-    return false;
-  });
+    if (j == -1) return true;
+    i += skip[bytes[i]];
+  }
+  return false;
 }
 
 Future<void> _createBackgroundKeypressIni(
@@ -1885,7 +1922,7 @@ Future<void> _createBackgroundKeypressIni(
   // Create the required files
   final keypressfilePath = p.join(
     managedPath,
-    ConstantVar.backgroundKeypressFileName,
+    ConstantVar.nrmmKeypressFileName,
   );
   final keypressFile = File(keypressfilePath);
 
@@ -1901,14 +1938,14 @@ Future<void> _createBackgroundKeypressIni(
       template.replaceAll("{game}", targetGame.name),
     );
     await includerFile.writeAsString(
-      "[IncludeKeypress]\ninclude = ${ConstantVar.backgroundKeypressFileName}",
+      "[IncludeKeypress]\ninclude = ${ConstantVar.nrmmKeypressFileName}",
     );
   } catch (_) {
     errorShouldTryAgain.value = true;
     operationLogs.add(
       TextSpan(
         text:
-            "${'Error cannot create'.tr(args: [ConstantVar.backgroundKeypressFileName])}.\n${ConstantVar.defaultErrorInfo}\n\n",
+            "${'Error cannot create'.tr(args: [ConstantVar.nrmmKeypressFileName])}.\n${ConstantVar.defaultErrorInfo}\n\n",
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );
@@ -2406,7 +2443,8 @@ Future<List<IniSection>> _parseIniSections(
       } else if (currentSection.name == '__preamble__' &&
               line.startsWith(';') &&
               (line.contains('No Reload Mod Manager') ||
-                  line.contains('";-;" are errored')) ||
+                  line.contains('";-;" are errored') ||
+                  line.contains('";+;" are disabled keys')) ||
           line.contains("Errored conditional blocks")) {
         //
         //also do not NRMM mark, we'll add it back later
@@ -2495,7 +2533,7 @@ Future<List<IniSection>> _parseIniSections(
     // Give nrmm mark
     sections[0].lines.insert(
       0,
-      "; \";-;\" are errored conditional lines.\n; Errored conditional blocks (if/else/elif/endif) are handled correctly, including namespaced variables.",
+      "; \";-;\" are errored conditional lines.\n; \";+;\" are disabled keys.\n; Errored conditional blocks (if/else/elif/endif) are handled correctly, including namespaced variables.",
     );
   }
   return sections;
@@ -3106,10 +3144,10 @@ Future<List<String>> _findIniFilesRecursive(String mainFolder) async {
 }
 
 Future<List<String>> findIniFilesRecursiveExcludeDisabled(
-  String mainFolder,
+  String mainFolderPath,
 ) async {
   final directory = Directory(
-    r"\\?\" + mainFolder.replaceFirst(r"\\?\", ''),
+    r"\\?\" + mainFolderPath.replaceFirst(r"\\?\", ''),
   ); // workaround \\?\ for long paths, only for Windows
   if (!await directory.exists()) return [];
 
@@ -3129,7 +3167,8 @@ Future<List<String>> findIniFilesRecursiveExcludeDisabled(
       .where((path) => path.toLowerCase().endsWith('.ini'))
       .where((path) => p.basename(path).toLowerCase() != 'desktop.ini')
       .where(
-        (path) => !containsDisabledSegment(p.relative(path, from: mainFolder)),
+        (path) =>
+            !containsDisabledSegment(p.relative(path, from: mainFolderPath)),
       )
       .toList();
 }
@@ -3161,31 +3200,31 @@ Future<void> openFileExplorerToSpecifiedPath(String path) async {
   }
 }
 
-Future<bool> completeDisableMod(Directory modDir) async {
-  if (p.basename(modDir.path).toLowerCase().startsWith('disabled')) {
+Future<bool> completeDisableMod(String modPath) async {
+  if (p.basename(modPath).toLowerCase().startsWith('disabled')) {
     return false;
   }
   try {
     String renamedPath = p.join(
-      p.dirname(modDir.path),
-      'DISABLED${p.basename(modDir.path)}',
+      p.dirname(modPath),
+      'DISABLED${p.basename(modPath)}',
     );
-    await modDir.rename(renamedPath);
+    await Directory(modPath).rename(renamedPath);
     return true;
   } catch (_) {
     return false;
   }
 }
 
-Future<bool> enableMod(Directory modDir) async {
+Future<bool> enableMod(String modPath) async {
   try {
     String renamedPath = p.join(
-      p.dirname(modDir.path),
+      p.dirname(modPath),
       p
-          .basename(modDir.path)
+          .basename(modPath)
           .replaceFirst(RegExp(r'^DISABLED', caseSensitive: false), ''),
     );
-    await modDir.rename(renamedPath);
+    await Directory(modPath).rename(renamedPath);
     return true;
   } catch (_) {
     return false;
@@ -3195,4 +3234,74 @@ Future<bool> enableMod(Directory modDir) async {
 class Ref<T> {
   T value;
   Ref(this.value);
+}
+
+Future<void> unwrapSingleFolderNesting(String path) async {
+  final dir = Directory(path);
+
+  try {
+    while (true) {
+      final entries = await dir.list().toList();
+
+      // Exclude specific filenames
+      final relevant =
+          entries.where((e) {
+            final basename = p.basename(e.path).toLowerCase();
+            const excluded = {
+              'modname',
+              'modforced',
+              'modsyntaxerrorremoved',
+              'modunoptimized',
+              'modnamespaced',
+              'modlink',
+              'fav',
+              '.nahidamd',
+            };
+            return !excluded.contains(basename) &&
+                !ConstantVar.modIconFilenames.contains(basename) &&
+                !basename.startsWith('jasm_') &&
+                !basename.startsWith('.jasm') &&
+                !basename.startsWith('.imm') &&
+                !basename.endsWith('.txt') &&
+                !basename.endsWith('.json');
+          }).toList();
+
+      // Stop if more than 1 relevant entry, or it's empty
+      if (relevant.length != 1) break;
+
+      // Stop if the single relevant entry is a file (any type except Directory)
+      final single = relevant.first;
+      final isDir = await FileSystemEntity.isDirectory(single.path);
+      if (!isDir) break;
+
+      final singleSubDir = Directory(single.path);
+
+      // Move contents of singleSubDir up to dir
+      final children = await singleSubDir.list().toList();
+
+      for (final entity in children) {
+        final target = p.join(dir.path, p.basename(entity.path));
+        if (entity is File) {
+          await entity.rename(target); //auto overwritten
+        } else if (entity is Directory) {
+          // cannot overwrite folder, rename to non existing folder name
+          await entity.rename(await getSafeTarget(target));
+        }
+      }
+
+      // Remove the now-empty wrapper folder
+      await singleSubDir.delete();
+    }
+  } catch (_) {}
+}
+
+Future<String> getSafeTarget(String target) async {
+  if (!await Directory(target).exists()) return target;
+
+  int i = 1;
+  while (true) {
+    final candidate = "${target}_$i";
+    if (!await Directory(candidate).exists()) return candidate;
+    i++;
+  }
 }

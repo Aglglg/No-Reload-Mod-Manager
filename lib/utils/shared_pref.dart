@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -183,7 +184,10 @@ class SharedPrefUtils {
       }
     }
 
-    return result;
+    String? sanitizedPath = ModsPathValidator.sanitizePath(result);
+    sanitizedPath ??= '';
+    if (result != sanitizedPath) setWuwaModsPath(sanitizedPath);
+    return sanitizedPath;
   }
 
   String getGenshinModsPath() {
@@ -200,7 +204,10 @@ class SharedPrefUtils {
       }
     }
 
-    return result;
+    String? sanitizedPath = ModsPathValidator.sanitizePath(result);
+    sanitizedPath ??= '';
+    if (result != sanitizedPath) setGenshinModsPath(sanitizedPath);
+    return sanitizedPath;
   }
 
   String getHsrModsPath() {
@@ -217,7 +224,10 @@ class SharedPrefUtils {
       }
     }
 
-    return result;
+    String? sanitizedPath = ModsPathValidator.sanitizePath(result);
+    sanitizedPath ??= '';
+    if (result != sanitizedPath) setHsrModsPath(sanitizedPath);
+    return sanitizedPath;
   }
 
   String getZzzModsPath() {
@@ -234,7 +244,10 @@ class SharedPrefUtils {
       }
     }
 
-    return result;
+    String? sanitizedPath = ModsPathValidator.sanitizePath(result);
+    sanitizedPath ??= '';
+    if (result != sanitizedPath) setZzzModsPath(sanitizedPath);
+    return sanitizedPath;
   }
 
   String getEndfieldModsPath() {
@@ -251,7 +264,48 @@ class SharedPrefUtils {
       }
     }
 
-    return result;
+    String? sanitizedPath = ModsPathValidator.sanitizePath(result);
+    sanitizedPath ??= '';
+    if (result != sanitizedPath) setEndfieldModsPath(sanitizedPath);
+    return sanitizedPath;
+  }
+
+  Future<void> setCurrentPath(String path, TargetGame targetGame) async {
+    switch (targetGame) {
+      case TargetGame.Arknights_Endfield:
+        await _prefs?.setString(keyCurrentPathEndfield, path);
+        break;
+      case TargetGame.Genshin_Impact:
+        await _prefs?.setString(keyCurrentPathGenshin, path);
+        break;
+      case TargetGame.Honkai_Star_Rail:
+        await _prefs?.setString(keyCurrentPathHsr, path);
+        break;
+      case TargetGame.Wuthering_Waves:
+        await _prefs?.setString(keyCurrentPathWuwa, path);
+        break;
+      case TargetGame.Zenless_Zone_Zero:
+        await _prefs?.setString(keyCurrentPathZzz, path);
+        break;
+      default:
+    }
+  }
+
+  String? getCurrentPath(TargetGame targetGame) {
+    switch (targetGame) {
+      case TargetGame.Arknights_Endfield:
+        return _prefs?.getString(keyCurrentPathEndfield);
+      case TargetGame.Genshin_Impact:
+        return _prefs?.getString(keyCurrentPathGenshin);
+      case TargetGame.Honkai_Star_Rail:
+        return _prefs?.getString(keyCurrentPathHsr);
+      case TargetGame.Wuthering_Waves:
+        return _prefs?.getString(keyCurrentPathWuwa);
+      case TargetGame.Zenless_Zone_Zero:
+        return _prefs?.getString(keyCurrentPathZzz);
+      default:
+        return null;
+    }
   }
 
   double getOverallScale() {
@@ -424,7 +478,7 @@ class SharedPrefUtils {
 
   bool isAutoPinWindow() {
     bool? result = _prefs?.getBool(keyAutoPinWindow);
-    return result ??= false;
+    return result ??= true;
   }
 
   Future<void> setShowMenuOutsideGame(bool value) async {
@@ -456,6 +510,12 @@ class SharedPrefUtils {
   static const String keyModsPathHsr = 'modsPathHsr';
   static const String keyModsPathZzz = 'modsPathZzz';
   static const String keyModsPathEndfield = 'modsPathEndfield';
+
+  static const String keyCurrentPathWuwa = 'currentPathWuwa';
+  static const String keyCurrentPathGenshin = 'currentPathGenshin';
+  static const String keyCurrentPathHsr = 'currentPathHsr';
+  static const String keyCurrentPathZzz = 'currentPathZzz';
+  static const String keyCurrentPathEndfield = 'currentPathEndfield';
 
   static const String defaultTargetProcessWuwa = 'Client-Win64-Shipping.exe';
   static const String defaultTargetProcessGenshin = 'GenshinImpact.exe';
@@ -489,7 +549,7 @@ class SharedPrefUtils {
 
   static const String keyAutoGenerateFolderIcon = "autoFolderIco";
 
-  static const String keyAutoPinWindow = "autoPinWindow";
+  static const String keyAutoPinWindow = "autoPinWindoww";
   static const String keyShowMenuOutsideGame = "showMenuOutsideGame";
 
   static const String keyKeybindSimulateKeypress = "keybindSimulateKeypress";

@@ -15,6 +15,7 @@ import 'package:no_reload_mod_manager/utils/custom_group_folder_icon.dart';
 import 'package:no_reload_mod_manager/utils/force_read_as_utf8.dart';
 import 'package:no_reload_mod_manager/utils/keypress_simulator_manager.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
+import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:path/path.dart' as p;
@@ -95,9 +96,7 @@ class _GenerateGroupIcoFileDialogState
         contents = [
           ...contents,
           TextSpan(
-            text: "Generating folder icon".tr(
-              args: [p.basename(group.$1.path)],
-            ),
+            text: "Generating folder icon".tr(args: [p.basename(group.$1)]),
             style: GoogleFonts.poppins(
               color: Colors.white,
               fontSize: 14,
@@ -107,14 +106,14 @@ class _GenerateGroupIcoFileDialogState
         ];
       });
 
-      await setFolderIcon(group.$1.path, p.join(group.$1.path, 'icon.png'));
+      await setFolderIcon(group.$1, p.join(group.$1, 'icon.png'));
 
       setState(() {
         final newContents = List<TextSpan>.from(contents);
         newContents.removeLast();
         newContents.add(
           TextSpan(
-            text: "Generated folder icon".tr(args: [p.basename(group.$1.path)]),
+            text: "Generated folder icon".tr(args: [p.basename(group.$1)]),
             style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
           ),
         );
@@ -186,9 +185,7 @@ class _GenerateGroupIcoFileDialogState
                   },
                   child: Text(
                     'Cancel'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: const Color.fromARGB(255, 33, 149, 243),
-                    ),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
                   ),
                 ),
                 TextButton(
@@ -197,9 +194,7 @@ class _GenerateGroupIcoFileDialogState
                   },
                   child: Text(
                     'Confirm'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: const Color.fromARGB(255, 33, 149, 243),
-                    ),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
                   ),
                 ),
               ]
@@ -213,9 +208,7 @@ class _GenerateGroupIcoFileDialogState
                   },
                   child: Text(
                     'Confirm'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: const Color.fromARGB(255, 33, 149, 243),
-                    ),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
                   ),
                 ),
               ],
@@ -260,9 +253,7 @@ class ChangeLanguageDialog extends ConsumerWidget {
           },
           child: Text(
             'Restart'.tr(),
-            style: GoogleFonts.poppins(
-              color: const Color.fromARGB(255, 33, 149, 243),
-            ),
+            style: GoogleFonts.poppins(color: getAccentColor(ref)),
           ),
         ),
       ],
@@ -375,9 +366,7 @@ class _PrefCorruptedDialogState extends ConsumerState<PrefCorruptedDialog> {
           },
           child: Text(
             'Close'.tr(),
-            style: GoogleFonts.poppins(
-              color: const Color.fromARGB(255, 33, 149, 243),
-            ),
+            style: GoogleFonts.poppins(color: getAccentColor(ref)),
           ),
         ),
       ],
@@ -904,9 +893,7 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
                   },
                   child: Text(
                     'Cancel'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: const Color.fromARGB(255, 33, 149, 243),
-                    ),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
                   ),
                 ),
                 if (validFolders.isNotEmpty || validArchives.isNotEmpty)
@@ -963,75 +950,6 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
   void dispose() {
     _scrollController.dispose();
     super.dispose();
-  }
-
-  Future<String> getSafeTarget(String target) async {
-    if (!await Directory(target).exists()) return target;
-
-    int i = 1;
-    while (true) {
-      final candidate = "${target}_$i";
-      if (!await Directory(candidate).exists()) return candidate;
-      i++;
-    }
-  }
-
-  Future<void> unwrapSingleFolderNesting(String path) async {
-    final dir = Directory(path);
-
-    try {
-      while (true) {
-        final entries = await dir.list().toList();
-
-        // Exclude specific filenames
-        final relevant =
-            entries.where((e) {
-              final basename = p.basename(e.path).toLowerCase();
-              const excluded = {
-                'modname',
-                'modforced',
-                'modsyntaxerrorremoved',
-                'modunoptimized',
-                'modnamespaced',
-                'modlink',
-                '.nahidamd',
-              };
-              return !excluded.contains(basename) &&
-                  !ConstantVar.modIconFilenames.contains(basename) &&
-                  !basename.startsWith('jasm_') &&
-                  !basename.startsWith('.jasm') &&
-                  !basename.startsWith('.imm') &&
-                  !basename.endsWith('.txt') &&
-                  !basename.endsWith('.json');
-            }).toList();
-
-        // Stop if more than 1 relevant entry, or it's empty
-        if (relevant.length != 1) break;
-
-        // Stop if the single relevant entry is a file (any type except Directory)
-        final single = relevant.first;
-        final isDir = await FileSystemEntity.isDirectory(single.path);
-        if (!isDir) break;
-
-        final singleSubDir = Directory(single.path);
-
-        // Move contents of singleSubDir up to dir
-        final children = await singleSubDir.list().toList();
-
-        for (final entity in children) {
-          final target = p.join(dir.path, p.basename(entity.path));
-          if (entity is File) {
-            await entity.rename(target); //auto overwritten
-          } else if (entity is Directory) {
-            // cannot overwrite folder, rename to non existing folder name
-            await entity.rename(await getSafeTarget(target));
-          }
-        }
-
-        // Remove the now-empty wrapper folder
-        await singleSubDir.delete();
-      }
-    } catch (_) {}
   }
 
   Future<void> copyMods({bool proceed = false}) async {
@@ -1391,9 +1309,7 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
                   },
                   child: Text(
                     'Close'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: const Color.fromARGB(255, 33, 149, 243),
-                    ),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
                   ),
                 ),
               ]
@@ -1405,9 +1321,7 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
                   },
                   child: Text(
                     'Confirm'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: const Color.fromARGB(255, 33, 149, 243),
-                    ),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
                   ),
                 ),
               ]
@@ -1442,18 +1356,6 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
     super.dispose();
   }
 
-  Future<bool> modsPathIsLocatedInTheSameDirectoryAsDllAndMainIniFile(
-    String path,
-  ) async {
-    final basePath = p.dirname(path);
-    final d3dxIni = p.join(basePath, "d3dx.ini");
-    final d3d11Dll = p.join(basePath, "d3d11.dll");
-    if (await File(d3dxIni).exists() && await File(d3d11Dll).exists()) {
-      return true;
-    }
-    return false;
-  }
-
   Future<void> validatingModsPath() async {
     setState(() {
       contents = [];
@@ -1465,26 +1367,61 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
       );
     });
 
-    bool validModsPath = false;
+    final modsPathStatus = await ModsPathValidator.validate(widget.modsPath);
+    ref.read(modsPathStatusProvider.notifier).state = modsPathStatus;
 
-    try {
-      final modsPath = p.normalize(widget.modsPath);
-
-      if (!await Directory(modsPath).exists()) {
+    switch (modsPathStatus) {
+      case ModsPathStatus.invalidNotExist:
         setState(() {
           _showClose = true;
           contents = [
             TextSpan(
-              text: "Mods path doesn't exist".tr(),
+              text: "Mods path does not exist.".tr(),
               style: GoogleFonts.poppins(color: Colors.red),
             ),
           ];
         });
-      } else if ((modsPath.toLowerCase().endsWith('mods') ||
-              modsPath.toLowerCase().endsWith('mods\\')) &&
-          await modsPathIsLocatedInTheSameDirectoryAsDllAndMainIniFile(
-            modsPath,
-          )) {
+        break;
+      case ModsPathStatus.invalidNotModsFolder:
+        setState(() {
+          _showClose = true;
+          contents = [
+            TextSpan(
+              text:
+                  "Invalid Mods path. Make sure you're targeting the \"Mods\" folder."
+                      .tr(),
+              style: GoogleFonts.poppins(color: Colors.red),
+            ),
+          ];
+        });
+        break;
+      case ModsPathStatus.invalidMissingD3dx:
+        setState(() {
+          _showClose = true;
+          contents = [
+            TextSpan(
+              text:
+                  "Invalid Mods path. Cannot find d3dx.ini next to the \"Mods\" folder."
+                      .tr(),
+              style: GoogleFonts.poppins(color: Colors.red),
+            ),
+          ];
+        });
+        break;
+      case ModsPathStatus.invalidMissingDll:
+        setState(() {
+          _showClose = true;
+          contents = [
+            TextSpan(
+              text:
+                  "Invalid Mods path. Cannot find d3d11.dll next to the \"Mods\" folder."
+                      .tr(),
+              style: GoogleFonts.poppins(color: Colors.red),
+            ),
+          ];
+        });
+        break;
+      default:
         setState(() {
           contents = [
             TextSpan(
@@ -1493,37 +1430,9 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
             ),
           ];
         });
-        //
-        validModsPath = true;
-        //
-      } else {
-        setState(() {
-          _showClose = true;
-          contents = [
-            TextSpan(
-              text:
-                  "Mods path is invalid. Make sure you're targetting \"Mods\" folder."
-                      .tr(),
-              style: GoogleFonts.poppins(color: Colors.red),
-            ),
-          ];
-        });
-      }
-    } catch (_) {
-      setState(() {
-        _showClose = true;
-        contents = [
-          TextSpan(
-            text:
-                "Mods path is invalid, please remove all illegal characters."
-                    .tr(),
-            style: GoogleFonts.poppins(color: Colors.red),
-          ),
-        ];
-      });
     }
 
-    if (validModsPath) {
+    if (!modsPathStatus.isFullyInvalid) {
       await manageMods(p.normalize(widget.modsPath));
     }
   }
@@ -1558,12 +1467,12 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
     final futures = <Future>[];
 
     for (var group in groupFolders) {
-      final iconPath = p.join(group.$1.path, 'icon.png');
+      final iconPath = p.join(group.$1, 'icon.png');
       final iconFile = File(iconPath);
 
       if (!await iconFile.exists()) {
         if (!context.mounted) return;
-        futures.add(tryGetIcon(group.$1.path, ref.read(targetGameProvider)));
+        futures.add(tryGetIcon(group.$1, ref.read(targetGameProvider)));
       }
     }
 
@@ -1621,9 +1530,7 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
                       },
                       child: Text(
                         'Close & Reload'.tr(),
-                        style: GoogleFonts.poppins(
-                          color: const Color.fromARGB(255, 33, 149, 243),
-                        ),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
                       ),
                     )
                     : TextButton(
@@ -1635,9 +1542,7 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
                       },
                       child: Text(
                         'Close'.tr(),
-                        style: GoogleFonts.poppins(
-                          color: const Color.fromARGB(255, 33, 149, 243),
-                        ),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
                       ),
                     ),
               ]
@@ -1736,9 +1641,330 @@ class _RestoreModDialogState extends ConsumerState<RestoreModDialog> {
                   },
                   child: Text(
                     'Close'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: const Color.fromARGB(255, 33, 149, 243),
-                    ),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                  ),
+                ),
+              ]
+              : [],
+    );
+  }
+}
+
+class ExtractModCasualDialog extends ConsumerStatefulWidget {
+  final String archivePath;
+  const ExtractModCasualDialog({super.key, required this.archivePath});
+
+  @override
+  ConsumerState<ExtractModCasualDialog> createState() =>
+      _ExtractModCasualDialogState();
+}
+
+class _ExtractModCasualDialogState
+    extends ConsumerState<ExtractModCasualDialog> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showConfirm = false;
+  bool _showConfirmExtract = true;
+  bool _showClose = false;
+  bool _showPasswordTextfield = true;
+  List<TextSpan> contents = [];
+  Map<String, String> passwordedArchives = {};
+
+  @override
+  void initState() {
+    super.initState();
+    setState(() {
+      contents = [
+        TextSpan(
+          text: 'Extract this archive here?'.tr(),
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ];
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> extractFile({bool proceed = false}) async {
+    setState(() {
+      _showConfirmExtract = false;
+      contents = [];
+    });
+    //ARCHIVE CHECK PASSWORD
+    if (!proceed) {
+      bool isPassworded = await SevenZip.instance.isEncrypted(
+        widget.archivePath,
+      );
+      if (isPassworded) {
+        setState(() {
+          passwordedArchives = {...passwordedArchives, widget.archivePath: ''};
+        });
+      }
+
+      if (passwordedArchives.isNotEmpty) {
+        setState(() {
+          _showConfirm = true;
+        });
+        return;
+      } else {
+        proceed = true;
+      }
+    }
+
+    if (proceed) {
+      setState(() {
+        contents = [];
+        _showPasswordTextfield = false;
+        contents.add(
+          TextSpan(
+            text: 'Extracting file...'.tr(),
+            style: GoogleFonts.poppins(color: Colors.white),
+          ),
+        );
+      });
+    }
+
+    List<TextSpan> operationLogs = [];
+
+    //MOD ARCHIVEs
+    String destFolderName = p.basenameWithoutExtension(widget.archivePath);
+    String destPath = p.dirname(widget.archivePath);
+    try {
+      //group_x/archiveName
+      String destDirPath = p.join(destPath, destFolderName);
+      destDirPath = await checkForDuplicateFolderName(destDirPath);
+
+      //extract
+      final extractResult = await SevenZip.instance.extract(
+        widget.archivePath,
+        outputDir: destDirPath,
+        password: passwordedArchives[widget.archivePath] ?? '',
+      );
+
+      if (extractResult.success) {
+        //make sure the mod folder directly contains files not another nested folder
+        await unwrapSingleFolderNesting(destDirPath);
+      } else {
+        try {
+          await Directory(
+            r"\\?\" + destDirPath.replaceFirst(r"\\?\", ''),
+          ).delete(
+            recursive: true,
+          ); // workaround \\?\ for long paths, only for Windows
+        } catch (_) {}
+        if (extractResult.wrongPassword) {
+          throw Exception("Wrong password");
+        } else {
+          throw Exception("Failed to extract");
+        }
+      }
+
+      operationLogs.add(
+        TextSpan(
+          text: 'Archive extracted'.tr(args: [p.basename(widget.archivePath)]),
+          style: GoogleFonts.poppins(
+            color: Colors.green,
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (e.toString().contains("Wrong password")) {
+        operationLogs.add(
+          TextSpan(
+            text: 'Archive wrong password'.tr(
+              args: [p.basename(widget.archivePath)],
+            ),
+            style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
+          ),
+        );
+      } else if (e.toString().contains("Failed to extract")) {
+        operationLogs.add(
+          TextSpan(
+            text: 'Error! Archive not supported'.tr(
+              args: [p.basename(widget.archivePath)],
+            ),
+            style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
+          ),
+        );
+      } else {
+        operationLogs.add(
+          TextSpan(
+            text:
+                '${'Error! Cannot extract mod archive'.tr(args: [p.basename(widget.archivePath)])}.\n${ConstantVar.defaultErrorInfo}\n\n',
+            style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
+          ),
+        );
+      }
+    }
+
+    setState(() {
+      _showClose = true;
+      contents = operationLogs;
+    });
+
+    await _scrollToBottom();
+  }
+
+  Future<String> checkForDuplicateFolderName(String destPath) async {
+    String fixedDestPath = destPath;
+    while (await Directory(fixedDestPath).exists()) {
+      fixedDestPath = '${fixedDestPath}_';
+    }
+    return fixedDestPath;
+  }
+
+  Future<void> _scrollToBottom() async {
+    // Wait until scrollController has a valid position
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (!_scrollController.hasClients) return;
+
+    await _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  void _onCloseClicked() {
+    triggerRefresh(ref);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        'Extract file'.tr(),
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
+      ),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.trackpad,
+            },
+          ),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (_showPasswordTextfield)
+                  ...passwordedArchives.entries.map((e) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          p.basename(e.key),
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w400,
+                            color: Colors.grey,
+                            fontSize: 12,
+                          ),
+                          textAlign: TextAlign.start,
+                        ),
+                        SizedBox(height: 3),
+                        TextField(
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            isDense: true,
+                            disabledBorder: InputBorder.none,
+                            hintText: 'Archive password'.tr(),
+                            hintStyle: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w300,
+                              color: const Color.fromARGB(80, 255, 255, 255),
+                              fontSize: 13,
+                            ),
+                          ),
+                          maxLines: 1,
+                          keyboardType: TextInputType.none,
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white,
+                            fontSize: 13,
+                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.deny(
+                              RegExp(r'[\n\r\u0085\u2028\u2029]'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            passwordedArchives[e.key] = value;
+                          },
+                          onSubmitted: (value) {
+                            passwordedArchives[e.key] = value;
+                          },
+                        ),
+                        SizedBox(height: 16),
+                      ],
+                    );
+                  }),
+
+                RichText(text: TextSpan(children: contents)),
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions:
+          _showClose
+              ? [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    ref.read(alertDialogShownProvider.notifier).state = false;
+                    _onCloseClicked();
+                  },
+                  child: Text(
+                    'Close'.tr(),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                  ),
+                ),
+              ]
+              : _showConfirmExtract
+              ? [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    ref.read(alertDialogShownProvider.notifier).state = false;
+                  },
+                  child: Text(
+                    'Close'.tr(),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    extractFile(proceed: false);
+                  },
+                  child: Text(
+                    'Confirm'.tr(),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                  ),
+                ),
+              ]
+              : _showConfirm
+              ? [
+                TextButton(
+                  onPressed: () {
+                    extractFile(proceed: true);
+                  },
+                  child: Text(
+                    'Confirm'.tr(),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
                   ),
                 ),
               ]
@@ -1844,9 +2070,7 @@ class _DuplicatedUtilitiesDialogState
           },
           child: Text(
             'Disable all'.tr(),
-            style: GoogleFonts.poppins(
-              color: const Color.fromARGB(255, 33, 149, 243),
-            ),
+            style: GoogleFonts.poppins(color: getAccentColor(ref)),
           ),
         ),
         TextButton(
@@ -1856,9 +2080,7 @@ class _DuplicatedUtilitiesDialogState
           },
           child: Text(
             'Close'.tr(),
-            style: GoogleFonts.poppins(
-              color: const Color.fromARGB(255, 33, 149, 243),
-            ),
+            style: GoogleFonts.poppins(color: getAccentColor(ref)),
           ),
         ),
       ],
@@ -1873,13 +2095,13 @@ class _DuplicatedUtilitiesDialogState
 class RemoveModGroupDialog extends ConsumerStatefulWidget {
   final String name;
   final String validModsPath;
-  final Directory modOrGroupDir;
+  final String modOrGroupPath;
   final bool isGroup;
   const RemoveModGroupDialog({
     super.key,
     required this.name,
     required this.validModsPath,
-    required this.modOrGroupDir,
+    required this.modOrGroupPath,
     required this.isGroup,
   });
 
@@ -1951,7 +2173,7 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
         ),
       ];
     });
-    String baseFolderName = p.basename(widget.modOrGroupDir.path);
+    String baseFolderName = p.basename(widget.modOrGroupPath);
     String managedPath = p.join(
       widget.validModsPath,
       ConstantVar.managedRemovedFolderName,
@@ -1969,7 +2191,9 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
         ); // workaround \\?\ for long paths, only for Windows
       }
 
-      Directory movedDir = await widget.modOrGroupDir.rename(destPath);
+      Directory movedDir = await Directory(
+        widget.modOrGroupPath,
+      ).rename(destPath);
       List<TextSpan> operationLogs = await restoreManagedMod([movedDir]);
       operationLogs.insert(
         0,
@@ -2072,9 +2296,7 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
                   },
                   child: Text(
                     'Cancel'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: const Color.fromARGB(255, 33, 149, 243),
-                    ),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
                   ),
                 ),
                 TextButton(
@@ -2098,9 +2320,7 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
                   },
                   child: Text(
                     'Confirm'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: const Color.fromARGB(255, 33, 149, 243),
-                    ),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
                   ),
                 ),
               ],
@@ -2175,9 +2395,7 @@ class _EditModLinkDialogState extends ConsumerState<EditModLinkDialog> {
           },
           child: Text(
             'Cancel'.tr(),
-            style: GoogleFonts.poppins(
-              color: const Color.fromARGB(255, 33, 149, 243),
-            ),
+            style: GoogleFonts.poppins(color: getAccentColor(ref)),
           ),
         ),
         TextButton(
@@ -2187,9 +2405,7 @@ class _EditModLinkDialogState extends ConsumerState<EditModLinkDialog> {
           },
           child: Text(
             'Confirm'.tr(),
-            style: GoogleFonts.poppins(
-              color: const Color.fromARGB(255, 33, 149, 243),
-            ),
+            style: GoogleFonts.poppins(color: getAccentColor(ref)),
           ),
         ),
       ],
@@ -2682,9 +2898,7 @@ class _SaveModCustomizationsDialogState
                   },
                   child: Text(
                     'Close'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: const Color.fromARGB(255, 33, 149, 243),
-                    ),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
                   ),
                 ),
               ]
@@ -2696,9 +2910,7 @@ class _SaveModCustomizationsDialogState
                   },
                   child: Text(
                     'Reload (F10)'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: const Color.fromARGB(255, 33, 149, 243),
-                    ),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
                   ),
                 ),
                 TextButton(
@@ -2708,9 +2920,7 @@ class _SaveModCustomizationsDialogState
                   },
                   child: Text(
                     'Cancel'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: const Color.fromARGB(255, 33, 149, 243),
-                    ),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
                   ),
                 ),
                 TextButton(
@@ -2719,9 +2929,7 @@ class _SaveModCustomizationsDialogState
                   },
                   child: Text(
                     'Confirm'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: const Color.fromARGB(255, 33, 149, 243),
-                    ),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
                   ),
                 ),
               ]
@@ -2730,6 +2938,19 @@ class _SaveModCustomizationsDialogState
               : [],
     );
   }
+}
+
+sealed class _FlatItem {}
+
+final class _GroupRow extends _FlatItem {
+  final ModGroupData group;
+  final int groupIndex;
+  _GroupRow(this.group, this.groupIndex);
+}
+
+final class _ModRow extends _FlatItem {
+  final ModData mod;
+  _ModRow(this.mod);
 }
 
 class BatchDisableOrEnableModsDialog extends ConsumerStatefulWidget {
@@ -2750,15 +2971,14 @@ class _BatchDisableOrEnableModsDialogState
 
   bool _showConfirm = true;
   bool _isLoading = false;
-
   List<TextSpan> contents = [];
 
-  late Map<String, (ModData, bool)> _modChecked;
+  late final Map<String, (ModData, bool)> _modChecked;
+  late final Map<ModGroupData, List<ModData>> _filteredMods;
 
-  // Pre-filtered mods (no repeated where/toList calls)
-  late Map<ModGroupData, List<ModData>> _filteredMods;
+  int? _expandedIndex;
+  late List<_FlatItem> _flatItems;
 
-  // Cached text styles (avoid rebuilding fonts every frame)
   late final TextStyle _groupTitleStyle;
   late final TextStyle _groupPathStyle;
   late final TextStyle _modNameStyle;
@@ -2769,52 +2989,42 @@ class _BatchDisableOrEnableModsDialogState
   void initState() {
     super.initState();
 
-    // Pre-filter mods once
     _filteredMods = {
       for (final group in widget.groupAndModsPair)
-        group: group.modsInGroup.where((m) => m.modDir.path != 'None').toList(),
+        group: group.modsInGroup.where((m) => m.modPath != 'None').toList(),
     };
 
-    // Initialize checkbox state
     _modChecked = {
-      for (final group in _filteredMods.entries)
-        for (final mod in group.value)
-          mod.modDir.path: (
+      for (final e in _filteredMods.entries)
+        for (final mod in e.value)
+          mod.modPath: (
             mod,
-            !p.basename(mod.modDir.path).toLowerCase().startsWith('disabled'),
+            !p.basename(mod.modPath).toLowerCase().startsWith('disabled'),
           ),
     };
-  }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+    _rebuildFlatItems();
 
-    // Cache styles once (after context is available)
     _groupTitleStyle = GoogleFonts.poppins(
       color: Colors.white,
       fontSize: 14,
       fontWeight: FontWeight.w600,
     );
-
     _groupPathStyle = GoogleFonts.poppins(
       color: Colors.grey,
       fontSize: 12,
       fontWeight: FontWeight.w400,
     );
-
     _modNameStyle = GoogleFonts.poppins(
       color: const Color.fromARGB(230, 255, 255, 255),
       fontSize: 13,
       fontWeight: FontWeight.w400,
     );
-
     _modPathStyle = GoogleFonts.poppins(
       color: Colors.grey,
       fontSize: 12,
       fontWeight: FontWeight.w400,
     );
-
     _infoStyle = GoogleFonts.poppins(
       color: Colors.grey,
       fontSize: 13,
@@ -2822,34 +3032,48 @@ class _BatchDisableOrEnableModsDialogState
     );
   }
 
-  // ─────────────────────────────────────────────
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _rebuildFlatItems() {
+    final groups = widget.groupAndModsPair;
+    _flatItems = [
+      for (int i = 0; i < groups.length; i++) ...[
+        _GroupRow(groups[i], i),
+        if (_expandedIndex == i)
+          for (final mod in _filteredMods[groups[i]]!) _ModRow(mod),
+      ],
+    ];
+  }
 
   bool? _groupValue(ModGroupData group) {
     final mods = _filteredMods[group]!;
     if (mods.isEmpty) return false;
 
-    int checkedCount = 0;
+    var count = 0;
     for (final mod in mods) {
-      if (_modChecked[mod.modDir.path]!.$2 == true) {
-        checkedCount++;
-      }
+      if (_modChecked[mod.modPath]!.$2) count++;
     }
-
-    if (checkedCount == mods.length) return true;
-    if (checkedCount == 0) return false;
+    if (count == mods.length) return true;
+    if (count == 0) return false;
     return null;
+  }
+
+  void _toggleExpansion(int index) {
+    setState(() {
+      _expandedIndex = _expandedIndex == index ? null : index;
+      _rebuildFlatItems();
+    });
   }
 
   void _toggleGroup(ModGroupData group, bool? value) {
     final target = value ?? false;
-    final mods = _filteredMods[group]!;
-
     setState(() {
-      for (final mod in mods) {
-        _modChecked[mod.modDir.path] = (
-          _modChecked[mod.modDir.path]!.$1,
-          target,
-        );
+      for (final mod in _filteredMods[group]!) {
+        _modChecked[mod.modPath] = (_modChecked[mod.modPath]!.$1, target);
       }
     });
   }
@@ -2862,15 +3086,10 @@ class _BatchDisableOrEnableModsDialogState
     });
   }
 
-  // ─────────────────────────────────────────────
-
   Future<void> batchDisableEnableMods() async {
     setState(() {
       _isLoading = true;
       _showConfirm = false;
-    });
-
-    setState(() {
       contents = [
         TextSpan(
           text: "Enabling/disabling mods...".tr(),
@@ -2879,45 +3098,35 @@ class _BatchDisableOrEnableModsDialogState
       ];
     });
 
-    List<(Directory groupDir, ModData modData)> failedEnableDisableMod = [];
+    final failed = <(Directory, ModData)>[];
 
-    for (var mod in _modChecked.entries) {
-      //Unchecked and not starts with Disabled, disable it
-      if (mod.value.$2 == false &&
-          !p.basename(mod.key).toLowerCase().startsWith('disabled')) {
-        bool success = await completeDisableMod(Directory(mod.key));
-        if (!success) {
-          failedEnableDisableMod.add((
-            Directory(p.dirname(mod.key)),
-            _modChecked[mod.key]!.$1,
-          ));
+    for (final entry in _modChecked.entries) {
+      final baseName = p.basename(entry.key).toLowerCase();
+      final isDisabled = baseName.startsWith('disabled');
+      final wantEnabled = entry.value.$2;
+
+      if (!wantEnabled && !isDisabled) {
+        if (!await completeDisableMod(entry.key)) {
+          failed.add((Directory(p.dirname(entry.key)), entry.value.$1));
         }
-      }
-      //Checked and starts with Disabled, enable it
-      else if (mod.value.$2 == true &&
-          p.basename(mod.key).toLowerCase().startsWith('disabled')) {
-        bool success = await enableMod(Directory(mod.key));
-        if (!success) {
-          failedEnableDisableMod.add((
-            Directory(p.dirname(mod.key)),
-            _modChecked[mod.key]!.$1,
-          ));
+      } else if (wantEnabled && isDisabled) {
+        if (!await enableMod(entry.key)) {
+          failed.add((Directory(p.dirname(entry.key)), entry.value.$1));
         }
       }
     }
 
-    List<TextSpan> failedEnableInfo = [];
-    for (var mod in failedEnableDisableMod) {
+    final failSpans = <TextSpan>[];
+    for (final item in failed) {
       String groupName = '';
       try {
         groupName = await forceReadAsStringUtf8(
-          File(p.join(mod.$1.path, 'groupname')),
+          File(p.join(item.$1.path, 'groupname')),
         );
       } catch (_) {}
-      //
-      failedEnableInfo.add(
+      failSpans.add(
         TextSpan(
-          text: "$groupName - ${mod.$2.modName}\n${mod.$2.modDir.path}\n\n",
+          text: "$groupName - ${item.$2.modName}\n${item.$2.modPath}\n\n",
           style: GoogleFonts.poppins(
             color: Colors.white,
             fontSize: 14,
@@ -2929,33 +3138,31 @@ class _BatchDisableOrEnableModsDialogState
 
     setState(() {
       _isLoading = false;
-
-      if (failedEnableDisableMod.isEmpty) {
-        contents = [
-          TextSpan(
-            text: "Managed mods have been disabled/enabled".tr(),
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ];
-      } else {
-        contents = [
-          ...failedEnableInfo,
-          TextSpan(
-            text:
-                "Some mods can't be enabled/disabled, please rename these mods manually with File Explorer."
-                    .tr(),
-            style: GoogleFonts.poppins(
-              color: const Color.fromARGB(255, 189, 170, 0),
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ];
-      }
+      contents =
+          failed.isEmpty
+              ? [
+                TextSpan(
+                  text: "Managed mods have been disabled/enabled".tr(),
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ]
+              : [
+                ...failSpans,
+                TextSpan(
+                  text:
+                      "Some mods can't be enabled/disabled, please rename these mods manually with File Explorer."
+                          .tr(),
+                  style: GoogleFonts.poppins(
+                    color: const Color.fromARGB(255, 189, 170, 0),
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ];
     });
 
     await _scrollToBottom();
@@ -2964,7 +3171,6 @@ class _BatchDisableOrEnableModsDialogState
   Future<void> _scrollToBottom() async {
     await Future.delayed(const Duration(milliseconds: 100));
     if (!_scrollController.hasClients) return;
-
     await _scrollController.animateTo(
       _scrollController.position.maxScrollExtent,
       duration: const Duration(milliseconds: 300),
@@ -2972,8 +3178,104 @@ class _BatchDisableOrEnableModsDialogState
     );
   }
 
+  Widget _buildGroupHeader(_GroupRow item) {
+    final isExpanded = _expandedIndex == item.groupIndex;
+    return InkWell(
+      onTap: () => _toggleExpansion(item.groupIndex),
+      child: Row(
+        children: [
+          Checkbox(
+            activeColor: getAccentColor(ref),
+            tristate: true,
+            value: _groupValue(item.group),
+            onChanged: (v) => _toggleGroup(item.group, v),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          Expanded(
+            child: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    item.group.groupName,
+                    overflow: TextOverflow.ellipsis,
+                    style: _groupTitleStyle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    p.basename(item.group.groupPath),
+                    overflow: TextOverflow.ellipsis,
+                    style: _groupPathStyle,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            isExpanded ? Icons.expand_less : Icons.expand_more,
+            color: Colors.grey,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModRow(_ModRow item) {
+    final path = item.mod.modPath;
+    return Row(
+      children: [
+        const SizedBox(width: 25),
+        Checkbox(
+          activeColor: getAccentColor(ref),
+          value: _modChecked[path]!.$2,
+          onChanged:
+              (v) => setState(() {
+                _modChecked[path] = (_modChecked[path]!.$1, v!);
+              }),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+        ),
+        Expanded(
+          child: Row(
+            children: [
+              Flexible(
+                child: Text(
+                  item.mod.modName,
+                  overflow: TextOverflow.ellipsis,
+                  style: _modNameStyle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  p.basename(path),
+                  overflow: TextOverflow.ellipsis,
+                  style: _modPathStyle,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final scrollBehavior = ScrollConfiguration.of(context).copyWith(
+      dragDevices: {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.trackpad,
+      },
+    );
+
     return AlertDialog(
       title: Text(
         "Enable/disable mods".tr(),
@@ -2981,190 +3283,40 @@ class _BatchDisableOrEnableModsDialogState
       ),
       content: ConstrainedBox(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
-          minWidth: !_showConfirm ? 0 : MediaQuery.of(context).size.width * 0.6,
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
+          minWidth: !_showConfirm ? 0 : MediaQuery.of(context).size.width * 0.8,
         ),
         child:
             !_showConfirm
                 ? ScrollConfiguration(
-                  behavior: ScrollConfiguration.of(context).copyWith(
-                    dragDevices: {
-                      PointerDeviceKind.touch,
-                      PointerDeviceKind.mouse,
-                      PointerDeviceKind.trackpad,
-                    },
-                  ),
+                  behavior: scrollBehavior,
                   child: SingleChildScrollView(
                     controller: _scrollController,
                     child: RichText(text: TextSpan(children: contents)),
                   ),
                 )
-                : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // -- Mod List --
-                    Expanded(
-                      child: ScrollConfiguration(
-                        behavior: ScrollConfiguration.of(context).copyWith(
-                          dragDevices: {
-                            PointerDeviceKind.touch,
-                            PointerDeviceKind.mouse,
-                            PointerDeviceKind.trackpad,
-                          },
-                        ),
-                        child: SingleChildScrollView(
-                          controller: _scrollController,
-                          child: ExpansionPanelList.radio(
-                            elevation: 0,
-                            dividerColor: Colors.transparent,
-                            expandedHeaderPadding: EdgeInsets.zero,
-                            animationDuration: const Duration(
-                              milliseconds: 250,
-                            ),
-                            materialGapSize: 0,
-                            children:
-                                widget.groupAndModsPair.asMap().entries.map((
-                                  e,
-                                ) {
-                                  final group = e.value;
-                                  final mods = _filteredMods[group]!;
-
-                                  return ExpansionPanelRadio(
-                                    value: e.key,
-                                    canTapOnHeader: true,
-                                    backgroundColor: Colors.transparent,
-
-                                    // -- Group Header --
-                                    headerBuilder: (context, isExpanded) {
-                                      final groupVal = _groupValue(group);
-
-                                      return Row(
-                                        children: [
-                                          Checkbox(
-                                            activeColor: const Color.fromARGB(
-                                              255,
-                                              33,
-                                              149,
-                                              243,
-                                            ),
-                                            tristate: true,
-                                            value: groupVal,
-                                            onChanged:
-                                                (v) => _toggleGroup(group, v),
-                                            materialTapTargetSize:
-                                                MaterialTapTargetSize
-                                                    .shrinkWrap,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            child: Row(
-                                              children: [
-                                                Flexible(
-                                                  child: Text(
-                                                    group.groupName,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    style: _groupTitleStyle,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Flexible(
-                                                  child: Text(
-                                                    p.basename(
-                                                      group.groupDir.path,
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    style: _groupPathStyle,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      );
-                                    },
-
-                                    // -- Mods Body --
-                                    body: Column(
-                                      children:
-                                          mods.map((mod) {
-                                            final path = mod.modDir.path;
-
-                                            return Row(
-                                              children: [
-                                                const SizedBox(width: 25),
-                                                Checkbox(
-                                                  activeColor:
-                                                      const Color.fromARGB(
-                                                        255,
-                                                        33,
-                                                        149,
-                                                        243,
-                                                      ),
-                                                  value: _modChecked[path]!.$2,
-                                                  onChanged:
-                                                      (v) => setState(
-                                                        () =>
-                                                            _modChecked[path] = (
-                                                              _modChecked[path]!
-                                                                  .$1,
-                                                              v!,
-                                                            ),
-                                                      ),
-                                                  materialTapTargetSize:
-                                                      MaterialTapTargetSize
-                                                          .shrinkWrap,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          4,
-                                                        ),
-                                                  ),
-                                                ),
-                                                Expanded(
-                                                  child: Row(
-                                                    children: [
-                                                      Flexible(
-                                                        child: Text(
-                                                          mod.modName,
-                                                          overflow:
-                                                              TextOverflow
-                                                                  .ellipsis,
-                                                          style: _modNameStyle,
-                                                        ),
-                                                      ),
-                                                      const SizedBox(width: 8),
-                                                      Flexible(
-                                                        child: Text(
-                                                          p.basename(path),
-                                                          overflow:
-                                                              TextOverflow
-                                                                  .ellipsis,
-                                                          style: _modPathStyle,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ],
-                                            );
-                                          }).toList(),
-                                    ),
-                                  );
-                                }).toList(),
+                : SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.6,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: ScrollConfiguration(
+                          behavior: scrollBehavior,
+                          child: ListView.builder(
+                            controller: _scrollController,
+                            itemCount: _flatItems.length,
+                            itemBuilder:
+                                (_, i) => switch (_flatItems[i]) {
+                                  _GroupRow item => _buildGroupHeader(item),
+                                  _ModRow item => _buildModRow(item),
+                                },
                           ),
                         ),
                       ),
-                    ),
 
-                    if (_showConfirm) const SizedBox(height: 10),
+                      const SizedBox(height: 10),
 
-                    // -- Legend --
-                    if (_showConfirm)
                       Row(
                         children: [
                           SizedBox(
@@ -3200,18 +3352,18 @@ class _BatchDisableOrEnableModsDialogState
                           Text("Disabled".tr(), style: _infoStyle),
                         ],
                       ),
-                    if (_showConfirm) const SizedBox(height: 10),
-                    if (_showConfirm)
+
+                      const SizedBox(height: 10),
                       Text(
                         "Before disabling the mods, click Save Mod Customizations to save your changes to the mod toggles/states."
                             .tr(),
                         style: _infoStyle.copyWith(color: Colors.white),
                       ),
-                  ],
+                    ],
+                  ),
                 ),
       ),
 
-      // -- Actions --
       actions:
           _showConfirm
               ? [
@@ -3219,18 +3371,14 @@ class _BatchDisableOrEnableModsDialogState
                   onPressed: () => _setAll(true),
                   child: Text(
                     'Enable all mods'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: const Color.fromARGB(255, 33, 149, 243),
-                    ),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
                   ),
                 ),
                 TextButton(
                   onPressed: () => _setAll(false),
                   child: Text(
                     'Disable all mods'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: const Color.fromARGB(255, 33, 149, 243),
-                    ),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
                   ),
                 ),
                 TextButton(
@@ -3240,25 +3388,19 @@ class _BatchDisableOrEnableModsDialogState
                   },
                   child: Text(
                     'Cancel'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: const Color.fromARGB(255, 33, 149, 243),
-                    ),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
                   ),
                 ),
                 TextButton(
-                  onPressed: () async {
-                    await batchDisableEnableMods();
-                  },
+                  onPressed: batchDisableEnableMods,
                   child: Text(
                     'Confirm'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: const Color.fromARGB(255, 33, 149, 243),
-                    ),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
                   ),
                 ),
               ]
               : _isLoading
-              ? []
+              ? const []
               : [
                 TextButton(
                   onPressed: () async {
@@ -3275,9 +3417,7 @@ class _BatchDisableOrEnableModsDialogState
                   },
                   child: Text(
                     'Update Mod Data'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: const Color.fromARGB(255, 33, 149, 243),
-                    ),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
                   ),
                 ),
               ],
@@ -3644,9 +3784,7 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
                   },
                   child: Text(
                     'Cancel'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: const Color.fromARGB(255, 33, 149, 243),
-                    ),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
                   ),
                 ),
                 if (namespacesMap.isNotEmpty)
@@ -3656,9 +3794,7 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
                     },
                     child: Text(
                       'Confirm'.tr(),
-                      style: GoogleFonts.poppins(
-                        color: const Color.fromARGB(255, 33, 149, 243),
-                      ),
+                      style: GoogleFonts.poppins(color: getAccentColor(ref)),
                     ),
                   ),
               ]
@@ -3675,9 +3811,7 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
                   },
                   child: Text(
                     _namespaceChanged ? 'Close & Reload'.tr() : 'Close'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: const Color.fromARGB(255, 33, 149, 243),
-                    ),
+                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
                   ),
                 ),
               ],

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,9 +13,9 @@ import 'package:no_reload_mod_manager/tabs/mods_tab_grid.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
 import 'package:no_reload_mod_manager/utils/force_read_as_utf8.dart';
+import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/mod_navigator.dart';
-import 'package:no_reload_mod_manager/utils/refreshable_image.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:no_reload_mod_manager/utils/ui_dialogues.dart';
@@ -84,17 +85,19 @@ class _TabModsState extends ConsumerState<TabMods> with WindowListener {
 
 class GroupContainer extends ConsumerStatefulWidget {
   final int index;
-  final int currentIndex;
   final double size;
   final Color? selectedColor;
   final Function() onTap;
+  final Function()? onMouseEnter;
+  final Function()? onMouseExit;
   const GroupContainer({
     super.key,
     required this.index,
-    required this.currentIndex,
     required this.size,
     required this.onTap,
     this.selectedColor,
+    this.onMouseEnter,
+    this.onMouseExit,
   });
 
   @override
@@ -103,19 +106,38 @@ class GroupContainer extends ConsumerStatefulWidget {
 
 class _GroupContainerState extends ConsumerState<GroupContainer> {
   bool isHovering = false;
+  DateTime? dateTimeFavorite;
+
+  @override
+  void initState() {
+    super.initState();
+    setState(() {
+      dateTimeFavorite =
+          ref.read(modGroupDataProvider)[widget.index].favoriteDateTime;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
     return MouseRegion(
       cursor: SystemMouseCursors.click,
-      onEnter:
-          (_) => setState(() {
-            isHovering = true;
-          }),
-      onExit:
-          (_) => setState(() {
-            isHovering = false;
-          }),
+      onEnter: (_) {
+        setState(() {
+          isHovering = true;
+        });
+        if (widget.onMouseEnter != null) {
+          widget.onMouseEnter!();
+        }
+      },
+      onExit: (_) {
+        setState(() {
+          isHovering = false;
+        });
+        if (widget.onMouseExit != null) {
+          widget.onMouseExit!();
+        }
+      },
       child: GestureDetector(
         onTap: widget.onTap,
         child: Container(
@@ -126,10 +148,10 @@ class _GroupContainerState extends ConsumerState<GroupContainer> {
             border: Border.all(
               width: 3 * sss,
               color:
-                  widget.selectedColor != null
-                      ? widget.selectedColor!
-                      : isHovering
+                  isHovering
                       ? Colors.white
+                      : widget.selectedColor != null
+                      ? widget.selectedColor!
                       : const Color.fromARGB(127, 255, 255, 255),
               strokeAlign: BorderSide.strokeAlignInside,
             ),
@@ -137,15 +159,26 @@ class _GroupContainerState extends ConsumerState<GroupContainer> {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(999),
-            child: RefreshableLocalImage(
-              imageWidget:
-                  ref.watch(modGroupDataProvider)[widget.index].groupIcon,
-              errorWidget: Icon(
-                size: 35 * sss,
-                Icons.image_outlined,
-                color: const Color.fromARGB(127, 255, 255, 255),
-              ),
-            ),
+            child:
+                ref.watch(modGroupDataProvider)[widget.index].iconPath == null
+                    ? Icon(
+                      size: 35 * sss,
+                      Icons.image_outlined,
+                      color: const Color.fromARGB(127, 255, 255, 255),
+                    )
+                    : Image.file(
+                      File(
+                        ref.watch(modGroupDataProvider)[widget.index].iconPath!,
+                      ),
+                      fit: BoxFit.cover,
+                      cacheWidth: ConstantVar.groupImageCacheWidth,
+                      errorBuilder:
+                          (context, error, stackTrace) => Icon(
+                            size: 35 * sss,
+                            Icons.image_outlined,
+                            color: const Color.fromARGB(127, 255, 255, 255),
+                          ),
+                    ),
           ),
         ),
       ),
@@ -222,21 +255,24 @@ class _ModContainerState extends ConsumerState<ModContainer>
     final updatedMods = widget.currentGroupData.modsInGroup;
     final oldMod = updatedMods[widget.index];
     updatedMods[widget.index] = ModData(
-      modDir: oldMod.modDir,
-      modIcon: oldMod.modIcon,
+      modPath: oldMod.modPath,
+      iconPath: oldMod.iconPath,
       realIndex: oldMod.realIndex,
       modName: _modNameTextFieldController.text,
       isOldAutoFixed: oldMod.isOldAutoFixed,
       isSyntaxErrorRemoved: oldMod.isSyntaxErrorRemoved,
       isUnoptimized: oldMod.isUnoptimized,
       isNamespaced: oldMod.isNamespaced,
+      isDisabled: oldMod.isDisabled,
+      favoriteDateTime: oldMod.favoriteDateTime,
     );
 
     // Clone the ModGroupData with updated mod list
     final updatedGroup = ModGroupData(
-      groupDir: widget.currentGroupData.groupDir,
-      groupIcon: widget.currentGroupData.groupIcon,
+      groupPath: widget.currentGroupData.groupPath,
+      iconPath: widget.currentGroupData.iconPath,
       groupName: widget.currentGroupData.groupName,
+      favoriteDateTime: widget.currentGroupData.favoriteDateTime,
       modsInGroup: updatedMods,
       realIndex: widget.currentGroupData.realIndex,
       previousSelectedModOnGroup:
@@ -250,15 +286,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
     // Save to provider
     ref.read(modGroupDataProvider.notifier).state = updatedGroups;
 
-    await setModNameOnDisk(oldMod.modDir, _modNameTextFieldController.text);
-  }
-
-  bool isModDisabled(String modPath) {
-    if (p.basename(modPath).toLowerCase().startsWith('disabled')) {
-      return true;
-    } else {
-      return false;
-    }
+    await setModNameOnDisk(oldMod.modPath, _modNameTextFieldController.text);
   }
 
   @override
@@ -266,567 +294,1030 @@ class _ModContainerState extends ConsumerState<ModContainer>
     final sss = ref.watch(zoomScaleProvider);
     final currentMod = widget.currentGroupData.modsInGroup[widget.index];
     final isNoneModSlot = widget.index == 0;
-    final hasNoneModCustomIcon = isNoneModSlot && currentMod.modIcon != null;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        RightClickMenuRegion(
-          menuItems: [
-            CustomMenuItem(
-              scale: sss,
-              onSelected: () {
-                if (!context.mounted) return;
-                widget.onSelected();
-              },
-              label: 'Select'.tr(),
-              textColor: const Color.fromARGB(255, 33, 149, 243),
-            ),
-            if (!ref.watch(windowIsPinnedProvider))
-              CustomMenuItem(
-                scale: sss,
-                onSelected: () {
-                  if (!context.mounted) return;
-                  ref.read(windowIsPinnedProvider.notifier).state = true;
-                },
-                label: 'Add mods'.tr(),
-              ),
-            CustomMenuItem.submenu(
-              label: 'Mod icon'.tr(),
-              scale: sss,
-              items: [
+        Stack(
+          children: [
+            RightClickMenuRegion(
+              menuItems: [
                 CustomMenuItem(
                   scale: sss,
-                  onSelected: () async {
+                  onSelected: () {
                     if (!context.mounted) return;
-                    await setGroupOrModIcon(
-                      ref,
-                      widget.currentGroupData.groupDir,
-                      currentMod.modIcon,
-                      fromClipboard: true,
-                      isGroup: false,
-                      isNoneMod: isNoneModSlot,
-                      modDir: currentMod.modDir,
-                    );
+                    widget.onSelected();
                   },
-                  label: 'Clipboard icon'.tr(),
+                  label: 'Select'.tr(),
+                  textColor: getAccentColor(ref),
                 ),
-                CustomMenuItem(
+                if (!ref.watch(windowIsPinnedProvider))
+                  CustomMenuItem(
+                    scale: sss,
+                    onSelected: () {
+                      if (!context.mounted) return;
+                      ref.read(windowIsPinnedProvider.notifier).state = true;
+                    },
+                    label: 'Add mods'.tr(),
+                  ),
+                CustomMenuItem.submenu(
+                  label: 'Mod icon'.tr(),
                   scale: sss,
-                  onSelected: () async {
-                    if (!context.mounted) return;
-                    await setGroupOrModIcon(
-                      ref,
-                      widget.currentGroupData.groupDir,
-                      currentMod.modIcon,
-                      fromClipboard: false,
-                      isGroup: false,
-                      isNoneMod: isNoneModSlot,
-                      modDir: currentMod.modDir,
-                    );
-                  },
-                  label: 'Custom icon'.tr(),
+                  items: [
+                    CustomMenuItem(
+                      scale: sss,
+                      onSelected: () async {
+                        if (!context.mounted) return;
+                        await setGroupOrModIcon(
+                          ref,
+                          widget.currentGroupData.groupPath,
+                          currentMod.iconPath,
+                          fromClipboard: true,
+                          isGroup: false,
+                          isNoneMod: isNoneModSlot,
+                          modPath: currentMod.modPath,
+                        );
+                      },
+                      label: 'Clipboard icon'.tr(),
+                    ),
+                    CustomMenuItem(
+                      scale: sss,
+                      onSelected: () async {
+                        if (!context.mounted) return;
+                        await setGroupOrModIcon(
+                          ref,
+                          widget.currentGroupData.groupPath,
+                          currentMod.iconPath,
+                          fromClipboard: false,
+                          isGroup: false,
+                          isNoneMod: isNoneModSlot,
+                          modPath: currentMod.modPath,
+                        );
+                      },
+                      label: 'Custom icon'.tr(),
+                    ),
+                    CustomMenuItem(
+                      scale: sss,
+                      onSelected: () async {
+                        if (!context.mounted) return;
+                        await unsetGroupOrModIcon(
+                          ref,
+                          widget.currentGroupData.groupPath,
+                          currentMod.iconPath,
+                          isNoneMod: isNoneModSlot,
+                          modPath: currentMod.modPath,
+                        );
+                      },
+                      label: 'Remove icon'.tr(),
+                    ),
+                  ],
                 ),
-                CustomMenuItem(
-                  scale: sss,
-                  onSelected: () async {
-                    if (!context.mounted) return;
-                    await unsetGroupOrModIcon(
-                      ref,
-                      widget.currentGroupData.groupDir,
-                      currentMod.modIcon,
-                      isNoneMod: isNoneModSlot,
-                      modDir: currentMod.modDir,
-                    );
-                  },
-                  label: 'Remove icon'.tr(),
-                ),
-              ],
-            ),
-            if (widget.index != 0)
-              CustomMenuItem(
-                scale: sss,
-                onSelected: () {
-                  if (!context.mounted) return;
-                  setState(() {
-                    modTextFieldEnabled = true;
-                  });
-                  _modNameTextFieldController.selection = TextSelection(
-                    baseOffset: 0,
-                    extentOffset: _modNameTextFieldController.text.length,
-                  );
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    modTextFieldFocusNode.requestFocus();
-                  });
-                },
-                label: 'Rename'.tr(),
-              ),
-            if (widget.index != 0)
-              CustomMenuItem(
-                scale: sss,
-                onSelected: () {
-                  if (!context.mounted) return;
-                  ref.read(modKeybindProvider.notifier).state = null;
-                  ref.read(modKeybindProvider.notifier).state = (
-                    widget.currentGroupData.modsInGroup[widget.index],
-                    widget.currentGroupData.groupName,
-                    ref.read(targetGameProvider),
-                  );
-                },
-                label: 'Keybinds'.tr(),
-              ),
-            if (widget.index != 0 &&
-                widget.currentGroupData.modsInGroup[widget.index].isNamespaced)
-              CustomMenuItem(
-                scale: sss,
-                onSelected: () {
-                  if (!context.mounted) return;
-                  ref.read(alertDialogShownProvider.notifier).state = true;
-                  showDialog(
-                    barrierDismissible: false,
-                    context: context,
-                    builder:
-                        (context) => ChangeNamespaceDialog(
-                          modPath:
-                              widget
-                                  .currentGroupData
-                                  .modsInGroup[widget.index]
-                                  .modDir
-                                  .path,
-                        ),
-                  );
-                },
-                label: 'Namespace',
-              ),
-            if (widget.index != 0)
-              CustomMenuItem(
-                scale: sss,
-                onSelected: () {
-                  if (!context.mounted) return;
-                  openFileExplorerToSpecifiedPath(
+                if (widget.index != 0)
+                  CustomMenuItem(
+                    scale: sss,
+                    onSelected: () {
+                      if (!context.mounted) return;
+                      setState(() {
+                        modTextFieldEnabled = true;
+                      });
+                      _modNameTextFieldController.selection = TextSelection(
+                        baseOffset: 0,
+                        extentOffset: _modNameTextFieldController.text.length,
+                      );
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        modTextFieldFocusNode.requestFocus();
+                      });
+                    },
+                    label: 'Rename'.tr(),
+                  ),
+                if (widget.index != 0)
+                  CustomMenuItem(
+                    scale: sss,
+                    onSelected: () {
+                      if (!context.mounted) return;
+                      ref.read(modKeybindProvider.notifier).state = null;
+                      ref.read(modKeybindProvider.notifier).state = (
+                        widget.currentGroupData.modsInGroup[widget.index],
+                        widget.currentGroupData.groupName,
+                        ref.read(targetGameProvider),
+                        false,
+                        false,
+                      );
+                    },
+                    label: 'Keybinds'.tr(),
+                  ),
+                if (widget.index != 0 &&
                     widget
                         .currentGroupData
                         .modsInGroup[widget.index]
-                        .modDir
-                        .path,
-                  );
-                },
-                label: 'Open in File Explorer'.tr(),
-              ),
-            if (widget.index != 0 &&
-                !isModDisabled(
-                  widget.currentGroupData.modsInGroup[widget.index].modDir.path,
-                ))
-              CustomMenuItem(
-                scale: sss,
-                onSelected: () async {
-                  if (!context.mounted) return;
+                        .isNamespaced)
+                  CustomMenuItem(
+                    scale: sss,
+                    onSelected: () {
+                      if (!context.mounted) return;
+                      ref.read(alertDialogShownProvider.notifier).state = true;
+                      showDialog(
+                        barrierDismissible: false,
+                        context: context,
+                        builder:
+                            (context) => ChangeNamespaceDialog(
+                              modPath:
+                                  widget
+                                      .currentGroupData
+                                      .modsInGroup[widget.index]
+                                      .modPath,
+                            ),
+                      );
+                    },
+                    label: 'Namespace',
+                  ),
+                if (widget.index != 0)
+                  CustomMenuItem(
+                    scale: sss,
+                    onSelected: () {
+                      if (!context.mounted) return;
+                      openFileExplorerToSpecifiedPath(
+                        widget
+                            .currentGroupData
+                            .modsInGroup[widget.index]
+                            .modPath,
+                      );
+                    },
+                    label: 'Open in File Explorer'.tr(),
+                  ),
+                if (widget.index != 0 &&
+                    !widget
+                        .currentGroupData
+                        .modsInGroup[widget.index]
+                        .isDisabled)
+                  CustomMenuItem(
+                    scale: sss,
+                    onSelected: () async {
+                      if (!context.mounted) return;
 
-                  bool success = await completeDisableMod(
-                    widget.currentGroupData.modsInGroup[widget.index].modDir,
-                  );
+                      String? watchedPath =
+                          DynamicDirectoryWatcher.watcher?.path;
+                      DynamicDirectoryWatcher.stop();
 
-                  if (!context.mounted) return;
+                      bool success = await completeDisableMod(
+                        widget
+                            .currentGroupData
+                            .modsInGroup[widget.index]
+                            .modPath,
+                      );
 
-                  if (success) {
-                    showUpdateModSnackbar(
-                      context,
-                      ProviderScope.containerOf(context, listen: false),
-                    );
-                    triggerRefresh(ref);
-                  } else {
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        backgroundColor: const Color(0xFF2B2930),
-                        margin: EdgeInsets.only(
-                          left: 20,
-                          right: 20,
-                          bottom: 20,
-                        ),
-                        duration: Duration(seconds: 3),
-                        behavior: SnackBarBehavior.floating,
-                        closeIconColor: const Color.fromARGB(255, 33, 149, 243),
-                        showCloseIcon: true,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        content: Text(
-                          'Failed to disable mod'.tr(),
-                          style: GoogleFonts.poppins(
-                            color: Colors.yellow,
-                            fontSize: 13 * ref.read(zoomScaleProvider),
-                          ),
-                        ),
-                        dismissDirection: DismissDirection.down,
-                      ),
-                    );
-                  }
-                },
-                label: 'Disable mod completely'.tr(),
-              ),
-            if (widget.index != 0 &&
-                isModDisabled(
-                  widget.currentGroupData.modsInGroup[widget.index].modDir.path,
-                ))
-              CustomMenuItem(
-                scale: sss,
-                onSelected: () async {
-                  if (!context.mounted) return;
+                      if (watchedPath != null) {
+                        DynamicDirectoryWatcher.watch(watchedPath);
+                      }
 
-                  bool success = await enableMod(
-                    widget.currentGroupData.modsInGroup[widget.index].modDir,
-                  );
+                      if (!context.mounted) return;
 
-                  if (!context.mounted) return;
-
-                  if (success) {
-                    showUpdateModSnackbar(
-                      context,
-                      ProviderScope.containerOf(context, listen: false),
-                    );
-                    triggerRefresh(ref);
-                  } else {
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        backgroundColor: const Color(0xFF2B2930),
-                        margin: EdgeInsets.only(
-                          left: 20,
-                          right: 20,
-                          bottom: 20,
-                        ),
-                        duration: Duration(seconds: 3),
-                        behavior: SnackBarBehavior.floating,
-                        closeIconColor: const Color.fromARGB(255, 33, 149, 243),
-                        showCloseIcon: true,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        content: Text(
-                          'Failed to enable mod'.tr(),
-                          style: GoogleFonts.poppins(
-                            color: Colors.yellow,
-                            fontSize: 13 * ref.read(zoomScaleProvider),
-                          ),
-                        ),
-                        dismissDirection: DismissDirection.down,
-                      ),
-                    );
-                  }
-                },
-                label: 'Enable mod'.tr(),
-              ),
-            if (widget.index != 0)
-              CustomMenuItem.submenu(
-                items: [
-                  if (widget.index != 0)
-                    CustomMenuItem(
-                      scale: sss,
-                      onSelected: () async {
-                        if (!context.mounted) return;
-                        try {
-                          String urlPath = p.join(
-                            widget
-                                .currentGroupData
-                                .modsInGroup[widget.index]
-                                .modDir
-                                .path,
-                            'modlink',
-                          );
-                          String url = await forceReadAsStringUtf8(
-                            File(urlPath),
-                          );
-                          if (!await launchUrl(Uri.parse(url))) {}
-                        } catch (_) {}
-                      },
-                      label: 'Open in browser'.tr(),
-                    ),
-                  if (widget.index != 0)
-                    CustomMenuItem(
-                      scale: sss,
-                      onSelected: () async {
-                        if (!context.mounted) return;
-                        String urlPath = p.join(
-                          widget
-                              .currentGroupData
-                              .modsInGroup[widget.index]
-                              .modDir
-                              .path,
-                          'modlink',
+                      if (success) {
+                        showUpdateModSnackbar(
+                          context,
+                          ProviderScope.containerOf(context, listen: false),
                         );
-                        ref.read(alertDialogShownProvider.notifier).state =
-                            true;
-                        await showDialog(
-                          barrierDismissible: false,
-                          context: context,
-                          builder:
-                              (context) =>
-                                  EditModLinkDialog(modLinkFile: File(urlPath)),
+
+                        //UPDATE RIVERPOD
+                        final currentGroups = ref.read(modGroupDataProvider);
+
+                        final updatedGroups =
+                            currentGroups.map((group) {
+                              if (group.groupPath ==
+                                  widget.currentGroupData.groupPath) {
+                                final updatedMods =
+                                    group.modsInGroup.map((mod) {
+                                      if (mod.modPath ==
+                                          widget
+                                              .currentGroupData
+                                              .modsInGroup[widget.index]
+                                              .modPath) {
+                                        return ModData(
+                                          modPath: p.join(
+                                            p.dirname(mod.modPath),
+                                            "DISABLED${p.basename(mod.modPath)}",
+                                          ),
+                                          iconPath: mod.iconPath,
+                                          modName: mod.modName,
+                                          realIndex: mod.realIndex,
+                                          isOldAutoFixed: mod.isOldAutoFixed,
+                                          isSyntaxErrorRemoved:
+                                              mod.isSyntaxErrorRemoved,
+                                          isUnoptimized: mod.isUnoptimized,
+                                          isNamespaced: mod.isNamespaced,
+                                          isDisabled: true,
+                                          favoriteDateTime:
+                                              mod.favoriteDateTime,
+                                        );
+                                      }
+                                      return mod;
+                                    }).toList();
+
+                                updatedMods.removeWhere(
+                                  (element) => element.realIndex == 0,
+                                );
+
+                                updatedMods.sort((a, b) {
+                                  if (a.isDisabled != b.isDisabled) {
+                                    return a.isDisabled ? 1 : -1;
+                                  }
+
+                                  final aFavorite = a.favoriteDateTime != null;
+                                  final bFavorite = b.favoriteDateTime != null;
+
+                                  if (aFavorite != bFavorite) {
+                                    return aFavorite ? -1 : 1;
+                                  }
+
+                                  if (aFavorite) {
+                                    final cmp = b.favoriteDateTime!.compareTo(
+                                      a.favoriteDateTime!,
+                                    );
+                                    if (cmp != 0) return cmp;
+                                  }
+
+                                  return compareNatural(
+                                    a.modName.toLowerCase(),
+                                    b.modName.toLowerCase(),
+                                  );
+                                });
+
+                                updatedMods.insert(
+                                  0,
+                                  ModData(
+                                    modPath: "None",
+                                    iconPath: p.join(
+                                      group.groupPath,
+                                      ConstantVar.noneSlotIconFileName,
+                                    ),
+                                    modName: "None".tr(),
+                                    realIndex: 0,
+                                    isOldAutoFixed: false,
+                                    isSyntaxErrorRemoved: false,
+                                    isUnoptimized: false,
+                                    isNamespaced: false,
+                                    isDisabled: false,
+                                    favoriteDateTime: null,
+                                  ),
+                                );
+
+                                return ModGroupData(
+                                  groupPath: group.groupPath,
+                                  iconPath: group.iconPath,
+                                  groupName: group.groupName,
+                                  favoriteDateTime: group.favoriteDateTime,
+                                  modsInGroup: updatedMods,
+                                  realIndex: group.realIndex,
+                                  previousSelectedModOnGroup:
+                                      group.previousSelectedModOnGroup,
+                                );
+                              }
+                              return group;
+                            }).toList();
+
+                        ref.read(modGroupDataProvider.notifier).state =
+                            updatedGroups;
+                      } else {
+                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            backgroundColor: const Color(0xFF2B2930),
+                            margin: EdgeInsets.only(
+                              left: 20,
+                              right: 20,
+                              bottom: 20,
+                            ),
+                            duration: Duration(seconds: 3),
+                            behavior: SnackBarBehavior.floating,
+                            closeIconColor: getAccentColor(ref),
+                            showCloseIcon: true,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            content: Text(
+                              'Failed to disable mod'.tr(),
+                              style: GoogleFonts.poppins(
+                                color: Colors.yellow,
+                                fontSize: 13 * ref.read(zoomScaleProvider),
+                              ),
+                            ),
+                            dismissDirection: DismissDirection.down,
+                          ),
                         );
-                      },
-                      label: 'Edit link'.tr(),
-                    ),
-                ],
-                label: 'Mod source'.tr(),
-                scale: sss,
-              ),
-            if (widget.index != 0)
-              CustomMenuItem(
-                scale: sss,
-                onSelected: () {
-                  if (!context.mounted) return;
-                  ref.read(alertDialogShownProvider.notifier).state = true;
-                  showDialog(
-                    barrierDismissible: false,
-                    context: context,
-                    builder:
-                        (context) => RemoveModGroupDialog(
-                          name: _modNameTextFieldController.text,
-                          validModsPath: ref.read(validModsPath)!,
-                          modOrGroupDir:
-                              widget
-                                  .currentGroupData
-                                  .modsInGroup[widget.index]
-                                  .modDir,
-                          isGroup: false,
-                        ),
-                  );
-                },
-                label: 'Remove mod'.tr(),
-              ),
-          ],
-          child: GestureDetector(
-            onDoubleTap:
-                widget.isCentered || widget.isGrid ? widget.onSelected : null,
-            onTap: widget.onTap,
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              onEnter:
-                  (_) => setState(() {
-                    isHovering = true;
-                  }),
-              onExit:
-                  (_) => setState(() {
-                    isHovering = false;
-                  }),
-              child: Tooltip(
-                message: p.basename(
-                  widget.currentGroupData.modsInGroup[widget.index].modDir.path,
-                ),
-                waitDuration: Duration(milliseconds: 500),
-                child: AnimatedContainer(
-                  duration: Duration(milliseconds: !widget.isGrid ? 250 : 0),
-                  curve: Curves.easeOut,
-                  height: widget.itemHeight,
-                  width: 156.816 * sss,
-                  decoration: BoxDecoration(
-                    color: Colors.transparent,
-                    border: Border.all(
-                      strokeAlign: BorderSide.strokeAlignInside,
-                      color:
-                          (isHovering && !widget.isGrid) ||
-                                  (isHovering &&
-                                      widget.isGrid &&
-                                      !ref.watch(wasUsingKeyboard)) ||
-                                  (widget.isActiveInGrid && widget.isGrid)
-                              ? Colors.white
-                              : isModDisabled(
+                      }
+                    },
+                    label: 'Disable mod completely'.tr(),
+                  ),
+                if (widget.index != 0 &&
+                    widget
+                        .currentGroupData
+                        .modsInGroup[widget.index]
+                        .isDisabled)
+                  CustomMenuItem(
+                    scale: sss,
+                    onSelected: () async {
+                      if (!context.mounted) return;
+
+                      String? watchedPath =
+                          DynamicDirectoryWatcher.watcher?.path;
+                      DynamicDirectoryWatcher.stop();
+
+                      bool success = await enableMod(
+                        widget
+                            .currentGroupData
+                            .modsInGroup[widget.index]
+                            .modPath,
+                      );
+
+                      if (watchedPath != null) {
+                        DynamicDirectoryWatcher.watch(watchedPath);
+                      }
+
+                      if (!context.mounted) return;
+
+                      if (success) {
+                        showUpdateModSnackbar(
+                          context,
+                          ProviderScope.containerOf(context, listen: false),
+                        );
+
+                        //UPDATE RIVERPOD
+                        final currentGroups = ref.read(modGroupDataProvider);
+
+                        final updatedGroups =
+                            currentGroups.map((group) {
+                              if (group.groupPath ==
+                                  widget.currentGroupData.groupPath) {
+                                final updatedMods =
+                                    group.modsInGroup.map((mod) {
+                                      if (mod.modPath ==
+                                          widget
+                                              .currentGroupData
+                                              .modsInGroup[widget.index]
+                                              .modPath) {
+                                        return ModData(
+                                          modPath: mod.modPath.replaceFirst(
+                                            RegExp(
+                                              r'disabled',
+                                              caseSensitive: false,
+                                            ),
+                                            '',
+                                          ),
+                                          iconPath: mod.iconPath,
+                                          modName: mod.modName,
+                                          realIndex: mod.realIndex,
+                                          isOldAutoFixed: mod.isOldAutoFixed,
+                                          isSyntaxErrorRemoved:
+                                              mod.isSyntaxErrorRemoved,
+                                          isUnoptimized: mod.isUnoptimized,
+                                          isNamespaced: mod.isNamespaced,
+                                          isDisabled: false,
+                                          favoriteDateTime:
+                                              mod.favoriteDateTime,
+                                        );
+                                      }
+                                      return mod;
+                                    }).toList();
+
+                                updatedMods.removeWhere(
+                                  (element) => element.realIndex == 0,
+                                );
+
+                                updatedMods.sort((a, b) {
+                                  if (a.isDisabled != b.isDisabled) {
+                                    return a.isDisabled ? 1 : -1;
+                                  }
+
+                                  final aFavorite = a.favoriteDateTime != null;
+                                  final bFavorite = b.favoriteDateTime != null;
+
+                                  if (aFavorite != bFavorite) {
+                                    return aFavorite ? -1 : 1;
+                                  }
+
+                                  if (aFavorite) {
+                                    final cmp = b.favoriteDateTime!.compareTo(
+                                      a.favoriteDateTime!,
+                                    );
+                                    if (cmp != 0) return cmp;
+                                  }
+
+                                  return compareNatural(
+                                    a.modName.toLowerCase(),
+                                    b.modName.toLowerCase(),
+                                  );
+                                });
+
+                                updatedMods.insert(
+                                  0,
+                                  ModData(
+                                    modPath: "None",
+                                    iconPath: p.join(
+                                      group.groupPath,
+                                      ConstantVar.noneSlotIconFileName,
+                                    ),
+                                    modName: "None".tr(),
+                                    realIndex: 0,
+                                    isOldAutoFixed: false,
+                                    isSyntaxErrorRemoved: false,
+                                    isUnoptimized: false,
+                                    isNamespaced: false,
+                                    isDisabled: false,
+                                    favoriteDateTime: null,
+                                  ),
+                                );
+
+                                return ModGroupData(
+                                  groupPath: group.groupPath,
+                                  iconPath: group.iconPath,
+                                  groupName: group.groupName,
+                                  favoriteDateTime: group.favoriteDateTime,
+                                  modsInGroup: updatedMods,
+                                  realIndex: group.realIndex,
+                                  previousSelectedModOnGroup:
+                                      group.previousSelectedModOnGroup,
+                                );
+                              }
+                              return group;
+                            }).toList();
+
+                        ref.read(modGroupDataProvider.notifier).state =
+                            updatedGroups;
+                      } else {
+                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            backgroundColor: const Color(0xFF2B2930),
+                            margin: EdgeInsets.only(
+                              left: 20,
+                              right: 20,
+                              bottom: 20,
+                            ),
+                            duration: Duration(seconds: 3),
+                            behavior: SnackBarBehavior.floating,
+                            closeIconColor: getAccentColor(ref),
+                            showCloseIcon: true,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            content: Text(
+                              'Failed to enable mod'.tr(),
+                              style: GoogleFonts.poppins(
+                                color: Colors.yellow,
+                                fontSize: 13 * ref.read(zoomScaleProvider),
+                              ),
+                            ),
+                            dismissDirection: DismissDirection.down,
+                          ),
+                        );
+                      }
+                    },
+                    label: 'Enable mod'.tr(),
+                  ),
+                if (widget.index != 0)
+                  CustomMenuItem.submenu(
+                    items: [
+                      if (widget.index != 0)
+                        CustomMenuItem(
+                          scale: sss,
+                          onSelected: () async {
+                            if (!context.mounted) return;
+                            try {
+                              String urlPath = p.join(
                                 widget
                                     .currentGroupData
                                     .modsInGroup[widget.index]
-                                    .modDir
-                                    .path,
-                              )
-                              ? Colors.red
-                              : widget.isSelected
-                              ? const Color.fromARGB(255, 33, 149, 243)
-                              : const Color.fromARGB(127, 255, 255, 255),
-                      width:
-                          (isHovering &&
-                                      widget.isGrid &&
-                                      !ref.watch(wasUsingKeyboard)) ||
-                                  (widget.isActiveInGrid && widget.isGrid)
-                              ? 4 * sss
-                              : 3 * sss,
-                    ),
-                    borderRadius: BorderRadius.circular(17 * sss),
+                                    .modPath,
+                                'modlink',
+                              );
+                              String url = await forceReadAsStringUtf8(
+                                File(urlPath),
+                              );
+                              if (!await launchUrl(Uri.parse(url))) {}
+                            } catch (_) {}
+                          },
+                          label: 'Open in browser'.tr(),
+                        ),
+                      if (widget.index != 0)
+                        CustomMenuItem(
+                          scale: sss,
+                          onSelected: () async {
+                            if (!context.mounted) return;
+                            String urlPath = p.join(
+                              widget
+                                  .currentGroupData
+                                  .modsInGroup[widget.index]
+                                  .modPath,
+                              'modlink',
+                            );
+                            ref.read(alertDialogShownProvider.notifier).state =
+                                true;
+                            await showDialog(
+                              barrierDismissible: false,
+                              context: context,
+                              builder:
+                                  (context) => EditModLinkDialog(
+                                    modLinkFile: File(urlPath),
+                                  ),
+                            );
+                          },
+                          label: 'Edit link'.tr(),
+                        ),
+                    ],
+                    label: 'Mod source'.tr(),
+                    scale: sss,
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(14 * sss),
-                    clipBehavior: Clip.antiAlias,
-                    child: Stack(
-                      children: [
-                        widget.index != 0
-                            ? SizedBox.expand(
-                              child: RefreshableLocalImage(
-                                imageWidget:
-                                    widget
-                                        .currentGroupData
-                                        .modsInGroup[widget.index]
-                                        .modIcon,
-                                errorWidget: Icon(
-                                  size: 40 * sss,
-                                  Icons.image_outlined,
-                                  color: const Color.fromARGB(
-                                    127,
-                                    255,
-                                    255,
-                                    255,
-                                  ),
-                                ),
-                              ),
-                            )
-                            : hasNoneModCustomIcon
-                            ? SizedBox.expand(
-                              child: RefreshableLocalImage(
-                                imageWidget: currentMod.modIcon,
-                                errorWidget: Icon(
-                                  size: 45 * sss,
-                                  Icons.close,
-                                  color: const Color.fromARGB(
-                                    127,
-                                    255,
-                                    255,
-                                    255,
-                                  ),
-                                ),
-                              ),
-                            )
-                            : SizedBox.expand(
-                              child: Icon(
-                                size: 45 * sss,
-                                Icons.close,
-                                color: const Color.fromARGB(127, 255, 255, 255),
-                              ),
+                if (widget.index != 0)
+                  CustomMenuItem(
+                    scale: sss,
+                    onSelected: () {
+                      if (!context.mounted) return;
+                      ref.read(alertDialogShownProvider.notifier).state = true;
+                      showDialog(
+                        barrierDismissible: false,
+                        context: context,
+                        builder:
+                            (context) => RemoveModGroupDialog(
+                              name: _modNameTextFieldController.text,
+                              validModsPath: ref.read(validModsPath)!,
+                              modOrGroupPath:
+                                  widget
+                                      .currentGroupData
+                                      .modsInGroup[widget.index]
+                                      .modPath,
+                              isGroup: false,
                             ),
+                      );
+                    },
+                    label: 'Remove mod'.tr(),
+                  ),
+              ],
+              child: GestureDetector(
+                onDoubleTap:
+                    widget.isCentered || widget.isGrid
+                        ? widget.onSelected
+                        : null,
+                onTap: widget.onTap,
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  onEnter:
+                      (_) => setState(() {
+                        isHovering = true;
+                      }),
+                  onExit:
+                      (_) => setState(() {
+                        isHovering = false;
+                      }),
+                  child: Tooltip(
+                    message: p.basename(
+                      widget.currentGroupData.modsInGroup[widget.index].modPath,
+                    ),
+                    textStyle: GoogleFonts.poppins(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 12 * sss,
+                    ),
+                    waitDuration: Duration(milliseconds: 500),
+                    child: AnimatedContainer(
+                      duration: Duration(
+                        milliseconds: !widget.isGrid ? 250 : 0,
+                      ),
+                      curve: Curves.easeOut,
+                      height: widget.itemHeight,
+                      width: 156.816 * sss,
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        border: Border.all(
+                          strokeAlign: BorderSide.strokeAlignInside,
+                          color:
+                              (isHovering && !widget.isGrid) ||
+                                      (isHovering &&
+                                          widget.isGrid &&
+                                          !ref.watch(wasUsingKeyboard)) ||
+                                      (widget.isActiveInGrid && widget.isGrid)
+                                  ? Colors.white
+                                  : widget
+                                      .currentGroupData
+                                      .modsInGroup[widget.index]
+                                      .isDisabled
+                                  ? const Color.fromARGB(169, 244, 67, 54)
+                                  : widget.isSelected
+                                  ? getAccentColor(ref)
+                                  : const Color.fromARGB(127, 255, 255, 255),
+                          width: 3 * sss,
+                        ),
+                        borderRadius: BorderRadius.circular(17 * sss),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(14 * sss),
+                        clipBehavior: Clip.antiAlias,
+                        child: Stack(
+                          children: [
+                            widget.index != 0
+                                ? SizedBox.expand(
+                                  child:
+                                      currentMod.iconPath == null
+                                          ? Icon(
+                                            size: 40 * sss,
+                                            Icons.image_outlined,
+                                            color: const Color.fromARGB(
+                                              127,
+                                              255,
+                                              255,
+                                              255,
+                                            ),
+                                          )
+                                          : Image.file(
+                                            File(currentMod.iconPath!),
+                                            fit: BoxFit.cover,
+                                            cacheWidth:
+                                                ConstantVar.modImageCacheWidth,
+                                            errorBuilder:
+                                                (context, error, stackTrace) =>
+                                                    Icon(
+                                                      size: 40 * sss,
+                                                      Icons.image_outlined,
+                                                      color:
+                                                          const Color.fromARGB(
+                                                            127,
+                                                            255,
+                                                            255,
+                                                            255,
+                                                          ),
+                                                    ),
+                                          ),
+                                )
+                                : isNoneModSlot
+                                ? currentMod.iconPath == null
+                                    ? SizedBox.expand(
+                                      child: Icon(
+                                        size: 45 * sss,
+                                        Icons.close,
+                                        color: const Color.fromARGB(
+                                          127,
+                                          255,
+                                          255,
+                                          255,
+                                        ),
+                                      ),
+                                    )
+                                    : SizedBox.expand(
+                                      child: Image.file(
+                                        File(currentMod.iconPath!),
+                                        fit: BoxFit.cover,
+                                        cacheWidth:
+                                            ConstantVar.modImageCacheWidth,
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                Icon(
+                                                  size: 45 * sss,
+                                                  Icons.close,
+                                                  color: const Color.fromARGB(
+                                                    127,
+                                                    255,
+                                                    255,
+                                                    255,
+                                                  ),
+                                                ),
+                                      ),
+                                    )
+                                : SizedBox.expand(
+                                  child: Icon(
+                                    size: 45 * sss,
+                                    Icons.close,
+                                    color: const Color.fromARGB(
+                                      127,
+                                      255,
+                                      255,
+                                      255,
+                                    ),
+                                  ),
+                                ),
 
-                        if (widget
-                                .currentGroupData
-                                .modsInGroup[widget.index]
-                                .isOldAutoFixed ||
-                            widget
-                                .currentGroupData
-                                .modsInGroup[widget.index]
-                                .isSyntaxErrorRemoved ||
-                            widget
-                                .currentGroupData
-                                .modsInGroup[widget.index]
-                                .isUnoptimized ||
-                            widget
-                                .currentGroupData
-                                .modsInGroup[widget.index]
-                                .isNamespaced)
-                          Align(
-                            alignment: Alignment.bottomCenter,
-                            child: Container(
-                              height: 30 * sss,
-                              width: 156.816 * sss,
-                              color: const Color.fromARGB(150, 0, 0, 0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                spacing: 8 * sss,
-                                children: [
-                                  if (widget
-                                      .currentGroupData
-                                      .modsInGroup[widget.index]
-                                      .isNamespaced)
-                                    Tooltip(
-                                      richMessage: TextSpan(
-                                        text: "Mod uses namespaces".tr(),
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12 * sss,
+                            if (widget
+                                    .currentGroupData
+                                    .modsInGroup[widget.index]
+                                    .isOldAutoFixed ||
+                                widget
+                                    .currentGroupData
+                                    .modsInGroup[widget.index]
+                                    .isSyntaxErrorRemoved ||
+                                widget
+                                    .currentGroupData
+                                    .modsInGroup[widget.index]
+                                    .isUnoptimized ||
+                                widget
+                                    .currentGroupData
+                                    .modsInGroup[widget.index]
+                                    .isNamespaced)
+                              Align(
+                                alignment: Alignment.bottomCenter,
+                                child: Container(
+                                  height: 30 * sss,
+                                  width: 156.816 * sss,
+                                  color: const Color.fromARGB(150, 0, 0, 0),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    spacing: 8 * sss,
+                                    children: [
+                                      if (widget
+                                          .currentGroupData
+                                          .modsInGroup[widget.index]
+                                          .isNamespaced)
+                                        Tooltip(
+                                          preferBelow: true,
+                                          verticalOffset: 50 * sss,
+                                          richMessage: TextSpan(
+                                            text: "Mod uses namespaces".tr(),
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 12 * sss,
+                                            ),
+                                          ),
+                                          child: HoverableIcon(
+                                            iconData: Icons.device_hub,
+                                            scaleFactor: sss,
+                                            idleColor: Colors.white,
+                                            activeColor: Colors.grey,
+                                          ),
                                         ),
-                                      ),
-                                      child: HoverableIcon(
-                                        iconData: Icons.device_hub,
-                                        scaleFactor: sss,
-                                        idleColor: Colors.white,
-                                        activeColor: Colors.grey,
-                                      ),
-                                    ),
-                                  if (widget
-                                      .currentGroupData
-                                      .modsInGroup[widget.index]
-                                      .isOldAutoFixed)
-                                    Tooltip(
-                                      richMessage: TextSpan(
-                                        text:
-                                            'Mod syntax errors were auto-fixed by earlier NRMM versions.'
-                                                .tr(),
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12 * sss,
+                                      if (widget
+                                          .currentGroupData
+                                          .modsInGroup[widget.index]
+                                          .isOldAutoFixed)
+                                        Tooltip(
+                                          preferBelow: true,
+                                          verticalOffset: 50 * sss,
+                                          richMessage: TextSpan(
+                                            text:
+                                                'Mod syntax errors were auto-fixed by earlier NRMM versions.'
+                                                    .tr(),
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 12 * sss,
+                                            ),
+                                          ),
+                                          child: HoverableIcon(
+                                            iconData:
+                                                Icons
+                                                    .running_with_errors_rounded,
+                                            scaleFactor: sss,
+                                            idleColor: Colors.yellow,
+                                            activeColor: Colors.white,
+                                          ),
                                         ),
-                                      ),
-                                      child: HoverableIcon(
-                                        iconData:
-                                            Icons.running_with_errors_rounded,
-                                        scaleFactor: sss,
-                                        idleColor: Colors.yellow,
-                                        activeColor: Colors.white,
-                                      ),
-                                    ),
-                                  if (widget
-                                      .currentGroupData
-                                      .modsInGroup[widget.index]
-                                      .isSyntaxErrorRemoved)
-                                    Tooltip(
-                                      richMessage: TextSpan(
-                                        text:
-                                            'Mod syntax errors are automatically removed.'
-                                                .tr(),
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12 * sss,
+                                      if (widget
+                                          .currentGroupData
+                                          .modsInGroup[widget.index]
+                                          .isSyntaxErrorRemoved)
+                                        Tooltip(
+                                          preferBelow: true,
+                                          verticalOffset: 50 * sss,
+                                          richMessage: TextSpan(
+                                            text:
+                                                'Mod syntax errors are automatically removed.'
+                                                    .tr(),
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 12 * sss,
+                                            ),
+                                          ),
+                                          child: HoverableIcon(
+                                            iconData: Icons.rule_rounded,
+                                            scaleFactor: sss,
+                                            idleColor: Colors.white,
+                                            activeColor: Colors.grey,
+                                          ),
                                         ),
-                                      ),
-                                      child: HoverableIcon(
-                                        iconData: Icons.rule_rounded,
-                                        scaleFactor: sss,
-                                        idleColor: Colors.white,
-                                        activeColor: Colors.grey,
-                                      ),
-                                    ),
-                                  if (widget
-                                      .currentGroupData
-                                      .modsInGroup[widget.index]
-                                      .isUnoptimized)
-                                    Tooltip(
-                                      richMessage: TextSpan(
-                                        text:
-                                            'Mod is unoptimized and might slow down performance or even break other mods.'
-                                                .tr(),
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12 * sss,
+                                      if (widget
+                                          .currentGroupData
+                                          .modsInGroup[widget.index]
+                                          .isUnoptimized)
+                                        Tooltip(
+                                          preferBelow: true,
+                                          verticalOffset: 50 * sss,
+                                          richMessage: TextSpan(
+                                            text:
+                                                'Mod is unoptimized and might slow down performance or even break other mods.'
+                                                    .tr(),
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 12 * sss,
+                                            ),
+                                          ),
+                                          child: Transform.scale(
+                                            scaleX: -1,
+                                            child: HoverableIcon(
+                                              iconData: Icons.speed_rounded,
+                                              scaleFactor: sss,
+                                              idleColor: Colors.yellow,
+                                              activeColor: Colors.white,
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                      child: Transform.scale(
-                                        scaleX: -1,
-                                        child: HoverableIcon(
-                                          iconData: Icons.speed_rounded,
-                                          scaleFactor: sss,
-                                          idleColor: Colors.yellow,
-                                          activeColor: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                ],
+                                    ],
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                      ],
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
+            if (widget.index != 0 && isHovering)
+              Transform.translate(
+                offset: Offset(7 * sss, 7 * sss),
+                child: SizedBox(
+                  width: 156.816 * sss,
+                  height: widget.itemHeight,
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: GestureDetector(
+                      onTap: () async {
+                        final container = ProviderScope.containerOf(
+                          context,
+                          listen: false,
+                        );
+
+                        bool wasFavorite = currentMod.favoriteDateTime != null;
+                        final currentGroups = ref.read(modGroupDataProvider);
+
+                        final visualGroups =
+                            currentGroups.map((group) {
+                              if (group.groupPath ==
+                                  widget.currentGroupData.groupPath) {
+                                final visualMods =
+                                    group.modsInGroup.map((mod) {
+                                      if (mod.modPath == currentMod.modPath) {
+                                        return ModData(
+                                          modPath: mod.modPath,
+                                          iconPath: mod.iconPath,
+                                          modName: mod.modName,
+                                          realIndex: mod.realIndex,
+                                          isOldAutoFixed: mod.isOldAutoFixed,
+                                          isSyntaxErrorRemoved:
+                                              mod.isSyntaxErrorRemoved,
+                                          isUnoptimized: mod.isUnoptimized,
+                                          isNamespaced: mod.isNamespaced,
+                                          isDisabled: mod.isDisabled,
+                                          favoriteDateTime:
+                                              wasFavorite
+                                                  ? null
+                                                  : DateTime.now(),
+                                        );
+                                      }
+                                      return mod;
+                                    }).toList();
+
+                                return ModGroupData(
+                                  groupPath: group.groupPath,
+                                  iconPath: group.iconPath,
+                                  groupName: group.groupName,
+                                  favoriteDateTime: group.favoriteDateTime,
+                                  modsInGroup: visualMods,
+                                  realIndex: group.realIndex,
+                                  previousSelectedModOnGroup:
+                                      group.previousSelectedModOnGroup,
+                                );
+                              }
+                              return group;
+                            }).toList();
+
+                        ref.read(modGroupDataProvider.notifier).state =
+                            visualGroups;
+
+                        String? watchedPath =
+                            DynamicDirectoryWatcher.watcher?.path;
+                        DynamicDirectoryWatcher.stop();
+                        try {
+                          final favFile = File(
+                            p.join(currentMod.modPath, 'fav'),
+                          );
+                          if (wasFavorite) {
+                            await favFile.delete();
+                          } else {
+                            await favFile.create();
+                          }
+                        } catch (_) {}
+                        if (watchedPath != null) {
+                          DynamicDirectoryWatcher.watch(watchedPath);
+                        }
+
+                        await Future.delayed(const Duration(milliseconds: 500));
+
+                        //SORT
+                        final sortedGroups =
+                            container.read(modGroupDataProvider).map((group) {
+                              if (group.groupPath ==
+                                  widget.currentGroupData.groupPath) {
+                                final updatedMods = List<ModData>.from(
+                                  group.modsInGroup,
+                                );
+
+                                updatedMods.removeWhere(
+                                  (element) => element.realIndex == 0,
+                                );
+
+                                updatedMods.sort((a, b) {
+                                  if (a.isDisabled != b.isDisabled) {
+                                    return a.isDisabled ? 1 : -1;
+                                  }
+
+                                  final aFavorite = a.favoriteDateTime != null;
+                                  final bFavorite = b.favoriteDateTime != null;
+
+                                  if (aFavorite != bFavorite) {
+                                    return aFavorite ? -1 : 1;
+                                  }
+
+                                  if (aFavorite) {
+                                    final cmp = b.favoriteDateTime!.compareTo(
+                                      a.favoriteDateTime!,
+                                    );
+                                    if (cmp != 0) return cmp;
+                                  }
+
+                                  return compareNatural(
+                                    a.modName.toLowerCase(),
+                                    b.modName.toLowerCase(),
+                                  );
+                                });
+
+                                updatedMods.insert(
+                                  0,
+                                  ModData(
+                                    modPath: "None",
+                                    iconPath: p.join(
+                                      group.groupPath,
+                                      ConstantVar.noneSlotIconFileName,
+                                    ),
+                                    modName: "None".tr(),
+                                    realIndex: 0,
+                                    isOldAutoFixed: false,
+                                    isSyntaxErrorRemoved: false,
+                                    isUnoptimized: false,
+                                    isNamespaced: false,
+                                    isDisabled: false,
+                                    favoriteDateTime: null,
+                                  ),
+                                );
+
+                                return ModGroupData(
+                                  groupPath: group.groupPath,
+                                  iconPath: group.iconPath,
+                                  groupName: group.groupName,
+                                  favoriteDateTime: group.favoriteDateTime,
+                                  modsInGroup: updatedMods,
+                                  realIndex: group.realIndex,
+                                  previousSelectedModOnGroup:
+                                      group.previousSelectedModOnGroup,
+                                );
+                              }
+                              return group;
+                            }).toList();
+
+                        container.read(modGroupDataProvider.notifier).state =
+                            sortedGroups;
+                      },
+                      child: MouseRegion(
+                        onEnter:
+                            (_) => setState(() {
+                              isHovering = true;
+                            }),
+                        onExit:
+                            (_) => setState(() {
+                              isHovering = false;
+                            }),
+                        cursor: SystemMouseCursors.click,
+
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color.fromARGB(100, 0, 0, 0),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.all(3.0 * sss),
+                            child: Icon(
+                              currentMod.favoriteDateTime != null
+                                  ? Icons.star_rounded
+                                  : Icons.star_outline_rounded,
+                              color: Colors.amber,
+                              size: 23 * sss,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
         SizedBox(height: 3 * sss, width: 156.816 * sss),
         SizedBox(
@@ -836,7 +1327,7 @@ class _ModContainerState extends ConsumerState<ModContainer>
             focusNode: modTextFieldFocusNode,
             textInputAction: TextInputAction.done,
             enabled: modTextFieldEnabled,
-            cursorColor: const Color.fromARGB(255, 33, 149, 243),
+            cursorColor: getAccentColor(ref),
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(color: Colors.white, fontSize: 12 * sss),
             decoration: InputDecoration(
@@ -849,14 +1340,12 @@ class _ModContainerState extends ConsumerState<ModContainer>
               ),
               disabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(
-                  color: const Color.fromARGB(255, 33, 149, 243),
+                  color: getAccentColor(ref),
                   style: BorderStyle.none,
                 ),
               ),
               focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(
-                  color: const Color.fromARGB(255, 33, 149, 243),
-                ),
+                borderSide: BorderSide(color: getAccentColor(ref)),
               ),
             ),
             onEditingComplete: () {
@@ -899,6 +1388,8 @@ class _ModContainerState extends ConsumerState<ModContainer>
             widget.currentGroupData.modsInGroup[widget.index],
             widget.currentGroupData.groupName,
             ref.read(targetGameProvider),
+            false,
+            false,
           );
         }
       }
@@ -915,7 +1406,7 @@ class TabModsNotReady extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sss = ref.watch(zoomScaleProvider);
     return Padding(
-      padding: EdgeInsets.only(top: 85 * sss),
+      padding: EdgeInsets.only(top: 102 * sss),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -984,7 +1475,7 @@ class TabModsLoading extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sss = ref.watch(zoomScaleProvider);
     return Padding(
-      padding: EdgeInsets.only(top: 57 * sss),
+      padding: EdgeInsets.only(top: 74 * sss),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

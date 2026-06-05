@@ -38,14 +38,14 @@ void goToSearchResult(WidgetRef ref, String query) {
     for (var i = 0; i < modGroupDatas.length; i++) {
       if (!isModOnly) {
         names.add((modGroupDatas[i].groupName.trim(), i, null));
-        names.add((p.basename(modGroupDatas[i].groupDir.path).trim(), i, null));
+        names.add((p.basename(modGroupDatas[i].groupPath).trim(), i, null));
       }
 
       if (!isGroupOnly) {
         List<ModData> modDatas = modGroupDatas[i].modsInGroup;
         for (var j = 0; j < modDatas.length; j++) {
           names.add((modDatas[j].modName.trim(), i, j));
-          names.add((p.basename(modDatas[j].modDir.path).trim(), i, j));
+          names.add((p.basename(modDatas[j].modPath).trim(), i, j));
         }
       }
     }
@@ -55,11 +55,7 @@ void goToSearchResult(WidgetRef ref, String query) {
         ref.read(modGroupDataProvider)[currentGroupIndex].modsInGroup;
     for (var i = 0; i < modDatas.length; i++) {
       names.add((modDatas[i].modName.trim(), currentGroupIndex, i));
-      names.add((
-        p.basename(modDatas[i].modDir.path).trim(),
-        currentGroupIndex,
-        i,
-      ));
+      names.add((p.basename(modDatas[i].modPath).trim(), currentGroupIndex, i));
     }
   }
 

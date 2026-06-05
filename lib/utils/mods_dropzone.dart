@@ -5,6 +5,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/utils/archive_manager.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:no_reload_mod_manager/utils/ui_dialogues.dart';
@@ -53,7 +54,7 @@ class _ModsDropZoneState extends ConsumerState<ModsDropZone> {
         margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
         duration: Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
-        closeIconColor: const Color.fromARGB(255, 33, 149, 243),
+        closeIconColor: getAccentColor(ref),
         showCloseIcon: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         content: Text(
@@ -140,9 +141,7 @@ class _ModsDropZoneState extends ConsumerState<ModsDropZone> {
       child: Container(
         decoration: BoxDecoration(
           color:
-              _dragging
-                  ? const Color.fromARGB(30, 33, 149, 243)
-                  : Colors.transparent,
+              _dragging ? getAccentColor(ref, alpha: 30) : Colors.transparent,
         ),
       ),
     );

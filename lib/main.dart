@@ -1,8 +1,8 @@
 //Sorry the code is messy.
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'package:auto_updater/auto_updater.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
@@ -13,12 +13,11 @@ import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
 import 'package:no_reload_mod_manager/utils/get_cloud_data.dart';
 import 'package:no_reload_mod_manager/utils/hotkey_handler.dart';
 import 'package:no_reload_mod_manager/utils/ini_handler_bridge.dart';
-import 'package:no_reload_mod_manager/utils/keypress_simulate.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/mod_navigator.dart';
 import 'package:no_reload_mod_manager/utils/mods_dropzone.dart';
-import 'package:no_reload_mod_manager/utils/refreshable_image.dart';
+import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:no_reload_mod_manager/utils/ui_dialogues.dart';
@@ -35,7 +34,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:top_snackbar_flutter/top_snack_bar.dart';
 import 'package:tray_manager/tray_manager.dart' as tray;
 import 'package:url_launcher/url_launcher.dart';
-import 'package:win32/win32.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:animated_segmented_tab_control/animated_segmented_tab_control.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
@@ -237,6 +235,14 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
     });
   }
 
+  bool isAnyTextFieldFocused() {
+    final context = FocusManager.instance.primaryFocus?.context;
+    if (context == null) return false;
+
+    return context.widget is EditableText ||
+        context.findAncestorWidgetOfExactType<EditableText>() != null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return KeyboardListener(
@@ -244,18 +250,37 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
         if (value is KeyUpEvent ||
             ref.read(alertDialogShownProvider) ||
             ref.read(popupMenuShownProvider)) {
+          if (value.physicalKey == PhysicalKeyboardKey.shiftLeft ||
+              value.physicalKey == PhysicalKeyboardKey.shiftRight) {
+            ref.read(isShiftPressed.notifier).state = false;
+          }
+          if (value.physicalKey == PhysicalKeyboardKey.controlLeft ||
+              value.physicalKey == PhysicalKeyboardKey.controlRight) {
+            ref.read(isCtrlPressed.notifier).state = false;
+          }
         } else {
           await ModNavigationListener.notifyListeners(value, null);
+
+          if (value.physicalKey == PhysicalKeyboardKey.shiftLeft ||
+              value.physicalKey == PhysicalKeyboardKey.shiftRight) {
+            ref.read(isShiftPressed.notifier).state = true;
+          }
+          if (value.physicalKey == PhysicalKeyboardKey.controlLeft ||
+              value.physicalKey == PhysicalKeyboardKey.controlRight) {
+            ref.read(isCtrlPressed.notifier).state = true;
+          }
         }
 
         //Fix stuck on windows menu when press Alt
         if ((value.physicalKey == PhysicalKeyboardKey.altLeft ||
                 value.physicalKey == PhysicalKeyboardKey.altRight) &&
             value is KeyUpEvent) {
-          simulateKeyDown(VK_ESCAPE);
-          await Future.delayed(Duration(milliseconds: 50));
-          simulateKeyUp(VK_ESCAPE);
-          focusNode.requestFocus();
+          if (!isAnyTextFieldFocused()) {
+            // simulateKeyDown(VK_ESCAPE);
+            // await Future.delayed(Duration(milliseconds: 50));
+            // simulateKeyUp(VK_ESCAPE);
+            // focusNode.requestFocus();
+          }
         }
       },
       focusNode: focusNode,
@@ -268,8 +293,8 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
         home: Background(successLoadPref: widget.successLoadPref),
         theme: ThemeData.dark().copyWith(
           colorScheme: ThemeData.dark().colorScheme.copyWith(
-            primary: const Color.fromARGB(127, 33, 149, 243),
-            secondary: const Color.fromARGB(127, 33, 149, 243),
+            primary: getAccentColor(ref, alpha: 127),
+            secondary: getAccentColor(ref, alpha: 127),
           ),
         ),
       ),
@@ -302,7 +327,7 @@ class _BackgroundState extends ConsumerState<Background> {
 
   Color getBorderColor(WidgetRef ref) {
     if (ref.watch(windowIsPinnedProvider)) {
-      return const Color.fromARGB(255, 33, 149, 243);
+      return getAccentColor(ref);
     } else {
       return const Color.fromARGB(127, 255, 255, 255);
     }
@@ -325,8 +350,7 @@ class _BackgroundState extends ConsumerState<Background> {
                       .read(modGroupDataProvider)[ref.read(
                         currentGroupIndexProvider,
                       )]
-                      .groupDir
-                      .path,
+                      .groupPath,
             ),
       );
     }
@@ -373,13 +397,13 @@ class _BackgroundState extends ConsumerState<Background> {
                             .watch(modGroupDataProvider)[ref.watch(
                               currentGroupIndexProvider,
                             )]
-                            .groupDir
-                            .path,
+                            .groupPath,
                   ),
                 RightClickMenuRegion(
                   menuItems: <ContextMenuEntry>[
                     if (ref.watch(tabIndexProvider) == 1 &&
-                        ref.watch(modGroupDataProvider).isEmpty)
+                        ref.watch(modGroupDataProvider).isEmpty &&
+                        ref.watch(validModsPath) != null)
                       CustomMenuItem(
                         scale: sss,
                         onSelected: () async {
@@ -510,6 +534,7 @@ class _BackgroundState extends ConsumerState<Background> {
                         ref.read(targetGameProvider.notifier).state =
                             TargetGame.none;
                         await windowManager.hide();
+                        clearImagesCache();
                         DynamicDirectoryWatcher.stop();
                       },
                       label: 'Hide window'.tr(),
@@ -925,7 +950,11 @@ class _MainViewState extends ConsumerState<MainView>
         tray.MenuItem(
           key: 'Hide',
           label: 'Hide'.tr(),
-          onClick: (menuItem) => bitsdojo.appWindow.hide(),
+          onClick: (menuItem) {
+            bitsdojo.appWindow.hide();
+            clearImagesCache();
+            DynamicDirectoryWatcher.stop();
+          },
         ),
         tray.MenuItem.separator(),
         tray.MenuItem(
@@ -1149,7 +1178,7 @@ class _MainViewState extends ConsumerState<MainView>
               margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
               duration: Duration(days: 1),
               behavior: SnackBarBehavior.floating,
-              closeIconColor: const Color.fromARGB(255, 33, 149, 243),
+              closeIconColor: getAccentColor(ref),
               showCloseIcon: true,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
@@ -1164,7 +1193,7 @@ class _MainViewState extends ConsumerState<MainView>
               action:
                   urlDetails.isNotEmpty
                       ? SnackBarAction(
-                        textColor: const Color.fromARGB(255, 33, 149, 243),
+                        textColor: getAccentColor(ref),
                         label: "Details".tr(),
                         onPressed: () async {
                           try {
@@ -1219,125 +1248,114 @@ class _MainViewState extends ConsumerState<MainView>
       );
     }
 
-    ImageRefreshListener.refreshImages(ref.read(modGroupDataProvider));
-
     ref.read(validModsPath.notifier).state = null;
     ref.read(searchBarShownProvider.notifier).state = false;
 
     setState(() {
       _views = [TabKeybinds(), TabModsLoading(), TabSettings()];
     });
-    ref.read(currentGroupIndexProvider.notifier).state = 0;
     TargetGame targetGame = ref.read(targetGameProvider);
     if (targetGame == TargetGame.none) return;
 
+    ref.read(currentGroupIndexProvider.notifier).state = 0;
+
     String modsPath = getCurrentModsPath(targetGame);
-    bool existAndValid = false;
+    String managedPath = p.join(modsPath, ConstantVar.managedFolderName);
     String notReadyReason = "";
+    bool existAndValid = false;
 
-    try {
-      if (!await Directory(modsPath).exists()) {
-        existAndValid = false;
+    final modsPathStatus = await ModsPathValidator.validate(modsPath);
+
+    ref.read(modsPathStatusProvider.notifier).state = modsPathStatus;
+
+    switch (modsPathStatus) {
+      case ModsPathStatus.invalidNotExist:
         notReadyReason = "Mods path does not exist.".tr();
-      } else if (modsPath.toLowerCase().endsWith('mods') ||
-          modsPath.toLowerCase().endsWith('mods\\')) {
-        existAndValid = true;
-      } else {
-        existAndValid = false;
-        notReadyReason = "Mods path invalid.".tr();
-      }
-    } catch (_) {
-      existAndValid = false;
-      notReadyReason = "Mods path invalid.".tr();
-    }
-
-    if (existAndValid) {
-      String managedPath = p.join(modsPath, ConstantVar.managedFolderName);
-      String backgroundKeypressPath = p.join(
-        managedPath,
-        ConstantVar.backgroundKeypressFileName,
-      );
-      String nrmmIncluderPath = p.join(
-        managedPath,
-        ConstantVar.nrmmIncluderFileName,
-      );
-      String managerGroupPath = p.join(
-        managedPath,
-        ConstantVar.managerGroupFileName,
-      );
-
-      //Check managed folder
-      if (!await Directory(managedPath).exists()) {
-        existAndValid = false;
+        break;
+      case ModsPathStatus.invalidNotModsFolder:
+        notReadyReason =
+            "Invalid Mods path. Make sure you're targeting the \"Mods\" folder."
+                .tr();
+        break;
+      case ModsPathStatus.invalidMissingD3dx:
+        notReadyReason =
+            "Invalid Mods path. Cannot find d3dx.ini next to the \"Mods\" folder."
+                .tr();
+        break;
+      case ModsPathStatus.invalidMissingDll:
+        notReadyReason =
+            "Invalid Mods path. Cannot find d3d11.dll next to the \"Mods\" folder."
+                .tr();
+        break;
+      case ModsPathStatus.invalidWithoutManagedFolder:
         notReadyReason =
             "Mods path is correct, but the '_MANAGED_' folder is missing or outdated."
                 .tr();
-      }
-      //Check nrmm_keypress.txt
-      else if (!await File(backgroundKeypressPath).exists()) {
-        existAndValid = false;
+        break;
+      case ModsPathStatus.invalidWithoutPrerequisiteFiles:
         notReadyReason =
             "Mods path is correct, but some requirements are missing.".tr();
-      }
-      //Check nrmm includer
-      else if (!await File(nrmmIncluderPath).exists()) {
-        existAndValid = false;
+        break;
+      case ModsPathStatus.invalidOutdated:
         notReadyReason =
-            "Mods path is correct, but some requirements are missing.".tr();
-      }
-      //Check manager_group.ini
-      else if (!await File(managerGroupPath).exists()) {
-        existAndValid = false;
-        notReadyReason =
-            "Mods path is correct, but some requirements are missing.".tr();
-      }
+            "Everything is correct, but config files are outdated.".tr();
+        break;
+      case ModsPathStatus.valid:
+        existAndValid = true;
+        break;
+    }
 
-      //Check for ini configuration version
-      if (existAndValid) {
-        String managedPath = p.join(modsPath, ConstantVar.managedFolderName);
+    if (existAndValid) {
+      //Load mod & group data
+      final datas = await refreshModData(Directory(managedPath));
 
-        String managerGroupPath = p.join(
-          managedPath,
-          ConstantVar.managerGroupFileName,
-        );
-        final firstLine = await readFirstLine(managerGroupPath);
-        if (firstLine?.trim() != ";revision_4") {
-          existAndValid = false;
-          notReadyReason =
-              "Everything is correct, but config files are outdated.".tr();
+      ref.read(sortGroupMethod.notifier).state =
+          SharedPrefUtils().getGroupSort();
+
+      final method = ref.read(sortGroupMethod);
+
+      datas.sort((a, b) {
+        final aFavorite = a.favoriteDateTime != null;
+        final bFavorite = b.favoriteDateTime != null;
+
+        // Favorites always first
+        if (aFavorite != bFavorite) {
+          return aFavorite ? -1 : 1;
         }
-      }
 
-      if (existAndValid) {
-        //Load mod & group datas
-        final datas = await refreshModData(Directory(managedPath));
+        // If both are favorites, always sort by newest first
+        if (aFavorite) {
+          final dateCmp = b.favoriteDateTime!.compareTo(a.favoriteDateTime!);
+          if (dateCmp != 0) return dateCmp;
+        }
 
-        ref.read(sortGroupMethod.notifier).state =
-            SharedPrefUtils().getGroupSort();
-
-        if (ref.read(sortGroupMethod) == 1) {
-          datas.sort(
-            (a, b) =>
-                a.groupName.toLowerCase().compareTo(b.groupName.toLowerCase()),
+        // Non-favorites handling based on method
+        if (method == 1) {
+          // Sort alphabetically by name
+          return compareNatural(
+            a.groupName.toLowerCase(),
+            b.groupName.toLowerCase(),
           );
         }
 
-        ref.read(modGroupDataProvider.notifier).state = datas;
+        return a.realIndex.compareTo(b.realIndex);
+      });
 
-        ref.read(validModsPath.notifier).state = modsPath;
-        int groupIndex = await getSelectedGroupIndex(
-          managedPath,
-          ref.read(modGroupDataProvider).length,
-        );
-        ref.read(currentGroupIndexProvider.notifier).state = groupIndex;
+      ref.read(modGroupDataProvider.notifier).state = datas;
 
-        DynamicDirectoryWatcher.watch(
-          r"\\?\" + managedPath.replaceFirst(r"\\?\", ''),
-          ref: ref,
-        ); //if somehow there's long path, \\?\ workaround, only for Windows
-      } else {
-        DynamicDirectoryWatcher.stop();
-      }
+      ref.read(validModsPath.notifier).state = modsPath;
+      int groupIndex = await getSelectedGroupIndex(
+        managedPath,
+        ref.read(modGroupDataProvider).length,
+      );
+      ref.read(currentGroupIndexProvider.notifier).state = groupIndex;
+
+      DynamicDirectoryWatcher.watch(
+        r"\\?\" + managedPath.replaceFirst(r"\\?\", ''),
+        ref: ref,
+      ); //if somehow there's long path, \\?\ workaround, only for Windows
+    } else {
+      DynamicDirectoryWatcher.stop();
     }
 
     //Sometimes widget don't rebuild/don't show loading screen because loading time was too fast
@@ -1361,6 +1379,7 @@ class _MainViewState extends ConsumerState<MainView>
         changeWindowTitleName("");
       }
       await windowManager.hide();
+      clearImagesCache();
       DynamicDirectoryWatcher.stop();
     } else {
       String foregroundProcessName = getForegroundWindowProcessName();
@@ -1428,28 +1447,8 @@ class _MainViewState extends ConsumerState<MainView>
         ref.read(targetGameProvider.notifier).state = TargetGame.none;
       }
       await windowManager.hide();
+      clearImagesCache();
       DynamicDirectoryWatcher.stop();
-    }
-  }
-
-  Future<String?> readFirstLine(String filePath) async {
-    final file = File(filePath);
-
-    if (!await file.exists()) return null;
-
-    // Open file as a stream of bytes
-    final stream = file.openRead();
-
-    // Decode bytes to UTF-8 text, split into lines
-    final lines = stream
-        .transform(utf8.decoder)
-        .transform(const LineSplitter());
-
-    // Return the first line
-    try {
-      return await lines.first;
-    } catch (_) {
-      return null; // File might be empty
     }
   }
 
@@ -1594,9 +1593,9 @@ class _UpdateModDataSnackbarButtonState
               child: Text(
                 'Do not forget to press Update Mod Data'.tr(),
                 style: GoogleFonts.poppins(
-                  color: Colors.red,
+                  color: Colors.yellow,
                   fontStyle: FontStyle.normal,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                   fontSize: 14 * ref.read(zoomScaleProvider),
                   decoration: TextDecoration.none,
                 ),
@@ -1628,8 +1627,8 @@ class _UpdateModDataSnackbarButtonState
               child: Text(
                 'Update Mod Data'.tr(),
                 style: GoogleFonts.poppins(
-                  color: const Color.fromARGB(255, 33, 149, 243),
-                  fontWeight: FontWeight.bold,
+                  color: getAccentColor(ref),
+                  fontWeight: FontWeight.w600,
                   fontSize: 14 * ref.read(zoomScaleProvider),
                 ),
               ),
@@ -1672,6 +1671,10 @@ void changeWindowTitleName(String gameName) {
       gameName.isNotEmpty
           ? "No Reload Mod Manager $gameName"
           : "No Reload Mod Manager";
+}
+
+Color getAccentColor(WidgetRef ref, {int alpha = 255}) {
+  return Color.fromARGB(alpha, 33, 149, 243);
 }
 
 class RandomTips extends ConsumerStatefulWidget {
@@ -1860,7 +1863,7 @@ class _RandomTipsState extends ConsumerState<RandomTips>
                       style: GoogleFonts.poppins(
                         color: const Color.fromARGB(200, 33, 149, 243),
                         fontSize: 11 * sss,
-                        fontWeight: FontWeight.w400,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
@@ -1876,6 +1879,8 @@ class _RandomTipsState extends ConsumerState<RandomTips>
 
 String getRandomTips(String previousTips) {
   final tips = <String>[
+    "Press Space to search mods".tr(),
+    "Press Space to search mods".tr(),
     "Press Space to search mods".tr(),
     "Press Space to search mods".tr(),
     "Press Space to search mods".tr(),

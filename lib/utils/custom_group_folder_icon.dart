@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:isolate';
 import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 import 'package:image/image.dart' as img;
@@ -86,9 +85,7 @@ Future<String?> _convertToIco(File inputFile, {int size = 256}) async {
   final inputBytes = await inputFile.readAsBytes();
 
   //do it without blocking main thread
-  final icoBytes = await Isolate.run(
-    () => _encodeIcoInIsolate([inputBytes, size]),
-  );
+  final icoBytes = await _encodeIcoInIsolate([inputBytes, size]);
 
   if (icoBytes != null) {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
