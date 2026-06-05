@@ -175,3 +175,5 @@ final explorerViewOpenedForwardPathsZzz =
     StateProvider<StackCollection<String>>((ref) => StackCollection());
 final explorerViewOpenedForwardPathsEndfield =
     StateProvider<StackCollection<String>>((ref) => StackCollection());
+
+final triggerRefreshModName = StateProvider<bool>((ref) => false);

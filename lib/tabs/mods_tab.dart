@@ -230,6 +230,11 @@ class _ModContainerState extends ConsumerState<ModContainer>
         getModName();
       });
     });
+    ref.listenManual(triggerRefreshModName, (previous, next) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        getModName();
+      });
+    });
     ModNavigationListener.addListener(this);
   }
 
@@ -576,6 +581,10 @@ class _ModContainerState extends ConsumerState<ModContainer>
 
                         ref.read(modGroupDataProvider.notifier).state =
                             updatedGroups;
+
+                        //Force update mod names
+                        final state = ref.read(triggerRefreshModName);
+                        ref.read(triggerRefreshModName.notifier).state = !state;
                       } else {
                         ScaffoldMessenger.of(context).hideCurrentSnackBar();
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -742,6 +751,10 @@ class _ModContainerState extends ConsumerState<ModContainer>
 
                         ref.read(modGroupDataProvider.notifier).state =
                             updatedGroups;
+
+                        //Force update mod names
+                        final state = ref.read(triggerRefreshModName);
+                        ref.read(triggerRefreshModName.notifier).state = !state;
                       } else {
                         ScaffoldMessenger.of(context).hideCurrentSnackBar();
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -1284,6 +1297,10 @@ class _ModContainerState extends ConsumerState<ModContainer>
 
                         container.read(modGroupDataProvider.notifier).state =
                             sortedGroups;
+
+                        //Force update mod names
+                        final state = ref.read(triggerRefreshModName);
+                        ref.read(triggerRefreshModName.notifier).state = !state;
                       },
                       child: MouseRegion(
                         onEnter:
