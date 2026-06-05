@@ -925,11 +925,16 @@ Future<List<TextSpan>> restoreManagedMod(List<Directory> modDirs) async {
             continue;
           }
 
+          bool startsWithSpecialComment1 = trimmedLineLower
+              .replaceAll(' ', '')
+              .startsWith(';-;condition=');
+          bool startsWithSpecialComment2 = trimmedLineLower
+              .replaceAll(' ', '')
+              .startsWith(';+;condition=');
           //remove manager condition expression
           if (trimmedLineLower.replaceAll(' ', '').startsWith('condition=') ||
-              trimmedLineLower
-                  .replaceAll(' ', '')
-                  .startsWith(';-;condition=')) {
+              startsWithSpecialComment1 ||
+              startsWithSpecialComment2) {
             final indexOfEqual = rawLines[i].indexOf('=');
             final expression = rawLines[i].substring(indexOfEqual + 1).trim();
             String modifiedExpression =
@@ -939,7 +944,12 @@ Future<List<TextSpan>> restoreManagedMod(List<Directory> modDirs) async {
               if (modifiedExpression == "") {
                 rawLines[i] = "-----";
               } else {
-                rawLines[i] = "condition = $modifiedExpression";
+                rawLines[i] =
+                    startsWithSpecialComment1
+                        ? ";-;condition = $modifiedExpression"
+                        : startsWithSpecialComment2
+                        ? ";+;condition = $modifiedExpression"
+                        : "condition = $modifiedExpression";
               }
               modified = true;
               continue;
