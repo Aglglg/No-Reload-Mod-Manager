@@ -2432,7 +2432,8 @@ Future<List<IniSection>> _parseIniSections(
           line
               .toLowerCase()
               .replaceAll(' ', '')
-              .contains("\$managed_slot_id=")) {
+              .contains("\$managed_slot_id=") &&
+          !line.startsWith(';')) {
         //
         //also do not add $managed_slot_id on constants
         //
