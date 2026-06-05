@@ -1423,7 +1423,7 @@ class TabModsNotReady extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sss = ref.watch(zoomScaleProvider);
     return Padding(
-      padding: EdgeInsets.only(top: 102 * sss),
+      padding: EdgeInsets.only(top: 85 * sss),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -1492,7 +1492,7 @@ class TabModsLoading extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sss = ref.watch(zoomScaleProvider);
     return Padding(
-      padding: EdgeInsets.only(top: 74 * sss),
+      padding: EdgeInsets.only(top: 57 * sss),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
