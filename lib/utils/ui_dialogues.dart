@@ -1367,10 +1367,7 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
       );
     });
 
-    final modsPathStatus = await ModsPathValidator.validate(
-      widget.modsPath,
-      ref.read(isCasualStyle),
-    );
+    final modsPathStatus = await ModsPathValidator.validate(widget.modsPath);
     ref.read(modsPathStatusProvider.notifier).state = modsPathStatus;
 
     switch (modsPathStatus) {

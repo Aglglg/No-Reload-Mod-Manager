@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:no_reload_mod_manager/casual_style/dds_handler_bridge.dart';
 import 'package:no_reload_mod_manager/data/mod_data.dart';
 import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
@@ -30,7 +29,6 @@ bool _hasIndex(int index, int listLength) {
 void clearImagesCache() {
   PaintingBinding.instance.imageCache.clear();
   PaintingBinding.instance.imageCache.clearLiveImages();
-  clearDdsCache();
 }
 
 void triggerRefresh(WidgetRef ref) {

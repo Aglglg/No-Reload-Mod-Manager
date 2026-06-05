@@ -58,12 +58,7 @@ add_subdirectory(
   ${CMAKE_CURRENT_SOURCE_DIR}/../lib/xxmi_lib_ini_handler
   xxmilib_ini_handler_build
 )
-add_subdirectory(
-  ${CMAKE_CURRENT_SOURCE_DIR}/../lib/bcdeclib
-  bcdeclib
-)
 add_dependencies(${BINARY_NAME} xxmi_lib_ini_handler)
-add_dependencies(${BINARY_NAME} bcdeclib)
 ###############################
 ###############################
 
@@ -92,10 +87,6 @@ install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
 ###########################################
 ###########################################
 install(TARGETS xxmi_lib_ini_handler
-  RUNTIME DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
-  COMPONENT Runtime
-)
-install(TARGETS bcdeclib
   RUNTIME DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime
 )

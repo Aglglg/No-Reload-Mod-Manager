@@ -74,7 +74,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
         Center(
           child: Padding(
             padding: EdgeInsets.only(
-              top: 102 * sss,
+              top: 85 * sss,
               bottom: 15 * sss,
               left: 45 * sss,
               right: 45 * sss,
@@ -1577,14 +1577,9 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
   }
 
   Future<void> isModsPathValid(String path) async {
-    final modsPathStatus = await ModsPathValidator.validate(
-      path,
-      ref.read(isCasualStyle),
-    );
+    final modsPathStatus = await ModsPathValidator.validate(path);
 
-    if (modsPathStatus == ModsPathStatus.valid ||
-        modsPathStatus == ModsPathStatus.validCasual ||
-        modsPathStatus == ModsPathStatus.validCasualWithoutKeypress) {
+    if (modsPathStatus == ModsPathStatus.valid) {
       ref.read(validModsPath.notifier).state = ModsPathValidator.sanitizePath(
         path,
       );

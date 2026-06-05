@@ -102,10 +102,6 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
       await setModDir();
     });
 
-    ref.listenManual(isCasualStyle, (previous, next) async {
-      await setModDir();
-    });
-
     ref.listenManual(targetGameProvider, (previous, next) async {
       await setModDir();
     });
@@ -162,9 +158,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
               modKeybind.$5
                   ? await File(modKeybind.$1.modPath).exists()
                   : await Directory(modKeybind.$1.modPath).exists();
-          if (exist &&
-              modKeybind.$3 == ref.read(targetGameProvider) &&
-              modKeybind.$4 == ref.read(isCasualStyle)) {
+          if (exist && modKeybind.$3 == ref.read(targetGameProvider)) {
             setState(() {
               modData = modKeybind.$1;
               groupName = modKeybind.$2;
@@ -575,7 +569,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
         child: Stack(
           children: [
             Padding(
-              padding: EdgeInsets.only(top: 102 * sss),
+              padding: EdgeInsets.only(top: 85 * sss),
               child: Align(
                 alignment: Alignment.topCenter,
                 child: Column(
@@ -637,7 +631,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
 
             Padding(
               padding: EdgeInsets.only(
-                top: 167 * sss,
+                top: 150 * sss,
                 right: 45 * sss,
                 left: 45 * sss,
                 bottom: 40 * sss,
@@ -831,7 +825,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
     } else {
       return Padding(
         padding: EdgeInsets.only(
-          top: 102 * sss,
+          top: 85 * sss,
           right: 49 * sss,
           left: 49 * sss,
           bottom: 30 * sss,

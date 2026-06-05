@@ -91,8 +91,8 @@ class _TabModsGridState extends ConsumerState<TabModsGrid>
                   padding: EdgeInsets.only(
                     top:
                         ref.watch(modGroupDataProvider).isNotEmpty
-                            ? 98 * sss
-                            : 84 * sss,
+                            ? 81 * sss
+                            : 67 * sss,
                   ),
                   child: IgnorePointer(
                     child: Text(
@@ -116,7 +116,7 @@ class _TabModsGridState extends ConsumerState<TabModsGrid>
             if (ref.watch(modGroupDataProvider).isNotEmpty)
               Padding(
                 padding: EdgeInsets.only(
-                  top: ref.watch(windowIsPinnedProvider) ? 123 * sss : 98 * sss,
+                  top: ref.watch(windowIsPinnedProvider) ? 103 * sss : 78 * sss,
                   right: 45 * sss,
                   left: 45 * sss,
                   bottom: 40 * sss,
@@ -130,7 +130,7 @@ class _TabModsGridState extends ConsumerState<TabModsGrid>
               Padding(
                 padding: EdgeInsets.only(
                   top:
-                      ref.watch(windowIsPinnedProvider) ? 255 * sss : 230 * sss,
+                      ref.watch(windowIsPinnedProvider) ? 235 * sss : 210 * sss,
                   right: 45 * sss,
                   left: 45 * sss,
                   bottom: 45 * sss,

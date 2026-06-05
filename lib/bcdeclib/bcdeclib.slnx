@@ -1,8 +1,0 @@
-<Solution>
-  <Configurations>
-    <Platform Name="x64" />
-    <Platform Name="x86" />
-  </Configurations>
-  <Folder Name="/Solution Items/" />
-  <Project Path="bcdeclib.vcxproj" Id="d7147f9a-b0e2-48e2-a4b5-1d69f882fd39" />
-</Solution>

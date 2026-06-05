@@ -4,20 +4,14 @@ import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:path/path.dart' as p;
 
 enum ModsPathStatus {
-  // Fully invalid
   invalidNotExist,
   invalidNotModsFolder,
   invalidMissingD3dx,
   invalidMissingDll,
 
-  // Valid for Casual Style
-  validCasualWithoutKeypress,
-  validCasual,
-
-  // for No-Reload
-  invalidNoReloadWithoutManagedFolder,
-  invalidNoReloadWithoutPrerequisiteFiles,
-  invalidNoReloadOutdated,
+  invalidWithoutManagedFolder,
+  invalidWithoutPrerequisiteFiles,
+  invalidOutdated,
 
   valid,
 }
@@ -32,10 +26,7 @@ extension ModsPathStatusExtension on ModsPathStatus {
 }
 
 class ModsPathValidator {
-  static Future<ModsPathStatus> validate(
-    String modsPath,
-    bool isCasualStyle,
-  ) async {
+  static Future<ModsPathStatus> validate(String modsPath) async {
     final sanitizedPath = sanitizePath(modsPath);
     if (sanitizedPath == null) {
       return ModsPathStatus.invalidNotExist;
@@ -92,28 +83,22 @@ class ModsPathValidator {
       hasKeypress = false;
     }
 
-    if (isCasualStyle) {
-      return (hasKeypress && hasIncluder)
-          ? ModsPathStatus.validCasual
-          : ModsPathStatus.validCasualWithoutKeypress;
-    } else {
-      if (!hasManagedFolder) {
-        return ModsPathStatus.invalidNoReloadWithoutManagedFolder;
-      }
-      if (hasManagerIni && hasIncluder && hasKeypress) {
-        // Check revision
-        final firstLine = await _readFirstLine(
-          p.join(managedPath, ConstantVar.managerGroupFileName),
-        );
-        if (firstLine?.trim() != ";revision_4") {
-          return ModsPathStatus.invalidNoReloadOutdated;
-        }
-
-        return ModsPathStatus.valid;
-      }
-
-      return ModsPathStatus.invalidNoReloadWithoutPrerequisiteFiles;
+    if (!hasManagedFolder) {
+      return ModsPathStatus.invalidWithoutManagedFolder;
     }
+    if (hasManagerIni && hasIncluder && hasKeypress) {
+      // Check revision
+      final firstLine = await _readFirstLine(
+        p.join(managedPath, ConstantVar.managerGroupFileName),
+      );
+      if (firstLine?.trim() != ";revision_4") {
+        return ModsPathStatus.invalidOutdated;
+      }
+
+      return ModsPathStatus.valid;
+    }
+
+    return ModsPathStatus.invalidWithoutPrerequisiteFiles;
   }
 
   static Future<String?> _readFirstLine(String filePath) async {

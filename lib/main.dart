@@ -403,8 +403,7 @@ class _BackgroundState extends ConsumerState<Background> {
                   menuItems: <ContextMenuEntry>[
                     if (ref.watch(tabIndexProvider) == 1 &&
                         ref.watch(modGroupDataProvider).isEmpty &&
-                        ref.watch(validModsPath) != null &&
-                        !ref.watch(isCasualStyle))
+                        ref.watch(validModsPath) != null)
                       CustomMenuItem(
                         scale: sss,
                         onSelected: () async {
@@ -436,8 +435,7 @@ class _BackgroundState extends ConsumerState<Background> {
                         },
                         label: 'Search'.tr(),
                       ),
-                    if (ref.watch(tabIndexProvider) == 1 &&
-                        !ref.watch(isCasualStyle))
+                    if (ref.watch(tabIndexProvider) == 1)
                       CustomMenuItem.submenu(
                         scale: sss,
                         items: [
@@ -1263,14 +1261,10 @@ class _MainViewState extends ConsumerState<MainView>
 
     String modsPath = getCurrentModsPath(targetGame);
     String managedPath = p.join(modsPath, ConstantVar.managedFolderName);
-    bool casualStyle = ref.read(isCasualStyle);
     String notReadyReason = "";
     bool existAndValid = false;
 
-    final modsPathStatus = await ModsPathValidator.validate(
-      modsPath,
-      casualStyle,
-    );
+    final modsPathStatus = await ModsPathValidator.validate(modsPath);
 
     ref.read(modsPathStatusProvider.notifier).state = modsPathStatus;
 
@@ -1293,24 +1287,18 @@ class _MainViewState extends ConsumerState<MainView>
             "Invalid Mods path. Cannot find d3d11.dll next to the \"Mods\" folder."
                 .tr();
         break;
-      case ModsPathStatus.invalidNoReloadWithoutManagedFolder:
+      case ModsPathStatus.invalidWithoutManagedFolder:
         notReadyReason =
             "Mods path is correct, but the '_MANAGED_' folder is missing or outdated."
                 .tr();
         break;
-      case ModsPathStatus.invalidNoReloadWithoutPrerequisiteFiles:
+      case ModsPathStatus.invalidWithoutPrerequisiteFiles:
         notReadyReason =
             "Mods path is correct, but some requirements are missing.".tr();
         break;
-      case ModsPathStatus.invalidNoReloadOutdated:
+      case ModsPathStatus.invalidOutdated:
         notReadyReason =
             "Everything is correct, but config files are outdated.".tr();
-        break;
-      case ModsPathStatus.validCasualWithoutKeypress:
-        existAndValid = casualStyle;
-        break;
-      case ModsPathStatus.validCasual:
-        existAndValid = casualStyle;
         break;
       case ModsPathStatus.valid:
         existAndValid = true;
@@ -1318,69 +1306,54 @@ class _MainViewState extends ConsumerState<MainView>
     }
 
     if (existAndValid) {
-      if (casualStyle) {
-        ref.read(modGroupDataProvider.notifier).state = [];
+      //Load mod & group data
+      final datas = await refreshModData(Directory(managedPath));
 
-        ref.read(validModsPath.notifier).state = modsPath;
+      ref.read(sortGroupMethod.notifier).state =
+          SharedPrefUtils().getGroupSort();
 
-        ref.read(validModsPath.notifier).state = modsPath;
-        int groupIndex = await getSelectedGroupIndex(managedPath, 500);
-        ref.read(currentGroupIndexProvider.notifier).state = groupIndex;
+      final method = ref.read(sortGroupMethod);
 
-        DynamicDirectoryWatcher.watch(
-          r"\\?\" + modsPath.replaceFirst(r"\\?\", ''),
-          ref: ref,
-        ); //if somehow there's long path, \\?\ workaround, only for Windows
-      } else {
-        //Load mod & group data
-        final datas = await refreshModData(Directory(managedPath));
+      datas.sort((a, b) {
+        final aFavorite = a.favoriteDateTime != null;
+        final bFavorite = b.favoriteDateTime != null;
 
-        ref.read(sortGroupMethod.notifier).state =
-            SharedPrefUtils().getGroupSort();
+        // Favorites always first
+        if (aFavorite != bFavorite) {
+          return aFavorite ? -1 : 1;
+        }
 
-        final method = ref.read(sortGroupMethod);
+        // If both are favorites, always sort by newest first
+        if (aFavorite) {
+          final dateCmp = b.favoriteDateTime!.compareTo(a.favoriteDateTime!);
+          if (dateCmp != 0) return dateCmp;
+        }
 
-        datas.sort((a, b) {
-          final aFavorite = a.favoriteDateTime != null;
-          final bFavorite = b.favoriteDateTime != null;
+        // Non-favorites handling based on method
+        if (method == 1) {
+          // Sort alphabetically by name
+          return compareNatural(
+            a.groupName.toLowerCase(),
+            b.groupName.toLowerCase(),
+          );
+        }
 
-          // Favorites always first
-          if (aFavorite != bFavorite) {
-            return aFavorite ? -1 : 1;
-          }
+        return a.realIndex.compareTo(b.realIndex);
+      });
 
-          // If both are favorites, always sort by newest first
-          if (aFavorite) {
-            final dateCmp = b.favoriteDateTime!.compareTo(a.favoriteDateTime!);
-            if (dateCmp != 0) return dateCmp;
-          }
+      ref.read(modGroupDataProvider.notifier).state = datas;
 
-          // Non-favorites handling based on method
-          if (method == 1) {
-            // Sort alphabetically by name
-            return compareNatural(
-              a.groupName.toLowerCase(),
-              b.groupName.toLowerCase(),
-            );
-          }
+      ref.read(validModsPath.notifier).state = modsPath;
+      int groupIndex = await getSelectedGroupIndex(
+        managedPath,
+        ref.read(modGroupDataProvider).length,
+      );
+      ref.read(currentGroupIndexProvider.notifier).state = groupIndex;
 
-          return a.realIndex.compareTo(b.realIndex);
-        });
-
-        ref.read(modGroupDataProvider.notifier).state = datas;
-
-        ref.read(validModsPath.notifier).state = modsPath;
-        int groupIndex = await getSelectedGroupIndex(
-          managedPath,
-          ref.read(modGroupDataProvider).length,
-        );
-        ref.read(currentGroupIndexProvider.notifier).state = groupIndex;
-
-        DynamicDirectoryWatcher.watch(
-          r"\\?\" + managedPath.replaceFirst(r"\\?\", ''),
-          ref: ref,
-        ); //if somehow there's long path, \\?\ workaround, only for Windows
-      }
+      DynamicDirectoryWatcher.watch(
+        r"\\?\" + managedPath.replaceFirst(r"\\?\", ''),
+        ref: ref,
+      ); //if somehow there's long path, \\?\ workaround, only for Windows
     } else {
       DynamicDirectoryWatcher.stop();
     }
@@ -1502,52 +1475,9 @@ class _MainViewState extends ConsumerState<MainView>
         ///Tab views
         IndexedStack(index: ref.watch(tabIndexProvider), children: _views),
 
-        //Switch Style
-        Padding(
-          padding: EdgeInsets.only(top: 5.2 * sss),
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: Transform.scale(
-              alignment: Alignment.topCenter,
-              scale: sss,
-              child: TextButton(
-                onPressed: () async {
-                  final casualStyle = ref.read(isCasualStyle);
-                  ref.read(isCasualStyle.notifier).state = !casualStyle;
-                  triggerRefresh(ref);
-                },
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      ref.watch(isCasualStyle)
-                          ? Icons.folder_rounded
-                          : Icons.bolt_rounded,
-                      size: 20,
-                      color: getAccentColor(ref),
-                    ),
-                    SizedBox(width: ref.watch(isCasualStyle) ? 10 : 6),
-                    Text(
-                      ref.watch(isCasualStyle)
-                          ? "Casual Style"
-                          : "No-Reload Style",
-                      style: GoogleFonts.poppins(
-                        color: getAccentColor(ref),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-
         ///Tab bars
         Padding(
-          padding: EdgeInsets.only(top: 42 * sss),
+          padding: EdgeInsets.only(top: 25 * sss),
           child: Align(
             alignment: Alignment.topCenter,
             child: Transform.scale(
@@ -1744,9 +1674,7 @@ void changeWindowTitleName(String gameName) {
 }
 
 Color getAccentColor(WidgetRef ref, {int alpha = 255}) {
-  return ref.watch(isCasualStyle)
-      ? Color.fromARGB(alpha, 164, 229, 196)
-      : Color.fromARGB(alpha, 33, 149, 243);
+  return Color.fromARGB(alpha, 33, 149, 243);
 }
 
 class RandomTips extends ConsumerStatefulWidget {

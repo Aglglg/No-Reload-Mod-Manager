@@ -7,11 +7,6 @@ import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:no_reload_mod_manager/utils/stack_collection.dart';
 
-final StateProvider<bool> isCasualStyle = StateProvider<bool>((ref) {
-  SharedPrefUtils().tryInit();
-  return SharedPrefUtils().getCasualStyle();
-});
-
 final StateProvider<TargetGame> targetGameProvider = StateProvider<TargetGame>(
   (ref) => TargetGame.none,
 );
