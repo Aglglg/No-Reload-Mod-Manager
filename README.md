@@ -4,7 +4,6 @@ How? Of course, first of all you must know [How to contribute to open sourced pr
 
 ---
 ### To-do list
-- Troubleshoot & Preset features
 - Bugfixes 
 ---
 
