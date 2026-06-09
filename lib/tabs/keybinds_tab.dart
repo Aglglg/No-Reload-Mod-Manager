@@ -343,7 +343,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
         keyP.dispose();
       }
 
-      widths.add(maxW + 40.0 * sss);
+      widths.add(maxW + 32.0 * sss + 28.0);
 
       if ((i + 1) % _kRowChunk == 0 || i == keys.length - 1) {
         final rows = _packRows(widths, availableWidth, spacing);
