@@ -803,16 +803,54 @@ static bool GetIniStringAndLog(Globals& G, const wchar_t* section, const wchar_t
 	return rc;
 }
 
+//I think we don't need to know the value for only parsing conditional lines, but okay, let it be, because I'm lazy.
+static float GetIniConstant(Globals& G, const wchar_t* section, const wchar_t* val, bool* found)
+{
+	if (!val || val[0] != L'$') {
+		if (found)
+			*found = false;
+		return 0;
+	}
+
+	std::wstring var_name(val);
+	std::wstring ini_namespace = G.ini_sections[section].ini_namespace;
+
+	CommandListVariables::iterator var = G.command_list_globals.find(get_namespaced_var_name_lower(var_name, &ini_namespace));
+
+	if (var == G.command_list_globals.end()) {
+		//IniWarningW(L"Constant variable %ls is not defined!\n - [%ls] @ [%ls]\n", val, section, ini_namespace.c_str());
+		if (found)
+			*found = false;
+		return 0;
+	}
+
+	if (found)
+		*found = true;
+
+	return var->second.fval;
+}
+
 int GetIniInt(Globals& G, const wchar_t* section, const wchar_t* key, int def, bool* found, bool warn)
 {
 	wchar_t val[32];
 	int ret = def;
-	int len;
 
 	if (found)
 		*found = false;
 
 	if (GetIniString(G, section, key, 0, val, 32)) {
+		bool constant_found = false;
+
+		ret = (int)GetIniConstant(G, section, val, &constant_found);
+
+		if (constant_found) {
+			if (found)
+				*found = true;
+			//LogInfo("  %S=%d\n", key, ret);
+			return ret;
+		}
+
+		int len;
 		if (swscanf_s(val, L"%d%n", &ret, &len) != 1 || len != wcslen(val)) {
 			if (warn) {
 				std::wstring ini_namespace = G.ini_sections[section].ini_namespace;
@@ -1170,10 +1208,6 @@ static void ParseConstantsSection(Globals& G)
 
 		next = section->erase(entry);
 	}
-
-	G.constants_command_list.clear();
-	G.post_constants_command_list.clear();
-	ParseCommandList(G, L"Constants", &G.constants_command_list, &G.post_constants_command_list, NULL);
 }
 
 wchar_t* ShaderOverrideIniKeys[] = {
@@ -1685,8 +1719,13 @@ void LoadConfigFile(Globals& G, const std::wstring& ini_file, const std::wstring
 	//EnumeratePresetOverrideSections();
 
 	//Used for parsing expression, so parse resource and constants first
-	ParseResourceSections(G);
 	ParseConstantsSection(G);
+	ParseResourceSections(G);
+
+	// Second pass for the Constants command list:
+	G.constants_command_list.clear();
+	G.post_constants_command_list.clear();
+	ParseCommandList(G, L"Constants", &G.constants_command_list, &G.post_constants_command_list, NULL);
 
 	//Only care about condition line in [Key] sections
 	RegisterPresetKeyBindings(G);
