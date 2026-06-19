@@ -337,7 +337,7 @@ static void tokenise(Globals& G, const std::wstring* expression, CommandListSynt
 			}
 		}
 
-		pos = remain.find_first_not_of(L"abcdefghijklmnopqrstuvwxyz_-0123456789");
+		pos = remain.find_first_not_of(L"@abcdefghijklmnopqrstuvwxyz_-0123456789");
 		if (pos) {
 			token = remain.substr(0, pos);
 			ret = texture_filter_target.ParseTarget(G, token.c_str(), true, ini_namespace);
@@ -1051,7 +1051,12 @@ bool ResourceCopyTarget::ParseTarget(Globals& G, const wchar_t* target,
 {
 	int ret, len;
 	size_t length = wcslen(target);
-	CustomResources::iterator res;
+
+	if (target[0] == L'@') {
+		evaluation_mode = ResourceCopyTargetEvaluationMode::RESOURCE_IDENTITY;
+		target++;
+		length--;
+	}
 
 	ret = swscanf_s(target, L"%lcs-cb%u%n", &shader_type, 1, &slot, &len);
 	//D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT = 14
@@ -1119,7 +1124,7 @@ bool ResourceCopyTarget::ParseTarget(Globals& G, const wchar_t* target,
 		std::wstring resource_id(target);
 		std::wstring namespaced_section;
 
-		res = G.customResources.end();
+		CustomResources::iterator res = G.customResources.end();
 		if (get_namespaced_section_name_lower(&resource_id, ini_namespace, &namespaced_section))
 			res = G.customResources.find(namespaced_section);
 		if (res == G.customResources.end())

@@ -121,16 +121,23 @@ enum class ResourceCopyTargetType {
 	CPU,
 };
 
+enum class ResourceCopyTargetEvaluationMode {
+	RESOURCE,
+	RESOURCE_IDENTITY,
+};
+
 //CONCRETE
 class ResourceCopyTarget {
 public:
 	ResourceCopyTargetType type;
+	ResourceCopyTargetEvaluationMode evaluation_mode;
 	wchar_t shader_type;
 	unsigned slot;
 	CustomResource* custom_resource;
 
 	ResourceCopyTarget() :
 		type(ResourceCopyTargetType::INVALID),
+		evaluation_mode(ResourceCopyTargetEvaluationMode::RESOURCE),
 		shader_type(L'\0'),
 		slot(0),
 		custom_resource(NULL)
