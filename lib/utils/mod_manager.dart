@@ -907,10 +907,13 @@ Future<List<TextSpan>> restoreManagedMod(List<Directory> modDirs) async {
 
           //remove manager comment mark
           if (trimmedLineLower.startsWith(';') &&
-                  (trimmedLineLower.contains('no reload mod manager') ||
-                      trimmedLineLower.contains('";-;" are errored') ||
-                      trimmedLineLower.contains('";+;" are disabled keys')) ||
-              trimmedLineLower.contains("errored conditional blocks")) {
+              (trimmedLineLower.contains('no reload mod manager') ||
+                  trimmedLineLower.contains('";-;" are errored') ||
+                  trimmedLineLower.contains('";+;" are disabled keys') ||
+                  trimmedLineLower.contains("errored conditional blocks") ||
+                  trimmedLineLower.contains(
+                    "if certain syntax is only available",
+                  ))) {
             rawLines[i] = "-----";
             modified = true;
             continue;
@@ -1328,9 +1331,9 @@ Future<List<TextSpan>> updateModData(
                     fontWeight: FontWeight.w400,
                   ),
                 ),
-              if (!usingCustomXxmiDll.value)
+              if (usingCustomXxmiDll.value)
                 TextSpan(
-                  text: '\n${'Learn more'.tr()}',
+                  text: '\n${'Check for Updates'.tr()}',
                   style: GoogleFonts.poppins(
                     color: Colors.green,
                     fontSize: 13,
@@ -2452,11 +2455,12 @@ Future<List<IniSection>> _parseIniSections(
         oldAutoFix.value = true;
         currentSection.lines.add(rawLine);
       } else if (currentSection.name == '__preamble__' &&
-              line.startsWith(';') &&
-              (line.contains('No Reload Mod Manager') ||
-                  line.contains('";-;" are errored') ||
-                  line.contains('";+;" are disabled keys')) ||
-          line.contains("Errored conditional blocks")) {
+          line.startsWith(';') &&
+          (line.contains('No Reload Mod Manager') ||
+              line.contains('";-;" are errored') ||
+              line.contains('";+;" are disabled keys') ||
+              line.contains("Errored conditional blocks") ||
+              line.contains("If certain syntax is only available"))) {
         //
         //also do not NRMM mark, we'll add it back later
         //
@@ -2544,7 +2548,7 @@ Future<List<IniSection>> _parseIniSections(
     // Give nrmm mark
     sections[0].lines.insert(
       0,
-      "; \";-;\" are errored conditional lines.\n; \";+;\" are disabled keys.\n; Errored conditional blocks (if/else/elif/endif) are handled correctly, including namespaced variables.",
+      "; \";-;\" are errored conditional lines.\n; \";+;\" are disabled keys.\n; Errored conditional blocks (if/else/elif/endif) are handled correctly (newer syntax may require further testing), including namespaced variables.\n; If certain syntax is only available in newer XXMI versions, make sure to use the latest XXMI.",
     );
   }
   return sections;
