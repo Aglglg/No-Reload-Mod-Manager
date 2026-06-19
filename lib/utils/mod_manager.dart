@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
@@ -1895,23 +1896,89 @@ Future<void> _tryRenameOldManagedFolder(String modsPath) async {
 }
 
 Future<bool> dllSupportsAdditionalForegroundWindow(String dllPath) async {
-  final bytes = await File(dllPath).readAsBytes();
+  final raf = await File(dllPath).open();
+  try {
+    return await _checkRdata(raf);
+  } catch (_) {
+    return false;
+  } finally {
+    await raf.close();
+  }
+}
 
-  // ASCII
-  final needle = utf8.encode('additional_foreground_window');
-  // UTF-16LE
-  final needleWide = Uint8List.fromList(
-    'additional_foreground_window'.codeUnits.expand((c) => [c, 0]).toList(),
-  );
+Future<Uint8List> _peRead(RandomAccessFile raf, int offset, int length) async {
+  await raf.setPosition(offset);
+  return raf.read(length);
+}
 
-  for (final target in [needle, needleWide]) {
-    outer:
-    for (int i = 0; i <= bytes.length - target.length; i++) {
-      for (int j = 0; j < target.length; j++) {
-        if (bytes[i + j] != target[j]) continue outer;
-      }
+Future<bool> _checkRdata(RandomAccessFile raf) async {
+  final dos = await _peRead(raf, 0, 64);
+  if (dos.length < 64 || dos[0] != 0x4D || dos[1] != 0x5A) {
+    return false;
+  }
+
+  final peOffset = ByteData.sublistView(dos).getUint32(0x3C, Endian.little);
+  final coff = await _peRead(raf, peOffset, 24);
+  if (coff.length < 24 || coff[0] != 0x50 || coff[1] != 0x45) {
+    return false;
+  }
+
+  final bd = ByteData.sublistView(coff);
+  final numSections = bd.getUint16(6, Endian.little);
+  final optHeaderSize = bd.getUint16(20, Endian.little);
+  final sectionTableStart = peOffset + 4 + 20 + optHeaderSize;
+
+  for (int i = 0; i < numSections; i++) {
+    final sh = await _peRead(raf, sectionTableStart + i * 40, 40);
+    if (sh.length < 40) continue;
+
+    final shBd = ByteData.sublistView(sh);
+    final characteristics = shBd.getUint32(36, Endian.little);
+
+    final isReadOnlyDataSection =
+        (characteristics & 0x00000040) != 0 &&
+        (characteristics & 0x40000000) != 0 &&
+        (characteristics & 0x80000000) == 0;
+
+    final name = String.fromCharCodes(sh.sublist(0, 8).where((b) => b != 0));
+    final isTargetName = name == '.rdata' || name == '.rodata';
+
+    if (!isReadOnlyDataSection && !isTargetName) continue;
+
+    final rawSize = shBd.getUint32(16, Endian.little);
+    final rawOffset = shBd.getUint32(20, Endian.little);
+    if (rawSize == 0 || rawOffset == 0) continue;
+
+    final section = await _peRead(raf, rawOffset, rawSize);
+
+    if (_containsUtf16Le(section, 'additional_foreground_window')) {
       return true;
     }
+  }
+
+  return false;
+}
+
+bool _containsUtf16Le(Uint8List bytes, String str) {
+  final needle = Uint8List(str.length * 2);
+  for (int i = 0; i < str.length; i++) {
+    needle[i * 2] = str.codeUnitAt(i);
+  }
+
+  final int needleLen = needle.length;
+  final int first = needle[0], second = needle[1];
+  int idx = 0;
+
+  while (idx <= bytes.length - needleLen) {
+    idx = bytes.indexOf(first, idx);
+    if (idx == -1 || idx > bytes.length - needleLen) break;
+
+    if (bytes[idx + 1] == second) {
+      int j = 2;
+      while (j < needleLen && bytes[idx + j] == needle[j]) j++;
+      if (j == needleLen) return true;
+    }
+    idx++;
   }
   return false;
 }
