@@ -1,0 +1,2 @@
+[System]
+additional_foreground_window = No Reload Mod Manager {game}

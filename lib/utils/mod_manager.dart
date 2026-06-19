@@ -1041,6 +1041,7 @@ Future<List<TextSpan>> updateModData(
 
   Ref<bool> errorShouldTryAgain = Ref(false);
   Ref<bool> usingCustomXxmiDll = Ref(false);
+  Ref<bool> usingSupportedXxmiDll = Ref(false);
 
   final stopwatch = Stopwatch()..start();
 
@@ -1052,6 +1053,7 @@ Future<List<TextSpan>> updateModData(
       operationLogs,
       errorShouldTryAgain,
       usingCustomXxmiDll,
+      usingSupportedXxmiDll,
       targetGame,
       dllPath,
     );
@@ -1317,12 +1319,12 @@ Future<List<TextSpan>> updateModData(
                 TextSpan(
                   text: 'XXMI for NRMM detected'.tr(),
                   style: GoogleFonts.poppins(
-                    color: Colors.grey,
+                    color: Colors.yellow,
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
-              if (!usingCustomXxmiDll.value)
+              if (!usingCustomXxmiDll.value && !usingSupportedXxmiDll.value)
                 TextSpan(
                   text: 'Standard XXMI/3DMigoto detected'.tr(),
                   style: GoogleFonts.poppins(
@@ -1331,13 +1333,22 @@ Future<List<TextSpan>> updateModData(
                     fontWeight: FontWeight.w400,
                   ),
                 ),
+              if (!usingCustomXxmiDll.value && usingSupportedXxmiDll.value)
+                TextSpan(
+                  text: 'Supported XXMI/3DMigoto detected'.tr(),
+                  style: GoogleFonts.poppins(
+                    color: Colors.grey,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
               if (usingCustomXxmiDll.value)
                 TextSpan(
-                  text: '\n${'Check for Updates'.tr()}',
+                  text: '\n${'Learn more'.tr()}',
                   style: GoogleFonts.poppins(
-                    color: Colors.green,
+                    color: Colors.yellow,
                     fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
                     decoration: TextDecoration.underline,
                     decorationThickness: 2,
                   ),
@@ -1505,6 +1516,7 @@ Future<(String, bool)> _prepareManagedFolder(
   List<TextSpan> operationLogs,
   Ref<bool> errorShouldTryAgain,
   Ref<bool> usingCustomXxmiDll,
+  Ref<bool> usingSupportedXxmiDll,
   TargetGame targetGame,
   String dllPath,
 ) async {
@@ -1535,6 +1547,7 @@ Future<(String, bool)> _prepareManagedFolder(
     operationLogs,
     errorShouldTryAgain,
     usingCustomXxmiDll,
+    usingSupportedXxmiDll,
     targetGame,
     dllPath,
   );
@@ -1881,6 +1894,28 @@ Future<void> _tryRenameOldManagedFolder(String modsPath) async {
   }
 }
 
+Future<bool> dllSupportsAdditionalForegroundWindow(String dllPath) async {
+  final bytes = await File(dllPath).readAsBytes();
+
+  // ASCII
+  final needle = utf8.encode('additional_foreground_window');
+  // UTF-16LE
+  final needleWide = Uint8List.fromList(
+    'additional_foreground_window'.codeUnits.expand((c) => [c, 0]).toList(),
+  );
+
+  for (final target in [needle, needleWide]) {
+    outer:
+    for (int i = 0; i <= bytes.length - target.length; i++) {
+      for (int j = 0; j < target.length; j++) {
+        if (bytes[i + j] != target[j]) continue outer;
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
 Future<bool> _isDllForNrmm(String dllPath) async {
   final file = File(dllPath);
   // Sanity check — a real d3d11.dll is between 1MB and 150MB
@@ -1914,23 +1949,34 @@ Future<void> _createBackgroundKeypressIni(
   List<TextSpan> operationLogs,
   Ref<bool> errorShouldTryAgain,
   Ref<bool> usingCustomXxmiDll,
+  Ref<bool> usingSupportedXxmiDll,
   TargetGame targetGame,
   String dllPath,
 ) async {
   bool nrmmCustomXXMIDll = false;
+  bool xxmiSupportAdditionalWindow = false;
 
   try {
     nrmmCustomXXMIDll = await _isDllForNrmm(dllPath);
+  } catch (_) {}
+
+  try {
+    xxmiSupportAdditionalWindow = await dllSupportsAdditionalForegroundWindow(
+      dllPath,
+    );
   } catch (_) {}
 
   // Load the .txt template from assets
   final template = await rootBundle.loadString(
     nrmmCustomXXMIDll
         ? 'assets/template_txt/listen_keypress_manager.txt'
+        : xxmiSupportAdditionalWindow
+        ? 'assets/template_txt/listen_keypress_additional_window.txt'
         : 'assets/template_txt/listen_keypress_even_on_background.txt',
   );
 
   usingCustomXxmiDll.value = nrmmCustomXXMIDll;
+  usingSupportedXxmiDll.value = xxmiSupportAdditionalWindow;
 
   // Create the required files
   final keypressfilePath = p.join(

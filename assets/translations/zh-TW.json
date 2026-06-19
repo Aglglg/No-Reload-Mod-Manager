@@ -236,7 +236,7 @@
   "Invalid Mods path. Cannot find d3d11.dll next to the \"Mods\" folder.": "模組路徑無效。\n在「Mods」資料夾旁找不到 d3d11.dll。\n請確保你已至少使用 XXMI Launcher 啟動過一次遊戲。",
   "The following ini files have paths that are too long": "以下 .ini 檔案的路徑過長：\n{}\n",
   "Please shorten the folder names": "請縮短資料夾名稱或移除列出的模組，因為路徑過長可能導致模組衝突或遊戲無提示崩潰。\n\n",
-  "XXMI for NRMM detected": "\n偵測到 XXMI for NRMM。\n模組切換/按鍵切換僅在遊戲視窗處於焦點狀態時有效。",
+  "XXMI for NRMM detected": "\n偵測到 XXMI for NRMM。\n請直接使用更新版本的原版 XXMI。",
   "Standard XXMI/3DMigoto detected": "\n偵測到標準 XXMI/3DMigoto。\n即使遊戲視窗未處於焦點狀態，模組切換/按鍵切換仍可正常使用。",
   "Modding library is inside managed folder": "{} 在 {} 中被偵測到。\n",
   "Please put modding library outside managed folder": "請將 {} 移動至根目錄「Mods」資料夾，然後使用設定中的還原區功能。\n\n",
@@ -259,5 +259,6 @@
   "Don't forget to reload the mod with F10.": "別忘了按 F10 重新載入模組。",
   "Reload": "重新載入",
   "Enable All Keybinds": "啟用所有按鍵切換",
-  "Disable All Keybinds": "停用所有按鍵切換"
+  "Disable All Keybinds": "停用所有按鍵切換",
+  "Supported XXMI/3DMigoto detected": "\n偵測到受支援的 XXMI！\n模組切換/按鍵切換僅在遊戲視窗處於焦點狀態時有效。"
 }

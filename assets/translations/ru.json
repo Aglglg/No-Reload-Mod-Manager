@@ -236,7 +236,7 @@
   "Invalid Mods path. Cannot find d3d11.dll next to the \"Mods\" folder.": "Путь к модам недействителен.\nНе удаётся найти d3d11.dll рядом с папкой \"Mods\".\nУбедитесь, что вы хотя бы раз запускали игру через XXMI Launcher.",
   "The following ini files have paths that are too long": "Следующие .ini файлы имеют слишком длинные пути:\n{}\n",
   "Please shorten the folder names": "Пожалуйста, сократите названия папок или удалите указанные моды, так как длинные пути могут вызвать конфликты модов или скрытый вылет игры.\n\n",
-  "XXMI for NRMM detected": "\nОбнаружен XXMI для NRMM.\nПереключатели/привязки клавиш модов работают только когда игра в фокусе.",
+  "XXMI for NRMM detected": "\nОбнаружен XXMI для NRMM.\nПожалуйста, просто используйте более новую оригинальную версию XXMI.",
   "Standard XXMI/3DMigoto detected": "\nОбнаружен стандартный XXMI/3DMigoto.\nПереключатели/привязки клавиш модов работают, даже когда игра не в фокусе.",
   "Modding library is inside managed folder": "{} обнаружен внутри {}.\n",
   "Please put modding library outside managed folder": "Пожалуйста, переместите {} в корневую папку \"Mods\", затем воспользуйтесь функцией Восстановление в Настройках.\n\n",
@@ -259,5 +259,6 @@
   "Don't forget to reload the mod with F10.": "Не забудьте перезагрузить мод с помощью F10.",
   "Reload": "Перезагрузить",
   "Enable All Keybinds": "Включить все привязки клавиш",
-  "Disable All Keybinds": "Отключить все привязки клавиш"
+  "Disable All Keybinds": "Отключить все привязки клавиш",
+  "Supported XXMI/3DMigoto detected": "\nОбнаружен поддерживаемый XXMI!\nПереключатели/привязки клавиш модов работают только когда игра в фокусе."
 }
