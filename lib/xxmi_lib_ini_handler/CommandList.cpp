@@ -337,10 +337,10 @@ static void tokenise(Globals& G, const std::wstring* expression, CommandListSynt
 			}
 		}
 
-		pos = remain.find_first_not_of(L"@abcdefghijklmnopqrstuvwxyz_-0123456789");
+		pos = remain.find_first_not_of(L"@#abcdefghijklmnopqrstuvwxyz_-0123456789[$.]");
 		if (pos) {
 			token = remain.substr(0, pos);
-			ret = texture_filter_target.ParseTarget(G, token.c_str(), true, ini_namespace);
+			ret = texture_filter_target.ParseTarget(G, token.c_str(), true, ini_namespace, scope);
 			if (ret) {
 				operand = std::make_shared<CommandListOperand>(friendly_pos, token);
 				if (operand->parse(G, &token, ini_namespace, scope)) {
@@ -957,7 +957,7 @@ bool CommandListOperand::parse(Globals& G, const std::wstring* operand, const st
 		return operand_allowed_in_context(type, scope);
 	}
 
-	ret = texture_filter_target.ParseTarget(G, operand->c_str(), true, ini_namespace);
+	ret = texture_filter_target.ParseTarget(G, operand->c_str(), true, ini_namespace, scope);
 	if (ret) {
 		type = ParamOverrideType::TEXTURE;
 		return operand_allowed_in_context(type, scope);
@@ -1046,14 +1046,27 @@ CustomResource::~CustomResource()
 {
 }
 
+CustomResourcePool::CustomResourcePool()
+{
+}
+
+CustomResourcePool::~CustomResourcePool()
+{
+}
+
 bool ResourceCopyTarget::ParseTarget(Globals& G, const wchar_t* target,
-	bool is_source, const std::wstring* ini_namespace)
+	bool is_source, const std::wstring* ini_namespace, CommandListScope* scope)
 {
 	int ret, len;
 	size_t length = wcslen(target);
 
 	if (target[0] == L'@') {
 		evaluation_mode = ResourceCopyTargetEvaluationMode::RESOURCE_IDENTITY;
+		target++;
+		length--;
+	}
+	else if (target[0] == L'#') {
+		evaluation_mode = ResourceCopyTargetEvaluationMode::POOL_INDEX;
 		target++;
 		length--;
 	}
@@ -1120,7 +1133,11 @@ bool ResourceCopyTarget::ParseTarget(Globals& G, const wchar_t* target,
 	}
 
 	if (length >= 9 && !wcsncmp(target, L"resource", 8)) {
-
+		if (evaluation_mode != ResourceCopyTargetEvaluationMode::RESOURCE &&
+			evaluation_mode != ResourceCopyTargetEvaluationMode::RESOURCE_IDENTITY)
+		{
+			return false;
+		}
 		std::wstring resource_id(target);
 		std::wstring namespaced_section;
 
@@ -1132,8 +1149,97 @@ bool ResourceCopyTarget::ParseTarget(Globals& G, const wchar_t* target,
 		if (res == G.customResources.end())
 			return false;
 
-		custom_resource = &res->second;
+		_custom_resource = &res->second;
 		type = ResourceCopyTargetType::CUSTOM_RESOURCE;
+		return true;
+	}
+
+	if (length >= 5 && !wcsncmp(target, L"pool", 4)) {
+		std::wstring pool_id;
+		std::wstring pool_index_var_name;
+
+		if (target[length - 1] == L']')
+		{
+			// Parse PoolName[$id] or PoolName[0]
+			const wchar_t* pool_index_open_pos = wcsrchr(target, L'[');
+			if (pool_index_open_pos && pool_index_open_pos > target) {
+				pool_index_var_name = std::wstring(pool_index_open_pos + 1, target + length - 1);
+				length = pool_index_open_pos - target;
+				pool_id = std::wstring(target, target + length);
+			}
+			else {
+				// Invalid syntax (opening `[` not found or located after closing `]`)
+				return false;
+			}
+		}
+		else if (evaluation_mode == ResourceCopyTargetEvaluationMode::RESOURCE_IDENTITY)
+		{
+			// Treat ^PoolName as POOL_IDENTITY instead of RESOURCE_IDENTITY (no index provided)
+			evaluation_mode = ResourceCopyTargetEvaluationMode::POOL_IDENTITY;
+			pool_id = std::wstring(target);
+		}
+		else if (evaluation_mode == ResourceCopyTargetEvaluationMode::POOL_INDEX)
+		{
+			// Treat #PoolName as POOL_SIZE instead of POOL_INDEX (no index provided)
+			evaluation_mode = ResourceCopyTargetEvaluationMode::POOL_SIZE;
+			pool_id = std::wstring(target);
+		}
+
+		if (!pool_id.empty())
+		{
+			std::wstring namespaced_section;
+			CustomResourcePools::iterator con = G.customResourcePools.end();
+			if (get_namespaced_section_name_lower(&pool_id, ini_namespace, &namespaced_section))
+				con = G.customResourcePools.find(namespaced_section);
+			if (con == G.customResourcePools.end())
+				con = G.customResourcePools.find(pool_id);
+			if (con != G.customResourcePools.end())
+				custom_resource_pool = &con->second;
+		}
+
+		if (custom_resource_pool == nullptr)
+			return false;
+
+		// Handle resource pool index
+		if (!pool_index_var_name.empty()) {
+			if (pool_index_var_name[0] == L'$')
+			{
+				// Parse DYNAMIC pool index PoolName[$id]
+				CommandListVariable* var = NULL;
+				// Try parsing var_name as a variable:
+				if (find_local_variable(pool_index_var_name, scope, &var) ||
+					parse_command_list_var_name(G, pool_index_var_name, ini_namespace, &var)) {
+					// Bind custom resource pool
+					// Custom resource will be resolved dynamically in ResourceCopyTarget::GetResource
+					custom_resource_pool_index_var = var;
+				}
+				else {
+					return false;
+				}
+			}
+			else
+			{
+				// Parse STATIC pool index or PoolName[0] 
+				int ret, len1;
+				float val;
+				// Try parsing var_name as a float
+				ret = swscanf_s(pool_index_var_name.c_str(), L"%f%n", &val, &len1);
+				if (ret != 0 && ret != EOF && len1 == pool_index_var_name.length()) {
+					// Bind custom resource instance directly
+					//_custom_resource = custom_resource_pool->GetResource(val);
+				}
+				else {
+					return false;
+				}
+			}
+
+			type = ResourceCopyTargetType::CUSTOM_RESOURCE;
+		}
+		else
+		{
+			type = ResourceCopyTargetType::CUSTOM_RESOURCE_POOL;
+		}
+
 		return true;
 	}
 

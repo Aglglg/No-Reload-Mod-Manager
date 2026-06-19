@@ -99,6 +99,19 @@ public:
 
 typedef std::unordered_map<std::wstring, class CustomResource> CustomResources;
 
+//CONCRETE
+class CustomResourcePool
+{
+public:
+	std::wstring name;
+
+	CustomResourcePool();
+	~CustomResourcePool();
+
+};
+
+typedef std::unordered_map<std::wstring, class CustomResourcePool> CustomResourcePools;
+
 enum class ResourceCopyTargetType {
 	INVALID,
 	EMPTY,
@@ -115,6 +128,7 @@ enum class ResourceCopyTargetType {
 	CURSOR_MASK,
 	CURSOR_COLOR,
 	THIS_RESOURCE,
+	CUSTOM_RESOURCE_POOL,
 	SWAP_CHAIN,
 	REAL_SWAP_CHAIN,
 	FAKE_SWAP_CHAIN,
@@ -124,27 +138,35 @@ enum class ResourceCopyTargetType {
 enum class ResourceCopyTargetEvaluationMode {
 	RESOURCE,
 	RESOURCE_IDENTITY,
+	POOL_IDENTITY,
+	POOL_SIZE,
+	POOL_INDEX,
 };
 
 //CONCRETE
 class ResourceCopyTarget {
+private:
+	CustomResource* _custom_resource;
 public:
 	ResourceCopyTargetType type;
 	ResourceCopyTargetEvaluationMode evaluation_mode;
 	wchar_t shader_type;
 	unsigned slot;
-	CustomResource* custom_resource;
+	CustomResourcePool* custom_resource_pool;
+	CommandListVariable* custom_resource_pool_index_var;
 
 	ResourceCopyTarget() :
 		type(ResourceCopyTargetType::INVALID),
 		evaluation_mode(ResourceCopyTargetEvaluationMode::RESOURCE),
 		shader_type(L'\0'),
 		slot(0),
-		custom_resource(NULL)
+		_custom_resource(NULL),
+		custom_resource_pool(NULL),
+		custom_resource_pool_index_var(NULL)
 	{
 	}
 
-	bool ParseTarget(Globals& G, const wchar_t* target, bool is_source, const std::wstring* ini_namespace);
+	bool ParseTarget(Globals& G, const wchar_t* target, bool is_source, const std::wstring* ini_namespace, CommandListScope* scope);
 
 };
 
