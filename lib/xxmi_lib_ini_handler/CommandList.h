@@ -135,13 +135,30 @@ enum class ResourceCopyTargetType {
 	CPU,
 };
 
-enum class ResourceCopyTargetEvaluationMode {
-	RESOURCE,
-	RESOURCE_IDENTITY,
-	POOL_IDENTITY,
-	POOL_SIZE,
-	POOL_INDEX,
+enum class ResourceCopyTargetEvaluationMode : uint16_t {
+	INVALID = 0b0000000000000000, // 0x0000
+	// RESOURCE
+	RESOURCE = 0b0000000000000001, // 0x0001
+	RESOURCE_IDENTITY = 0b0000000000000010, // 0x0002
+	RESOURCE_STRIDE = 0b0000000000000100, // 0x0004
+	RESOURCE_SOURCE_STRIDE = 0b0000000000001000, // 0x0008
+	RESOURCE_SIZE = 0b0000000000010000, // 0x0010
+	//                       0b0000000000100000, // 0x0020
+	//                       0b0000000001000000, // 0x0040
+	//                       0b0000000010000000, // 0x0080
+	//                       0b0000000100000000, // 0x0100
+	//                       0b0000001000000000, // 0x0200
+	RESOURCE_MASK = 0b0000001111111111, // lower 10 bits
+	// POOL
+	POOL_IDENTITY = 0b0000010000000000, // 0x0400
+	POOL_SIZE = 0b0000100000000000, // 0x0800
+	POOL_INDEX = 0b0001000000000000, // 0x1000
+	//                       0b0010000000000000, // 0x2000
+	//                       0b0100000000000000, // 0x4000
+	//                       0b1000000000000000, // 0x8000
+	POOL_MASK = 0b1111110000000000  // upper 6 bits
 };
+SENSIBLE_ENUM(ResourceCopyTargetEvaluationMode);
 
 //CONCRETE
 class ResourceCopyTarget {

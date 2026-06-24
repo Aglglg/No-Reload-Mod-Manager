@@ -337,7 +337,7 @@ static void tokenise(Globals& G, const std::wstring* expression, CommandListSynt
 			}
 		}
 
-		pos = remain.find_first_not_of(L"@#abcdefghijklmnopqrstuvwxyz_-0123456789[$.]");
+		pos = remain.find_first_not_of(L"@#abcdefghijklmnopqrstuvwxyz_-0123456789[$.]>");
 		if (pos) {
 			token = remain.substr(0, pos);
 			ret = texture_filter_target.ParseTarget(G, token.c_str(), true, ini_namespace, scope);
@@ -1059,16 +1059,44 @@ bool ResourceCopyTarget::ParseTarget(Globals& G, const wchar_t* target,
 {
 	int ret, len;
 	size_t length = wcslen(target);
+	std::wstring temp_target;
 
-	if (target[0] == L'@') {
+	switch (target[0]) {
+	case L'@':
 		evaluation_mode = ResourceCopyTargetEvaluationMode::RESOURCE_IDENTITY;
 		target++;
 		length--;
-	}
-	else if (target[0] == L'#') {
+		break;
+	case L'#':
 		evaluation_mode = ResourceCopyTargetEvaluationMode::POOL_INDEX;
 		target++;
 		length--;
+		break;
+	}
+
+	struct SuffixInfo {
+		const wchar_t* suffix;
+		size_t len; // including "->"
+		ResourceCopyTargetEvaluationMode mode;
+	};
+
+	static constexpr SuffixInfo suffixes[] = {
+		{ L"->sourcestride", 14, ResourceCopyTargetEvaluationMode::RESOURCE_SOURCE_STRIDE },
+		{ L"->stride",        8, ResourceCopyTargetEvaluationMode::RESOURCE_STRIDE },
+		{ L"->size",          6, ResourceCopyTargetEvaluationMode::RESOURCE_SIZE },
+	};
+
+	if (length >= 8) // Smallest possible match atm is "ib->size"
+	{
+		for (const auto& s : suffixes) {
+			if (length >= s.len + 2 && target[length - s.len + 1] == L'>' && !wmemcmp(target + length - s.len, s.suffix, s.len)) {
+				evaluation_mode = s.mode;
+				length -= s.len;
+				temp_target.assign(target, length);
+				target = temp_target.c_str();
+				break;
+			}
+		}
 	}
 
 	ret = swscanf_s(target, L"%lcs-cb%u%n", &shader_type, 1, &slot, &len);
@@ -1133,11 +1161,9 @@ bool ResourceCopyTarget::ParseTarget(Globals& G, const wchar_t* target,
 	}
 
 	if (length >= 9 && !wcsncmp(target, L"resource", 8)) {
-		if (evaluation_mode != ResourceCopyTargetEvaluationMode::RESOURCE &&
-			evaluation_mode != ResourceCopyTargetEvaluationMode::RESOURCE_IDENTITY)
-		{
+		if (!(evaluation_mode & ResourceCopyTargetEvaluationMode::RESOURCE_MASK))
 			return false;
-		}
+
 		std::wstring resource_id(target);
 		std::wstring namespaced_section;
 

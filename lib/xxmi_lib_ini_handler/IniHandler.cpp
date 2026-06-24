@@ -1080,6 +1080,8 @@ static CustomResourcePool* ParseResourcePoolSection(Globals& G, const wchar_t* s
 
 	custom_resource_pool->name = pool_id;
 	/*custom_resource_pool->resource_template = ParseResourceSection(G, section_name, L"template");
+	
+	custom_resource_pool->resource_template->pool = custom_resource_pool;
 	custom_resource_pool->resource_template->pool_index = -1;
 
 	custom_resource_pool->resources.resize(pool_size, nullptr);
