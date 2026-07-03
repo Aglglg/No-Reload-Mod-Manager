@@ -210,7 +210,7 @@
   "Save Mod Customizations": "Save Mod Customizations",
   "Set current mod customizations (toggles/states) as default": "Set current mod customizations (toggles/states) as default",
   "It is recommended to reload the mods with F10 first and wait until the process is complete": "\n\nIt is recommended to reload the mods with F10 first and wait until the process is complete.",
-  "File d3dx_user.ini does not exist": "File d3dx_user.ini does not exist",
+  "File d3dx_user.ini does not exist": "File d3dx_user.ini does not exist.\nNothing to be saved, make sure you've successfully mod the game first and press F10.",
   "Only mods inside the _MANAGED_ folder can have their customizations saved. Try pressing \"Update Mod Data\" first to create the folder.": "Only mods inside the _MANAGED_ folder can have their customizations saved. Try pressing \"Update Mod Data\" first to create the folder.",
   "Current mod customizations have been set as the default.": "Current mod customizations have been set as the default.",
   "To get faster mod reload, consider disabling mods you rarely use.": "\nTo get faster mod reload, consider disabling mods you rarely use.\nSettings tab, just scroll down a bit.\n",

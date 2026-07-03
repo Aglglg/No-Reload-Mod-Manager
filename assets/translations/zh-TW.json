@@ -210,7 +210,7 @@
   "Save Mod Customizations": "儲存模組自訂設定",
   "Set current mod customizations (toggles/states) as default": "將目前的模組自訂設定（切換/狀態）設為預設",
   "It is recommended to reload the mods with F10 first and wait until the process is complete": "\n\n建議先按 F10 重新載入模組，並等待載入完成。",
-  "File d3dx_user.ini does not exist": "檔案 d3dx_user.ini 不存在",
+  "File d3dx_user.ini does not exist": "檔案 d3dx_user.ini 不存在。\n沒有可儲存的內容，請確保已成功為遊戲安裝模組並按下 F10。",
   "Only mods inside the _MANAGED_ folder can have their customizations saved. Try pressing \"Update Mod Data\" first to create the folder.": "只有位於 _MANAGED_ 資料夾中的模組才能儲存自訂設定。請先點擊「更新模組資料」來建立該資料夾。",
   "Current mod customizations have been set as the default.": "目前的模組自訂設定已設為預設。",
   "To get faster mod reload, consider disabling mods you rarely use.": "\n如需加快模組載入速度，可以考慮停用不常用的模組。位於「設定」分頁中，向下捲動一點即可。\n",
