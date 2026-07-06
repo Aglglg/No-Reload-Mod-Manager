@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
@@ -19,6 +20,7 @@ import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
 import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:path/path.dart' as p;
+import 'package:url_launcher/url_launcher.dart';
 
 class GenerateGroupIcoFileDialog extends ConsumerStatefulWidget {
   final String validModsPath;
@@ -303,7 +305,7 @@ class _PrefCorruptedDialogState extends ConsumerState<PrefCorruptedDialog> {
                   .tr(),
           style: GoogleFonts.poppins(
             color: Colors.white,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w500,
           ),
         ),
       );
@@ -371,6 +373,263 @@ class _PrefCorruptedDialogState extends ConsumerState<PrefCorruptedDialog> {
         ),
       ],
     );
+  }
+}
+
+class SupportAndStatsDialog extends ConsumerStatefulWidget {
+  const SupportAndStatsDialog({super.key});
+
+  @override
+  ConsumerState<SupportAndStatsDialog> createState() =>
+      _SupportAndStatsDialogState();
+}
+
+class _SupportAndStatsDialogState extends ConsumerState<SupportAndStatsDialog> {
+  final ScrollController _scrollController = ScrollController();
+  int _modsCount = 0;
+  int _groupsCount = 0;
+  int _daysUsed = 0;
+  bool _usedSinceV1 = false;
+
+  bool _answered = false;
+  String? _choice;
+  bool _isYes = false;
+  Timer? _closeTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  @override
+  void dispose() {
+    _closeTimer?.cancel();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadStats() async {
+    _modsCount = 0;
+    _groupsCount = ref.read(modGroupDataProvider).length;
+
+    for (var group in ref.read(modGroupDataProvider)) {
+      _modsCount += group.modsInGroup.length - 1;
+    }
+
+    String prefPath = p.join(
+      SharedPrefUtils().getUserProfilePath(),
+      r'AppData\Roaming\com.aglg\No Reload Mod Manager',
+    );
+
+    DateTime? firstLaunch;
+    final prefDir = Directory(prefPath);
+    if (await prefDir.exists()) {
+      final ttfFiles =
+          await prefDir
+              .list()
+              .where(
+                (entity) =>
+                    entity is File && p.extension(entity.path) == '.ttf',
+              )
+              .cast<File>()
+              .toList();
+
+      for (final file in ttfFiles) {
+        final modified = await file.lastModified();
+        if (firstLaunch == null || modified.isBefore(firstLaunch)) {
+          firstLaunch = modified;
+        }
+      }
+    }
+
+    _daysUsed =
+        firstLaunch != null ? DateTime.now().difference(firstLaunch).inDays : 0;
+
+    final modsPath = ref.read(validModsPath);
+    if (modsPath != null) {
+      final oldJsonPath = p.join(
+        modsPath,
+        ConstantVar.managedFolderName,
+        "moddata.json",
+      );
+
+      if (await File(oldJsonPath).exists()) {
+        final oldJsonFileModification = await File(oldJsonPath).lastModified();
+
+        if (oldJsonFileModification.year == 2025) {
+          _usedSinceV1 = true;
+        }
+      }
+    }
+
+    setState(() {});
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToBottom();
+    });
+  }
+
+  Future<void> _handleAnswer(String choice, {required bool isYes}) async {
+    setState(() {
+      _answered = true;
+      _choice = choice;
+      _isYes = isYes;
+    });
+
+    _closeTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        Navigator.of(context).pop();
+        ref.read(alertDialogShownProvider.notifier).state = false;
+      }
+    });
+
+    if (!_isYes) return;
+    try {
+      if (!await launchUrl(Uri.parse(ref.read(supportLinkProvider)))) {}
+    } catch (_) {}
+
+    await _scrollToBottom();
+  }
+
+  Future<void> _scrollToBottom() async {
+    // Wait until scrollController has a valid position
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (!_scrollController.hasClients) return;
+
+    await _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Center(
+        child: Text(
+          'Statistics'.tr(),
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
+        ),
+      ),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.trackpad,
+            },
+            scrollbars: false,
+          ),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children:
+                  _answered ? _buildAnsweredContent() : _buildQuestionContent(),
+            ),
+          ),
+        ),
+      ),
+      contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
+      actionsAlignment: MainAxisAlignment.center,
+      actions:
+          _answered
+              ? []
+              : [
+                TextButton(
+                  onPressed: () => _handleAnswer('No'.tr(), isYes: false),
+                  child: Text(
+                    'No'.tr(),
+                    style: GoogleFonts.poppins(
+                      color: getAccentColor(ref),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => _handleAnswer('Yes'.tr(), isYes: true),
+                  child: Text(
+                    'Yes'.tr(),
+                    style: GoogleFonts.poppins(
+                      color: getAccentColor(ref),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+    );
+  }
+
+  List<Widget> _buildQuestionContent() {
+    return [
+      Image.asset('assets/images/camellya_peek.webp', height: 100),
+      const SizedBox(height: 16),
+      Text(
+        '${'Groups'.tr()}: $_groupsCount',
+        style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        '${'Mods'.tr()}: $_modsCount',
+        style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        'Days used'.tr(args: [_daysUsed.toString()]),
+        style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
+      ),
+      if (_usedSinceV1) ...[
+        const SizedBox(height: 4),
+        Text(
+          "Using NRMM since v1".tr(),
+          style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
+        ),
+      ],
+      const SizedBox(height: 15),
+      Text(
+        "NRMM runs on donations alone".tr(),
+        textAlign: TextAlign.center,
+        style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
+      ),
+      Text(
+        "Support the dev?".tr(),
+        style: GoogleFonts.poppins(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: Colors.green,
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _buildAnsweredContent() {
+    return [
+      Text(
+        "Support the dev?".tr(),
+        style: GoogleFonts.poppins(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: Colors.green,
+        ),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        _choice ?? '',
+        style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
+      ),
+      const SizedBox(height: 16),
+      Image.asset(
+        _isYes
+            ? 'assets/images/encore_wow.webp'
+            : 'assets/images/verina_sad.webp',
+        height: 100,
+      ),
+    ];
   }
 }
 

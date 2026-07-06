@@ -499,6 +499,24 @@ class SharedPrefUtils {
     return result ??= false;
   }
 
+  Future<void> setLastOpened(DateTime value) async {
+    await _prefs?.setString(keyLastOpened, value.toString());
+  }
+
+  DateTime getLastOpened() {
+    String? result = _prefs?.getString(keyLastOpened);
+    if (result == null) {
+      setLastOpened(DateTime.now());
+      return DateTime.now();
+    } else {
+      try {
+        return DateTime.parse(result);
+      } catch (_) {
+        return DateTime.now();
+      }
+    }
+  }
+
   static const String keyTargetProcessWuwa = 'targetProcessWuwa';
   static const String keyTargetProcessGenshin = 'targetProcessGenshin';
   static const String keyTargetProcessHsr = 'targetProcessHsr';
@@ -553,6 +571,8 @@ class SharedPrefUtils {
   static const String keyShowMenuOutsideGame = "showMenuOutsideGame";
 
   static const String keyKeybindSimulateKeypress = "keybindSimulateKeypress";
+
+  static const String keyLastOpened = "lastOpened";
 
   String getUserProfilePath() {
     if (Platform.isWindows) {

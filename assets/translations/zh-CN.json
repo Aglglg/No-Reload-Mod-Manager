@@ -260,5 +260,13 @@
   "Reload": "重新加载",
   "Enable All Keybinds": "启用所有按键切换",
   "Disable All Keybinds": "禁用所有按键切换",
-  "Supported XXMI/3DMigoto detected": "\n检测到受支持的 XXMI！\n模组开关/按键切换仅在游戏窗口处于焦点状态时有效。"
+  "Supported XXMI/3DMigoto detected": "\n检测到受支持的 XXMI！\n模组开关/按键切换仅在游戏窗口处于焦点状态时有效。",
+  "Statistics": "统计",
+  "Yes": "是",
+  "No": "否",
+  "Groups": "分组",
+  "Days used": "已使用 {} 天（也许）",
+  "Using NRMM since v1": "从 v1 起使用 NRMM！",
+  "NRMM runs on donations alone": "NRMM 仅靠捐助运营",
+  "Support the dev?": "支持开发者？"
 }

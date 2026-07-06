@@ -98,6 +98,10 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
+    - assets/images/verina_plant.webp
+    - assets/images/verina_sad.webp
+    - assets/images/encore_wow.webp
+    - assets/images/camellya_peek.webp
     - assets/images/app_icon.ico
     - assets/images/app_icon.png
     - assets/template_txt/listen_keypress_even_on_background.txt

@@ -177,3 +177,4 @@ final explorerViewOpenedForwardPathsEndfield =
     StateProvider<StackCollection<String>>((ref) => StackCollection());
 
 final triggerRefreshModName = StateProvider<bool>((ref) => false);
+final showVerina = StateProvider<bool>((ref) => false);

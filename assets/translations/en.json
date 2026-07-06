@@ -260,5 +260,13 @@
   "Reload": "Reload",
   "Enable All Keybinds": "Enable All Keybinds",
   "Disable All Keybinds": "Disable All Keybinds",
-  "Supported XXMI/3DMigoto detected": "\nSupported XXMI detected!\nMod toggles/keybinds only work when the game is in focus."
+  "Supported XXMI/3DMigoto detected": "\nSupported XXMI detected!\nMod toggles/keybinds only work when the game is in focus.",
+  "Statistics": "Statistics",
+  "Yes": "Yes",
+  "No": "No",
+  "Groups": "Groups",
+  "Days used": "Used for {} days (maybe)",
+  "Using NRMM since v1": "Using NRMM since v1!",
+  "NRMM runs on donations alone": "NRMM runs on donations alone",
+  "Support the dev?": "Support the dev?"
 }

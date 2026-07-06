@@ -1226,6 +1226,24 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                             child: Column(
                               children: [
                                 Text(
+                                  "Stats".tr(),
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontSize: 12 * sss,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Container(height: 8 * sss),
+                                StatsIconButton(),
+                                Container(height: 15 * sss),
+                              ],
+                            ),
+                          ),
+                          Container(width: 15 * sss),
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Text(
                                   "Support me".tr(),
                                   style: GoogleFonts.poppins(
                                     color: Colors.white,
@@ -1343,6 +1361,54 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class StatsIconButton extends ConsumerStatefulWidget {
+  const StatsIconButton({super.key});
+
+  @override
+  ConsumerState<StatsIconButton> createState() => _StatsIconButtonState();
+}
+
+class _StatsIconButtonState extends ConsumerState<StatsIconButton> {
+  bool hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final sss = ref.watch(zoomScaleProvider);
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter:
+          (event) => setState(() {
+            hover = true;
+          }),
+      onExit:
+          (event) => setState(() {
+            hover = false;
+          }),
+      child: GestureDetector(
+        onTap: () async {
+          ref.read(alertDialogShownProvider.notifier).state = true;
+          await showDialog(
+            barrierDismissible: false,
+            context: context,
+            builder: (context) => SupportAndStatsDialog(),
+          );
+        },
+        child: Transform.scale(
+          scale: 1.3,
+          alignment: Alignment.center,
+          child: Icon(
+            Icons.assessment_rounded,
+            size: 25 * sss,
+            color:
+                hover ? Colors.white : const Color.fromARGB(127, 255, 255, 255),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -876,7 +876,7 @@ class _MainViewState extends ConsumerState<MainView>
             if (!ref.read(alertDialogShownProvider)) {
               ref.read(targetGameProvider.notifier).state =
                   TargetGame.Wuthering_Waves;
-              changeWindowTitleName(TargetGame.Wuthering_Waves.name);
+              changeWindowTitleName(TargetGame.Wuthering_Waves.name, ref: ref);
             }
             ref.read(windowIsPinnedProvider.notifier).state = true;
             await windowManager.show();
@@ -890,7 +890,7 @@ class _MainViewState extends ConsumerState<MainView>
             if (!ref.read(alertDialogShownProvider)) {
               ref.read(targetGameProvider.notifier).state =
                   TargetGame.Genshin_Impact;
-              changeWindowTitleName(TargetGame.Genshin_Impact.name);
+              changeWindowTitleName(TargetGame.Genshin_Impact.name, ref: ref);
             }
             ref.read(windowIsPinnedProvider.notifier).state = true;
             await windowManager.show();
@@ -904,7 +904,7 @@ class _MainViewState extends ConsumerState<MainView>
             if (!ref.read(alertDialogShownProvider)) {
               ref.read(targetGameProvider.notifier).state =
                   TargetGame.Honkai_Star_Rail;
-              changeWindowTitleName(TargetGame.Honkai_Star_Rail.name);
+              changeWindowTitleName(TargetGame.Honkai_Star_Rail.name, ref: ref);
             }
             ref.read(windowIsPinnedProvider.notifier).state = true;
             await windowManager.show();
@@ -918,7 +918,10 @@ class _MainViewState extends ConsumerState<MainView>
             if (!ref.read(alertDialogShownProvider)) {
               ref.read(targetGameProvider.notifier).state =
                   TargetGame.Zenless_Zone_Zero;
-              changeWindowTitleName(TargetGame.Zenless_Zone_Zero.name);
+              changeWindowTitleName(
+                TargetGame.Zenless_Zone_Zero.name,
+                ref: ref,
+              );
             }
             ref.read(windowIsPinnedProvider.notifier).state = true;
             await windowManager.show();
@@ -932,7 +935,10 @@ class _MainViewState extends ConsumerState<MainView>
             if (!ref.read(alertDialogShownProvider)) {
               ref.read(targetGameProvider.notifier).state =
                   TargetGame.Arknights_Endfield;
-              changeWindowTitleName(TargetGame.Arknights_Endfield.name);
+              changeWindowTitleName(
+                TargetGame.Arknights_Endfield.name,
+                ref: ref,
+              );
             }
             ref.read(windowIsPinnedProvider.notifier).state = true;
             await windowManager.show();
@@ -1388,7 +1394,7 @@ class _MainViewState extends ConsumerState<MainView>
         if (!ref.read(alertDialogShownProvider)) {
           ref.read(targetGameProvider.notifier).state =
               TargetGame.Wuthering_Waves;
-          changeWindowTitleName(TargetGame.Wuthering_Waves.name);
+          changeWindowTitleName(TargetGame.Wuthering_Waves.name, ref: ref);
         }
         ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
@@ -1398,7 +1404,7 @@ class _MainViewState extends ConsumerState<MainView>
         if (!ref.read(alertDialogShownProvider)) {
           ref.read(targetGameProvider.notifier).state =
               TargetGame.Genshin_Impact;
-          changeWindowTitleName(TargetGame.Genshin_Impact.name);
+          changeWindowTitleName(TargetGame.Genshin_Impact.name, ref: ref);
         }
         ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
@@ -1408,7 +1414,7 @@ class _MainViewState extends ConsumerState<MainView>
         if (!ref.read(alertDialogShownProvider)) {
           ref.read(targetGameProvider.notifier).state =
               TargetGame.Honkai_Star_Rail;
-          changeWindowTitleName(TargetGame.Honkai_Star_Rail.name);
+          changeWindowTitleName(TargetGame.Honkai_Star_Rail.name, ref: ref);
         }
         ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
@@ -1418,7 +1424,7 @@ class _MainViewState extends ConsumerState<MainView>
         if (!ref.read(alertDialogShownProvider)) {
           ref.read(targetGameProvider.notifier).state =
               TargetGame.Zenless_Zone_Zero;
-          changeWindowTitleName(TargetGame.Zenless_Zone_Zero.name);
+          changeWindowTitleName(TargetGame.Zenless_Zone_Zero.name, ref: ref);
         }
         ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
@@ -1428,7 +1434,7 @@ class _MainViewState extends ConsumerState<MainView>
         if (!ref.read(alertDialogShownProvider)) {
           ref.read(targetGameProvider.notifier).state =
               TargetGame.Arknights_Endfield;
-          changeWindowTitleName(TargetGame.Arknights_Endfield.name);
+          changeWindowTitleName(TargetGame.Arknights_Endfield.name, ref: ref);
         }
         ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
@@ -1521,13 +1527,40 @@ class _MainViewState extends ConsumerState<MainView>
         ///Random tips
         if (showRandomTips) RandomTips(),
 
+        if (ref.watch(showVerina))
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Transform.translate(
+              offset: Offset(0, 7) * sss,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () async {
+                    ref.read(showVerina.notifier).state = false;
+                    ref.read(alertDialogShownProvider.notifier).state = true;
+                    await showDialog(
+                      barrierDismissible: false,
+                      context: context,
+                      builder: (context) => SupportAndStatsDialog(),
+                    );
+                    await SharedPrefUtils().setLastOpened(DateTime.now());
+                  },
+                  child: Image.asset(
+                    'assets/images/verina_plant.webp',
+                    height: 95 * sss,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
         Align(
           alignment: Alignment.bottomCenter,
           child: MouseRegion(
             hitTestBehavior: HitTestBehavior.translucent,
             onEnter: (_) {
               setState(() {
-                showRandomTips = true;
+                showRandomTips = ref.watch(showVerina) ? false : true;
               });
             },
             onExit: (_) {
@@ -1666,11 +1699,21 @@ void showUpdateModSnackbar(BuildContext context, ProviderContainer container) {
   );
 }
 
-void changeWindowTitleName(String gameName) {
+void changeWindowTitleName(String gameName, {WidgetRef? ref}) {
   bitsdojo.appWindow.title =
       gameName.isNotEmpty
           ? "No Reload Mod Manager $gameName"
           : "No Reload Mod Manager";
+
+  if (gameName.isNotEmpty) {
+    final lastOpened = SharedPrefUtils().getLastOpened();
+    final daysDifference = DateTime.now().difference(lastOpened).inDays;
+    if (daysDifference >= 7) {
+      if (ref != null) {
+        ref.read(showVerina.notifier).state = true;
+      }
+    }
+  }
 }
 
 Color getAccentColor(WidgetRef ref, {int alpha = 255}) {

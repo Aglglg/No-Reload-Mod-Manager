@@ -260,5 +260,13 @@
   "Reload": "Reload",
   "Enable All Keybinds": "Aktifkan Semua Keybind",
   "Disable All Keybinds": "Nonaktifkan Semua Keybind",
-  "Supported XXMI/3DMigoto detected": "\nXXMI yang didukung terdeteksi!\nToggle/keybind mod hanya berfungsi saat game sedang difokuskan."
+  "Supported XXMI/3DMigoto detected": "\nXXMI yang didukung terdeteksi!\nToggle/keybind mod hanya berfungsi saat game sedang difokuskan.",
+  "Statistics": "Statistik",
+  "Yes": "Ya",
+  "No": "Tidak",
+  "Groups": "Grup",
+  "Days used": "Digunakan selama {} hari (mungkin)",
+  "Using NRMM since v1": "Pengguna NRMM sejak v1!",
+  "NRMM runs on donations alone": "NRMM berjalan dari donasi saja",
+  "Support the dev?": "Dukung developer-nya?"
 }
