@@ -2726,6 +2726,50 @@ class _SaveModCustomizationsDialogState
     });
   }
 
+  ({bool isAscii, String result}) checkAscii(String s) {
+    final buffer = StringBuffer();
+    bool allAscii = true;
+    bool inNonAscii = false;
+
+    for (final rune in s.runes) {
+      final isCharAscii = rune <= 127;
+      if (!isCharAscii) allAscii = false;
+
+      if (!isCharAscii && !inNonAscii) {
+        buffer.write('|');
+        inNonAscii = true;
+      } else if (isCharAscii && inNonAscii) {
+        buffer.write('|');
+        inNonAscii = false;
+      }
+      buffer.writeCharCode(rune);
+    }
+    if (inNonAscii) buffer.write('|');
+
+    return (isAscii: allAscii, result: buffer.toString());
+  }
+
+  List<InlineSpan> _buildPathSpans(String relativePath) {
+    final (isAscii: _, result: marked) = checkAscii(relativePath);
+    final parts = marked.split('|');
+    final spans = <InlineSpan>[];
+    for (var i = 0; i < parts.length; i++) {
+      if (parts[i].isEmpty) continue;
+      final isNonAscii = i.isOdd;
+      spans.add(
+        TextSpan(
+          text: parts[i],
+          style: GoogleFonts.poppins(
+            color: isNonAscii ? Colors.red : Colors.grey,
+            fontWeight: FontWeight.w400,
+            fontSize: 13,
+          ),
+        ),
+      );
+    }
+    return spans;
+  }
+
   Future<void> saveModsCustomizations() async {
     setState(() {
       _showConfirm = false;
@@ -2789,7 +2833,6 @@ class _SaveModCustomizationsDialogState
 
       bool malformedD3dxUserFile = false;
       final potentiallyTriggeringBugPaths = <String>{};
-      bool isAscii(String s) => s.codeUnits.every((c) => c >= 0 && c <= 127);
 
       for (final rawSavedValue in rawSavedValues) {
         if (!rawSavedValue.contains(r"$\")) continue;
@@ -2831,8 +2874,13 @@ class _SaveModCustomizationsDialogState
             final isRelevant =
                 (e is Directory) || (e is File && name.endsWith("ini"));
 
-            if (isRelevant && !isAscii(name)) {
-              potentiallyTriggeringBugPaths.add(e.path);
+            if (isRelevant) {
+              final (isAscii: ok, result: markedName) = checkAscii(name);
+              if (!ok) {
+                potentiallyTriggeringBugPaths.add(
+                  e.path.replaceFirst(r"\\?\", ''),
+                );
+              }
             }
           }
         }
@@ -2949,13 +2997,14 @@ class _SaveModCustomizationsDialogState
 
           if (malformedD3dxUserFile && potentiallyTriggeringBugPaths.isNotEmpty)
             TextSpan(
-              text:
-                  "\n${potentiallyTriggeringBugPaths.map((e) => p.relative(e, from: p.dirname(widget.validModsPath))).join('\n')}",
-              style: GoogleFonts.poppins(
-                color: Colors.grey,
-                fontWeight: FontWeight.w400,
-                fontSize: 13,
-              ),
+              children: [
+                for (final e in potentiallyTriggeringBugPaths) ...[
+                  const TextSpan(text: '\n'),
+                  ..._buildPathSpans(
+                    p.relative(e, from: p.dirname(widget.validModsPath)),
+                  ),
+                ],
+              ],
             ),
         ];
       });
