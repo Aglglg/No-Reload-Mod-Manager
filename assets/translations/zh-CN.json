@@ -230,7 +230,7 @@
   "Reload (F10)": "重新加载 (F10)",
   "If mod customizations are still not saved": "\n若模组自定义设置仍未保存，可能是模组作者忘记为开关添加 persist 关键字，\n或你忘记用 F10 重新加载。",
   "Some malformed entries were detected in the d3dx_user.ini file": "\n\n在 d3dx_user.ini 文件中检测到一些格式错误的条目，这可能导致部分模组自定义设置无法保存。\n这可能是由于使用了过旧的 3DMigoto/XXMI DLL 所致。",
-  "Update to a newer XXMI DLL or rename the following files/folders": "\n\n请更新至更新版本的 XXMI DLL，或将以下文件/文件夹重命名——文件和文件夹名称只能包含英文字母（不可含中文、西里尔文、阿拉伯文等）：",
+  "Update to a newer XXMI DLL or rename the following files/folders": "\n\n请更新至更新版本的 XXMI DLL，或将标红的文件/文件夹重命名为仅含 ASCII 字符的名称：",
   "Mods Path (invalid)": "模组路径（无效）",
   "Invalid Mods path. Cannot find d3dx.ini next to the \"Mods\" folder.": "模组路径无效。\n在\"Mods\"文件夹旁找不到 d3dx.ini。\n请确保你选择的是 *MI 文件夹内的\"Mods\"文件夹，例如\"GIMI\\Mods\"。",
   "Invalid Mods path. Cannot find d3d11.dll next to the \"Mods\" folder.": "模组路径无效。\n在\"Mods\"文件夹旁找不到 d3d11.dll。\n请确保你已至少使用 XXMI Launcher 启动过一次游戏。",
