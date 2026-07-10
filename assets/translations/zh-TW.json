@@ -229,7 +229,7 @@
   "Enabling/disabling mods...": "正在啟用/停用模組。。。",
   "Reload (F10)": "重新載入 (F10)",
   "If mod customizations are still not saved": "\n若模組自訂設定仍未儲存，可能是模組作者忘記為切換加入 persist 關鍵字，\n或你忘記用 F10 重新載入。",
-  "Some malformed entries were detected in the d3dx_user.ini file": "\n\n在 d3dx_user.ini 檔案中偵測到一些格式錯誤的項目，這可能導致部分模組自訂設定無法儲存。\n這可能是由於使用了過舊的 3DMigoto/XXMI DLL 所致。",
+  "Some malformed entries were detected in the d3dx_user.ini file": "\n\n在 d3dx_user.ini 中偵測到格式錯誤的項目——模組自訂設定和選擇可能無法正確儲存。\n這可能是由於 3DMigoto/XXMI DLL 版本過舊所致。",
   "Update to a newer XXMI DLL or rename the following files/folders": "\n\nzh-TW: 請更新至更新版本的 XXMI DLL，或將標紅的檔案/資料夾重新命名為僅含 ASCII 字符的名稱：",
   "Mods Path (invalid)": "模組路徑（無效）",
   "Invalid Mods path. Cannot find d3dx.ini next to the \"Mods\" folder.": "模組路徑無效。\n在「Mods」資料夾旁找不到 d3dx.ini。\n請確保你選擇的是 *MI 資料夾內的「Mods」資料夾，例如「GIMI\\Mods」。",

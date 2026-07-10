@@ -229,7 +229,7 @@
   "Enabling/disabling mods...": "Включение/отключение модов...",
   "Reload (F10)": "Перезагрузить (F10)",
   "If mod customizations are still not saved": "\nЕсли настройки мода всё ещё не сохраняются, создатель мода, вероятно, забыл добавить ключевое слово 'persist' к переключателям.\nИли вы забыли перезагрузить с помощью F10.",
-  "Some malformed entries were detected in the d3dx_user.ini file": "\n\nВ файле d3dx_user.ini обнаружены некорректные записи, которые могут препятствовать сохранению некоторых настроек мода.\nЭто может произойти при использовании устаревшей версии 3DMigoto/XXMI DLL.",
+  "Some malformed entries were detected in the d3dx_user.ini file": "\n\nВ d3dx_user.ini обнаружены некорректные записи — настройки и выбор модов могут сохраняться некорректно.\nЭто может произойти при использовании устаревшей версии 3DMigoto/XXMI DLL.",
   "Update to a newer XXMI DLL or rename the following files/folders": "\n\nОбновите XXMI DLL до более новой версии или переименуйте выделенные файлы/папки, используя только символы ASCII:",
   "Mods Path (invalid)": "Путь к модам (недействителен)",
   "Invalid Mods path. Cannot find d3dx.ini next to the \"Mods\" folder.": "Путь к модам недействителен.\nНе удаётся найти d3dx.ini рядом с папкой \"Mods\".\nУбедитесь, что вы указываете папку \"Mods\" внутри папки *MI, например \"GIMI\\Mods\".",

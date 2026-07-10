@@ -229,7 +229,7 @@
   "Enabling/disabling mods...": "Mengaktifkan/menonaktifkan mod...",
   "Reload (F10)": "Reload (F10)",
   "If mod customizations are still not saved": "\nJika kustomisasi mod masih belum tersimpan, mod creator mungkin lupa menambahkan keyword 'persist' pada toggle.\nAtau kamu lupa reload dengan F10.",
-  "Some malformed entries were detected in the d3dx_user.ini file": "\n\nBeberapa entri yang tidak valid terdeteksi dalam file d3dx_user.ini, yang mungkin mencegah beberapa kustomisasi mod untuk tersimpan.\nIni bisa terjadi ketika menggunakan 3DMigoto/XXMI DLL versi lama.",
+  "Some malformed entries were detected in the d3dx_user.ini file": "\n\nEntri tidak valid terdeteksi di d3dx_user.ini — kustomisasi dan pilihan mod mungkin tidak tersimpan dengan benar.\nIni bisa terjadi karena 3DMigoto/XXMI DLL yang sudah lama.",
   "Update to a newer XXMI DLL or rename the following files/folders": "\n\nUpdate ke XXMI DLL yang lebih baru, atau ganti nama file/folder yang ditandai agar hanya menggunakan karakter ASCII:",
   "Mods Path (invalid)": "Mods Path (tidak valid)",
   "Invalid Mods path. Cannot find d3dx.ini next to the \"Mods\" folder.": "Mods path tidak valid.\nTidak dapat menemukan d3dx.ini di sebelah folder \"Mods\".\nPastikan kamu memilih folder \"Mods\" di dalam folder *MI, contoh: \"GIMI\\Mods\".",

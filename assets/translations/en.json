@@ -229,7 +229,7 @@
   "Enabling/disabling mods...": "Disabling all mods...",
   "Reload (F10)": "Reload (F10)",
   "If mod customizations are still not saved": "\nIf mod customizations are still not saved, the mod creator probably forgot to add the 'persist' keyword to the toggles.\nOr you forgot to reload with F10.",
-  "Some malformed entries were detected in the d3dx_user.ini file": "\n\nSome malformed entries were detected in the d3dx_user.ini file, which may prevent certain mod customizations from being saved.\nThis can happen when using an outdated 3DMigoto/XXMI DLL.",
+  "Some malformed entries were detected in the d3dx_user.ini file": "\n\nMalformed entries detected in d3dx_user.ini — mod customizations and selections may not be saved correctly.\nThis can happen with an outdated 3DMigoto/XXMI DLL.",
   "Update to a newer XXMI DLL or rename the following files/folders": "\n\nUpdate to a newer XXMI DLL, or rename the highlighted files/folders to use only ASCII characters:",
   "Mods Path (invalid)": "Mods Path (invalid)",
   "Invalid Mods path. Cannot find d3dx.ini next to the \"Mods\" folder.": "Invalid Mods path.\nCannot find d3dx.ini next to the \"Mods\" folder.\nMake sure you're targeting the \"Mods\" folder inside your *MI folder, e.g. \"GIMI\\Mods\".",
