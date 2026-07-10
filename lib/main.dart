@@ -1,6 +1,8 @@
 //Sorry the code is messy.
 import 'dart:async';
+import 'dart:ffi' as ffi;
 import 'dart:io';
+import 'dart:isolate';
 import 'package:auto_updater/auto_updater.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -45,6 +47,7 @@ import 'package:xinput_gamepad/xinput_gamepad.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 void main(List<String> args) async {
+  prewarmDll();
   WidgetsFlutterBinding.ensureInitialized();
   bool successLoadPref = await SharedPrefUtils().tryInit();
   await EasyLocalization.ensureInitialized();
@@ -225,6 +228,20 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
   @override
   void onWindowResize() {
     debouncedSaveWindowSize();
+  }
+
+  DateTime? _backgroundedAt;
+
+  @override
+  void onWindowBlur() => _backgroundedAt = DateTime.now();
+
+  @override
+  void onWindowFocus() {
+    if (_backgroundedAt == null) return;
+    final idleDuration = DateTime.now().difference(_backgroundedAt!);
+    if (idleDuration > const Duration(minutes: 15)) {
+      prewarmDll();
+    }
   }
 
   Timer? _resizeDebounce;
@@ -1949,4 +1966,13 @@ String getRandomTips(String previousTips) {
 
   available.shuffle();
   return available.first;
+}
+
+void prewarmDll() {
+  print("PREWARM");
+  unawaited(
+    Isolate.run(() {
+      ffi.DynamicLibrary.open('xxmi_lib_ini_handler.dll');
+    }),
+  );
 }
