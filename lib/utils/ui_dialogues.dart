@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -154,66 +155,76 @@ class _GenerateGroupIcoFileDialogState
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        "Generate group folder icon".tr(),
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
-      ),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
-        ),
-        child: ScrollConfiguration(
-          behavior: ScrollConfiguration.of(context).copyWith(
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.mouse,
-              PointerDeviceKind.trackpad,
-            },
+    return Stack(
+      children: [
+        MoveWindow(),
+        AlertDialog(
+          title: Text(
+            "Generate group folder icon".tr(),
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+            ),
           ),
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: RichText(text: TextSpan(children: contents)),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(
+                dragDevices: {
+                  PointerDeviceKind.touch,
+                  PointerDeviceKind.mouse,
+                  PointerDeviceKind.trackpad,
+                },
+              ),
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: RichText(text: TextSpan(children: contents)),
+              ),
+            ),
           ),
+          actions:
+              _showConfirm
+                  ? [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        ref.read(alertDialogShownProvider.notifier).state =
+                            false;
+                      },
+                      child: Text(
+                        'Cancel'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        await generateIcons();
+                      },
+                      child: Text(
+                        'Confirm'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
+                    ),
+                  ]
+                  : _isLoading
+                  ? []
+                  : [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        ref.read(alertDialogShownProvider.notifier).state =
+                            false;
+                      },
+                      child: Text(
+                        'Confirm'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
+                    ),
+                  ],
         ),
-      ),
-      actions:
-          _showConfirm
-              ? [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    ref.read(alertDialogShownProvider.notifier).state = false;
-                  },
-                  child: Text(
-                    'Cancel'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () async {
-                    await generateIcons();
-                  },
-                  child: Text(
-                    'Confirm'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-              ]
-              : _isLoading
-              ? []
-              : [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    ref.read(alertDialogShownProvider.notifier).state = false;
-                  },
-                  child: Text(
-                    'Confirm'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-              ],
+      ],
     );
   }
 }
@@ -224,39 +235,47 @@ class ChangeLanguageDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return AlertDialog(
-      title: Text(
-        'Change language'.tr(),
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
-      ),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
-        ),
-        child: SingleChildScrollView(
-          child: RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: 'Language changed, please Restart.'.tr(),
-                  style: GoogleFonts.poppins(color: Colors.white),
-                ),
-              ],
+    return Stack(
+      children: [
+        MoveWindow(),
+        AlertDialog(
+          title: Text(
+            'Change language'.tr(),
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
             ),
           ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-            ref.read(alertDialogShownProvider.notifier).state = false;
-            checkToRelaunch(forcedRelaunch: true);
-          },
-          child: Text(
-            'Restart'.tr(),
-            style: GoogleFonts.poppins(color: getAccentColor(ref)),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: SingleChildScrollView(
+              child: RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'Language changed, please Restart.'.tr(),
+                      style: GoogleFonts.poppins(color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                ref.read(alertDialogShownProvider.notifier).state = false;
+                checkToRelaunch(forcedRelaunch: true);
+              },
+              child: Text(
+                'Restart'.tr(),
+                style: GoogleFonts.poppins(color: getAccentColor(ref)),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -337,39 +356,47 @@ class _PrefCorruptedDialogState extends ConsumerState<PrefCorruptedDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        'Warning'.tr(),
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
-      ),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
-        ),
-        child: ScrollConfiguration(
-          behavior: ScrollConfiguration.of(context).copyWith(
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.mouse,
-              PointerDeviceKind.trackpad,
-            },
+    return Stack(
+      children: [
+        MoveWindow(),
+        AlertDialog(
+          title: Text(
+            'Warning'.tr(),
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+            ),
           ),
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: RichText(text: TextSpan(children: contents)),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(
+                dragDevices: {
+                  PointerDeviceKind.touch,
+                  PointerDeviceKind.mouse,
+                  PointerDeviceKind.trackpad,
+                },
+              ),
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: RichText(text: TextSpan(children: contents)),
+              ),
+            ),
           ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-            ref.read(alertDialogShownProvider.notifier).state = false;
-          },
-          child: Text(
-            'Close'.tr(),
-            style: GoogleFonts.poppins(color: getAccentColor(ref)),
-          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                ref.read(alertDialogShownProvider.notifier).state = false;
+              },
+              child: Text(
+                'Close'.tr(),
+                style: GoogleFonts.poppins(color: getAccentColor(ref)),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -505,63 +532,73 @@ class _SupportAndStatsDialogState extends ConsumerState<SupportAndStatsDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Center(
-        child: Text(
-          'Statistics'.tr(),
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
-        ),
-      ),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
-        ),
-        child: ScrollConfiguration(
-          behavior: ScrollConfiguration.of(context).copyWith(
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.mouse,
-              PointerDeviceKind.trackpad,
-            },
-            scrollbars: false,
-          ),
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children:
-                  _answered ? _buildAnsweredContent() : _buildQuestionContent(),
+    return Stack(
+      children: [
+        MoveWindow(),
+        AlertDialog(
+          title: Center(
+            child: Text(
+              'Statistics'.tr(),
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+                fontSize: 18,
+              ),
             ),
           ),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(
+                dragDevices: {
+                  PointerDeviceKind.touch,
+                  PointerDeviceKind.mouse,
+                  PointerDeviceKind.trackpad,
+                },
+                scrollbars: false,
+              ),
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children:
+                      _answered
+                          ? _buildAnsweredContent()
+                          : _buildQuestionContent(),
+                ),
+              ),
+            ),
+          ),
+          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
+          actionsAlignment: MainAxisAlignment.center,
+          actions:
+              _answered
+                  ? []
+                  : [
+                    TextButton(
+                      onPressed: () => _handleAnswer('No'.tr(), isYes: false),
+                      child: Text(
+                        'No'.tr(),
+                        style: GoogleFonts.poppins(
+                          color: getAccentColor(ref),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _handleAnswer('Yes'.tr(), isYes: true),
+                      child: Text(
+                        'Yes'.tr(),
+                        style: GoogleFonts.poppins(
+                          color: getAccentColor(ref),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
         ),
-      ),
-      contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
-      actionsAlignment: MainAxisAlignment.center,
-      actions:
-          _answered
-              ? []
-              : [
-                TextButton(
-                  onPressed: () => _handleAnswer('No'.tr(), isYes: false),
-                  child: Text(
-                    'No'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: getAccentColor(ref),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () => _handleAnswer('Yes'.tr(), isYes: true),
-                  child: Text(
-                    'Yes'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: getAccentColor(ref),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
+      ],
     );
   }
 
@@ -1119,56 +1156,66 @@ class _OnDropFolderDialogState extends ConsumerState<OnDropModFolderDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        widget.dialogTitleText,
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
-      ),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
-        ),
-        child: ScrollConfiguration(
-          behavior: ScrollConfiguration.of(context).copyWith(
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.mouse,
-              PointerDeviceKind.trackpad,
-            },
+    return Stack(
+      children: [
+        MoveWindow(),
+        AlertDialog(
+          title: Text(
+            widget.dialogTitleText,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+            ),
           ),
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: RichText(text: TextSpan(children: contents)),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(
+                dragDevices: {
+                  PointerDeviceKind.touch,
+                  PointerDeviceKind.mouse,
+                  PointerDeviceKind.trackpad,
+                },
+              ),
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: RichText(text: TextSpan(children: contents)),
+              ),
+            ),
           ),
-        ),
-      ),
-      actions:
-          _showClose
-              ? [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    ref.read(alertDialogShownProvider.notifier).state = false;
-                  },
-                  child: Text(
-                    'Cancel'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-                if (validFolders.isNotEmpty || validArchives.isNotEmpty)
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      ref.read(alertDialogShownProvider.notifier).state = false;
-                      widget.onConfirmFunction(validFolders, validArchives);
-                    },
-                    child: Text(
-                      'Confirm'.tr(),
-                      style: GoogleFonts.poppins(color: Colors.green),
+          actions:
+              _showClose
+                  ? [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        ref.read(alertDialogShownProvider.notifier).state =
+                            false;
+                      },
+                      child: Text(
+                        'Cancel'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
                     ),
-                  ),
-              ]
-              : [],
+                    if (validFolders.isNotEmpty || validArchives.isNotEmpty)
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          ref.read(alertDialogShownProvider.notifier).state =
+                              false;
+                          widget.onConfirmFunction(validFolders, validArchives);
+                        },
+                        child: Text(
+                          'Confirm'.tr(),
+                          style: GoogleFonts.poppins(color: Colors.green),
+                        ),
+                      ),
+                  ]
+                  : [],
+        ),
+      ],
     );
   }
 }
@@ -1478,113 +1525,127 @@ class _CopyModDialogState extends ConsumerState<CopyModDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        'Copy mods'.tr(),
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
-      ),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
-        ),
-        child: ScrollConfiguration(
-          behavior: ScrollConfiguration.of(context).copyWith(
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.mouse,
-              PointerDeviceKind.trackpad,
-            },
-          ),
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (_showPasswordTextfield)
-                  ...passwordedArchives.entries.map((e) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          p.basename(e.key),
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w400,
-                            color: Colors.grey,
-                            fontSize: 12,
-                          ),
-                          textAlign: TextAlign.start,
-                        ),
-                        SizedBox(height: 3),
-                        TextField(
-                          obscureText: true,
-                          decoration: InputDecoration(
-                            isDense: true,
-                            disabledBorder: InputBorder.none,
-                            hintText: 'Archive password'.tr(),
-                            hintStyle: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w300,
-                              color: const Color.fromARGB(80, 255, 255, 255),
-                              fontSize: 13,
-                            ),
-                          ),
-                          maxLines: 1,
-                          keyboardType: TextInputType.none,
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w400,
-                            color: Colors.white,
-                            fontSize: 13,
-                          ),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.deny(
-                              RegExp(r'[\n\r\u0085\u2028\u2029]'),
-                            ),
-                          ],
-                          onChanged: (value) {
-                            passwordedArchives[e.key] = value;
-                          },
-                          onSubmitted: (value) {
-                            passwordedArchives[e.key] = value;
-                          },
-                        ),
-                        SizedBox(height: 16),
-                      ],
-                    );
-                  }),
-
-                RichText(text: TextSpan(children: contents)),
-              ],
+    return Stack(
+      children: [
+        MoveWindow(),
+        AlertDialog(
+          title: Text(
+            'Copy mods'.tr(),
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
             ),
           ),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(
+                dragDevices: {
+                  PointerDeviceKind.touch,
+                  PointerDeviceKind.mouse,
+                  PointerDeviceKind.trackpad,
+                },
+              ),
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (_showPasswordTextfield)
+                      ...passwordedArchives.entries.map((e) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              p.basename(e.key),
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w400,
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
+                              textAlign: TextAlign.start,
+                            ),
+                            SizedBox(height: 3),
+                            TextField(
+                              obscureText: true,
+                              decoration: InputDecoration(
+                                isDense: true,
+                                disabledBorder: InputBorder.none,
+                                hintText: 'Archive password'.tr(),
+                                hintStyle: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w300,
+                                  color: const Color.fromARGB(
+                                    80,
+                                    255,
+                                    255,
+                                    255,
+                                  ),
+                                  fontSize: 13,
+                                ),
+                              ),
+                              maxLines: 1,
+                              keyboardType: TextInputType.none,
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w400,
+                                color: Colors.white,
+                                fontSize: 13,
+                              ),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.deny(
+                                  RegExp(r'[\n\r\u0085\u2028\u2029]'),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                passwordedArchives[e.key] = value;
+                              },
+                              onSubmitted: (value) {
+                                passwordedArchives[e.key] = value;
+                              },
+                            ),
+                            SizedBox(height: 16),
+                          ],
+                        );
+                      }),
+
+                    RichText(text: TextSpan(children: contents)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          actions:
+              _showClose
+                  ? [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        ref.read(alertDialogShownProvider.notifier).state =
+                            false;
+                        _onCloseClicked();
+                      },
+                      child: Text(
+                        'Close'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
+                    ),
+                  ]
+                  : _showConfirm
+                  ? [
+                    TextButton(
+                      onPressed: () {
+                        copyMods(proceed: true);
+                      },
+                      child: Text(
+                        'Confirm'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
+                    ),
+                  ]
+                  : [],
         ),
-      ),
-      actions:
-          _showClose
-              ? [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    ref.read(alertDialogShownProvider.notifier).state = false;
-                    _onCloseClicked();
-                  },
-                  child: Text(
-                    'Close'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-              ]
-              : _showConfirm
-              ? [
-                TextButton(
-                  onPressed: () {
-                    copyMods(proceed: true);
-                  },
-                  child: Text(
-                    'Confirm'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-              ]
-              : [],
+      ],
     );
   }
 }
@@ -1752,60 +1813,72 @@ class _UpdateModDialogState extends ConsumerState<UpdateModDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        'Manage mods'.tr(),
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
-      ),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
-        ),
-        child: ScrollConfiguration(
-          behavior: ScrollConfiguration.of(context).copyWith(
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.mouse,
-              PointerDeviceKind.trackpad,
-            },
+    return Stack(
+      children: [
+        MoveWindow(),
+        AlertDialog(
+          title: Text(
+            'Manage mods'.tr(),
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+            ),
           ),
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: RichText(text: TextSpan(children: contents)),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(
+                dragDevices: {
+                  PointerDeviceKind.touch,
+                  PointerDeviceKind.mouse,
+                  PointerDeviceKind.trackpad,
+                },
+              ),
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: RichText(text: TextSpan(children: contents)),
+              ),
+            ),
           ),
+          actions:
+              _showClose
+                  ? [
+                    _needReload
+                        ? TextButton(
+                          onPressed: () async {
+                            Navigator.of(context).pop();
+                            ref.read(alertDialogShownProvider.notifier).state =
+                                false;
+                            await simulateKeyF10();
+                            triggerRefresh(ref);
+                          },
+                          child: Text(
+                            'Close & Reload'.tr(),
+                            style: GoogleFonts.poppins(
+                              color: getAccentColor(ref),
+                            ),
+                          ),
+                        )
+                        : TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            ref.read(alertDialogShownProvider.notifier).state =
+                                false;
+                            triggerRefresh(ref);
+                          },
+                          child: Text(
+                            'Close'.tr(),
+                            style: GoogleFonts.poppins(
+                              color: getAccentColor(ref),
+                            ),
+                          ),
+                        ),
+                  ]
+                  : [],
         ),
-      ),
-      actions:
-          _showClose
-              ? [
-                _needReload
-                    ? TextButton(
-                      onPressed: () async {
-                        Navigator.of(context).pop();
-                        ref.read(alertDialogShownProvider.notifier).state =
-                            false;
-                        await simulateKeyF10();
-                        triggerRefresh(ref);
-                      },
-                      child: Text(
-                        'Close & Reload'.tr(),
-                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                      ),
-                    )
-                    : TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        ref.read(alertDialogShownProvider.notifier).state =
-                            false;
-                        triggerRefresh(ref);
-                      },
-                      child: Text(
-                        'Close'.tr(),
-                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                      ),
-                    ),
-              ]
-              : [],
+      ],
     );
   }
 }
@@ -1867,44 +1940,53 @@ class _RestoreModDialogState extends ConsumerState<RestoreModDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        'Restore mods'.tr(),
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
-      ),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
-        ),
-        child: ScrollConfiguration(
-          behavior: ScrollConfiguration.of(context).copyWith(
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.mouse,
-              PointerDeviceKind.trackpad,
-            },
+    return Stack(
+      children: [
+        MoveWindow(),
+        AlertDialog(
+          title: Text(
+            'Restore mods'.tr(),
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+            ),
           ),
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: RichText(text: TextSpan(children: contents)),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(
+                dragDevices: {
+                  PointerDeviceKind.touch,
+                  PointerDeviceKind.mouse,
+                  PointerDeviceKind.trackpad,
+                },
+              ),
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: RichText(text: TextSpan(children: contents)),
+              ),
+            ),
           ),
+          actions:
+              _showClose
+                  ? [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        ref.read(alertDialogShownProvider.notifier).state =
+                            false;
+                      },
+                      child: Text(
+                        'Close'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
+                    ),
+                  ]
+                  : [],
         ),
-      ),
-      actions:
-          _showClose
-              ? [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    ref.read(alertDialogShownProvider.notifier).state = false;
-                  },
-                  child: Text(
-                    'Close'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-              ]
-              : [],
+      ],
     );
   }
 }
@@ -2099,135 +2181,150 @@ class _ExtractModCasualDialogState
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        'Extract file'.tr(),
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
-      ),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
-        ),
-        child: ScrollConfiguration(
-          behavior: ScrollConfiguration.of(context).copyWith(
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.mouse,
-              PointerDeviceKind.trackpad,
-            },
-          ),
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (_showPasswordTextfield)
-                  ...passwordedArchives.entries.map((e) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          p.basename(e.key),
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w400,
-                            color: Colors.grey,
-                            fontSize: 12,
-                          ),
-                          textAlign: TextAlign.start,
-                        ),
-                        SizedBox(height: 3),
-                        TextField(
-                          obscureText: true,
-                          decoration: InputDecoration(
-                            isDense: true,
-                            disabledBorder: InputBorder.none,
-                            hintText: 'Archive password'.tr(),
-                            hintStyle: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w300,
-                              color: const Color.fromARGB(80, 255, 255, 255),
-                              fontSize: 13,
-                            ),
-                          ),
-                          maxLines: 1,
-                          keyboardType: TextInputType.none,
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w400,
-                            color: Colors.white,
-                            fontSize: 13,
-                          ),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.deny(
-                              RegExp(r'[\n\r\u0085\u2028\u2029]'),
-                            ),
-                          ],
-                          onChanged: (value) {
-                            passwordedArchives[e.key] = value;
-                          },
-                          onSubmitted: (value) {
-                            passwordedArchives[e.key] = value;
-                          },
-                        ),
-                        SizedBox(height: 16),
-                      ],
-                    );
-                  }),
-
-                RichText(text: TextSpan(children: contents)),
-              ],
+    return Stack(
+      children: [
+        MoveWindow(),
+        AlertDialog(
+          title: Text(
+            'Extract file'.tr(),
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
             ),
           ),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(
+                dragDevices: {
+                  PointerDeviceKind.touch,
+                  PointerDeviceKind.mouse,
+                  PointerDeviceKind.trackpad,
+                },
+              ),
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (_showPasswordTextfield)
+                      ...passwordedArchives.entries.map((e) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              p.basename(e.key),
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w400,
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
+                              textAlign: TextAlign.start,
+                            ),
+                            SizedBox(height: 3),
+                            TextField(
+                              obscureText: true,
+                              decoration: InputDecoration(
+                                isDense: true,
+                                disabledBorder: InputBorder.none,
+                                hintText: 'Archive password'.tr(),
+                                hintStyle: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w300,
+                                  color: const Color.fromARGB(
+                                    80,
+                                    255,
+                                    255,
+                                    255,
+                                  ),
+                                  fontSize: 13,
+                                ),
+                              ),
+                              maxLines: 1,
+                              keyboardType: TextInputType.none,
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w400,
+                                color: Colors.white,
+                                fontSize: 13,
+                              ),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.deny(
+                                  RegExp(r'[\n\r\u0085\u2028\u2029]'),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                passwordedArchives[e.key] = value;
+                              },
+                              onSubmitted: (value) {
+                                passwordedArchives[e.key] = value;
+                              },
+                            ),
+                            SizedBox(height: 16),
+                          ],
+                        );
+                      }),
+
+                    RichText(text: TextSpan(children: contents)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          actions:
+              _showClose
+                  ? [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        ref.read(alertDialogShownProvider.notifier).state =
+                            false;
+                        _onCloseClicked();
+                      },
+                      child: Text(
+                        'Close'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
+                    ),
+                  ]
+                  : _showConfirmExtract
+                  ? [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        ref.read(alertDialogShownProvider.notifier).state =
+                            false;
+                      },
+                      child: Text(
+                        'Close'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        extractFile(proceed: false);
+                      },
+                      child: Text(
+                        'Confirm'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
+                    ),
+                  ]
+                  : _showConfirm
+                  ? [
+                    TextButton(
+                      onPressed: () {
+                        extractFile(proceed: true);
+                      },
+                      child: Text(
+                        'Confirm'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
+                    ),
+                  ]
+                  : [],
         ),
-      ),
-      actions:
-          _showClose
-              ? [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    ref.read(alertDialogShownProvider.notifier).state = false;
-                    _onCloseClicked();
-                  },
-                  child: Text(
-                    'Close'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-              ]
-              : _showConfirmExtract
-              ? [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    ref.read(alertDialogShownProvider.notifier).state = false;
-                  },
-                  child: Text(
-                    'Close'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    extractFile(proceed: false);
-                  },
-                  child: Text(
-                    'Confirm'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-              ]
-              : _showConfirm
-              ? [
-                TextButton(
-                  onPressed: () {
-                    extractFile(proceed: true);
-                  },
-                  child: Text(
-                    'Confirm'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-              ]
-              : [],
+      ],
     );
   }
 }
@@ -2297,50 +2394,58 @@ class _DuplicatedUtilitiesDialogState
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        'Details'.tr(),
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
-      ),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
-        ),
-        child: ScrollConfiguration(
-          behavior: ScrollConfiguration.of(context).copyWith(
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.mouse,
-              PointerDeviceKind.trackpad,
-            },
+    return Stack(
+      children: [
+        MoveWindow(),
+        AlertDialog(
+          title: Text(
+            'Details'.tr(),
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+            ),
           ),
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: RichText(text: TextSpan(children: contents)),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(
+                dragDevices: {
+                  PointerDeviceKind.touch,
+                  PointerDeviceKind.mouse,
+                  PointerDeviceKind.trackpad,
+                },
+              ),
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: RichText(text: TextSpan(children: contents)),
+              ),
+            ),
           ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () async {
-            Navigator.of(context).pop();
-            ref.read(alertDialogShownProvider.notifier).state = false;
-            await _disableAllUtilities();
-          },
-          child: Text(
-            'Disable all'.tr(),
-            style: GoogleFonts.poppins(color: getAccentColor(ref)),
-          ),
-        ),
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-            ref.read(alertDialogShownProvider.notifier).state = false;
-          },
-          child: Text(
-            'Close'.tr(),
-            style: GoogleFonts.poppins(color: getAccentColor(ref)),
-          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                ref.read(alertDialogShownProvider.notifier).state = false;
+                await _disableAllUtilities();
+              },
+              child: Text(
+                'Disable all'.tr(),
+                style: GoogleFonts.poppins(color: getAccentColor(ref)),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                ref.read(alertDialogShownProvider.notifier).state = false;
+              },
+              child: Text(
+                'Close'.tr(),
+                style: GoogleFonts.poppins(color: getAccentColor(ref)),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -2522,67 +2627,77 @@ class _RemoveModGroupDialogState extends ConsumerState<RemoveModGroupDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        widget.isGroup ? 'Remove group'.tr() : 'Remove mod'.tr(),
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
-      ),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
-        ),
-        child: ScrollConfiguration(
-          behavior: ScrollConfiguration.of(context).copyWith(
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.mouse,
-              PointerDeviceKind.trackpad,
-            },
+    return Stack(
+      children: [
+        MoveWindow(),
+        AlertDialog(
+          title: Text(
+            widget.isGroup ? 'Remove group'.tr() : 'Remove mod'.tr(),
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+            ),
           ),
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: RichText(text: TextSpan(children: contents)),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(
+                dragDevices: {
+                  PointerDeviceKind.touch,
+                  PointerDeviceKind.mouse,
+                  PointerDeviceKind.trackpad,
+                },
+              ),
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: RichText(text: TextSpan(children: contents)),
+              ),
+            ),
           ),
+          actions:
+              _showConfirm
+                  ? [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        ref.read(alertDialogShownProvider.notifier).state =
+                            false;
+                      },
+                      child: Text(
+                        'Cancel'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        await renameOrMoveFolder();
+                      },
+                      child: Text(
+                        'Confirm'.tr(),
+                        style: GoogleFonts.poppins(color: Colors.red),
+                      ),
+                    ),
+                  ]
+                  : _isLoading
+                  ? []
+                  : [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        ref.read(alertDialogShownProvider.notifier).state =
+                            false;
+                        _onConfirmToUpdateModClicked();
+                      },
+                      child: Text(
+                        'Confirm'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
+                    ),
+                  ],
         ),
-      ),
-      actions:
-          _showConfirm
-              ? [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    ref.read(alertDialogShownProvider.notifier).state = false;
-                  },
-                  child: Text(
-                    'Cancel'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () async {
-                    await renameOrMoveFolder();
-                  },
-                  child: Text(
-                    'Confirm'.tr(),
-                    style: GoogleFonts.poppins(color: Colors.red),
-                  ),
-                ),
-              ]
-              : _isLoading
-              ? []
-              : [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    ref.read(alertDialogShownProvider.notifier).state = false;
-                    _onConfirmToUpdateModClicked();
-                  },
-                  child: Text(
-                    'Confirm'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-              ],
+      ],
     );
   }
 }
@@ -2618,54 +2733,64 @@ class _EditModLinkDialogState extends ConsumerState<EditModLinkDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        'Mod link'.tr(),
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
-      ),
-      content: TextField(
-        controller: textController,
-        decoration: InputDecoration(
-          isDense: true,
-          disabledBorder: InputBorder.none,
-          hintText: 'https://modlink.example',
-          hintStyle: GoogleFonts.poppins(
-            fontWeight: FontWeight.w400,
-            color: const Color.fromARGB(30, 255, 255, 255),
-            fontSize: 14,
+    return Stack(
+      children: [
+        MoveWindow(),
+        AlertDialog(
+          title: Text(
+            'Mod link'.tr(),
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+            ),
           ),
-        ),
-        maxLines: null,
-        keyboardType: TextInputType.none,
-        style: GoogleFonts.poppins(
-          fontWeight: FontWeight.w400,
-          color: Colors.white,
-          fontSize: 13,
-        ),
-        inputFormatters: [
-          FilteringTextInputFormatter.deny(RegExp(r'[\n\r\u0085\u2028\u2029]')),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-            ref.read(alertDialogShownProvider.notifier).state = false;
-          },
-          child: Text(
-            'Cancel'.tr(),
-            style: GoogleFonts.poppins(color: getAccentColor(ref)),
+          content: TextField(
+            controller: textController,
+            decoration: InputDecoration(
+              isDense: true,
+              disabledBorder: InputBorder.none,
+              hintText: 'https://modlink.example',
+              hintStyle: GoogleFonts.poppins(
+                fontWeight: FontWeight.w400,
+                color: const Color.fromARGB(30, 255, 255, 255),
+                fontSize: 14,
+              ),
+            ),
+            maxLines: null,
+            keyboardType: TextInputType.none,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w400,
+              color: Colors.white,
+              fontSize: 13,
+            ),
+            inputFormatters: [
+              FilteringTextInputFormatter.deny(
+                RegExp(r'[\n\r\u0085\u2028\u2029]'),
+              ),
+            ],
           ),
-        ),
-        TextButton(
-          onPressed: () async {
-            Navigator.of(context).pop();
-            await widget.modLinkFile.writeAsString(textController.text);
-          },
-          child: Text(
-            'Confirm'.tr(),
-            style: GoogleFonts.poppins(color: getAccentColor(ref)),
-          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                ref.read(alertDialogShownProvider.notifier).state = false;
+              },
+              child: Text(
+                'Cancel'.tr(),
+                style: GoogleFonts.poppins(color: getAccentColor(ref)),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await widget.modLinkFile.writeAsString(textController.text);
+              },
+              child: Text(
+                'Confirm'.tr(),
+                style: GoogleFonts.poppins(color: getAccentColor(ref)),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -3173,77 +3298,87 @@ class _SaveModCustomizationsDialogState
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        "Save Mod Customizations".tr(),
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
-      ),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
-        ),
-        child: ScrollConfiguration(
-          behavior: ScrollConfiguration.of(context).copyWith(
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.mouse,
-              PointerDeviceKind.trackpad,
-            },
+    return Stack(
+      children: [
+        MoveWindow(),
+        AlertDialog(
+          title: Text(
+            "Save Mod Customizations".tr(),
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+            ),
           ),
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: RichText(text: TextSpan(children: contents)),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(
+                dragDevices: {
+                  PointerDeviceKind.touch,
+                  PointerDeviceKind.mouse,
+                  PointerDeviceKind.trackpad,
+                },
+              ),
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: RichText(text: TextSpan(children: contents)),
+              ),
+            ),
           ),
+          actions:
+              _showClose
+                  ? [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        ref.read(alertDialogShownProvider.notifier).state =
+                            false;
+                      },
+                      child: Text(
+                        'Close'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
+                    ),
+                  ]
+                  : _showConfirm
+                  ? [
+                    TextButton(
+                      onPressed: () async {
+                        await simulateKeyF10();
+                      },
+                      child: Text(
+                        'Reload (F10)'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        ref.read(alertDialogShownProvider.notifier).state =
+                            false;
+                      },
+                      child: Text(
+                        'Cancel'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        await saveModsCustomizations();
+                      },
+                      child: Text(
+                        'Confirm'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
+                    ),
+                  ]
+                  : _isLoading
+                  ? []
+                  : [],
         ),
-      ),
-      actions:
-          _showClose
-              ? [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    ref.read(alertDialogShownProvider.notifier).state = false;
-                  },
-                  child: Text(
-                    'Close'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-              ]
-              : _showConfirm
-              ? [
-                TextButton(
-                  onPressed: () async {
-                    await simulateKeyF10();
-                  },
-                  child: Text(
-                    'Reload (F10)'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    ref.read(alertDialogShownProvider.notifier).state = false;
-                  },
-                  child: Text(
-                    'Cancel'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () async {
-                    await saveModsCustomizations();
-                  },
-                  child: Text(
-                    'Confirm'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-              ]
-              : _isLoading
-              ? []
-              : [],
+      ],
     );
   }
 }
@@ -3584,151 +3719,162 @@ class _BatchDisableOrEnableModsDialogState
       },
     );
 
-    return AlertDialog(
-      title: Text(
-        "Enable/disable mods".tr(),
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
-      ),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.7,
-          minWidth: !_showConfirm ? 0 : MediaQuery.of(context).size.width * 0.8,
-        ),
-        child:
-            !_showConfirm
-                ? ScrollConfiguration(
-                  behavior: scrollBehavior,
-                  child: SingleChildScrollView(
-                    controller: _scrollController,
-                    child: RichText(text: TextSpan(children: contents)),
-                  ),
-                )
-                : SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.6,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: ScrollConfiguration(
-                          behavior: scrollBehavior,
-                          child: ListView.builder(
-                            controller: _scrollController,
-                            itemCount: _flatItems.length,
-                            itemBuilder:
-                                (_, i) => switch (_flatItems[i]) {
-                                  _GroupRow item => _buildGroupHeader(item),
-                                  _ModRow item => _buildModRow(item),
-                                },
-                          ),
-                        ),
+    return Stack(
+      children: [
+        MoveWindow(),
+        AlertDialog(
+          title: Text(
+            "Enable/disable mods".tr(),
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+            ),
+          ),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.7,
+              minWidth:
+                  !_showConfirm ? 0 : MediaQuery.of(context).size.width * 0.8,
+            ),
+            child:
+                !_showConfirm
+                    ? ScrollConfiguration(
+                      behavior: scrollBehavior,
+                      child: SingleChildScrollView(
+                        controller: _scrollController,
+                        child: RichText(text: TextSpan(children: contents)),
                       ),
-
-                      const SizedBox(height: 10),
-
-                      Row(
+                    )
+                    : SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.6,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SizedBox(
-                            width: 35,
-                            height: 35,
-                            child: FittedBox(
-                              fit: BoxFit.fill,
-                              child: Checkbox(
-                                value: true,
-                                onChanged: null,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
+                          Expanded(
+                            child: ScrollConfiguration(
+                              behavior: scrollBehavior,
+                              child: ListView.builder(
+                                controller: _scrollController,
+                                itemCount: _flatItems.length,
+                                itemBuilder:
+                                    (_, i) => switch (_flatItems[i]) {
+                                      _GroupRow item => _buildGroupHeader(item),
+                                      _ModRow item => _buildModRow(item),
+                                    },
                               ),
                             ),
                           ),
-                          Text("Enabled".tr(), style: _infoStyle),
-                          const SizedBox(width: 15),
-                          SizedBox(
-                            width: 35,
-                            height: 35,
-                            child: FittedBox(
-                              fit: BoxFit.fill,
-                              child: Checkbox(
-                                value: false,
-                                onChanged: null,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
+
+                          const SizedBox(height: 10),
+
+                          Row(
+                            children: [
+                              SizedBox(
+                                width: 35,
+                                height: 35,
+                                child: FittedBox(
+                                  fit: BoxFit.fill,
+                                  child: Checkbox(
+                                    value: true,
+                                    onChanged: null,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
+                              Text("Enabled".tr(), style: _infoStyle),
+                              const SizedBox(width: 15),
+                              SizedBox(
+                                width: 35,
+                                height: 35,
+                                child: FittedBox(
+                                  fit: BoxFit.fill,
+                                  child: Checkbox(
+                                    value: false,
+                                    onChanged: null,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Text("Disabled".tr(), style: _infoStyle),
+                            ],
                           ),
-                          Text("Disabled".tr(), style: _infoStyle),
+
+                          const SizedBox(height: 10),
+                          Text(
+                            "Before disabling the mods, click Save Mod Customizations to save your changes to the mod toggles/states."
+                                .tr(),
+                            style: _infoStyle.copyWith(color: Colors.white),
+                          ),
                         ],
                       ),
+                    ),
+          ),
 
-                      const SizedBox(height: 10),
-                      Text(
-                        "Before disabling the mods, click Save Mod Customizations to save your changes to the mod toggles/states."
-                            .tr(),
-                        style: _infoStyle.copyWith(color: Colors.white),
+          actions:
+              _showConfirm
+                  ? [
+                    TextButton(
+                      onPressed: () => _setAll(true),
+                      child: Text(
+                        'Enable all mods'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
                       ),
-                    ],
-                  ),
-                ),
-      ),
-
-      actions:
-          _showConfirm
-              ? [
-                TextButton(
-                  onPressed: () => _setAll(true),
-                  child: Text(
-                    'Enable all mods'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () => _setAll(false),
-                  child: Text(
-                    'Disable all mods'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    ref.read(alertDialogShownProvider.notifier).state = false;
-                  },
-                  child: Text(
-                    'Cancel'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-                TextButton(
-                  onPressed: batchDisableEnableMods,
-                  child: Text(
-                    'Confirm'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-              ]
-              : _isLoading
-              ? const []
-              : [
-                TextButton(
-                  onPressed: () async {
-                    Navigator.of(context).pop();
-                    ref.read(alertDialogShownProvider.notifier).state = true;
-                    await showDialog(
-                      barrierDismissible: false,
-                      context: context,
-                      builder:
-                          (context) => UpdateModDialog(
-                            modsPath: ref.read(validModsPath)!,
-                          ),
-                    );
-                  },
-                  child: Text(
-                    'Update Mod Data'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-              ],
+                    ),
+                    TextButton(
+                      onPressed: () => _setAll(false),
+                      child: Text(
+                        'Disable all mods'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        ref.read(alertDialogShownProvider.notifier).state =
+                            false;
+                      },
+                      child: Text(
+                        'Cancel'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: batchDisableEnableMods,
+                      child: Text(
+                        'Confirm'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
+                    ),
+                  ]
+                  : _isLoading
+                  ? const []
+                  : [
+                    TextButton(
+                      onPressed: () async {
+                        Navigator.of(context).pop();
+                        ref.read(alertDialogShownProvider.notifier).state =
+                            true;
+                        await showDialog(
+                          barrierDismissible: false,
+                          context: context,
+                          builder:
+                              (context) => UpdateModDialog(
+                                modsPath: ref.read(validModsPath)!,
+                              ),
+                        );
+                      },
+                      child: Text(
+                        'Update Mod Data'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
+                    ),
+                  ],
+        ),
+      ],
     );
   }
 }
@@ -4015,114 +4161,128 @@ class _ChangeNamespaceDialogState extends ConsumerState<ChangeNamespaceDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        "Change namespace".tr(),
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18),
-      ),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
-        ),
-        child: ScrollConfiguration(
-          behavior: ScrollConfiguration.of(context).copyWith(
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.mouse,
-              PointerDeviceKind.trackpad,
-            },
-          ),
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                RichText(text: TextSpan(children: contents)),
-                if (namespacesMap.isEmpty && !_isLoading)
-                  Text(
-                    'No namespaces found.'.tr(),
-                    style: GoogleFonts.poppins(
-                      color: Colors.green,
-                      fontSize: 14,
-                    ),
-                  )
-                else if (!_wasSaved)
-                  ...textControllersMap.entries.map((controller) {
-                    return TextField(
-                      readOnly: _isLoading,
-                      controller: controller.value,
-                      decoration: InputDecoration(
-                        disabledBorder: InputBorder.none,
-                        hintText: 'A-Z a-z 0-9 _ \\',
-                        hintStyle: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w400,
-                          color: const Color.fromARGB(71, 255, 255, 255),
-                          fontSize: 14,
-                        ),
-                      ),
-                      maxLines: null,
-                      keyboardType: TextInputType.none,
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w400,
-                        color: Colors.white,
-                        fontSize: 13,
-                      ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                          RegExp(r'[0-9a-zA-Z\\_]'),
-                        ),
-                        FilteringTextInputFormatter.deny(
-                          RegExp(r'[\n\r\u0085\u2028\u2029]'),
-                        ),
-                      ],
-                    );
-                  }),
-              ],
+    return Stack(
+      children: [
+        MoveWindow(),
+        AlertDialog(
+          title: Text(
+            "Change namespace".tr(),
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
             ),
           ),
-        ),
-      ),
-      actions:
-          _showSaveButton
-              ? [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    ref.read(alertDialogShownProvider.notifier).state = false;
-                  },
-                  child: Text(
-                    'Cancel'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(
+                dragDevices: {
+                  PointerDeviceKind.touch,
+                  PointerDeviceKind.mouse,
+                  PointerDeviceKind.trackpad,
+                },
+              ),
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    RichText(text: TextSpan(children: contents)),
+                    if (namespacesMap.isEmpty && !_isLoading)
+                      Text(
+                        'No namespaces found.'.tr(),
+                        style: GoogleFonts.poppins(
+                          color: Colors.green,
+                          fontSize: 14,
+                        ),
+                      )
+                    else if (!_wasSaved)
+                      ...textControllersMap.entries.map((controller) {
+                        return TextField(
+                          readOnly: _isLoading,
+                          controller: controller.value,
+                          decoration: InputDecoration(
+                            disabledBorder: InputBorder.none,
+                            hintText: 'A-Z a-z 0-9 _ \\',
+                            hintStyle: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w400,
+                              color: const Color.fromARGB(71, 255, 255, 255),
+                              fontSize: 14,
+                            ),
+                          ),
+                          maxLines: null,
+                          keyboardType: TextInputType.none,
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white,
+                            fontSize: 13,
+                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[0-9a-zA-Z\\_]'),
+                            ),
+                            FilteringTextInputFormatter.deny(
+                              RegExp(r'[\n\r\u0085\u2028\u2029]'),
+                            ),
+                          ],
+                        );
+                      }),
+                  ],
                 ),
-                if (namespacesMap.isNotEmpty)
-                  TextButton(
-                    onPressed: () async {
-                      await saveNamespace();
-                    },
-                    child: Text(
-                      'Confirm'.tr(),
-                      style: GoogleFonts.poppins(color: getAccentColor(ref)),
+              ),
+            ),
+          ),
+          actions:
+              _showSaveButton
+                  ? [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        ref.read(alertDialogShownProvider.notifier).state =
+                            false;
+                      },
+                      child: Text(
+                        'Cancel'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
                     ),
-                  ),
-              ]
-              : _isLoading
-              ? []
-              : [
-                TextButton(
-                  onPressed: () async {
-                    Navigator.of(context).pop();
-                    ref.read(alertDialogShownProvider.notifier).state = false;
-                    if (_namespaceChanged) {
-                      await simulateKeyF10();
-                    }
-                  },
-                  child: Text(
-                    _namespaceChanged ? 'Close & Reload'.tr() : 'Close'.tr(),
-                    style: GoogleFonts.poppins(color: getAccentColor(ref)),
-                  ),
-                ),
-              ],
+                    if (namespacesMap.isNotEmpty)
+                      TextButton(
+                        onPressed: () async {
+                          await saveNamespace();
+                        },
+                        child: Text(
+                          'Confirm'.tr(),
+                          style: GoogleFonts.poppins(
+                            color: getAccentColor(ref),
+                          ),
+                        ),
+                      ),
+                  ]
+                  : _isLoading
+                  ? []
+                  : [
+                    TextButton(
+                      onPressed: () async {
+                        Navigator.of(context).pop();
+                        ref.read(alertDialogShownProvider.notifier).state =
+                            false;
+                        if (_namespaceChanged) {
+                          await simulateKeyF10();
+                        }
+                      },
+                      child: Text(
+                        _namespaceChanged
+                            ? 'Close & Reload'.tr()
+                            : 'Close'.tr(),
+                        style: GoogleFonts.poppins(color: getAccentColor(ref)),
+                      ),
+                    ),
+                  ],
+        ),
+      ],
     );
   }
 }
