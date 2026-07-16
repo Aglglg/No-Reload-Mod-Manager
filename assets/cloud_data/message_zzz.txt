@@ -1,0 +1,2 @@
+Sometimes another tool (like mod fixer) misreading a modified ini - that one's not on me, and what do you expect me to do?
+Updates will be slower overall, thanks for everything.
