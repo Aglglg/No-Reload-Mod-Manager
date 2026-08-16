@@ -2,10 +2,16 @@
 #include "util_min.h"
 
 #include <wchar.h>
+#include <cstring>
 
 static int _autoicmp(const wchar_t* s1, const wchar_t* s2)
 {
 	return _wcsicmp(s1, s2);
+}
+
+static int _autoicmp(const char* s1, const char* s2)
+{
+	return _stricmp(s1, s2);
 }
 
 template <class T1, class T2>

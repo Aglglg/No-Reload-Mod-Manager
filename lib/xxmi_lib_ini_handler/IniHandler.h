@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <map>
+#include "CommandList.h"
 
 //defined Globals.h, do not include Globals.h, because Globals.h also include this file
 struct Globals;
@@ -65,6 +66,31 @@ struct IniLine {
 
 typedef std::vector<IniLine> IniSectionVector;
 
+template<typename T>
+struct IniValueTypeName
+{
+	static constexpr const wchar_t* value = L"value";
+};
+
+template<>
+struct IniValueTypeName<float>
+{
+	static constexpr const wchar_t* value = L"floating-point";
+};
+
+template<>
+struct IniValueTypeName<int>
+{
+	static constexpr const wchar_t* value = L"integer";
+};
+
+template<>
+struct IniValueTypeName<bool>
+{
+	static constexpr const wchar_t* value = L"boolean";
+};
+
+
 struct WStringInsensitiveLess {
 	bool operator() (const std::wstring& x, const std::wstring& y) const
 	{
@@ -108,5 +134,9 @@ typedef std::map<std::wstring, IniSection, WStringInsensitiveLess> IniSections;
 
 int GetIniInt(Globals& G, const wchar_t* section, const wchar_t* key, int def, bool* found, bool warn = true);
 
+bool ParseBinaryLiterals(const std::wstring& input, size_t start, uint64_t& out, size_t& length);
+
 bool get_namespaced_section_name_lower(const std::wstring* section, const std::wstring* ini_namespace, std::wstring* ret);
 std::wstring get_namespaced_var_name_lower(const std::wstring var, const std::wstring* ini_namespace);
+
+CommandListVariable* RegisterGlobalVariable(Globals& G, std::wstring& name, float* fval, VariableFlags flags);
