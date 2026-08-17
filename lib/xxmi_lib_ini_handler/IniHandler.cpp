@@ -1412,6 +1412,7 @@ static CustomResourcePool* ParseResourcePoolSection(Globals& G, const wchar_t* s
 	if (expiration_timeout_frames >= 0)
 		pool->expiration_timeout_frames = (unsigned)expiration_timeout_frames;
 	pool->reset_expired_elements = GetIniBool(section_name, L"pool_expiration_reset_elements", true, NULL);
+	pool->read_refreshes_expiration = GetIniBool(section_name, L"pool_expiration_refresh_on_read", false, NULL);
 
 	int spatial_radius = GetIniInt(section_name, L"pool_spatial_radius", 1, NULL);
 	if (spatial_radius < 1) {

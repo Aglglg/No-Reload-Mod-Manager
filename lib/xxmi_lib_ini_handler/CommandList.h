@@ -70,13 +70,21 @@ public:
 	std::wstring ini_section;
 	bool post;
 
+	bool runtime_populated = false;
+
 	void clear();
+
+	CommandList* ResolveCommandList();
+	bool CommandList::noop();
 
 	CommandList() :
 		post(false),
 		scope(NULL)
 	{
 	}
+
+private:
+	CommandList* source_command_list = nullptr;
 };
 
 //CONCRETE
@@ -193,37 +201,39 @@ static EnumName_t<const wchar_t*, ResourceCopyTargetType> ResourceCopyTargetType
 	{NULL, ResourceCopyTargetType::INVALID} // End of list marker
 };
 
-enum class ResourceCopyTargetEvaluationMode : uint16_t {
-	INVALID = 0b0000000000000000, // 0x0000
-	// RESOURCE
-	RESOURCE = 0b0000000000000001, // 0x0001
-	RESOURCE_IDENTITY = 0b0000000000000010, // 0x0002
-	RESOURCE_STRIDE = 0b0000000000000100, // 0x0004
-	RESOURCE_SOURCE_STRIDE = 0b0000000000001000, // 0x0008
-	RESOURCE_SIZE = 0b0000000000010000, // 0x0010
-	RESOURCE_OFFSET = 0b0000000000100000, // 0x0020
-	RESOURCE_REGION_HASH = 0b0000000001000000, // 0x0040
-	RESOURCE_SPATIAL_HASH = 0b0000000010000000, // 0x0080
-	//                       0b0000000100000000, // 0x0100
+enum class ResourceCopyTargetEvaluationMode : uint32_t {
+	INVALID                = 0b00000000000000000000000000000000,
 
-	RESOURCE_MASK = 0b0000000111111111,
+	// RESOURCE
+	RESOURCE               = 0b00000000000000000000000000000001,
+	RESOURCE_IDENTITY      = 0b00000000000000000000000000000010,
+	RESOURCE_STRIDE        = 0b00000000000000000000000000000100,
+	RESOURCE_SOURCE_STRIDE = 0b00000000000000000000000000001000,
+	RESOURCE_SIZE          = 0b00000000000000000000000000010000,
+	RESOURCE_OFFSET        = 0b00000000000000000000000000100000,
+	RESOURCE_REGION_HASH   = 0b00000000000000000000000001000000,
+	RESOURCE_SPATIAL_HASH  = 0b00000000000000000000000010000000,
+	RESOURCE_REGION        = 0b00000000000000000000000100000000,
+
+	RESOURCE_MASK          = 0b00000000000000000000000111111111,
 
 	// POOL
-	POOL_IDENTITY = 0b0000001000000000, // 0x0200
-	POOL_SIZE = 0b0000010000000000, // 0x0400
-	POOL_INDEX = 0b0000100000000000, // 0x0800
-	POOL_FULL_RANGE = 0b0001000000000000, // 0x1000
+	POOL_IDENTITY          = 0b00000000000000000000001000000000,
+	POOL_SIZE              = 0b00000000000000000000010000000000,
+	POOL_INDEX             = 0b00000000000000000000100000000000,
+	POOL_FULL_RANGE        = 0b00000000000000000001000000000000,
+	POOL_LAST_FRAME        = 0b00000000000000000010000000000000,
 
-	POOL_MASK = 0b0001111000000000,
+	POOL_MASK              = 0b00000000000000000011111000000000,
 
 	// VARIABLE
-	VARIABLE = 0b0010000000000000, // 0x2000
+	VARIABLE               = 0b00000000000000000100000000000000,
 
 	// LAYOUT
-	LAYOUT_ELEMENT_FORMAT = 0b0100000000000000, // 0x4000
-	LAYOUT_ELEMENT_OFFSET = 0b1000000000000000, // 0x8000
+	LAYOUT_ELEMENT_FORMAT  = 0b00000000000000001000000000000000,
+	LAYOUT_ELEMENT_OFFSET  = 0b00000000000000010000000000000000,
 
-	LAYOUT_MASK = 0b1100000000000000
+	LAYOUT_MASK            = 0b00000000000000011000000000000000
 };
 SENSIBLE_ENUM(ResourceCopyTargetEvaluationMode);
 static EnumName_t<const wchar_t*, ResourceCopyTargetEvaluationMode> ResourceCopyTargetEvaluationModeNames[] = {
@@ -502,6 +512,8 @@ enum class ParamOverrideType {
 	STEREO_ACTIVE,
 	STEREO_AVAILABLE,
 	FRAME_NUMBER,
+	DRAW_NUMBER,
+	DISPATCH_NUMBER,
 };
 static EnumName_t<const wchar_t*, ParamOverrideType> ParamOverrideTypeNames[] = {
 	{L"rt_width", ParamOverrideType::RT_WIDTH},
@@ -542,6 +554,8 @@ static EnumName_t<const wchar_t*, ParamOverrideType> ParamOverrideTypeNames[] = 
 	{L"stereo_active", ParamOverrideType::STEREO_ACTIVE},
 	{L"stereo_available", ParamOverrideType::STEREO_AVAILABLE},
 	{L"frame_number", ParamOverrideType::FRAME_NUMBER},
+	{L"draw_number", ParamOverrideType::DRAW_NUMBER},
+	{L"dispatch_number", ParamOverrideType::DISPATCH_NUMBER},
 	{NULL, ParamOverrideType::INVALID} // End of list marker
 };
 
@@ -745,7 +759,7 @@ public:
 
 	template<typename T>
 	bool GetEnum(const EnumName_t<const wchar_t*, T>* names, T invalid, T* out);
-	bool GetVariable(Globals& G, CommandListVariable*& out);
+	bool GetVariable(Globals& G, CommandListVariable*& out, bool is_source);
 	bool GetTarget(Globals& G, ResourceCopyTarget* out, bool is_source);
 	bool GetFloat(float* out);
 	bool GetExpression(Globals& G, std::unique_ptr<CommandListExpression>* out);

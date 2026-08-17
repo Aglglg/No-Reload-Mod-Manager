@@ -103,25 +103,55 @@ static bool ParseRunShader(Globals& G, std::wstring* val, const std::wstring* in
 	return true;
 }
 
+static bool FindExplicitCommandListSection(Globals& G, const wchar_t* val, const std::wstring* ini_namespace)
+{
+	ExplicitCommandListSections::iterator it;
+
+	std::wstring namespaced_section;
+
+	// We need value in lower case so our keys will be consistent in the
+	// unordered_map. ParseCommandList will have already done this, but the
+	// Key/Preset parsing code will not have, and rather than require it to
+	// we do it here:
+	std::wstring section_id(val);
+	std::transform(section_id.begin(), section_id.end(), section_id.begin(), ::towlower);
+
+	it = G.explicitCommandListSections.end();
+	if (get_namespaced_section_name_lower(&section_id, ini_namespace, &namespaced_section))
+		it = G.explicitCommandListSections.find(namespaced_section);
+	if (it == G.explicitCommandListSections.end())
+		it = G.explicitCommandListSections.find(section_id);
+	if (it == G.explicitCommandListSections.end())
+		//return nullptr;
+		return false;
+
+	//return &it->second;
+	return true;
+}
+
 bool ParseRunExplicitCommandList(Globals& G, std::wstring* val, const std::wstring* ini_namespace)
 {
 	//Only to determine if specified CommandList section is exist somewhere
-	ExplicitCommandListSections::iterator command_list;
-	std::wstring namespaced_section;
+	
+	//RunExplicitCommandList* operation = new RunExplicitCommandList();
 
-	std::wstring commandlist_section(val->c_str());
+	//operation->command_list_section = FindExplicitCommandListSection(G, val->c_str(), ini_namespace);
+	return FindExplicitCommandListSection(G, val->c_str(), ini_namespace);
 
-	command_list = G.explicitCommandListSections.end();
-	if (get_namespaced_section_name_lower(&commandlist_section, ini_namespace, &namespaced_section))
-		command_list = G.explicitCommandListSections.find(namespaced_section);
-	if (command_list == G.explicitCommandListSections.end())
-		command_list = G.explicitCommandListSections.find(commandlist_section);
-	if (command_list == G.explicitCommandListSections.end())
-	{
-		return false;
-	}
+	//if (!operation->command_list_section)
+		//goto bail;
 
-	return true;
+	//// If the user indicated an explicit command list we will run the pre
+	//// and post lists of the target list together. This tends to make
+	//// things a little less surprising for "post run = CommandListFoo"
+	//if (explicit_command_list)
+	//	operation->run_pre_and_post_together = true;
+
+	//return AddCommandToList(operation, explicit_command_list, NULL, pre_command_list, post_command_list, section, key, val);
+
+//bail:
+	//delete operation;
+	//return false;
 }
 
 static std::wstring get_between_first_and_last_backslash(const std::wstring& input)
@@ -220,6 +250,21 @@ void CommandList::clear()
 {
 	commands.clear();
 	static_vars.clear();
+}
+
+CommandList* CommandList::ResolveCommandList()
+{
+	return source_command_list ? source_command_list->ResolveCommandList() : this;
+}
+
+bool CommandList::noop()
+{
+	CommandList* resolved = ResolveCommandList();
+
+	if (resolved->runtime_populated)
+		return false;
+
+	return resolved->commands.empty();
 }
 
 float CommandListOperand::evaluate()
@@ -646,7 +691,7 @@ bool CommandArgumentReader::GetEnum(const EnumName_t<const wchar_t*, T>* names, 
 	return true;
 }
 
-bool CommandArgumentReader::GetVariable(Globals& G, CommandListVariable*& out)
+bool CommandArgumentReader::GetVariable(Globals& G, CommandListVariable*& out, bool is_source)
 {
 	std::wstring token;
 
@@ -665,10 +710,18 @@ bool CommandArgumentReader::GetVariable(Globals& G, CommandListVariable*& out)
 		return false;
 	}
 
-	if (!find_local_variable(token, m_scope, &out) &&
+	if ((!(m_scope && find_local_variable(token, m_scope, &out))) &&
 		!parse_command_list_var_name(G, token, m_ini_namespace, &out))
 	{
-		SetError(L"Unknown variable: " + token, m_peek_start_pos);
+		SetError(!m_scope
+			? L"Unknown global variable: " + token
+			: L"Unknown variable: " + token,
+			m_peek_start_pos);
+		return false;
+	}
+
+	if (out->flags & VariableFlags::LOCKED) {
+		SetError(L"Unable to assign value to <locked> variable: " + token, m_peek_start_pos);
 		return false;
 	}
 
@@ -1161,7 +1214,7 @@ static void tokenise(Globals& G, const std::wstring* expression, CommandListSynt
 		// Other Tokens
 		if (!has_prefix)
 		{
-			size_t len = FindIdentifierTokenEnd(remain, 0, OptionalChars::HYPHEN);
+			size_t len = FindIdentifierTokenEnd(remain, 0, OptionalChars::NONE);
 
 			if (len)
 			{
@@ -1955,15 +2008,34 @@ bool ParseCommandListVariableAssignment(Globals& G, const wchar_t* section,
 	CommandList* command_list, CommandList* pre_command_list, CommandList* post_command_list,
 	const std::wstring* ini_namespace)
 {
-	VariableAssignment* command = NULL;
-	CommandListVariable* var = NULL;
-	std::wstring name = key;
+	std::wstring line = key;
 
-	if (name.empty() && raw_line)
-		name = *raw_line;
+	if (line.empty() && raw_line)
+		line = *raw_line;
 
-	if (!name.compare(0, 6, L"local ")) {
-		name = name.substr(name.find_first_not_of(L" \t", 6));
+	bool declare_local = !line.compare(0, 5, L"local");
+
+	if (!declare_local && line[0] != L'$')
+		return false;
+
+	CommandArgumentReader args(L"variable_assignment", line, section, ini_namespace, pre_command_list->scope);
+
+	std::wstring name;
+
+	if (!args.PeekToken(&name))
+		return args.Fail();
+
+	if (declare_local)
+	{
+		if (!args.ConsumeToken())
+			return args.Fail();
+
+		if (!args.ConsumeSeparator(SeparatorMode::Space))
+			return args.Fail();
+
+		if (!args.PeekToken(&name))
+			return args.Fail();
+
 		if (!declare_local_variable(G, section, name, pre_command_list, ini_namespace))
 			return false;
 
@@ -1971,28 +2043,25 @@ bool ParseCommandListVariableAssignment(Globals& G, const wchar_t* section,
 			return true;
 	}
 
-	if (!find_local_variable(name, pre_command_list->scope, &var) &&
-		!parse_command_list_var_name(G, name, ini_namespace, &var))
+	if (name.back() == L']')
 		return false;
 
-	if (var->flags & VariableFlags::LOCKED) {
-		/*LogOverlayW(LOG_WARNING,
-			L"Unable to assign value \"%ls\" to <locked> variable \"%ls\"\n"
-			L" - [%ls] @ [%ls]\n",
-			val->c_str(), name.c_str(),
-			section, ini_namespace->c_str());*/
-		return false;
-	}
+	CommandListVariable* var = nullptr;
 
-	command = new VariableAssignment();
+	if (!args.GetVariable(G, var, false))
+		return args.Fail();
+
+	VariableAssignment* command = new VariableAssignment();
+
 	command->var = var;
 
 	if (!command->expression.parse(G, val, ini_namespace, command_list->scope))
 		goto bail;
 
-	command->ini_line = L"[" + std::wstring(section) + L"] " + std::wstring(key) + L" = " + *val;
+	command->ini_line = L"[" + std::wstring(section) + L"] " + line + L" = " + *val;
 	command_list->commands.push_back(std::shared_ptr<CommandListCommand>(command));
 	return true;
+
 bail:
 	delete command;
 	return false;
@@ -2137,10 +2206,15 @@ IniParserResult ResourceCopyTarget::ParseTargetMember(
 		{ L"->index",          7, ResourceCopyTargetEvaluationMode::POOL_INDEX },
 		{ L"->offset",         8, ResourceCopyTargetEvaluationMode::RESOURCE_OFFSET },
 		{ L"->stride",         8, ResourceCopyTargetEvaluationMode::RESOURCE_STRIDE },
+		{ L"->region",         8, ResourceCopyTargetEvaluationMode::RESOURCE_REGION, {{
+			MemberArg::Type::Unsigned, // Byte Offset 
+			MemberArg::Type::Unsigned  // Byte Size 
+		}} },
 		{ L"->hashregion",    12, ResourceCopyTargetEvaluationMode::RESOURCE_REGION_HASH, {{
 			MemberArg::Type::Unsigned, // Byte Offset 
 			MemberArg::Type::Unsigned  // Byte Size 
 		}} },
+		{ L"->lastframe",   13, ResourceCopyTargetEvaluationMode::POOL_LAST_FRAME },
 		{ L"->spatialhash",   13, ResourceCopyTargetEvaluationMode::RESOURCE_SPATIAL_HASH, {{
 			MemberArg::Type::Unsigned, // X Byte Offset 
 			MemberArg::Type::Unsigned, // Y Byte Offset 
@@ -2744,8 +2818,8 @@ bool IfCommand::noop(Globals& G, bool post, bool ignore_cto_pre, bool ignore_cto
 	}
 
 	if (post)
-		return true_commands_post->commands.empty() && false_commands_post->commands.empty();
-	return true_commands_pre->commands.empty() && false_commands_pre->commands.empty();
+		return true_commands_post->noop() && false_commands_post->noop();
+	return true_commands_pre->noop() && false_commands_pre->noop();
 }
 
 void CommandPlaceholder::run()
