@@ -377,6 +377,30 @@ static inline bool is_identifier_char(wchar_t c, OptionalChars identifier_flags)
 	return false;
 }
 
+static inline bool is_operator_char(wchar_t c)
+{
+	switch (c)
+	{
+	case L'=':
+	case L'&':
+	case L'|':
+	case L'+':
+	case L'-':
+	case L'/':
+	case L'*':
+	case L'>':
+	case L'<':
+	case L'%':
+	case L'!':
+	case L'^':
+	case L'~':
+		return true;
+
+	default:
+		return false;
+	}
+}
+
 static size_t FindIdentifierTokenEnd(const std::wstring& str, const size_t start = 0, OptionalChars identifier_flags = OptionalChars::NONE)
 {
 	for (size_t i = start; i < str.size(); ++i)
@@ -466,7 +490,7 @@ private:
 				return false;
 
 			// Broad token-boundary check only. Actual syntax validation is performed later by the dedicated parser.
-			if (!is_identifier_char(c, OptionalChars::ALL))
+			if ((is_operator_char(c) && c != L'-') || iswspace(c))
 				return false;
 		}
 
@@ -505,7 +529,7 @@ static size_t FindResourceCopyTargetTokenEnd(const std::wstring& str, size_t sta
 	// Scans a resource copy target token and returns the end position after performing minimal syntax validation:
 	// 1. Ensures identifier characters match `[a-z_-.0-9]+`.
 	// 2. Ensures an optional namespace is properly closed, while allowing arbitrary characters in the namespace name.
-	// 3. Ensures optional bracket expressions are properly balanced while allowing arbitrary characters inside them.
+	// 3. Ensures optional bracket expressions are properly nested while allowing arbitrary characters inside them.
 	// 4. Recognizes the optional member access operator (`->`) as part of the token.
 	// 
 	// Note: Token prefixes ('@', '#', '$') are handled by the caller, so scanning begins after the prefix (`start = 1`).
@@ -520,7 +544,9 @@ static size_t FindResourceCopyTargetTokenEnd(const std::wstring& str, size_t sta
 
 	NamespaceScanner namespace_scanner;
 
-	for (size_t i = start; i < str.size(); ++i)
+	size_t end = str.size();
+
+	for (size_t i = start; i < end; ++i)
 	{
 		wchar_t c = str[i];
 
@@ -556,25 +582,31 @@ static size_t FindResourceCopyTargetTokenEnd(const std::wstring& str, size_t sta
 			continue;
 		}
 
-		// Allow the member access operator ("->") as part of the token.
 		if (c == L'-')
 		{
-			if (i + 1 < str.size() && str[i + 1] == L'>')
+			// Allow the member access operator ("->") as part of the token.
+			if (i + 1 < end && str[i + 1] == L'>')
 			{
 				++i; // Consume '>'.
 				continue;
 			}
+			// Allow hyphen as part of identifier.
+			continue;
 		}
 
-		// The remaining characters must be valid identifier characters.
-		if (!is_identifier_char(c, OptionalChars(OptionalChars::HYPHEN | OptionalChars::PERIOD)))
-			return i;
+		// The remaining characters must be non-operator characters.
+		// Spacing character outside namespace terminates a token.
+		if (is_operator_char(c) || iswspace(c))
+		{
+			end = i;
+			break;
+		}
 	}
 
 	if (!brackets.empty())
-		throw CommandListSyntaxError(L"Unterminated bracket expression", str.size());
+		throw CommandListSyntaxError(L"Unterminated bracket expression", end);
 
-	return str.size();
+	return end;
 }
 
 inline bool ParseFloatToken(const std::wstring& input, float& out, size_t& length)
@@ -691,11 +723,11 @@ bool CommandArgumentReader::GetEnum(const EnumName_t<const wchar_t*, T>* names, 
 	return true;
 }
 
-bool CommandArgumentReader::GetVariable(Globals& G, CommandListVariable*& out, bool is_source)
+bool CommandArgumentReader::GetVariable(Globals& G, CommandListVariable*& out, bool is_source, PeekMode mode)
 {
 	std::wstring token;
 
-	if (!PeekToken(&token))
+	if (!PeekToken(&token, mode))
 		return false;
 
 	if (token[0] != L'$')
@@ -704,7 +736,7 @@ bool CommandArgumentReader::GetVariable(Globals& G, CommandListVariable*& out, b
 		return false;
 	}
 
-	if (FindVariableTokenEnd(token, 1) != token.size())
+	if (is_source && FindVariableTokenEnd(token, 1) != token.size())
 	{
 		SetError(L"Invalid variable: " + token, m_peek_start_pos);
 		return false;
@@ -732,16 +764,16 @@ bool CommandArgumentReader::GetVariable(Globals& G, CommandListVariable*& out, b
 	return true;
 }
 
-bool CommandArgumentReader::GetTarget(Globals& G, ResourceCopyTarget* out, bool is_source)
+bool CommandArgumentReader::GetTarget(Globals& G, ResourceCopyTarget* out, bool is_source, PeekMode mode)
 {
 	std::wstring token;
 
-	if (!PeekToken(&token))
+	if (!PeekToken(&token, mode))
 		return false;
 
 	bool has_prefix = token[0] == L'$' || token[0] == L'@' || token[0] == L'#';
 
-	if (FindResourceCopyTargetTokenEnd(token, has_prefix ? 1 : 0) != token.size())
+	if (is_source && FindResourceCopyTargetTokenEnd(token, has_prefix ? 1 : 0) != token.size())
 	{
 		SetError(L"Invalid target: " + token, m_peek_start_pos);
 		return false;
@@ -1194,32 +1226,26 @@ static void tokenise(Globals& G, const std::wstring* expression, CommandListSynt
 
 		bool has_prefix = has_variable_prefix || remain[0] == L'@' || remain[0] == L'#';
 
-		// ResourceCopyTarget
-		{
-			size_t len = FindResourceCopyTargetTokenEnd(remain, has_prefix ? 1 : 0);
-
-			if (len)
-			{
-				token = remain.substr(0, len);
-
-				if (operand->parse_target(G, &token, ini_namespace, scope))
-				{
-					//LogDebugW(L"      ResourceCopyTarget: \"%ls\"\n", token.c_str());
-					pos += len;
-					goto import_operand;
-				}
-			}
-		}
+		size_t len = 0;
 
 		// Other Tokens
 		if (!has_prefix)
 		{
-			size_t len = FindIdentifierTokenEnd(remain, 0, OptionalChars::NONE);
+			len = FindIdentifierTokenEnd(remain, 0, OptionalChars::NONE);
 
 			if (len)
 			{
 				token = remain.substr(0, len);
 
+				// Parse target without hyphen (e.g. `ib`, `vb0`).
+				if (operand->parse_slot(G, &token, ini_namespace, scope))
+				{
+					//LogDebug("      ResourceCopyTarget: \"%S\"\n", token.c_str());
+					pos += len;
+					goto import_operand;
+				}
+			
+				// Parse ini params (e.g. `x`, `y0`, `z128`).
 				if (operand->parse_ini_param(&token, ini_namespace, scope))
 				{
 					//LogDebug("      IniParam: \"%S\"\n", token.c_str());
@@ -1227,21 +1253,25 @@ static void tokenise(Globals& G, const std::wstring* expression, CommandListSynt
 					goto import_operand;
 				}
 
-				else if (operand->parse_ini_keywords(&token, ini_namespace, scope))
+				// Parse INI "ParamOverride" value getters (e.g. `TIME`, `INDEX_COUNT`).
+				if (operand->parse_ini_keywords(&token, ini_namespace, scope))
 				{
 					//LogDebug("      IniKeyword: \"%S\"\n", token.c_str());
 					pos += len;
 					goto import_operand;
 				}
 
-				else if (operand->parse_shader(&token, ini_namespace, scope))
+				// Parse special float (e.g. `inf`, `NaN`). Hyphen before `inf` is handled by operator.
+				if (operand->parse_float(&remain, ini_namespace, scope, len))
 				{
-					//LogDebug("      Shader: \"%S\"\n", token.c_str());
+					token = remain.substr(0, len);
+					//LogDebug("      Float: \"%S\"\n", token.c_str());
 					pos += len;
 					goto import_operand;
 				}
 
-				else if (operand->parse_scissor(&token, ini_namespace, scope))
+				// Parse scissor (e.g. `scissor0_top`).
+				if (operand->parse_scissor(&token, ini_namespace, scope))
 				{
 					//LogDebug("      Scissor: \"%S\"\n", token.c_str());
 					pos += len;
@@ -1250,14 +1280,31 @@ static void tokenise(Globals& G, const std::wstring* expression, CommandListSynt
 			}
 		}
 
-		// Special Float:
+		// More loose match with hyphens, brackets and UTF-8.
+		// Allows strings like `Pool\path like\namespace\chars_UTF-8[$index]->Call($PoolFoo[$index], 1)`.
+		size_t len_target = FindResourceCopyTargetTokenEnd(remain, has_prefix ? 1 : 0);
+		if (len_target)
 		{
-			size_t len = remain.size();
+			token = remain.substr(0, len_target);
 
-			if (operand->parse_float(&remain, ini_namespace, scope, len))
+			// Parse custom resource, pool or other target (e.g. `ResourceFoo`, `PoolFoo`, `cs-cb0`, `ib`).
+			if (operand->parse_target(G, &token, ini_namespace, scope))
 			{
-				token = remain.substr(0, len);
-				//LogDebug("      Float: \"%S\"\n", token.c_str());
+				//LogDebugW(L"      ResourceCopyTarget: \"%ls\"\n", token.c_str());
+				pos += len_target;
+				goto import_operand;
+			}
+		}
+
+		// Must be attempted after target, otherwise it'll win over slots (e.g. `vs` over `vs-cb0`).
+		if (!has_prefix && len)
+		{
+			token = remain.substr(0, len);
+
+			// Parse shader (e.g. `vs`, `cs`).
+			if (operand->parse_shader(&token, ini_namespace, scope))
+			{
+				//LogDebug("      Shader: \"%S\"\n", token.c_str());
 				pos += len;
 				goto import_operand;
 			}
@@ -1947,6 +1994,17 @@ bool CommandListOperand::parse_variable(Globals& G, const std::wstring* operand,
 	return false;
 }
 
+bool CommandListOperand::parse_slot(Globals& G, const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope)
+{
+	int ret;
+	ret = texture_filter_target.ParseTarget(G, operand->c_str(), true, ini_namespace, scope, false);
+	if (ret) {
+		type = ParamOverrideType::TEXTURE;
+		return operand_allowed_in_context(type, scope);
+	}
+	return false;
+}
+
 bool CommandListOperand::parse_target(Globals& G, const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope)
 {
 	int ret;
@@ -2022,18 +2080,15 @@ bool ParseCommandListVariableAssignment(Globals& G, const wchar_t* section,
 
 	std::wstring name;
 
-	if (!args.PeekToken(&name))
-		return args.Fail();
-
 	if (declare_local)
 	{
-		if (!args.ConsumeToken())
+		if (!args.GetToken(&name))
 			return args.Fail();
 
 		if (!args.ConsumeSeparator(SeparatorMode::Space))
 			return args.Fail();
 
-		if (!args.PeekToken(&name))
+		if (!args.PeekToken(&name, CommandArgumentReader::PeekMode::Argument))
 			return args.Fail();
 
 		if (!declare_local_variable(G, section, name, pre_command_list, ini_namespace))
@@ -2042,14 +2097,26 @@ bool ParseCommandListVariableAssignment(Globals& G, const wchar_t* section,
 		if (val->empty())
 			return true;
 	}
+	else
+	{
+		if (!args.PeekToken(&name, CommandArgumentReader::PeekMode::Argument))
+			return args.Fail();
+	}
 
 	if (name.back() == L']')
 		return false;
 
 	CommandListVariable* var = nullptr;
 
-	if (!args.GetVariable(G, var, false))
-		return args.Fail();
+	if (!args.GetVariable(G, var, false, CommandArgumentReader::PeekMode::Argument))
+	{
+		// Report only "locked" variable error for now to avoid `d3dx_user.ini` error spam.
+		// TODO: Refactor syntax parsing errors reporting.
+		if (var && var->flags & VariableFlags::LOCKED)
+			return args.Fail();
+		else
+			return false;
+	}
 
 	VariableAssignment* command = new VariableAssignment();
 
@@ -2558,7 +2625,7 @@ bool contains_whitespace(const wchar_t* str, size_t len)
 	return false;
 }
 
-bool ResourceCopyTarget::ParseTarget(Globals& G, const wchar_t* target, bool is_source, const std::wstring* ini_namespace, CommandListScope* scope)
+bool ResourceCopyTarget::ParseTarget(Globals& G, const wchar_t* target, bool is_source, const std::wstring* ini_namespace, CommandListScope* scope, bool allow_custom)
 {
 	IniParserResult ret;
 	size_t length = wcslen(target);
@@ -2567,38 +2634,41 @@ bool ResourceCopyTarget::ParseTarget(Globals& G, const wchar_t* target, bool is_
 	if (!target || length < 2)
 		return false;
 
-	// Consume an optional target prefix (`@` or `#` or `$`).
-	ret = ParseTargetPrefix(target, length);
-	//LogInfo("ParseTarget: %d at ParseTargetPrefix\n", ret);
-	if (ret == IniParserResult::SYNTAX_ERROR)
-		return false;
-
-	// Parse pool variable early.
-	if (evaluation_mode == ResourceCopyTargetEvaluationMode::VARIABLE)
+	if (allow_custom)
 	{
-		// Parse pool variable (e.g. `$PoolFoo[0]`).
+		// Consume an optional target prefix (`@` or `#` or `$`).
+		ret = ParseTargetPrefix(target, length);
+		//LogInfo("ParseTarget: %d at ParseTargetPrefix\n", ret);
+		if (ret == IniParserResult::SYNTAX_ERROR)
+			return false;
+
+		// Parse pool variable early.
+		if (evaluation_mode == ResourceCopyTargetEvaluationMode::VARIABLE)
+		{
+			// Parse pool variable (e.g. `$PoolFoo[0]`).
+			ret = ParseTargetPool(G, target, length, ini_namespace, scope, is_source);
+			//LogInfo("ParseTarget: %d at ParseTargetPool\n", ret);
+			return ret == IniParserResult::TOKEN_FOUND;
+		}
+
+		// Consume an optional resource member suffix (e.g. `->HashRegion(0, 16)` or `->Length`).
+		ret = ParseTargetMember(G, target, length, temp_target, ini_namespace, scope);
+		//LogInfo("ParseTarget: %d at ParseTargetMember\n", ret);
+		if (ret == IniParserResult::SYNTAX_ERROR)
+			return false;
+
+		// Parse the remainder as a custom resource (e.g. `ResourceFoo`).
+		ret = ParseTargetCustomResource(G, target, length, ini_namespace, scope);
+		//LogInfo("ParseTarget: %d at ParseTargetCustomResource\n", ret);
+		if (ret != IniParserResult::TOKEN_NOT_FOUND)
+			return ret == IniParserResult::TOKEN_FOUND;
+
+		// Parse the remainder as a resource pool (e.g. `PoolFoo`).
 		ret = ParseTargetPool(G, target, length, ini_namespace, scope, is_source);
 		//LogInfo("ParseTarget: %d at ParseTargetPool\n", ret);
-		return ret == IniParserResult::TOKEN_FOUND;
+		if (ret != IniParserResult::TOKEN_NOT_FOUND)
+			return ret == IniParserResult::TOKEN_FOUND;
 	}
-
-	// Consume an optional resource member suffix (e.g. `->HashRegion(0, 16)` or `->Length`).
-	ret = ParseTargetMember(G, target, length, temp_target, ini_namespace, scope);
-	//LogInfo("ParseTarget: %d at ParseTargetMember\n", ret);
-	if (ret == IniParserResult::SYNTAX_ERROR)
-		return false;
-
-	// Parse the remainder as a custom resource (e.g. `ResourceFoo`).
-	ret = ParseTargetCustomResource(G, target, length, ini_namespace, scope);
-	//LogInfo("ParseTarget: %d at ParseTargetCustomResource\n", ret);
-	if (ret != IniParserResult::TOKEN_NOT_FOUND)
-		return ret == IniParserResult::TOKEN_FOUND;
-
-	// Parse the remainder as a resource pool (e.g. `PoolFoo`).
-	ret = ParseTargetPool(G, target, length, ini_namespace, scope, is_source);
-	//LogInfo("ParseTarget: %d at ParseTargetPool\n", ret);
-	if (ret != IniParserResult::TOKEN_NOT_FOUND)
-		return ret == IniParserResult::TOKEN_FOUND;
 
 	// Parse the remainder as a pipeline slot (e.g. `vb0`, `this`, `null`).
 	ret = ParseTargetPipelineSlot(target, length, is_source);

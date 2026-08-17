@@ -318,7 +318,7 @@ public:
 
 	bool forbid_view_cache = false;
 
-	bool ParseTarget(Globals& G, const wchar_t* target, bool is_source, const std::wstring* ini_namespace, CommandListScope* scope);
+	bool ParseTarget(Globals& G, const wchar_t* target, bool is_source, const std::wstring* ini_namespace, CommandListScope* scope, bool allow_custom = true);
 
 private:
 	IniParserResult ParseTargetPrefix(const wchar_t*& target, size_t& length);
@@ -591,6 +591,7 @@ public:
 	bool parse_float(const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope, size_t& out_length);
 	bool parse_ini_param(const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope);
 	bool parse_variable(Globals& G, const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope);
+	bool parse_slot(Globals& G, const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope);
 	bool parse_target(Globals& G, const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope);
 	bool parse_shader(const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope);
 	bool parse_scissor(const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope);
@@ -759,8 +760,8 @@ public:
 
 	template<typename T>
 	bool GetEnum(const EnumName_t<const wchar_t*, T>* names, T invalid, T* out);
-	bool GetVariable(Globals& G, CommandListVariable*& out, bool is_source);
-	bool GetTarget(Globals& G, ResourceCopyTarget* out, bool is_source);
+	bool GetVariable(Globals& G, CommandListVariable*& out, bool is_source, PeekMode mode = PeekMode::Token);
+	bool GetTarget(Globals& G, ResourceCopyTarget* out, bool is_source, PeekMode mode = PeekMode::Token);
 	bool GetFloat(float* out);
 	bool GetExpression(Globals& G, std::unique_ptr<CommandListExpression>* out);
 
