@@ -1725,7 +1725,7 @@ void changeWindowTitleName(String gameName, {WidgetRef? ref}) {
   if (gameName.isNotEmpty) {
     final lastOpened = SharedPrefUtils().getLastOpened();
     final daysDifference = DateTime.now().difference(lastOpened).inDays;
-    if (daysDifference >= 7) {
+    if (daysDifference >= 10) {
       if (ref != null) {
         ref.read(showVerina.notifier).state = true;
       }
