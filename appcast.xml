@@ -5,14 +5,14 @@
         <description>Mod Manager for Gacha Games</description>
         <language>en</language>
         <item>
-            <title>Version 3.1.3</title>
+            <title>Version 3.1.4</title>
             <sparkle:releaseNotesLink>
                 https://github.com/Aglglg/No-Reload-Mod-Manager/releases
             </sparkle:releaseNotesLink>
-            <pubDate>Mon, 13 Jul 2026 10:54:10 +0000</pubDate>
-            <enclosure url="https://github.com/Aglglg/No-Reload-Mod-Manager/releases/download/v3.1.3/no_reload_mod_manager-3.1.3+1-windows-setup.exe"
-                       sparkle:dsaSignature="MD0CHGgbuzTPHRkdKKuIr6DqLZWrj8RyhqL7mLa2pAMCHQCwaXMb5U9q+gwlQVeK3EJwpMZ4mPJJsIoRyXz0"
-                       sparkle:version="3.1.3+1"
+            <pubDate>Mon, 17 Aug 2026 08:59:03 +0000</pubDate>
+            <enclosure url="https://github.com/Aglglg/No-Reload-Mod-Manager/releases/download/v3.1.4/no_reload_mod_manager-3.1.4+1-windows-setup.exe"
+                       sparkle:dsaSignature="MD4CHQCZfdLCUGOh7T/YZD7AoZk++0BqEZIJf5t/AW/zAh0AoH4ysqX1Fypu8mufk+K69N/4E9bf1pW/l/5dVQ=="
+                       sparkle:version="3.1.4+1"
                        sparkle:os="windows"
                        length="0"
                        type="application/octet-stream" />
