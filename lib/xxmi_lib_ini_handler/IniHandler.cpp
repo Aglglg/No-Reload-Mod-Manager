@@ -1407,6 +1407,7 @@ static CustomResourcePool* ParseResourcePoolSection(Globals& G, const wchar_t* s
 	pool->index_type = GetIniEnumClass(G, section_name, L"pool_index_type", PoolIndexType::RING, NULL, PoolIndexTypeNames);
 	/*pool->lazy_initialization = GetIniBool(section_name, L"pool_lazy_initialization", true, NULL);
 	pool->element_type_switch_reset = GetIniBool(section_name, L"pool_element_type_switch_reset", true, NULL);
+	pool->allocate_slot_on_missing = GetIniBool(section_name, L"pool_allocate_slot_on_missing", false, NULL);
 
 	int expiration_timeout_frames = GetIniInt(section_name, L"pool_expiration_timeout_frames", -1, NULL);
 	if (expiration_timeout_frames >= 0)

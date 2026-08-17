@@ -394,6 +394,10 @@ static inline bool is_operator_char(wchar_t c)
 	case L'!':
 	case L'^':
 	case L'~':
+	case L'(':
+	case L')':
+	case L'[':
+	case L']':
 		return true;
 
 	default:
@@ -1233,6 +1237,10 @@ static void tokenise(Globals& G, const std::wstring* expression, CommandListSynt
 		{
 			len = FindIdentifierTokenEnd(remain, 0, OptionalChars::NONE);
 
+			// Do not match identifiers followed by `->` (e.g. `vb0->stride`).
+			if (len && len + 1 < remain.size() && remain[len] == '-' && remain[len + 1] == '>')
+				len = 0;
+
 			if (len)
 			{
 				token = remain.substr(0, len);
@@ -1294,19 +1302,17 @@ static void tokenise(Globals& G, const std::wstring* expression, CommandListSynt
 				pos += len_target;
 				goto import_operand;
 			}
-		}
 
-		// Must be attempted after target, otherwise it'll win over slots (e.g. `vs` over `vs-cb0`).
-		if (!has_prefix && len)
-		{
-			token = remain.substr(0, len);
-
-			// Parse shader (e.g. `vs`, `cs`).
-			if (operand->parse_shader(&token, ini_namespace, scope))
+			// Must be attempted after target, otherwise it'll win over slots (e.g. `vs` over `vs-cb0`).
+			if (!has_prefix)
 			{
-				//LogDebug("      Shader: \"%S\"\n", token.c_str());
-				pos += len;
-				goto import_operand;
+				// Parse shader (e.g. `vs`, `cs`).
+				if (operand->parse_shader(G, &token, ini_namespace, scope))
+				{
+					//LogDebug("      Shader: \"%S\"\n", token.c_str());
+					pos += len_target;
+					goto import_operand;
+				}
 			}
 		}
 
@@ -2016,16 +2022,13 @@ bool CommandListOperand::parse_target(Globals& G, const std::wstring* operand, c
 	return false;
 }
 
-bool CommandListOperand::parse_shader(const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope)
+bool CommandListOperand::parse_shader(Globals& G, const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope)
 {
-	int len1 = 0;
-	int ret = swscanf_s(operand->c_str(), L"%lcs%n", &shader_filter_target, 1, &len1);
-	if (ret == 1 && len1 == operand->length()) {
-		switch (shader_filter_target) {
-		case L'v': case L'h': case L'd': case L'g': case L'p': case L'c':
-			type = ParamOverrideType::SHADER;
-			return operand_allowed_in_context(type, scope);
-		}
+	int ret;
+	ret = shader_target.ParseTarget(G, operand->c_str(), true, ini_namespace, scope);
+	if (ret) {
+		type = ParamOverrideType::SHADER;
+		return operand_allowed_in_context(type, scope);
 	}
 	return false;
 }
@@ -2134,30 +2137,6 @@ bail:
 	return false;
 }
 
-IniParserResult ResourceCopyTarget::ParseTargetPrefix(const wchar_t*& target, size_t& length)
-{
-	switch (target[0]) {
-	case L'$':
-		if ((target[length - 1] == L']') && !wcsncmp(target, L"$pool", 5)) {
-			evaluation_mode = ResourceCopyTargetEvaluationMode::VARIABLE;
-			target++;
-			length--;
-			return IniParserResult::TOKEN_FOUND;
-		}
-	case L'@':
-		evaluation_mode = ResourceCopyTargetEvaluationMode::RESOURCE_IDENTITY;
-		target++;
-		length--;
-		return IniParserResult::TOKEN_FOUND;
-	case L'#':
-		evaluation_mode = ResourceCopyTargetEvaluationMode::POOL_INDEX;
-		target++;
-		length--;
-		return IniParserResult::TOKEN_FOUND;
-	}
-	return IniParserResult::TOKEN_NOT_FOUND;
-}
-
 //float MemberArg::GetValue(CommandListState* state)
 //{
 //	if (expression)
@@ -2171,13 +2150,99 @@ const std::wstring& MemberArg::GetString() const
 	return constant_string;
 }
 
-bool ResourceCopyTarget::ParseMemberArguments(
-	Globals& G, const MemberInfo& member, const wchar_t* args_start, const wchar_t* args_end, const std::wstring* ini_namespace, CommandListScope* scope
-)
+IniParserResult SyntaxTarget::extract_arguments(const wchar_t* target, size_t& length, const wchar_t*& args_start, const wchar_t*& args_end)
+{
+	args_start = nullptr;
+	args_end = nullptr;
+
+	if (length == 0 || target[length - 1] != L')')
+		return IniParserResult::TOKEN_NOT_FOUND;
+
+	const wchar_t* open = wcsrchr(target, L'(');
+
+	if (!open || open <= target)
+		return IniParserResult::SYNTAX_ERROR;
+
+	// Remove "(...)" from target.
+	args_start = open + 1;
+	args_end = target + length - 1;
+
+	length = open - target;
+
+	return IniParserResult::TOKEN_FOUND;
+}
+
+bool SyntaxTarget::suffix_equals(const wchar_t* str, size_t len, const wchar_t* suffix, size_t suffix_len)
+{
+	return len >= suffix_len && !wmemcmp(str + len - suffix_len, suffix, suffix_len);
+}
+
+template<typename Mode, size_t N>
+IniParserResult SyntaxTarget::ParseTargetMember(
+	Globals& G,
+	const MemberInfo<Mode>(&members)[N],
+	const wchar_t*& target,
+	size_t& length,
+	std::wstring& temp_target,
+	Mode& evaluation_mode,
+	const std::wstring* ini_namespace,
+	CommandListScope* scope)
+{
+	const wchar_t* args_start = nullptr;
+	const wchar_t* args_end = nullptr;
+
+	IniParserResult args_result =
+		extract_arguments(target, length, args_start, args_end);
+
+	if (args_result == IniParserResult::SYNTAX_ERROR)
+		return IniParserResult::SYNTAX_ERROR;
+
+	for (const auto& member : members)
+	{
+		if (length < member.len + 2)
+			break;
+
+		const wchar_t* member_pos = target + length - member.len;
+
+		if (member_pos[1] != L'>')
+			continue;
+
+		if (!suffix_equals(target, length, member.keyword, member.len))
+			continue;
+
+		if (!ParseMemberArguments(
+			G,
+			member,
+			args_start,
+			args_end,
+			ini_namespace,
+			scope))
+			return IniParserResult::SYNTAX_ERROR;
+
+		evaluation_mode = member.mode;
+
+		length -= member.len;
+
+		temp_target.assign(target, length);
+		target = temp_target.c_str();
+
+		return IniParserResult::TOKEN_FOUND;
+	}
+
+	return IniParserResult::TOKEN_NOT_FOUND;
+}
+
+template<typename Mode>
+bool SyntaxTarget::ParseMemberArguments(
+	Globals& G,
+	const MemberInfo<Mode>& member,
+	const wchar_t* args_start,
+	const wchar_t* args_end,
+	const std::wstring* ini_namespace,
+	CommandListScope* scope)
 {
 	size_t num_args = member.num_args();
 
-	// No "(...)" present.
 	if (!args_start)
 		return num_args == 0;
 
@@ -2229,31 +2294,115 @@ bool ResourceCopyTarget::ParseMemberArguments(
 	return args.Finished();
 }
 
-IniParserResult extract_arguments(const wchar_t* target, size_t& length, const wchar_t*& args_start, const wchar_t*& args_end)
+IniParserResult ShaderTarget::ParseShaderPipelineSlot(const wchar_t*& target, size_t length, bool is_source)
 {
-	args_start = nullptr;
-	args_end = nullptr;
+	//LogInfo("ParseShaderPipelineSlot: target=%ls, length=%d, is_source=%d\n", target, length, is_source);
 
-	if (length == 0 || target[length - 1] != L')')
-		return IniParserResult::TOKEN_NOT_FOUND;
+	// WARNING: This test is especially susceptible to an uninitialised
+	//          %n fooling it into thinking it has parsed the entire string
+	//          if the stack garbage happens to contain operand->length().
+	//          This is because the %n does not immediately follow another
+	//          conversion specification and does not alter the return
+	//          value, so the return value will not distinguish between
+	//          early termination and completion, and since %lc will match
+	//          any character this can trigger easily. Seems to only occur
+	//          on vs2013, though I'm not positive if vs2017 zeroes out
+	//          len1 or dumb luck gave different values in the stack.
 
-	const wchar_t* open = wcsrchr(target, L'(');
+	int len1 = 0;
+	int ret = swscanf_s(target, L"%lcs%n", &shader_type, 1, &len1);
 
-	if (!open || open <= target)
-		return IniParserResult::SYNTAX_ERROR;
+	if (ret == 1 && len1 == length) {
+		switch (shader_type) {
+		case L'v': case L'h': case L'd': case L'g': case L'p': case L'c':
+			return IniParserResult::TOKEN_FOUND;
+		}
+	}
 
-	// Remove "(...)" from target.
-	args_start = open + 1;
-	args_end = target + length - 1;
-
-	length = open - target;
-
-	return IniParserResult::TOKEN_FOUND;
+	return IniParserResult::TOKEN_NOT_FOUND;
 }
 
-bool suffix_equals(const wchar_t* str, size_t len, const wchar_t* suffix, size_t suffix_len)
+bool ShaderTarget::ParseTarget(Globals& G, const wchar_t* target, bool is_source, const std::wstring* ini_namespace, CommandListScope* scope)
 {
-	return len >= suffix_len && !wmemcmp(str + len - suffix_len, suffix, suffix_len);
+	IniParserResult ret;
+	size_t length = wcslen(target);
+	std::wstring temp_target;
+
+	if (!target || length < 2)
+		return false;
+
+	//LogInfo("ShaderTarget::ParseTarget: `%ls` is_source=%d\n", target, is_source);
+
+	// Consume an optional member suffix.
+	ret = ParseTargetMember(G, target, length, temp_target, ini_namespace, scope);
+	//LogInfo("ParseTarget: %d at ParseTargetMember\n", ret);
+	if (ret == IniParserResult::SYNTAX_ERROR)
+		return false;
+
+	// Parse the remainder as a pipeline slot (e.g. `vs`, `ps`, `cs`).
+	ret = ParseShaderPipelineSlot(target, length, is_source);
+	//LogInfo("ParseTarget: %d at ParseTargetPipelineSlot\n", ret);
+	if (ret != IniParserResult::TOKEN_NOT_FOUND)
+		return ret == IniParserResult::TOKEN_FOUND;
+
+	//LogInfo("ParseTarget: 0 at END\n");
+	return false;
+}
+
+IniParserResult ShaderTarget::ParseTargetMember(
+	Globals& G, const wchar_t*& target, size_t& length, std::wstring& temp_target, const std::wstring* ini_namespace, CommandListScope* scope
+)
+{
+	//LogInfo("ShaderTarget::ParseTargetMember: target=%ls, length=%d\n", target, length);
+
+	if (length < 11) // Smallest possible match is "vs->cb_mask".
+		return IniParserResult::TOKEN_NOT_FOUND;
+
+	static constexpr MemberInfo members[] = {
+		{ L"->cb_mask",         9, ShaderTargetEvaluationMode::DCL_CB_MASK },
+		{ L"->cb_type",         9, ShaderTargetEvaluationMode::DCL_CB_TYPE, {{
+			MemberArg::Type::Unsigned, // Slot ID
+		}} },
+		{ L"->cb_size",         9, ShaderTargetEvaluationMode::DCL_CB_SIZE, {{
+			MemberArg::Type::Unsigned, // Slot ID
+		}} },
+		{ L"->srv_mask",       10, ShaderTargetEvaluationMode::DCL_SRV_MASK },
+		{ L"->srv_type",       10, ShaderTargetEvaluationMode::DCL_SRV_TYPE, {{
+			MemberArg::Type::Unsigned, // Slot ID
+		}} },
+		{ L"->srv_stride",     12, ShaderTargetEvaluationMode::DCL_SRV_STRIDE, {{
+			MemberArg::Type::Unsigned, // Slot ID
+		}} },
+		{ L"->srv_dimension",  15, ShaderTargetEvaluationMode::DCL_SRV_DIMENSION, {{
+			MemberArg::Type::Unsigned, // Slot ID
+		}} },
+	};
+
+	return SyntaxTarget::ParseTargetMember(G, members, target, length, temp_target, evaluation_mode, ini_namespace, scope);
+}
+
+IniParserResult ResourceCopyTarget::ParseTargetPrefix(const wchar_t*& target, size_t& length)
+{
+	switch (target[0]) {
+	case L'$':
+		if ((target[length - 1] == L']') && !wcsncmp(target, L"$pool", 5)) {
+			evaluation_mode = ResourceCopyTargetEvaluationMode::VARIABLE;
+			target++;
+			length--;
+			return IniParserResult::TOKEN_FOUND;
+		}
+	case L'@':
+		evaluation_mode = ResourceCopyTargetEvaluationMode::RESOURCE_IDENTITY;
+		target++;
+		length--;
+		return IniParserResult::TOKEN_FOUND;
+	case L'#':
+		evaluation_mode = ResourceCopyTargetEvaluationMode::POOL_INDEX;
+		target++;
+		length--;
+		return IniParserResult::TOKEN_FOUND;
+	}
+	return IniParserResult::TOKEN_NOT_FOUND;
 }
 
 IniParserResult ResourceCopyTarget::ParseTargetMember(
@@ -2299,45 +2448,7 @@ IniParserResult ResourceCopyTarget::ParseTargetMember(
 		}} },
 	};
 
-	// Consume (...) arguments contents (adjust `length` accordingly). Ensure syntax error passthrough.
-	const wchar_t* args_start = nullptr;
-	const wchar_t* args_end = nullptr;
-	IniParserResult args_result = extract_arguments(target, length, args_start, args_end);
-	if (args_result == IniParserResult::SYNTAX_ERROR)
-		return IniParserResult::SYNTAX_ERROR;
-
-	// Consume member keyword (adjust `target` and `length` accordingly).
-	for (const auto& member : members)
-	{
-		// Members are listed by ASC length. Exit loop if target is shorter than current member length plus "ib" length of 2.
-		if (length < member.len + 2)
-			break;
-
-		// Skip to next member if ">" pointer is not found at expected pos (avoids unneeded "wmemcmp" calls).
-		const wchar_t* member_pos = target + length - member.len;
-		if (member_pos[1] != L'>')
-			continue;
-
-		// Check if the trailing end matches the member substr, "->" included.
-		if (!suffix_equals(target, length, member.keyword, member.len))
-			continue;
-
-		if (!ParseMemberArguments(G, member, args_start, args_end, ini_namespace, scope))
-			return IniParserResult::SYNTAX_ERROR;
-
-		// Member found.
-		evaluation_mode = member.mode;
-
-		length -= member.len;
-
-		temp_target.assign(target, length);
-		target = temp_target.c_str();
-
-		//LogInfo("ParseTargetMember: TOKEN_FOUND keyword=%ls, target=%ls\n", member.keyword, target);
-		return IniParserResult::TOKEN_FOUND;
-	}
-
-	return IniParserResult::TOKEN_NOT_FOUND;
+	return SyntaxTarget::ParseTargetMember(G, members, target, length, temp_target, evaluation_mode, ini_namespace, scope);
 }
 
 IniParserResult ResourceCopyTarget::ParseTargetCustomResource(Globals& G, const wchar_t*& target, size_t length, const std::wstring* ini_namespace, CommandListScope* scope)
@@ -2633,6 +2744,8 @@ bool ResourceCopyTarget::ParseTarget(Globals& G, const wchar_t* target, bool is_
 
 	if (!target || length < 2)
 		return false;
+
+	//LogInfo("ParseTarget: `%ls` allow_custom=%d, is_source=%d\n", target, allow_custom, is_source);
 
 	if (allow_custom)
 	{

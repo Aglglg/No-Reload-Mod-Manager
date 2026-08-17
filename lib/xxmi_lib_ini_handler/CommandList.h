@@ -288,13 +288,23 @@ enum class IniParserResult : uint8_t {
 };
 
 //CONCRETE
-class ResourceCopyTarget {
-	static constexpr size_t MAX_MEMBER_ARGS_COUNT = 4;
+class SyntaxTarget
+{
 public:
+	static constexpr size_t MAX_MEMBER_ARGS_COUNT = 4;
+	std::array<MemberArg, MAX_MEMBER_ARGS_COUNT> member_args{};
+
+private:
+	static IniParserResult extract_arguments(const wchar_t* target, size_t& length, const wchar_t*& args_start, const wchar_t*& args_end);
+	static bool suffix_equals(const wchar_t* str, size_t len, const wchar_t* suffix, size_t suffix_len);
+
+protected:
+
+	template<typename Mode>
 	struct MemberInfo {
 		const wchar_t* keyword;
-		size_t len; // including "->"
-		ResourceCopyTargetEvaluationMode mode;
+		size_t len;
+		Mode mode;
 		std::array<MemberArg::Type, MAX_MEMBER_ARGS_COUNT> args{};
 
 		size_t num_args() const
@@ -306,6 +316,68 @@ public:
 		}
 	};
 
+	template<typename Mode>
+	bool ParseMemberArguments(
+		Globals& G,
+		const MemberInfo<Mode>& member,
+		const wchar_t* args_start,
+		const wchar_t* args_end,
+		const std::wstring* ini_namespace,
+		CommandListScope* scope);
+
+	template<typename Mode, size_t N>
+	IniParserResult ParseTargetMember(
+		Globals& G,
+		const MemberInfo<Mode>(&members)[N],
+		const wchar_t*& target,
+		size_t& length,
+		std::wstring& temp_target,
+		Mode& evaluation_mode,
+		const std::wstring* ini_namespace,
+		CommandListScope* scope);
+};
+
+enum class ShaderTargetEvaluationMode : uint32_t {
+	INVALID = 0b00000000000000000000000000000000,
+
+	SHADER = 0b00000000000000000000000000000001,
+
+	DCL_CB_MASK = 0b00000000000000000000000000000010,
+	DCL_CB_TYPE = 0b00000000000000000000000000000100,
+	DCL_CB_SIZE = 0b00000000000000000000000000001000,
+
+	DCL_SRV_MASK = 0b00000000000000000000000000010000,
+	DCL_SRV_TYPE = 0b00000000000000000000000000100000,
+	DCL_SRV_DIMENSION = 0b00000000000000000000000001000000,
+	DCL_SRV_STRIDE = 0b00000000000000000000000010000000,
+};
+SENSIBLE_ENUM(ShaderTargetEvaluationMode);
+//static EnumName_t<const wchar_t*, ShaderTargetEvaluationMode> ShaderTargetEvaluationModeNames[] = {
+//	{L"Shader", ShaderTargetEvaluationMode::SHADER},
+//
+//	{NULL, ShaderTargetEvaluationMode::INVALID} // End of list marker
+//};
+
+class ShaderTarget : public SyntaxTarget
+{
+public:
+	using MemberInfo = SyntaxTarget::MemberInfo<ShaderTargetEvaluationMode>;
+
+	ShaderTargetEvaluationMode evaluation_mode = ShaderTargetEvaluationMode::SHADER;
+	wchar_t shader_type = L'\0';
+
+	bool ParseTarget(Globals& G, const wchar_t* target, bool is_source, const std::wstring* ini_namespace, CommandListScope* scope);
+
+private:
+	IniParserResult ParseTargetMember(Globals& G, const wchar_t*& target, size_t& length, std::wstring& temp_target, const std::wstring* ini_namespace, CommandListScope* scope);
+	IniParserResult ParseShaderPipelineSlot(const wchar_t*& target, size_t length, bool is_source);
+};
+
+class ResourceCopyTarget : public SyntaxTarget
+{
+public:
+	using MemberInfo = SyntaxTarget::MemberInfo<ResourceCopyTargetEvaluationMode>;
+
 	ResourceCopyTargetType type = ResourceCopyTargetType::INVALID;
 	ResourceCopyTargetEvaluationMode evaluation_mode = ResourceCopyTargetEvaluationMode::RESOURCE;
 	wchar_t shader_type = L'\0';
@@ -314,15 +386,12 @@ public:
 	CustomResourcePool* custom_resource_pool = nullptr;
 	std::unique_ptr<CommandListExpression> pool_dynamic_index_expression = nullptr;
 
-	std::array<MemberArg, MAX_MEMBER_ARGS_COUNT> member_args{};
-
 	bool forbid_view_cache = false;
 
 	bool ParseTarget(Globals& G, const wchar_t* target, bool is_source, const std::wstring* ini_namespace, CommandListScope* scope, bool allow_custom = true);
 
 private:
 	IniParserResult ParseTargetPrefix(const wchar_t*& target, size_t& length);
-	bool ParseMemberArguments(Globals& G, const MemberInfo& member, const wchar_t* args_start, const wchar_t* args_end, const std::wstring* ini_namespace, CommandListScope* scope);
 	IniParserResult ParseTargetMember(Globals& G, const wchar_t*& target, size_t& length, std::wstring& temp_target, const std::wstring* ini_namespace, CommandListScope* scope);
 	IniParserResult ParseTargetPipelineSlot(const wchar_t*& target, size_t length, bool is_source);
 	IniParserResult ParseTargetCustomResource(Globals& G, const wchar_t*& target, size_t length, const std::wstring* ini_namespace, CommandListScope* scope);
@@ -574,7 +643,7 @@ public:
 	float* var_ftarget;
 
 	ResourceCopyTarget texture_filter_target;
-	wchar_t shader_filter_target;
+	ShaderTarget shader_target;
 
 	unsigned scissor;
 
@@ -593,7 +662,7 @@ public:
 	bool parse_variable(Globals& G, const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope);
 	bool parse_slot(Globals& G, const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope);
 	bool parse_target(Globals& G, const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope);
-	bool parse_shader(const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope);
+	bool parse_shader(Globals& G, const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope);
 	bool parse_scissor(const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope);
 	bool parse_ini_keywords(const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope);
 
