@@ -768,7 +768,7 @@ bool CommandArgumentReader::GetVariable(Globals& G, CommandListVariable*& out, b
 	return true;
 }
 
-bool CommandArgumentReader::GetTarget(Globals& G, ResourceCopyTarget* out, bool is_source, PeekMode mode)
+bool CommandArgumentReader::GetTarget(Globals& G, ResourceCopyTarget* out, bool is_source, PeekMode mode, bool validate)
 {
 	std::wstring token;
 
@@ -777,7 +777,7 @@ bool CommandArgumentReader::GetTarget(Globals& G, ResourceCopyTarget* out, bool 
 
 	bool has_prefix = token[0] == L'$' || token[0] == L'@' || token[0] == L'#';
 
-	if (is_source && FindResourceCopyTargetTokenEnd(token, has_prefix ? 1 : 0) != token.size())
+	if (is_source && validate && FindResourceCopyTargetTokenEnd(token, has_prefix ? 1 : 0) != token.size())
 	{
 		SetError(L"Invalid target: " + token, m_peek_start_pos);
 		return false;
@@ -1183,7 +1183,7 @@ static void tokenise(Globals& G, const std::wstring* expression, CommandListSynt
 		operand = std::make_shared<CommandListOperand>(friendly_pos, token);
 
 		// Numeric Literal
-		if (std::isdigit(remain[0]))
+		if (std::isdigit(remain[0]) || remain[0] == L'.')
 		{
 			// - Supported inputs: DECIMAL 0.0001, HEX 0x0001, BIN 0b0001.
 			// - Must tokenise subtraction operation first.
