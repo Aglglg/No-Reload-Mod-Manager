@@ -291,7 +291,14 @@ bool CommandListOperand::static_evaluate(float* ret, bool evaluate_variables)
 	case ParamOverrideType::TIME:
 		if (evaluate_variables) {
 			//don't care
-			//*ret = (float)G->gTime;
+			//*ret = G->gTime;
+			return true;
+		}
+		return false;
+	case ParamOverrideType::FRAME_TIME:
+		if (evaluate_variables) {
+			//don't care
+			//*ret = G->gFrameTime;
 			return true;
 		}
 		return false;
