@@ -145,19 +145,19 @@ Future<void> setupWindow(List<String> args) async {
   await windowManager.ensureInitialized();
   await hotKeyManager.unregisterAll();
 
-  await WindowsSingleInstance.ensureSingleInstance(
-    args,
-    "no_reload_mod_manager",
-    onSecondWindow: (args) {
-      for (var element in args) {
-        print(element);
-      }
-    },
-    bringWindowToFront:
-        false, //IMPORTANT, or else it will mess up with always on top or it will be hidden even when it's pinned or blue outline/border, IDK why
-  );
+  // await WindowsSingleInstance.ensureSingleInstance(
+  //   args,
+  //   "no_reload_mod_manager",
+  //   onSecondWindow: (args) {
+  //     for (var element in args) {
+  //       print(element);
+  //     }
+  //   },
+  //   bringWindowToFront:
+  //       false, //IMPORTANT, or else it will mess up with always on top or it will be hidden even when it's pinned or blue outline/border, IDK why
+  // );
 
-  await checkToRelaunch();
+  // await checkToRelaunch();
 
   String feedURL =
       'https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/appcast.xml';
@@ -1046,7 +1046,7 @@ class _MainViewState extends ConsumerState<MainView>
       await initSystemTray();
 
       //show notif only after system tray loaded successfully
-      await initializeAndShowNotification();
+      // await initializeAndShowNotification();
     });
     ref.listenManual(targetGameProvider, checkToShowInfoMessage);
 
