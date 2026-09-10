@@ -1246,7 +1246,6 @@ static void ParseIncludedIniFiles(Globals& G, const std::wstring& base_path)
 	std::unordered_set<std::wstring> seen;
 	std::wstring namespace_path, rel_path, ini_path;
 	std::vector<pcre2_code*> exclude;
-	DWORD attrib;
 
 	wchar_t migoto_path[MAX_PATH] = {};
 	wcsncpy_s(migoto_path, MAX_PATH, base_path.c_str(), _TRUNCATE);
@@ -1302,10 +1301,14 @@ static void ParseIncludedIniFiles(Globals& G, const std::wstring& base_path)
 	} while (!include_sections.empty());
 
 	free_globbing_vector(exclude);
+}
 
-	attrib = GetFileAttributes(G.user_config.c_str());
-	if (attrib != INVALID_FILE_ATTRIBUTES)
-		ParseNamespacedIniFile(G, G.user_config.c_str(), &G.user_config);
+static void ParsePersistentSettings(Globals& G)
+{
+	DWORD attrib = GetFileAttributes(G.user_config.c_str());
+	if (attrib == INVALID_FILE_ATTRIBUTES)
+		return;
+	ParseNamespacedIniFile(G, G.user_config.c_str(), &G.user_config);
 }
 
 static CustomResource* ParseResourceSection(Globals& G, const wchar_t* section_name, const wchar_t* resource_id_suffix)
@@ -1362,6 +1365,7 @@ static CustomResource* ParseResourceSection(Globals& G, const wchar_t* section_n
 	//	}
 	//}
 
+	//custom_resource->override_color_space = GetIniEnumClass(section_name, L"color_space", CustomColorSpace::DEFAULT, NULL, CustomColorSpaceNames);
 	//custom_resource->override_width = GetIniInt(section_name, L"width", -1, NULL);
 	//custom_resource->override_height = GetIniInt(section_name, L"height", -1, NULL);
 	//custom_resource->override_depth = GetIniInt(section_name, L"depth", -1, NULL);
@@ -1585,15 +1589,8 @@ static void ParseCommandList(Globals& G, const wchar_t* id,
 
 		if (entry->ini_namespace == G.user_config && !G.user_config.empty()) {
 			if (!G.user_config_dirty) {
-				/*printf(
-					"NOTICE: Unknown user settings will be removed from d3dx_user.ini\n"
-					" This is normal if you recently removed/changed any mods\n"
-					" Press ? to update the config now, or ? to reset all settings to default\n"
-					" The first unrecognised entry was: \"%S\"\n",
-					raw_line->c_str());*/
 				G.user_config_dirty |= 2;
 			}
-			//wprintf(L"[WARNING] Unrecognised entry in %ls: %ls\n", G->user_config.c_str(), raw_line->c_str());
 			continue;
 		}
 
@@ -2182,6 +2179,7 @@ void LoadConfigFile(Globals& G, const std::wstring& ini_file, const std::wstring
 
 	ParseIncludedIniFiles(G, base_path);
 
+	ParsePersistentSettings(G);
 
 	G.registered_command_lists.clear();
 

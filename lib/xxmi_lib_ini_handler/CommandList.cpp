@@ -1341,31 +1341,46 @@ static void tokenise(Globals& G, const std::wstring* expression, CommandListSynt
 static void group_parenthesis(CommandListSyntaxTree* tree)
 {
 	CommandListSyntaxTree::Tokens::iterator i;
-	CommandListSyntaxTree::Tokens::reverse_iterator rit;
 	CommandListOperatorToken* rbracket, * lbracket;
-	std::shared_ptr<CommandListSyntaxTree> inner;
 
-	for (i = tree->tokens.begin(); i != tree->tokens.end(); i++) {
+	for (i = tree->tokens.begin(); i != tree->tokens.end(); ++i) {
 		rbracket = dynamic_cast<CommandListOperatorToken*>(i->get());
-		if (rbracket && !rbracket->token.compare(L")")) {
-			for (rit = std::reverse_iterator<CommandListSyntaxTree::Tokens::iterator>(i); rit != tree->tokens.rend(); rit++) {
-				lbracket = dynamic_cast<CommandListOperatorToken*>(rit->get());
-				if (lbracket && !lbracket->token.compare(L"(")) {
-					inner = std::make_shared<CommandListSyntaxTree>(lbracket->token_pos);
-					inner->tokens.assign(rit.base(), i);
-					i = tree->tokens.erase(rit.base() - 1, i + 1);
-					i = tree->tokens.insert(i, std::move(inner));
-					goto continue_rbracket_search;
-				}
+
+		if (!rbracket || rbracket->token != L")")
+			continue;
+
+		auto l = i;
+		bool grouped = false;
+
+		while (l != tree->tokens.begin()) {
+			--l;
+
+			lbracket = dynamic_cast<CommandListOperatorToken*>(l->get());
+
+			if (lbracket && lbracket->token == L"(") {
+				auto inner = std::make_shared<CommandListSyntaxTree>(lbracket->token_pos);
+
+				// Everything strictly between '(' and ')'.
+				inner->tokens.assign(std::next(l), i);
+
+				// Erase '(' through ')'.
+				i = tree->tokens.erase(l, std::next(i));
+
+				// Replace them with the grouped tree.
+				i = tree->tokens.insert(i, std::move(inner));
+
+				grouped = true;
+				break;
 			}
-			throw CommandListSyntaxError(L"Unmatched )", rbracket->token_pos);
 		}
-	continue_rbracket_search: false;
+
+		if (!grouped)
+			throw CommandListSyntaxError(L"Unmatched )", rbracket->token_pos);
 	}
 
-	for (i = tree->tokens.begin(); i != tree->tokens.end(); i++) {
+	for (i = tree->tokens.begin(); i != tree->tokens.end(); ++i) {
 		lbracket = dynamic_cast<CommandListOperatorToken*>(i->get());
-		if (lbracket && !lbracket->token.compare(L"("))
+		if (lbracket && lbracket->token == L"(")
 			throw CommandListSyntaxError(L"Unmatched (", lbracket->token_pos);
 	}
 }
@@ -1634,6 +1649,9 @@ static void transform_operators_visit(CommandListSyntaxTree* tree,
 
 	if (!tree)
 		return;
+
+	if (tree->tokens.empty())
+		throw CommandListSyntaxError(L"Expression inside parentheses must not be empty", 0);
 
 	if (right_associative) {
 		if (unary) {
@@ -2062,11 +2080,23 @@ bool CommandListOperand::parse_scissor(const std::wstring* operand, const std::w
 
 bool CommandListOperand::parse_ini_keywords(const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope)
 {
-	type = lookup_enum_val<const wchar_t*, ParamOverrideType>
-		(ParamOverrideTypeNames, operand->c_str(), ParamOverrideType::INVALID);
+	if (operand->size() >= 14 && !wcsncmp(operand->c_str(), L"dxgi_format_", 4))
+	{
+		val = (float)ParseFormatString(operand->c_str(), false);
+
+		if (val == -1.0f)
+			return false;
+
+		type = ParamOverrideType::VALUE;
+	}
+	else
+	{
+		type = lookup_enum_val<const wchar_t*, ParamOverrideType>(ParamOverrideTypeNames, operand->c_str(), ParamOverrideType::INVALID);
+	}
 
 	if (type != ParamOverrideType::INVALID)
 		return operand_allowed_in_context(type, scope);
+
 	return false;
 }
 
@@ -2426,8 +2456,11 @@ IniParserResult ResourceCopyTarget::ParseTargetMember(
 	static constexpr MemberInfo members[] = {
 		{ L"->size",           6, ResourceCopyTargetEvaluationMode::RESOURCE_SIZE },
 		{ L"->index",          7, ResourceCopyTargetEvaluationMode::POOL_INDEX },
+		{ L"->width",          7, ResourceCopyTargetEvaluationMode::RESOURCE_WIDTH },
 		{ L"->offset",         8, ResourceCopyTargetEvaluationMode::RESOURCE_OFFSET },
 		{ L"->stride",         8, ResourceCopyTargetEvaluationMode::RESOURCE_STRIDE },
+		{ L"->format",         8, ResourceCopyTargetEvaluationMode::RESOURCE_FORMAT },
+		{ L"->height",         8, ResourceCopyTargetEvaluationMode::RESOURCE_HEIGHT },
 		{ L"->region",         8, ResourceCopyTargetEvaluationMode::RESOURCE_REGION, {{
 			MemberArg::Type::Unsigned, // Byte Offset 
 			MemberArg::Type::Unsigned  // Byte Size 
