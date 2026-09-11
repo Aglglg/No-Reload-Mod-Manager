@@ -12,6 +12,7 @@ import 'package:no_reload_mod_manager/tabs/mods_tab_carousel.dart';
 import 'package:no_reload_mod_manager/tabs/mods_tab_grid.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
+import 'package:no_reload_mod_manager/utils/external_editors.dart';
 import 'package:no_reload_mod_manager/utils/force_read_as_utf8.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
@@ -436,18 +437,84 @@ class _ModContainerState extends ConsumerState<ModContainer>
                     label: 'Namespace',
                   ),
                 if (widget.index != 0)
-                  CustomMenuItem(
+                  CustomMenuItem.submenu(
+                    label: "Open with".tr(),
                     scale: sss,
-                    onSelected: () {
-                      if (!context.mounted) return;
-                      openFileExplorerToSpecifiedPath(
-                        widget
-                            .currentGroupData
-                            .modsInGroup[widget.index]
-                            .modPath,
-                      );
-                    },
-                    label: 'Open in File Explorer'.tr(),
+                    items: [
+                      CustomMenuItem(
+                        scale: sss,
+                        onSelected: () {
+                          if (!context.mounted) return;
+                          openFileExplorerToSpecifiedPath(
+                            widget
+                                .currentGroupData
+                                .modsInGroup[widget.index]
+                                .modPath,
+                          );
+                        },
+                        label: 'File Explorer'.tr(),
+                      ),
+                      if (vsCodePath != null)
+                        CustomMenuItem(
+                          scale: sss,
+                          onSelected: () {
+                            if (!context.mounted) return;
+                            openVsCodeToSpecifiedPath(
+                              vsCodePath!,
+                              widget
+                                  .currentGroupData
+                                  .modsInGroup[widget.index]
+                                  .modPath,
+                            );
+                          },
+                          label: 'VS Code'.tr(),
+                        ),
+                      if (zedPath != null)
+                        CustomMenuItem(
+                          scale: sss,
+                          onSelected: () {
+                            if (!context.mounted) return;
+                            openZedToSpecifiedPath(
+                              zedPath!,
+                              widget
+                                  .currentGroupData
+                                  .modsInGroup[widget.index]
+                                  .modPath,
+                            );
+                          },
+                          label: 'Zed'.tr(),
+                        ),
+                      if (notepadppPath != null)
+                        CustomMenuItem(
+                          scale: sss,
+                          onSelected: () {
+                            if (!context.mounted) return;
+                            openNotepadPlusPlusToSpecifiedPath(
+                              notepadppPath!,
+                              widget
+                                  .currentGroupData
+                                  .modsInGroup[widget.index]
+                                  .modPath,
+                            );
+                          },
+                          label: 'Notepad++'.tr(),
+                        ),
+                      if (sublimeTextPath != null)
+                        CustomMenuItem(
+                          scale: sss,
+                          onSelected: () {
+                            if (!context.mounted) return;
+                            openSublimeTextToSpecifiedPath(
+                              sublimeTextPath!,
+                              widget
+                                  .currentGroupData
+                                  .modsInGroup[widget.index]
+                                  .modPath,
+                            );
+                          },
+                          label: 'Sublime Text'.tr(),
+                        ),
+                    ],
                   ),
                 if (widget.index != 0 &&
                     !widget

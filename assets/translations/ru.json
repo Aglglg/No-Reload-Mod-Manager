@@ -128,7 +128,6 @@
   "Custom icon": "Пользовательская иконка",
   "Mod icon": "Иконка мода",
   "Group icon": "Иконка группы",
-  "Open in File Explorer": "Открыть в Проводнике",
   "Contact for help": "Связаться для помощи",
   "Search group by name or real folder name": "Поиск группы (нажмите пробел еще раз для переключения режимов поиска)",
   "Search mod by name or real folder name": "Поиск мода (нажмите пробел еще раз для переключения режимов поиска)",
@@ -268,5 +267,11 @@
   "Days used": "Используется {} дней (возможно)",
   "Using NRMM since v1": "Использует NRMM с v1!",
   "NRMM runs on donations alone": "NRMM существует только на пожертвования",
-  "Support the dev?": "Поддержать разработчика?"
+  "Support the dev?": "Поддержать разработчика?",
+  "Open with": "Открыть с помощью",
+  "File Explorer": "Проводник",
+  "VS Code": "VS Code",
+  "Sublime Text": "Sublime Text",
+  "Notepad++": "Notepad++",
+  "Zed": "Zed"
 }

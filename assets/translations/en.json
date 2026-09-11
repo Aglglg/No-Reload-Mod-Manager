@@ -128,7 +128,6 @@
   "Custom icon": "Custom icon",
   "Mod icon": "Mod icon",
   "Group icon": "Group icon",
-  "Open in File Explorer": "Open in File Explorer",
   "Contact for help": "Contact for help",
   "Search group by name or real folder name": "Search group (press space key again to switch search modes)",
   "Search mod by name or real folder name": "Search mod (press space key again to switch search modes)",
@@ -268,5 +267,11 @@
   "Days used": "Used for {} days (maybe)",
   "Using NRMM since v1": "Using NRMM since v1!",
   "NRMM runs on donations alone": "NRMM runs on donations alone",
-  "Support the dev?": "Support the dev?"
+  "Support the dev?": "Support the dev?",
+  "Open with": "Open with",
+  "File Explorer": "File Explorer",
+  "VS Code": "VS Code",
+  "Sublime Text": "Sublime Text",
+  "Notepad++": "Notepad++",
+  "Zed": "Zed"
 }

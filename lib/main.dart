@@ -12,6 +12,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:no_reload_mod_manager/utils/check_admin_privillege.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
+import 'package:no_reload_mod_manager/utils/external_editors.dart';
 import 'package:no_reload_mod_manager/utils/get_cloud_data.dart';
 import 'package:no_reload_mod_manager/utils/hotkey_handler.dart';
 import 'package:no_reload_mod_manager/utils/ini_handler_bridge.dart';
@@ -48,6 +49,7 @@ import 'package:easy_localization/easy_localization.dart';
 
 void main(List<String> args) async {
   prewarmDll();
+  findExternalCodeEditors();
   WidgetsFlutterBinding.ensureInitialized();
   bool successLoadPref = await SharedPrefUtils().tryInit();
   await EasyLocalization.ensureInitialized();

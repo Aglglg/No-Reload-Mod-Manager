@@ -128,7 +128,6 @@
   "Custom icon": "自定义图标",
   "Mod icon": "模组图标",
   "Group icon": "分组图标",
-  "Open in File Explorer": "在文件资源管理器中打开",
   "Contact for help": "联系帮助",
   "Search group by name or real folder name": "搜索分组（再次按空格键切换搜索模式）",
   "Search mod by name or real folder name": "搜索模组（再次按空格键切换搜索模式）",
@@ -268,5 +267,11 @@
   "Days used": "已使用 {} 天（也许）",
   "Using NRMM since v1": "从 v1 起使用 NRMM！",
   "NRMM runs on donations alone": "NRMM 仅靠捐助运营",
-  "Support the dev?": "支持开发者？"
+  "Support the dev?": "支持开发者？",
+  "Open with": "打开方式",
+  "File Explorer": "文件资源管理器",
+  "VS Code": "VS Code",
+  "Sublime Text": "Sublime Text",
+  "Notepad++": "Notepad++",
+  "Zed": "Zed"
 }

@@ -3321,13 +3321,12 @@ String getCurrentModsPath(TargetGame targetGame) {
 }
 
 Future<void> openFileExplorerToSpecifiedPath(String path) async {
-  if (Platform.isWindows) {
-    if (await Directory(path).exists()) {
-      try {
-        await Process.run('explorer', [path]);
-      } catch (_) {}
-    }
-  }
+  if (!Platform.isWindows) return;
+  if (!await Directory(path).exists()) return;
+
+  try {
+    await Process.run('explorer', [path]);
+  } catch (_) {}
 }
 
 Future<bool> completeDisableMod(String modPath) async {

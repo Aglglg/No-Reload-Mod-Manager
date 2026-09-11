@@ -15,6 +15,7 @@ import 'package:no_reload_mod_manager/tabs/mods_tab.dart';
 import 'package:no_reload_mod_manager/utils/auto_group_icon.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
+import 'package:no_reload_mod_manager/utils/external_editors.dart';
 import 'package:no_reload_mod_manager/utils/keypress_simulator_manager.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
@@ -933,15 +934,69 @@ class _GroupAreaState extends ConsumerState<GroupAreaGrid>
                                 scale: sss,
                                 label: 'Group icon'.tr(),
                               ),
-                              CustomMenuItem(
+                              CustomMenuItem.submenu(
+                                label: "Open with".tr(),
                                 scale: sss,
-                                onSelected: () {
-                                  if (!context.mounted) return;
-                                  openFileExplorerToSpecifiedPath(
-                                    groupData.groupPath,
-                                  );
-                                },
-                                label: 'Open in File Explorer'.tr(),
+                                items: [
+                                  CustomMenuItem(
+                                    scale: sss,
+                                    onSelected: () {
+                                      if (!context.mounted) return;
+                                      openFileExplorerToSpecifiedPath(
+                                        groupData.groupPath,
+                                      );
+                                    },
+                                    label: 'File Explorer'.tr(),
+                                  ),
+                                  if (vsCodePath != null)
+                                    CustomMenuItem(
+                                      scale: sss,
+                                      onSelected: () {
+                                        if (!context.mounted) return;
+                                        openVsCodeToSpecifiedPath(
+                                          vsCodePath!,
+                                          groupData.groupPath,
+                                        );
+                                      },
+                                      label: 'VS Code'.tr(),
+                                    ),
+                                  if (zedPath != null)
+                                    CustomMenuItem(
+                                      scale: sss,
+                                      onSelected: () {
+                                        if (!context.mounted) return;
+                                        openZedToSpecifiedPath(
+                                          zedPath!,
+                                          groupData.groupPath,
+                                        );
+                                      },
+                                      label: 'Zed'.tr(),
+                                    ),
+                                  if (notepadppPath != null)
+                                    CustomMenuItem(
+                                      scale: sss,
+                                      onSelected: () {
+                                        if (!context.mounted) return;
+                                        openNotepadPlusPlusToSpecifiedPath(
+                                          notepadppPath!,
+                                          groupData.groupPath,
+                                        );
+                                      },
+                                      label: 'Notepad++'.tr(),
+                                    ),
+                                  if (sublimeTextPath != null)
+                                    CustomMenuItem(
+                                      scale: sss,
+                                      onSelected: () {
+                                        if (!context.mounted) return;
+                                        openSublimeTextToSpecifiedPath(
+                                          sublimeTextPath!,
+                                          groupData.groupPath,
+                                        );
+                                      },
+                                      label: 'Sublime Text'.tr(),
+                                    ),
+                                ],
                               ),
                               CustomMenuItem(
                                 scale: sss,

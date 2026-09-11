@@ -128,7 +128,6 @@
   "Custom icon": "Ikon kustom",
   "Mod icon": "Ikon mod",
   "Group icon": "Ikon grup",
-  "Open in File Explorer": "Buka di File Explorer",
   "Contact for help": "Kontak bantuan",
   "Search group by name or real folder name": "Cari group (tekan spasi lagi untuk ganti mode)",
   "Search mod by name or real folder name": "Cari mod (tekan spasi lagi untuk ganti mode)",
@@ -268,5 +267,11 @@
   "Days used": "Digunakan selama {} hari (mungkin)",
   "Using NRMM since v1": "Pengguna NRMM sejak v1!",
   "NRMM runs on donations alone": "NRMM berjalan dari donasi saja",
-  "Support the dev?": "Dukung developer-nya?"
+  "Support the dev?": "Dukung developer-nya?",
+  "Open with": "Buka dengan",
+  "File Explorer": "File Explorer",
+  "VS Code": "VS Code",
+  "Sublime Text": "Sublime Text",
+  "Notepad++": "Notepad++",
+  "Zed": "Zed"
 }

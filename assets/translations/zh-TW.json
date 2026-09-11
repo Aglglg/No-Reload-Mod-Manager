@@ -128,7 +128,6 @@
   "Custom icon": "自訂圖示",
   "Mod icon": "模組圖示",
   "Group icon": "群組圖示",
-  "Open in File Explorer": "在檔案總管中開啟",
   "Contact for help": "聯絡支援",
   "Search group by name or real folder name": "搜尋群組（再次按空白鍵切換搜尋模式）",
   "Search mod by name or real folder name": "搜尋模組（再次按空白鍵切換搜尋模式）",
@@ -268,5 +267,11 @@
   "Days used": "已使用 {} 天（也許）",
   "Using NRMM since v1": "從 v1 起使用 NRMM！",
   "NRMM runs on donations alone": "NRMM 僅靠捐助維持運作",
-  "Support the dev?": "支持開發者？"
+  "Support the dev?": "支持開發者？",
+  "Open with": "開啟方式",
+  "File Explorer": "檔案總管",
+  "VS Code": "VS Code",
+  "Sublime Text": "Sublime Text",
+  "Notepad++": "Notepad++",
+  "Zed": "Zed"
 }
