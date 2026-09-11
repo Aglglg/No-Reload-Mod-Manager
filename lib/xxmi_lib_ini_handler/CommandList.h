@@ -726,6 +726,10 @@ public:
 	bool has_nested_else_if;
 	std::wstring section;
 
+	bool static_evaluated = false;
+	bool is_static = false;
+	float static_val = 0.0f;
+
 	std::shared_ptr<CommandList> true_commands_pre;
 	std::shared_ptr<CommandList> true_commands_post;
 	std::shared_ptr<CommandList> false_commands_pre;

@@ -1115,7 +1115,84 @@ static const wchar_t* operator_tokens[] = {
 	L"(", L")", L"!", L"~", L"&", L"|", L"^", L"*", L"/", L"%", L"+", L"-", L"<", L">",
 };
 
-static void tokenise(Globals& G, const std::wstring* expression, CommandListSyntaxTree* tree, const std::wstring* ini_namespace, CommandListScope* scope)
+enum CommandListOperatorMask
+{
+	OP_UNARY = 1 << 0,
+	OP_EXPONENT = 1 << 1,
+	OP_MULTIPLICATION = 1 << 2,
+	OP_ADD_SUBTRACT = 1 << 3,
+	OP_SHIFT = 1 << 4,
+	OP_RELATIONAL = 1 << 5,
+	OP_EQUALITY = 1 << 6,
+	OP_BITWISE_AND = 1 << 7,
+	OP_BITWISE_XOR = 1 << 8,
+	OP_BITWISE_OR = 1 << 9,
+	OP_AND = 1 << 10,
+	OP_OR = 1 << 11
+};
+
+static uint32_t GetOperatorMask(const wchar_t* token, size_t length)
+{
+	if (length == 1) {
+		switch (token[0]) {
+		case L'!':
+		case L'~':
+			return OP_UNARY;
+
+		case L'+':
+		case L'-':
+			return OP_UNARY | OP_ADD_SUBTRACT;
+
+		case L'*':
+		case L'/':
+		case L'%':
+			return OP_MULTIPLICATION;
+
+		case L'<':
+		case L'>':
+			return OP_RELATIONAL;
+
+		case L'&':
+			return OP_BITWISE_AND;
+
+		case L'^':
+			return OP_BITWISE_XOR;
+
+		case L'|':
+			return OP_BITWISE_OR;
+		}
+	}
+	else if (length == 2) {
+		if (!wcsncmp(token, L"**", 2))
+			return OP_EXPONENT;
+
+		if (!wcsncmp(token, L"//", 2))
+			return OP_MULTIPLICATION;
+
+		if (!wcsncmp(token, L"<<", 2) || !wcsncmp(token, L">>", 2))
+			return OP_SHIFT;
+
+		if (!wcsncmp(token, L"<=", 2) || !wcsncmp(token, L">=", 2))
+			return OP_RELATIONAL;
+
+		if (!wcsncmp(token, L"==", 2) || !wcsncmp(token, L"!=", 2))
+			return OP_EQUALITY;
+
+		if (!wcsncmp(token, L"&&", 2))
+			return OP_AND;
+
+		if (!wcsncmp(token, L"||", 2))
+			return OP_OR;
+	}
+	else if (length == 3) {
+		if (!wcsncmp(token, L"===", 3) || !wcsncmp(token, L"!==", 3))
+			return OP_EQUALITY;
+	}
+
+	return 0;
+}
+
+static void tokenise(Globals& G, const std::wstring* expression, CommandListSyntaxTree* tree, const std::wstring* ini_namespace, CommandListScope* scope, uint32_t* operator_mask)
 {
 	const std::wstring& expr = *expression;
 
@@ -1145,12 +1222,15 @@ static void tokenise(Globals& G, const std::wstring* expression, CommandListSynt
 
 		bool matched = false;
 
+		// Operators:
 		for (i = 0; i < ARRAYSIZE(operator_tokens); i++)
 		{
 			size_t len = wcslen(operator_tokens[i]);
 
 			if (remain.compare(0, len, operator_tokens[i]) == 0)
 			{
+				*operator_mask |= GetOperatorMask(operator_tokens[i], len);
+
 				//LogDebug("      Operator: \"%S\"\n", remain.substr(0, len).c_str());
 
 				tree->tokens.emplace_back(std::make_shared<CommandListOperatorToken>(friendly_pos, remain.substr(0, len)));
@@ -1172,6 +1252,7 @@ static void tokenise(Globals& G, const std::wstring* expression, CommandListSynt
 
 			if (remain.size() > len && remain.compare(0, len, function_tokens[i]) == 0 && remain[len] == L'(')
 			{
+				*operator_mask |= OP_UNARY;
 				//LogDebug("      Function: \"%S\"\n", function_tokens[i]);
 
 				tree->tokens.emplace_back(std::make_shared<CommandListOperatorToken>(friendly_pos, remain.substr(0, len)));
@@ -1682,36 +1763,87 @@ static void transform_operators_recursive(CommandListWalkable* tree,
 	CommandListOperatorFactoryBase* factories[], int num_factories,
 	bool right_associative, bool unary)
 {
-	for (auto& inner : tree->walk()) {
-		transform_operators_recursive(dynamic_cast<CommandListWalkable*>(inner.get()),
-			factories, num_factories, right_associative, unary);
+	if (!tree)
+		return;
+
+	// Syntax trees contain their child nodes directly in tokens.
+	if (CommandListSyntaxTree* syntax_tree = dynamic_cast<CommandListSyntaxTree*>(tree))
+	{
+		for (auto& token : syntax_tree->tokens)
+		{
+			if (CommandListWalkable* child = dynamic_cast<CommandListWalkable*>(token.get()))
+				transform_operators_recursive(child, factories, num_factories, right_associative, unary);
+		}
+
+		transform_operators_visit(syntax_tree, factories, num_factories, right_associative, unary);
+
+		return;
 	}
 
-	transform_operators_visit(dynamic_cast<CommandListSyntaxTree*>(tree),
-		factories, num_factories, right_associative, unary);
+	// Operators are also walkable, but their children are stored
+	// separately as lhs_tree/rhs_tree rather than in tokens.
+	if (CommandListOperator* op = dynamic_cast<CommandListOperator*>(tree))
+	{
+		if (op->lhs_tree)
+		{
+			if (CommandListWalkable* lhs = dynamic_cast<CommandListWalkable*>(op->lhs_tree.get()))
+				transform_operators_recursive(lhs, factories, num_factories, right_associative, unary);
+		}
+
+		if (op->rhs_tree)
+		{
+			if (CommandListWalkable* rhs = dynamic_cast<CommandListWalkable*>(op->rhs_tree.get()))
+				transform_operators_recursive(rhs, factories, num_factories, right_associative, unary);
+		}
+	}
 }
 
 bool CommandListExpression::parse(Globals& G, const std::wstring* expression, const std::wstring* ini_namespace, CommandListScope* scope)
 {
 	CommandListSyntaxTree tree(0);
 
+	uint32_t operator_mask = 0;
+
 	try {
-		tokenise(G, expression, &tree, ini_namespace, scope);
+		tokenise(G, expression, &tree, ini_namespace, scope, &operator_mask);
 
 		group_parenthesis(&tree);
 
-		transform_operators_recursive(&tree, unary_operators, ARRAYSIZE(unary_operators), true, true);
-		transform_operators_recursive(&tree, exponent_operators, ARRAYSIZE(exponent_operators), true, false);
-		transform_operators_recursive(&tree, multi_division_operators, ARRAYSIZE(multi_division_operators), false, false);
-		transform_operators_recursive(&tree, add_subtract_operators, ARRAYSIZE(add_subtract_operators), false, false);
-		transform_operators_recursive(&tree, shift_operators, ARRAYSIZE(shift_operators), false, false);
-		transform_operators_recursive(&tree, relational_operators, ARRAYSIZE(relational_operators), false, false);
-		transform_operators_recursive(&tree, equality_operators, ARRAYSIZE(equality_operators), false, false);
-		transform_operators_recursive(&tree, bitwise_and_operators, ARRAYSIZE(bitwise_and_operators), false, false);
-		transform_operators_recursive(&tree, bitwise_xor_operators, ARRAYSIZE(bitwise_xor_operators), false, false);
-		transform_operators_recursive(&tree, bitwise_or_operators, ARRAYSIZE(bitwise_or_operators), false, false);
-		transform_operators_recursive(&tree, and_operators, ARRAYSIZE(and_operators), false, false);
-		transform_operators_recursive(&tree, or_operators, ARRAYSIZE(or_operators), false, false);
+		if (operator_mask & OP_UNARY)
+			transform_operators_recursive(&tree, unary_operators, ARRAYSIZE(unary_operators), true, true);
+
+		if (operator_mask & OP_EXPONENT)
+			transform_operators_recursive(&tree, exponent_operators, ARRAYSIZE(exponent_operators), true, false);
+
+		if (operator_mask & OP_MULTIPLICATION)
+			transform_operators_recursive(&tree, multi_division_operators, ARRAYSIZE(multi_division_operators), false, false);
+
+		if (operator_mask & OP_ADD_SUBTRACT)
+			transform_operators_recursive(&tree, add_subtract_operators, ARRAYSIZE(add_subtract_operators), false, false);
+
+		if (operator_mask & OP_SHIFT)
+			transform_operators_recursive(&tree, shift_operators, ARRAYSIZE(shift_operators), false, false);
+
+		if (operator_mask & OP_RELATIONAL)
+			transform_operators_recursive(&tree, relational_operators, ARRAYSIZE(relational_operators), false, false);
+
+		if (operator_mask & OP_EQUALITY)
+			transform_operators_recursive(&tree, equality_operators, ARRAYSIZE(equality_operators), false, false);
+
+		if (operator_mask & OP_BITWISE_AND)
+			transform_operators_recursive(&tree, bitwise_and_operators, ARRAYSIZE(bitwise_and_operators), false, false);
+
+		if (operator_mask & OP_BITWISE_XOR)
+			transform_operators_recursive(&tree, bitwise_xor_operators, ARRAYSIZE(bitwise_xor_operators), false, false);
+
+		if (operator_mask & OP_BITWISE_OR)
+			transform_operators_recursive(&tree, bitwise_or_operators, ARRAYSIZE(bitwise_or_operators), false, false);
+
+		if (operator_mask & OP_AND)
+			transform_operators_recursive(&tree, and_operators, ARRAYSIZE(and_operators), false, false);
+
+		if (operator_mask & OP_OR)
+			transform_operators_recursive(&tree, or_operators, ARRAYSIZE(or_operators), false, false);
 
 		evaluatable = tree.finalise();
 
@@ -1977,13 +2109,16 @@ bool parse_command_list_var_name(Globals& G, const std::wstring& name, const std
 		return false;
 
 	std::wstring low_name(name);
-	std::transform(low_name.begin(), low_name.end(), low_name.begin(), ::towlower);
 
-	var = G.command_list_globals.end();
+	for (wchar_t& c : low_name)
+		c = ascii_tolower(c);
+
 	if (!ini_namespace->empty())
 		var = G.command_list_globals.find(get_namespaced_var_name_lower(low_name, ini_namespace));
+
 	if (var == G.command_list_globals.end())
 		var = G.command_list_globals.find(low_name);
+
 	if (var == G.command_list_globals.end())
 		return false;
 
@@ -3018,16 +3153,18 @@ bool IfCommand::optimise()
 
 bool IfCommand::noop(Globals& G, bool post, bool ignore_cto_pre, bool ignore_cto_post)
 {
-	float static_val;
-	bool is_static;
-
 	if ((post && !post_finalised) || (!post && !pre_finalised)) {
 		//wprintf(L"[WARNING] Statement \"if\" missing \"endif\": - \"%ls\"\n", ini_line.c_str());
 		G.errored_lines.insert(ErroredLine{ full_path, line_index, line, L"Missing \"endif\""});
 		return true;
 	}
 
-	is_static = expression.static_evaluate(&static_val);
+	if (!static_evaluated)
+	{
+		is_static = expression.static_evaluate(&static_val);
+		static_evaluated = true;
+	}
+
 	if (is_static) {
 		if (static_val) {
 			false_commands_pre->clear();
@@ -3041,6 +3178,7 @@ bool IfCommand::noop(Globals& G, bool post, bool ignore_cto_pre, bool ignore_cto
 
 	if (post)
 		return true_commands_post->noop() && false_commands_post->noop();
+
 	return true_commands_pre->noop() && false_commands_pre->noop();
 }
 

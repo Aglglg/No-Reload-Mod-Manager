@@ -142,6 +142,11 @@ static IniSections::iterator prefix_upper_bound(IniSections& sections, std::wstr
 	return sections.end();
 }
 
+inline wchar_t ascii_tolower(wchar_t c)
+{
+	return (c >= L'A' && c <= L'Z') ? c + (L'a' - L'A') : c;
+}
+
 static bool get_namespaced_section_name(const std::wstring* section, const std::wstring* ini_namespace, std::wstring* ret)
 {
 	const wchar_t* section_prefix = SectionPrefix(section->c_str());
@@ -163,10 +168,12 @@ bool get_namespaced_section_name_lower(const std::wstring* section, const std::w
 	return rc;
 }
 
-std::wstring get_namespaced_var_name_lower(const std::wstring var, const std::wstring* ini_namespace)
+std::wstring get_namespaced_var_name_lower(const std::wstring& low_name, const std::wstring* ini_namespace)
 {
-	std::wstring ret = std::wstring(L"$\\") + *ini_namespace + std::wstring(L"\\") + var.substr(1);
-	std::transform(ret.begin(), ret.end(), ret.begin(), ::towlower);
+	std::wstring ret = L"$\\" + *ini_namespace + L'\\';
+	auto namespace_begin = ret.begin() + 2;  // Skip "$\\"
+	std::transform(namespace_begin, namespace_begin + ini_namespace->size(), namespace_begin, ::towlower);
+	ret.append(low_name, 1, std::wstring::npos);
 	return ret;
 }
 
@@ -1628,7 +1635,6 @@ static void ParseConstantsSection(Globals& G)
 {
 	VariableFlags flags;
 	IniSectionVector* section = NULL;
-	IniSectionVector::iterator entry, next;
 	std::wstring* key, * val, name;
 	const wchar_t* name_pos;
 	const std::wstring* ini_namespace;
@@ -1638,23 +1644,39 @@ static void ParseConstantsSection(Globals& G)
 	G.command_list_globals.clear();
 	//persistent_variables.clear();
 	GetIniSection(G, &section, L"Constants");
-	for (next = section->begin(), entry = next; entry < section->end(); entry = next) {
-		next++;
-		key = &entry->first;
-		val = &entry->second;
-		ini_namespace = &entry->ini_namespace;
+	size_t write_index = 0;
+
+	for (size_t read_index = 0; read_index < section->size(); ++read_index)
+	{
+		IniLine& entry = (*section)[read_index];
+
+		key = &entry.first;
+		val = &entry.second;
+		ini_namespace = &entry.ini_namespace;
 
 		if (!key->empty())
 			name = *key;
 		else
-			name = entry->raw_line;
+			name = entry.raw_line;
 
-		std::transform(name.begin(), name.end(), name.begin(), ::towlower);
+		for (wchar_t& c : name)
+			c = ascii_tolower(c);
 
 		flags = parse_enum_option_string_prefix<const wchar_t*, VariableFlags>
 			(VariableFlagNames, name.c_str(), &name_pos);
+
 		if (!(flags & VariableFlags::GLOBAL))
+		{
+			// Keep Non-Global Entries in their Original Order.
+			// Move instead of Copy so the WStrings are Transferred
+			// without Allocating/Copying their Contents.
+			if (write_index != read_index)
+				(*section)[write_index] = std::move(entry);
+
+			++write_index;
 			continue;
+		}
+
 		name = name_pos;
 
 		if (!valid_variable_name(name)) {
@@ -1677,8 +1699,12 @@ static void ParseConstantsSection(Globals& G)
 			continue;
 		}
 
-		next = section->erase(entry);
+		// Global Entries are Intentionally not Copied into the Compacted
+		// Vector, so they will not be Processed during the Second Pass.
 	}
+
+	// Remove the Trailing Entries left behind by the Compacting Pass.
+	section->erase(section->begin() + write_index, section->end());
 }
 
 wchar_t* ShaderOverrideIniKeys[] = {

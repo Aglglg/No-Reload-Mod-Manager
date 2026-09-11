@@ -136,7 +136,8 @@ int GetIniInt(Globals& G, const wchar_t* section, const wchar_t* key, int def, b
 
 bool ParseBinaryLiterals(const std::wstring& input, size_t start, uint64_t& out, size_t& length);
 
+inline wchar_t ascii_tolower(wchar_t c);
 bool get_namespaced_section_name_lower(const std::wstring* section, const std::wstring* ini_namespace, std::wstring* ret);
-std::wstring get_namespaced_var_name_lower(const std::wstring var, const std::wstring* ini_namespace);
+std::wstring get_namespaced_var_name_lower(const std::wstring& low_name, const std::wstring* ini_namespace);
 
 CommandListVariable* RegisterGlobalVariable(Globals& G, std::wstring& name, float* fval, VariableFlags flags);
