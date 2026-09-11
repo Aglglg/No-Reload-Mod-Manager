@@ -2792,6 +2792,8 @@ final List<String> shaderRegexIniKeys = [
 ];
 
 /// Called AFTER ini keys REORDERED
+/// unused means the section contains no command lines such as "run = ", etc
+/// and only contains lines such as "hash = "
 void _removeManagerLineWhenUnused(List<IniSection> sections) {
   for (var section in sections) {
     if (_isWhitelistedSection(section.name)) {
@@ -3002,7 +3004,7 @@ void _checkAndModifySections(
     final name = section.name;
     final lines = section.lines;
 
-    //Whitelisted or commandlist section
+    //Whitelisted sections
     if (_isWhitelistedSection(name)) {
       //simply insert manager if line on index 0. Because, at parsing logic, the old manager if line guaranteed to be removed
       lines.insert(
@@ -3157,6 +3159,8 @@ void _fixEndifLineAndTrailingFlowControlLine(
   }
 }
 
+//all sections that could run command line, such as TextureOverride, ShaderOverride, etc
+//except explicit command list section, that won't run without being called first with "run = ", such as CommandList.. CustomShader..
 bool _isWhitelistedSection(String sectionName) {
   final lower = sectionName.toLowerCase();
 
@@ -3172,14 +3176,7 @@ bool _isWhitelistedSection(String sectionName) {
     return true;
   }
 
-  const prefixes = [
-    'builtincustomshader',
-    'customshader',
-    'builtincommandlist',
-    'commandlist',
-    'shaderoverride',
-    'textureoverride',
-  ];
+  const prefixes = ['shaderoverride', 'textureoverride'];
 
   for (final p in prefixes) {
     if (lower.startsWith(p)) {
