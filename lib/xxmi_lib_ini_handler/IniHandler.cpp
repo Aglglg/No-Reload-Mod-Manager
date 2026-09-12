@@ -1594,12 +1594,8 @@ static void ParseCommandList(Globals& G, const wchar_t* id,
 			continue;
 		}
 
-		if (entry->ini_namespace == G.user_config && !G.user_config.empty()) {
-			if (!G.user_config_dirty) {
-				G.user_config_dirty |= 2;
-			}
+		if (entry->ini_namespace == G.user_config && !G.user_config.empty())
 			continue;
-		}
 
 		//wprintf(L"[WARNING] Ignored entry CommandList sections: %ls - [%ls] @ [%ls]\n", raw_line->c_str(), id, entry->ini_namespace.c_str());
 	}

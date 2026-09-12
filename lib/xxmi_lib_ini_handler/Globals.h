@@ -40,7 +40,7 @@ struct Globals
 	IniSections ini_sections;
 
 	std::wstring user_config;
-	int user_config_dirty;
+	bool user_config_dirty;
 	CommandList present_command_list;
 	CommandList post_present_command_list;
 	CommandList clear_rtv_command_list;

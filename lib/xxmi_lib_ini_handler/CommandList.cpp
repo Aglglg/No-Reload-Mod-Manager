@@ -1294,11 +1294,29 @@ static void tokenise(Globals& G, const std::wstring* expression, CommandListSynt
 		// Variable
 		if (has_variable_prefix)
 		{
-			size_t len = FindVariableTokenEnd(remain, 1);
+			bool is_pool_variable_candidate = remain.size() >= 6 && wcsncmp(remain.c_str(), L"$pool", 5) == 0;
 
-			// Skip handling variable pool (e.g. `$PoolFoo[0]`).
-			if (len && len < remain.size() && remain[len] == L'[')
-				len = 0;
+			if (is_pool_variable_candidate)
+			{
+				// More loose pool variable identifier match with hyphens, brackets and UTF-8.
+				// Allows strings like `$Pool\path like\namespace\chars_UTF-8[$index]`.
+				size_t len_target = FindResourceCopyTargetTokenEnd(remain, 1);
+
+				if (len_target)
+				{
+					token = remain.substr(0, len_target);
+
+					// Parse pool variable.
+					if (operand->parse_target(G, &token, ini_namespace, scope))
+					{
+						//LogDebugW(L"      ResourceCopyTarget: \"%ls\"\n", token.c_str());
+						pos += len_target;
+						goto import_operand;
+					}
+				}
+			}
+
+			size_t len = FindVariableTokenEnd(remain, 1);
 
 			if (len)
 			{
@@ -1310,9 +1328,9 @@ static void tokenise(Globals& G, const std::wstring* expression, CommandListSynt
 					pos += len;
 					goto import_operand;
 				}
-
-				throw CommandListSyntaxError(L"Variable not recognized: " + remain, friendly_pos);
 			}
+
+			throw CommandListSyntaxError(L"Variable not recognized: " + remain, friendly_pos);
 		}
 
 		bool has_prefix = has_variable_prefix || remain[0] == L'@' || remain[0] == L'#';
@@ -2055,8 +2073,8 @@ void VariableAssignment::run()
 	var->fval = expression.evaluate();
 
 
-	if (var->flags & VariableFlags::PERSIST){}
-		//G->user_config_dirty |= (var->fval != orig);
+	//if ((var->flags & VariableFlags::PERSIST) && var->fval != orig)
+		//G.user_config_dirty = true;
 }
 
 bool AssignmentCommand::optimise()
@@ -2215,13 +2233,24 @@ bool CommandListOperand::parse_scissor(const std::wstring* operand, const std::w
 
 bool CommandListOperand::parse_ini_keywords(const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope)
 {
-	if (operand->size() >= 14 && !wcsncmp(operand->c_str(), L"dxgi_format_", 4))
+	if (operand->size() >= 14 && !wcsncmp(operand->c_str(), L"dxgi_format_", 12))
 	{
 		val = (float)ParseFormatString(operand->c_str(), false);
 
 		if (val == -1.0f)
 			return false;
 
+		type = ParamOverrideType::VALUE;
+	}
+	else if (operand->size() >= 18 && !wcsncmp(operand->c_str(), L"d3d11_bind_", 11))
+	{
+		CustomResourceBindFlags flags = lookup_enum_val<const wchar_t*, CustomResourceBindFlags>(
+			CustomResourceBindFlagNames, operand->c_str() + 11, CustomResourceBindFlags::INVALID);
+
+		if (flags == CustomResourceBindFlags::INVALID)
+			return false;
+
+		val = (float)flags;
 		type = ParamOverrideType::VALUE;
 	}
 	else
@@ -2282,8 +2311,19 @@ bool ParseCommandListVariableAssignment(Globals& G, const wchar_t* section,
 
 	CommandListVariable* var = nullptr;
 
-	if (!args.GetVariable(G, var, false, CommandArgumentReader::PeekMode::Argument))
+	bool loading_user_config = *ini_namespace == G.user_config;
+
+	if (!args.GetVariable(G, var, false, CommandArgumentReader::PeekMode::Argument)
+		|| (loading_user_config && !(var->flags & VariableFlags::PERSIST)))
 	{
+		if (loading_user_config)
+		{
+			float value;
+			size_t len;
+			//if (ParseFloatToken(*val, value, len))
+				//RegisterUnknownSetting(name.c_str(), value);
+		}
+
 		// Report only "locked" variable error for now to avoid `d3dx_user.ini` error spam.
 		// TODO: Refactor syntax parsing errors reporting.
 		if (var && var->flags & VariableFlags::LOCKED)
@@ -2589,7 +2629,9 @@ IniParserResult ResourceCopyTarget::ParseTargetMember(
 	}
 
 	static constexpr MemberInfo members[] = {
+		{ L"->mips",           6, ResourceCopyTargetEvaluationMode::RESOURCE_MIPS },
 		{ L"->size",           6, ResourceCopyTargetEvaluationMode::RESOURCE_SIZE },
+		{ L"->array",          7, ResourceCopyTargetEvaluationMode::RESOURCE_ARRAY },
 		{ L"->index",          7, ResourceCopyTargetEvaluationMode::POOL_INDEX },
 		{ L"->width",          7, ResourceCopyTargetEvaluationMode::RESOURCE_WIDTH },
 		{ L"->offset",         8, ResourceCopyTargetEvaluationMode::RESOURCE_OFFSET },
@@ -2600,11 +2642,12 @@ IniParserResult ResourceCopyTarget::ParseTargetMember(
 			MemberArg::Type::Unsigned, // Byte Offset 
 			MemberArg::Type::Unsigned  // Byte Size 
 		}} },
+		{ L"->bindflags",     12, ResourceCopyTargetEvaluationMode::RESOURCE_BIND_FLAGS },
 		{ L"->hashregion",    12, ResourceCopyTargetEvaluationMode::RESOURCE_REGION_HASH, {{
 			MemberArg::Type::Unsigned, // Byte Offset 
 			MemberArg::Type::Unsigned  // Byte Size 
 		}} },
-		{ L"->lastframe",   13, ResourceCopyTargetEvaluationMode::POOL_LAST_FRAME },
+		{ L"->lastframe",     13, ResourceCopyTargetEvaluationMode::POOL_LAST_FRAME },
 		{ L"->spatialhash",   13, ResourceCopyTargetEvaluationMode::RESOURCE_SPATIAL_HASH, {{
 			MemberArg::Type::Unsigned, // X Byte Offset 
 			MemberArg::Type::Unsigned, // Y Byte Offset 

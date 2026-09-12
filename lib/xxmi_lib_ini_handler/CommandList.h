@@ -97,6 +97,34 @@ public:
 
 typedef std::unordered_map<std::wstring, class ExplicitCommandListSection> ExplicitCommandListSections;
 
+enum class CustomResourceBindFlags {
+	INVALID = 0x00000000,
+	VERTEX_BUFFER = 0x00000001,
+	INDEX_BUFFER = 0x00000002,
+	CONSTANT_BUFFER = 0x00000004,
+	SHADER_RESOURCE = 0x00000008,
+	STREAM_OUTPUT = 0x00000010,
+	RENDER_TARGET = 0x00000020,
+	DEPTH_STENCIL = 0x00000040,
+	UNORDERED_ACCESS = 0x00000080,
+	DECODER = 0x00000200,
+	VIDEO_ENCODER = 0x00000400,
+};
+SENSIBLE_ENUM(CustomResourceBindFlags);
+static EnumName_t<const wchar_t*, CustomResourceBindFlags> CustomResourceBindFlagNames[] = {
+	{L"vertex_buffer", CustomResourceBindFlags::VERTEX_BUFFER},
+	{L"index_buffer", CustomResourceBindFlags::INDEX_BUFFER},
+	{L"constant_buffer", CustomResourceBindFlags::CONSTANT_BUFFER},
+	{L"shader_resource", CustomResourceBindFlags::SHADER_RESOURCE},
+	{L"stream_output", CustomResourceBindFlags::STREAM_OUTPUT},
+	{L"render_target", CustomResourceBindFlags::RENDER_TARGET},
+	{L"depth_stencil", CustomResourceBindFlags::DEPTH_STENCIL},
+	{L"unordered_access", CustomResourceBindFlags::UNORDERED_ACCESS},
+	{L"decoder", CustomResourceBindFlags::DECODER},
+	{L"video_encoder", CustomResourceBindFlags::VIDEO_ENCODER},
+	{NULL, CustomResourceBindFlags::INVALID} // End of list marker
+};
+
 //CONCRETE
 class CustomResource
 {
@@ -217,26 +245,28 @@ enum class ResourceCopyTargetEvaluationMode : uint32_t {
 	RESOURCE_FORMAT        = 0b00000000000000000000001000000000,
 	RESOURCE_WIDTH         = 0b00000000000000000000010000000000,
 	RESOURCE_HEIGHT        = 0b00000000000000000000100000000000,
-
-	RESOURCE_MASK          = 0b00000000000000000000111111111111,
+	RESOURCE_ARRAY		   = 0b00000000000000000001000000000000,
+	RESOURCE_MIPS		   = 0b00000000000000000010000000000000,
+	RESOURCE_BIND_FLAGS	   = 0b00000000000000000100000000000000,
+	RESOURCE_MASK		   = 0b00000000000000000111111111111111,
 
 	// POOL
-	POOL_IDENTITY		   = 0b00000000000000000001000000000000,
-	POOL_SIZE			   = 0b00000000000000000010000000000000,
-	POOL_INDEX			   = 0b00000000000000000100000000000000,
-	POOL_FULL_RANGE		   = 0b00000000000000001000000000000000,
-	POOL_LAST_FRAME		   = 0b00000000000000010000000000000000,
+	POOL_IDENTITY		   = 0b00000000000000001000000000000000,
+	POOL_SIZE			   = 0b00000000000000010000000000000000,
+	POOL_INDEX			   = 0b00000000000000100000000000000000,
+	POOL_FULL_RANGE		   = 0b00000000000001000000000000000000,
+	POOL_LAST_FRAME		   = 0b00000000000010000000000000000000,
 
-	POOL_MASK			   = 0b00000000000000011111000000000000,
+	POOL_MASK			   = 0b00000000000011111000000000000000,
 
 	// VARIABLE
-	VARIABLE			   = 0b00000000000000100000000000000000,
+	VARIABLE			   = 0b00000000000100000000000000000000,
 
 	// LAYOUT
-	LAYOUT_ELEMENT_FORMAT  = 0b00000000000001000000000000000000,
-	LAYOUT_ELEMENT_OFFSET  = 0b00000000000010000000000000000000,
+	LAYOUT_ELEMENT_FORMAT  = 0b00000000001000000000000000000000,
+	LAYOUT_ELEMENT_OFFSET  = 0b00000000010000000000000000000000,
 
-	LAYOUT_MASK			   = 0b00000000000011000000000000000000
+	LAYOUT_MASK			   = 0b00000000011000000000000000000000
 };
 SENSIBLE_ENUM(ResourceCopyTargetEvaluationMode);
 static EnumName_t<const wchar_t*, ResourceCopyTargetEvaluationMode> ResourceCopyTargetEvaluationModeNames[] = {
@@ -251,6 +281,9 @@ static EnumName_t<const wchar_t*, ResourceCopyTargetEvaluationMode> ResourceCopy
 	{L"ResourceFormat", ResourceCopyTargetEvaluationMode::RESOURCE_FORMAT},
 	{L"ResourceWidth", ResourceCopyTargetEvaluationMode::RESOURCE_WIDTH},
 	{L"ResourceHeight", ResourceCopyTargetEvaluationMode::RESOURCE_HEIGHT},
+	{L"ResourceArray", ResourceCopyTargetEvaluationMode::RESOURCE_ARRAY},
+	{L"ResourceMips", ResourceCopyTargetEvaluationMode::RESOURCE_MIPS},
+	{L"ResourceBindFlags", ResourceCopyTargetEvaluationMode::RESOURCE_BIND_FLAGS},
 
 	{L"PoolIdentity", ResourceCopyTargetEvaluationMode::POOL_IDENTITY},
 	{L"PoolSize", ResourceCopyTargetEvaluationMode::POOL_SIZE},
