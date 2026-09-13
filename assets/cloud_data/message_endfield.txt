@@ -1,1 +1,0 @@
-A known issue can break some mods and will be fixed in the next NRMM update. This is a very specific issue, so most mod problems are still NOT caused by NRMM.
