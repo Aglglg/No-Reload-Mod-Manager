@@ -1579,7 +1579,7 @@ class _MainViewState extends ConsumerState<MainView>
             hitTestBehavior: HitTestBehavior.translucent,
             onEnter: (_) {
               setState(() {
-                showRandomTips = ref.watch(showVerina) ? false : true;
+                showRandomTips = true;
               });
             },
             onExit: (_) {
