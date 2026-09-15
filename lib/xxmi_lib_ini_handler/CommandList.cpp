@@ -170,7 +170,7 @@ static std::wstring get_between_first_and_last_backslash(const std::wstring& inp
 }
 
 bool ParseCommandListGeneralCommands(Globals& G, const wchar_t* key, std::wstring* val, const std::wstring* ini_namespace,
-	const std::wstring& full_path, int line_index, const std::wstring line)
+	const std::wstring& full_path, int line_index, const std::wstring* line)
 {
 	//only check for "run" key
 	if (!wcscmp(key, L"run")) {
@@ -197,7 +197,7 @@ bool ParseCommandListGeneralCommands(Globals& G, const wchar_t* key, std::wstrin
 							G.errored_lines.insert(ErroredLine{
 							full_path,
 							line_index,
-							line,
+							line->c_str(),
 							L"NON EXISTENT LIB:" + called_namespace
 								});
 						}
@@ -231,7 +231,7 @@ bool ParseCommandListGeneralCommands(Globals& G, const wchar_t* key, std::wstrin
 							G.errored_lines.insert(ErroredLine{
 							full_path,
 							line_index,
-							line,
+							line->c_str(),
 							L"NON EXISTENT LIB:" + called_namespace
 								});
 						}
@@ -2642,12 +2642,12 @@ IniParserResult ResourceCopyTarget::ParseTargetMember(
 			MemberArg::Type::Unsigned, // Byte Offset 
 			MemberArg::Type::Unsigned  // Byte Size 
 		}} },
-		{ L"->bindflags",     12, ResourceCopyTargetEvaluationMode::RESOURCE_BIND_FLAGS },
+		{ L"->bindflags",     11, ResourceCopyTargetEvaluationMode::RESOURCE_BIND_FLAGS },
+		{ L"->lastframe",     11, ResourceCopyTargetEvaluationMode::POOL_LAST_FRAME },
 		{ L"->hashregion",    12, ResourceCopyTargetEvaluationMode::RESOURCE_REGION_HASH, {{
 			MemberArg::Type::Unsigned, // Byte Offset 
 			MemberArg::Type::Unsigned  // Byte Size 
 		}} },
-		{ L"->lastframe",     13, ResourceCopyTargetEvaluationMode::POOL_LAST_FRAME },
 		{ L"->spatialhash",   13, ResourceCopyTargetEvaluationMode::RESOURCE_SPATIAL_HASH, {{
 			MemberArg::Type::Unsigned, // X Byte Offset 
 			MemberArg::Type::Unsigned, // Y Byte Offset 

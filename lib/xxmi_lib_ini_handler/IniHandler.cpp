@@ -244,16 +244,16 @@ static bool _get_namespaced_section_path(IniSections* custom_ini_sections, const
 
 static void ParseIniSectionLine(Globals& G, std::wstring* wline, std::wstring* section,
 	int* warn_duplicates, bool* warn_lines_without_equals,
-	IniSectionVector** section_vector, const std::wstring* ini_namespace,
+	IniSection** section_entry, const std::wstring* ini_namespace,
 	const std::wstring* ini_path, const std::wstring& full_path, int line_index)
 {
 	bool allow_duplicate_sections = false;
 	size_t first, last;
-	bool inserted;
 	bool namespaced_section = false;
 
 	*warn_duplicates = 1;
 	*warn_lines_without_equals = true;
+	*section_entry = NULL;
 
 	last = wline->find(L']');
 	if (last == wline->npos)
@@ -282,8 +282,10 @@ static void ParseIniSectionLine(Globals& G, std::wstring* wline, std::wstring* s
 		}
 	}
 
-	inserted = G.ini_sections.emplace(*section, IniSection{}).second;
-	if (!inserted && !allow_duplicate_sections) {
+	// the behaviour of GetPrivateProfileString.
+	std::pair<IniSections::iterator, bool> result = G.ini_sections.emplace(*section, IniSection{});
+
+	if (!result.second && !allow_duplicate_sections) {
 		//wprintf(L"[WARNING] Duplicate section found - [%ls]\n", section->c_str());
 
 		//If duplicate section on known lib namespaces, that means user having multiple known libraries
@@ -322,17 +324,18 @@ static void ParseIniSectionLine(Globals& G, std::wstring* wline, std::wstring* s
 		}
 
 		section->clear();
-		*section_vector = NULL;
 		return;
 	}
 
-	*section_vector = &G.ini_sections[*section].kv_vec;
+	IniSection* entry = &result.first->second;
+	*section_entry = entry;
+
 	G.ini_sections[*section].full_path = full_path;
 
 	if (namespaced_section) {
-		G.ini_sections[*section].ini_namespace = *ini_namespace;
+		entry->ini_namespace = *ini_namespace;
 		if (*ini_path != *ini_namespace)
-			G.ini_sections[*section].ini_path = *ini_path;
+			entry->ini_path = *ini_path;
 	}
 
 	if (IsCommandListSection(section->c_str())) {
@@ -412,13 +415,13 @@ static bool ParseIniPreamble(Globals& G, std::wstring* wline, std::wstring* ini_
 
 static void ParseIniKeyValLine(Globals& G, std::wstring* wline, std::wstring* section,
 	int warn_duplicates, bool warn_lines_without_equals,
-	IniSectionVector* section_vector, const std::wstring* ini_namespace, const std::wstring* full_path, int line_index)
+	IniSection* section_entry, const std::wstring* ini_namespace, const std::wstring* full_path, int line_index)
 {
 	size_t first, last, delim;
 	std::wstring key, val;
 	bool inserted;
 
-	if (section->empty() || section_vector == NULL) {
+	if (section->empty() || section_entry == NULL) {
 		//wprintf(L"[WARNING] Entry outside of section: %ls - [%ls]\n", wline->c_str(), ini_namespace->c_str());
 		return;
 	}
@@ -428,6 +431,7 @@ static void ParseIniKeyValLine(Globals& G, std::wstring* wline, std::wstring* se
 		last = wline->find_last_not_of(L" \t", delim - 1);
 		key = wline->substr(0, last + 1);
 		first = wline->find_first_not_of(L" \t", delim + 1);
+
 		if (first != wline->npos)
 			val = wline->substr(first);
 		else {
@@ -436,10 +440,10 @@ static void ParseIniKeyValLine(Globals& G, std::wstring* wline, std::wstring* se
 		}
 
 		if (warn_duplicates == 2) {
-			G.ini_sections.at(*section).kv_map[key] = val;
+			section_entry->kv_map[key] = val;
 		}
 		else {
-			inserted = G.ini_sections.at(*section).kv_map.emplace(key, val).second;
+			inserted = section_entry->kv_map.emplace(key, val).second;
 			if ((warn_duplicates == 1) && !inserted && !whitelisted_duplicate_key(section->c_str(), key.c_str())) {
 				//wprintf(L"[WARNING] Duplicate key found: %ls - [%ls] @ [%ls]\n", wline->c_str(), section->c_str(), ini_namespace->c_str());
 			}
@@ -452,7 +456,7 @@ static void ParseIniKeyValLine(Globals& G, std::wstring* wline, std::wstring* se
 		}
 	}
 
-	section_vector->emplace_back(key, val, *wline, *ini_namespace, *full_path, line_index);
+	section_entry->kv_vec.emplace_back(key, val, *wline, *ini_namespace, *full_path, line_index);
 }
 
 static void ParseIniBuffer(Globals& G, const char* data, size_t size, const std::wstring* _ini_namespace, std::wstring& full_path)
@@ -466,7 +470,10 @@ static void ParseIniBuffer(Globals& G, const char* data, size_t size, const std:
 	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 
 	std::wstring wline, section, ini_path;
+
 	IniSectionVector* section_vector = NULL;
+	IniSection* section_entry = NULL;
+
 	int warn_duplicates = 1;
 	bool warn_lines_without_equals = true;
 	std::wstring ini_namespace = _ini_namespace ? *_ini_namespace : L"";
@@ -512,7 +519,7 @@ static void ParseIniBuffer(Globals& G, const char* data, size_t size, const std:
 		if (wline[0] == L'[') {
 			preamble = false;
 			ParseIniSectionLine(G, &wline, &section, &warn_duplicates, &warn_lines_without_equals,
-				&section_vector, &ini_namespace, &ini_path, full_path, line_index);
+				&section_entry, &ini_namespace, &ini_path, full_path, line_index);
 			continue;
 		}
 
@@ -523,7 +530,7 @@ static void ParseIniBuffer(Globals& G, const char* data, size_t size, const std:
 		}
 
 		ParseIniKeyValLine(G, &wline, &section, warn_duplicates, warn_lines_without_equals,
-			section_vector, &ini_namespace, &full_path, line_index);
+			section_entry, &ini_namespace, &full_path, line_index);
 	}
 }
 
@@ -1246,7 +1253,7 @@ static void ParseIncludedIniFiles(Globals& G, const std::wstring& base_path)
 {
 	IniSections include_sections;
 	IniSections::iterator lower, upper, i;
-	const wchar_t* section_id;
+	const std::wstring* section_id;
 	IniSectionVector* section = NULL;
 	IniSectionVector::iterator entry;
 	std::wstring* key, * val;
@@ -1270,39 +1277,63 @@ static void ParseIncludedIniFiles(Globals& G, const std::wstring& base_path)
 		G.ini_sections.erase(lower, upper);
 
 		for (i = include_sections.begin(); i != include_sections.end(); i++) {
-			section_id = i->first.c_str();
-			//printf("[%S]\n", section_id);
+			section_id = &i->first;
+			//LogInfo("[%S]\n", section_id->c_str());
 
-			_get_namespaced_section_path(&include_sections, i->first.c_str(), &namespace_path);
+			_get_namespaced_section_path(&include_sections, section_id->c_str(), &namespace_path);
 
-			_GetIniSection(&include_sections, &section, section_id);
+			_GetIniSection(&include_sections, &section, section_id->c_str());
+
 			for (entry = section->begin(); entry < section->end(); entry++) {
 				key = &entry->first;
 				val = &entry->second;
+
 				//printf("  %S=%S\n", key->c_str(), val->c_str());
 
 				rel_path = namespace_path + *val;
 
 				if (seen.count(rel_path)) {
-					//wprintf(L"[WARNING] File included multiple times: %ls - [%ls]\n", rel_path.c_str(), section_id);
+					//wprintf(L"[WARNING] File included multiple times: %ls - [%ls]\n", rel_path.c_str(), section_id->c_str());
 					continue;
 				}
+
 				seen.insert(rel_path);
 
-				if (!wcscmp(key->c_str(), L"include")) {
-					ini_path = std::wstring(migoto_path) + rel_path;
-					ParseNamespacedIniFile(G, ini_path.c_str(), &rel_path);
+				switch (key->size())
+				{
+				case 7: // include
+					if (!wcscmp(key->c_str(), L"include")) {
+						ini_path = std::wstring(migoto_path) + rel_path;
+						ParseNamespacedIniFile(G, ini_path.c_str(), &rel_path);
+						continue;
+					}
+					break;
+
+				case 11: // user_config
+					if (!wcscmp(key->c_str(), L"user_config")) {
+						// Handled below
+						continue;
+					}
+					break;
+
+				case 17: // include_recursive / exclude_recursive
+					if (key->c_str()[0] == L'i') {
+						if (!wcscmp(key->c_str(), L"include_recursive")) {
+							ParseIniFilesRecursive(G, migoto_path, rel_path, exclude);
+							continue;
+						}
+					}
+					else if (key->c_str()[0] == L'e') {
+						if (!wcscmp(key->c_str(), L"exclude_recursive")) {
+							// Handled above
+							continue;
+						}
+					}
+					break;
 				}
-				else if (!wcscmp(key->c_str(), L"include_recursive")) {
-					ParseIniFilesRecursive(G, migoto_path, rel_path, exclude);
-				}
-				else if (!wcscmp(key->c_str(), L"exclude_recursive")) {
-				}
-				else if (!wcscmp(key->c_str(), L"user_config")) {
-				}
-				else {
-					//wprintf(L"[WARNING] Unrecognised entry [Include] sections: %ls=%ls - [%ls] @ [%ls]\n", key->c_str(), val->c_str(), section_id, namespace_path.c_str());
-				}
+
+				/*wprintf(L"Unrecognised entry: %ls=%ls\n - [%ls] @ [%ls]\n",
+					key->c_str(), val->c_str(), section_id->c_str(), namespace_path.c_str());*/
 			}
 		}
 	} while (!include_sections.empty());
@@ -1495,21 +1526,23 @@ static bool ParseCommandListLine(Globals& G, const wchar_t* ini_section,
 	// We only care about FlowControl & VariableAssignment
 	// and GeneralCommand to check "run" commandlist
 
-	if (ParseCommandListGeneralCommands(G, lhs, rhs, ini_namespace, full_path, line_index, raw_line->c_str()))
+	if (ParseCommandListVariableAssignment(G, ini_section, lhs, rhs, raw_line, command_list, pre_command_list, post_command_list, ini_namespace))
+		return true;
+
+	if (raw_line && !explicit_command_list &&
+		ParseCommandListFlowControl(G, ini_section, raw_line, pre_command_list, post_command_list, ini_namespace, full_path, line_index))
+		return true;
+
+	if (ParseCommandListGeneralCommands(G, lhs, rhs, ini_namespace, full_path, line_index, raw_line))
 		return true;
 
 	/*if (ParseCommandListIniParamOverride(ini_section, lhs, rhs, command_list, ini_namespace))
 		return true;*/
 
-	if (ParseCommandListVariableAssignment(G, ini_section, lhs, rhs, raw_line, command_list, pre_command_list, post_command_list, ini_namespace))
-		return true;
-
 	/*if (ParseCommandListResourceCopyTargetDirective(ini_section, lhs, rhs, command_list, ini_namespace))
 		return true;*/
 
-	if (raw_line && !explicit_command_list &&
-		ParseCommandListFlowControl(G, ini_section, raw_line, pre_command_list, post_command_list, ini_namespace, full_path, line_index))
-		return true;
+	
 
 	return false;
 }
