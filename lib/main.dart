@@ -1,6 +1,5 @@
 //Sorry the code is messy.
 import 'dart:async';
-import 'dart:ffi' as ffi;
 import 'dart:io';
 import 'dart:isolate';
 import 'package:auto_updater/auto_updater.dart';
@@ -48,7 +47,7 @@ import 'package:xinput_gamepad/xinput_gamepad.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 void main(List<String> args) async {
-  prewarmDll();
+  unawaited(prewarmDll());
   findExternalCodeEditors();
   WidgetsFlutterBinding.ensureInitialized();
   bool successLoadPref = await SharedPrefUtils().tryInit();
@@ -1970,11 +1969,7 @@ String getRandomTips(String previousTips) {
   return available.first;
 }
 
-void prewarmDll() {
+Future<void> prewarmDll() async {
   print("PREWARM");
-  unawaited(
-    Isolate.run(() {
-      ffi.DynamicLibrary.open('xxmi_lib_ini_handler.dll');
-    }),
-  );
+  await Isolate.run(() => getErroredLines('', '', {}));
 }
