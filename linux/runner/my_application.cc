@@ -135,7 +135,20 @@ static void my_application_class_init(MyApplicationClass* klass) {
 
 static void my_application_init(MyApplication* self) {}
 
+// Hides the harmless "gdk_device_get_axis" warning.
+static void ignore_gdk_axis_warning(const gchar* log_domain,
+                                    GLogLevelFlags log_level,
+                                    const gchar* message,
+                                    gpointer user_data) {
+  if (message != nullptr && g_strstr_len(message, -1, "gdk_device_get_axis") != nullptr) {
+    return;
+  }
+  g_log_default_handler(log_domain, log_level, message, user_data);
+}
+
 MyApplication* my_application_new() {
+  g_log_set_handler("Gdk", G_LOG_LEVEL_CRITICAL, ignore_gdk_axis_warning, nullptr);
+
   // Set the program name to the application ID, which helps various systems
   // like GTK and desktop environments map this running application to its
   // corresponding .desktop file. This ensures better integration by allowing
