@@ -3260,25 +3260,38 @@ String _getLiteralIni(List<IniSection> sections) {
 }
 
 Future<List<String>> _findIniFilesRecursive(String mainFolder) async {
-  final directory = Directory(
-    r"\\?\" + mainFolder.replaceFirst(r"\\?\", ''),
-  ); // workaround \\?\ for long paths, only for Windows
+  Directory directory;
+  if (Platform.isWindows) {
+    directory = Directory(r"\\?\" + mainFolder.replaceFirst(r"\\?\", ''));
+  } else {
+    directory = Directory(mainFolder);
+  }
+
   if (!await directory.exists()) return [];
 
   return await directory
       .list(recursive: true)
       .where((file) => file is File && file.path.endsWith('.ini'))
       .where((file) => p.basename(file.path).toLowerCase() != "desktop.ini")
-      .map((file) => file.path.replaceFirst(r"\\?\", ''))
+      .map(
+        (file) =>
+            Platform.isWindows
+                ? file.path.replaceFirst(r"\\?\", '')
+                : file.path,
+      )
       .toList();
 }
 
 Future<List<String>> findIniFilesRecursiveExcludeDisabled(
   String mainFolderPath,
 ) async {
-  final directory = Directory(
-    r"\\?\" + mainFolderPath.replaceFirst(r"\\?\", ''),
-  ); // workaround \\?\ for long paths, only for Windows
+  Directory directory;
+  if (Platform.isWindows) {
+    directory = Directory(r"\\?\" + mainFolderPath.replaceFirst(r"\\?\", ''));
+  } else {
+    directory = Directory(mainFolderPath);
+  }
+
   if (!await directory.exists()) return [];
 
   bool containsDisabledSegment(String path) {
@@ -3293,7 +3306,12 @@ Future<List<String>> findIniFilesRecursiveExcludeDisabled(
   return directory
       .list(recursive: true)
       .where((entity) => entity is File)
-      .map((entity) => entity.path.replaceFirst(r"\\?\", ''))
+      .map(
+        (entity) =>
+            Platform.isWindows
+                ? entity.path.replaceFirst(r"\\?\", '')
+                : entity.path,
+      )
       .where((path) => path.toLowerCase().endsWith('.ini'))
       .where((path) => p.basename(path).toLowerCase() != 'desktop.ini')
       .where(

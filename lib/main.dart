@@ -160,10 +160,12 @@ Future<void> setupWindow(List<String> args) async {
 
   await checkToRelaunch();
 
-  String feedURL =
-      'https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/appcast.xml';
-  await autoUpdater.setFeedURL(feedURL);
-  await autoUpdater.setScheduledCheckInterval(0);
+  if (Platform.isWindows) {
+    String feedURL =
+        'https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/appcast.xml';
+    await autoUpdater.setFeedURL(feedURL);
+    await autoUpdater.setScheduledCheckInterval(0);
+  }
 
   bitsdojo.doWhenWindowReady(() async {
     final minSize = Size(
@@ -599,6 +601,7 @@ class _MainViewState extends ConsumerState<MainView>
   }
 
   void setupGamepadNavigation() {
+    if (!Platform.isWindows) return;
     XInputManager.enableXInput();
     final Controller controller = Controller(
       index: 0,
@@ -883,7 +886,9 @@ class _MainViewState extends ConsumerState<MainView>
           : 'assets/images/app_icon.png',
     );
 
-    await tray.trayManager.setToolTip("Mod Manager for Gacha Games");
+    if (Platform.isWindows) {
+      await tray.trayManager.setToolTip("Mod Manager for Gacha Games");
+    }
 
     tray.Menu menu = tray.Menu(
       items: [
@@ -1374,10 +1379,14 @@ class _MainViewState extends ConsumerState<MainView>
       );
       ref.read(currentGroupIndexProvider.notifier).state = groupIndex;
 
-      DynamicDirectoryWatcher.watch(
-        r"\\?\" + managedPath.replaceFirst(r"\\?\", ''),
-        ref: ref,
-      ); //if somehow there's long path, \\?\ workaround, only for Windows
+      if (Platform.isWindows) {
+        DynamicDirectoryWatcher.watch(
+          r"\\?\" + managedPath.replaceFirst(r"\\?\", ''),
+          ref: ref,
+        );
+      } else {
+        DynamicDirectoryWatcher.watch(managedPath, ref: ref);
+      }
     } else {
       DynamicDirectoryWatcher.stop();
     }
@@ -1971,5 +1980,7 @@ String getRandomTips(String previousTips) {
 
 Future<void> prewarmDll() async {
   print("PREWARM");
-  await Isolate.run(() => getErroredLines('', '', {}));
+  try {
+    await Isolate.run(() => getErroredLines('', '', {}));
+  } catch (_) {}
 }
