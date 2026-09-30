@@ -15,6 +15,7 @@ import 'package:no_reload_mod_manager/utils/external_editors.dart';
 import 'package:no_reload_mod_manager/utils/get_cloud_data.dart';
 import 'package:no_reload_mod_manager/utils/hotkey_handler.dart';
 import 'package:no_reload_mod_manager/utils/ini_handler_bridge.dart';
+import 'package:no_reload_mod_manager/utils/keypress_simulate.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/mod_navigator.dart';
@@ -49,6 +50,7 @@ import 'package:easy_localization/easy_localization.dart';
 void main(List<String> args) async {
   unawaited(prewarmDll());
   findExternalCodeEditors();
+  linuxCreateKeyboardIfNeeded();
   WidgetsFlutterBinding.ensureInitialized();
   bool successLoadPref = await SharedPrefUtils().tryInit();
   await EasyLocalization.ensureInitialized();
