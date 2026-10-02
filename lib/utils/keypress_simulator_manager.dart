@@ -1,5 +1,7 @@
 import 'dart:ffi';
+import 'dart:io';
 import 'package:ffi/ffi.dart';
+import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/utils/keypress_simulate.dart';
 import 'package:win32/win32.dart';
 
@@ -8,41 +10,51 @@ Future<void> simulateKeyF10() async {
 }
 
 Future<void> simulateKeySelectMod(int realGroupIndex, int realModIndex) async {
-  simulateKeyDown(VK_CLEAR);
+  await simulateKeyDown(VK_CLEAR);
   await _simulateSelectGroupMod(VK_SPACE, realModIndex, realGroupIndex);
   await _simulateSelectGroupMod(VK_RETURN, realModIndex, realGroupIndex);
-  simulateKeyUp(VK_CLEAR);
+  await simulateKeyUp(VK_CLEAR);
 }
 
 Future<void> _simulateSelectGroupMod(int key, int x, int y) async {
   (int x, int y)? initialCursorPos = getCursorInitialPos();
-  SetCursorPos(x, y);
+
+  if (Platform.isWindows) {
+    SetCursorPos(x, y);
+  } else if (Platform.isLinux) {
+    await wineHelper.setCursorPos(x, y);
+  }
 
   lockCursor();
 
-  simulateKeyDown(key);
+  await simulateKeyDown(key);
 
   await Future.delayed(Duration(milliseconds: 50));
 
-  simulateKeyUp(key);
+  await simulateKeyUp(key);
   unlockCursor();
 
   if (initialCursorPos != null) {
-    SetCursorPos(initialCursorPos.$1, initialCursorPos.$2);
+    if (Platform.isWindows) {
+      SetCursorPos(initialCursorPos.$1, initialCursorPos.$2);
+    } else if (Platform.isLinux) {
+      await wineHelper.setCursorPos(initialCursorPos.$1, initialCursorPos.$2);
+    }
   }
 }
 
 Future<void> _simulateKeypressOnly(int key) async {
   try {
-    simulateKeyDown(key);
+    await simulateKeyDown(key);
 
     await Future.delayed(Duration(milliseconds: 50));
   } finally {
-    simulateKeyUp(key);
+    await simulateKeyUp(key);
   }
 }
 
 void lockCursor() {
+  if (!Platform.isWindows) return;
   final point = calloc<POINT>();
   GetCursorPos(point);
 
@@ -59,10 +71,13 @@ void lockCursor() {
 }
 
 void unlockCursor() {
+  if (!Platform.isWindows) return;
   ClipCursor(nullptr); // Unlock the cursor
 }
 
 (int x, int y)? getCursorInitialPos() {
+  if (!Platform.isWindows) return null;
+
   final point = calloc<POINT>();
 
   final result = GetCursorPos(point);
@@ -118,13 +133,13 @@ Future<void> _simulateMultipleKeypresses(List<int> keys) async {
   if (keys.isEmpty) return;
   try {
     for (final key in keys) {
-      simulateKeyDown(key);
+      await simulateKeyDown(key);
       await Future.delayed(const Duration(milliseconds: 30));
     }
     await Future.delayed(const Duration(milliseconds: 50));
   } finally {
     for (final key in keys.reversed) {
-      simulateKeyUp(key);
+      await simulateKeyUp(key);
       await Future.delayed(const Duration(milliseconds: 30));
     }
   }
