@@ -49,3 +49,7 @@ dsa_priv.pem
 
 #Dist
 /dist
+
+/android
+/ios
+/macos
