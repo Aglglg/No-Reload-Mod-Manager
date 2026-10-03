@@ -1489,6 +1489,7 @@ static CustomResourcePool* ParseResourcePoolSection(Globals& G, const wchar_t* s
 
 static void ParseResourceSections(Globals& G)
 {
+	//ClearDeferredBindFlags();
 	G.customResourcePools.clear();
 	G.customResources.clear();
 
@@ -2002,6 +2003,7 @@ static void ParseTextureOverrideSections(Globals& G)
 
 	G.mTextureOverrideMap.clear();
 	G.mFuzzyTextureOverrides.clear();
+	//InvalidateTextureOverrideCandidates();
 
 	lower = G.ini_sections.lower_bound(std::wstring(L"TextureOverride"));
 	upper = prefix_upper_bound(G.ini_sections, std::wstring(L"TextureOverride"));
@@ -2287,6 +2289,8 @@ void LoadConfigFile(Globals& G, const std::wstring& ini_file, const std::wstring
 	G.post_clear_uav_float_command_list.clear();
 	ParseCommandList(G, L"ClearUnorderedAccessViewFloat", &G.clear_uav_float_command_list, &G.post_clear_uav_float_command_list, NULL);
 
+	//PropagateDeferredBindFlags();
+	// 
 	// Look for:
 	//"if" missing "endif"
 	//"else" "elif" "else if" missing "if"

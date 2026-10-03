@@ -775,7 +775,7 @@ bool CommandArgumentReader::GetVariable(Globals& G, CommandListVariable*& out, b
 	return true;
 }
 
-bool CommandArgumentReader::GetTarget(Globals& G, ResourceCopyTarget* out, bool is_source, PeekMode mode, bool validate)
+bool CommandArgumentReader::GetTarget(Globals& G, ResourceCopyTarget* out, bool is_source, PeekMode mode, bool validate, bool allow_range)
 {
 	std::wstring token;
 
@@ -790,7 +790,7 @@ bool CommandArgumentReader::GetTarget(Globals& G, ResourceCopyTarget* out, bool 
 		return false;
 	}
 
-	if (!out->ParseTarget(G, token.c_str(), is_source, m_ini_namespace, m_scope))
+	if (!out->ParseTarget(G, token.c_str(), is_source, m_ini_namespace, m_scope, true, allow_range))
 	{
 		SetError(L"Unknown target: " + token, m_peek_start_pos);
 		return false;
@@ -2698,6 +2698,25 @@ IniParserResult ResourceCopyTarget::ParseTargetCustomResource(Globals& G, const 
 	return IniParserResult::TOKEN_FOUND;
 }
 
+// Bounds of a range written as "<start>:<end>" inside brackets, for
+// PoolFoo[$a:$b] and ps-t[$a:$b] alike. `colon` is their separator in `text`.
+// Both bounds are left unset when either expression does not parse.
+bool ResourceCopyTarget::ParseRangeBounds(Globals& G, const std::wstring& text, size_t colon, const std::wstring* ini_namespace, CommandListScope* scope)
+{
+	std::wstring start_text = text.substr(0, colon);
+	std::wstring end_text = text.substr(colon + 1);
+
+	range_start = std::make_unique<CommandListExpression>();
+	range_end = std::make_unique<CommandListExpression>();
+
+	if (range_start->parse(G, &start_text, ini_namespace, scope) && range_end->parse(G, &end_text, ini_namespace, scope))
+		return true;
+
+	range_start.reset();
+	range_end.reset();
+	return false;
+}
+
 IniParserResult ResourceCopyTarget::ParseTargetPool(Globals& G, const wchar_t*& target, size_t length, const std::wstring* ini_namespace, CommandListScope* scope, bool is_source)
 {
 	if (length < 5 || wcsncmp(target, L"pool", 4))
@@ -2765,7 +2784,24 @@ IniParserResult ResourceCopyTarget::ParseTargetPool(Globals& G, const wchar_t*& 
 		if (is_source)
 			return IniParserResult::SYNTAX_ERROR;
 		type = ResourceCopyTargetType::POOL;
-		evaluation_mode = ResourceCopyTargetEvaluationMode::POOL_FULL_RANGE;
+		if (evaluation_mode == ResourceCopyTargetEvaluationMode::VARIABLE)
+			evaluation_mode = ResourceCopyTargetEvaluationMode::POOL_FULL_RANGE_VARIABLE;
+		else
+			evaluation_mode = ResourceCopyTargetEvaluationMode::POOL_FULL_RANGE_RESOURCE;
+		return IniParserResult::TOKEN_FOUND;
+	}
+
+	// Pool range: PoolFoo[$a:$b], resources only.
+	size_t colon = pool_index_text.find(L':');
+	if (colon != std::wstring::npos) {
+		if (evaluation_mode != ResourceCopyTargetEvaluationMode::RESOURCE)
+			return IniParserResult::SYNTAX_ERROR;
+
+		if (!ParseRangeBounds(G, pool_index_text, colon, ini_namespace, scope))
+			return IniParserResult::SYNTAX_ERROR;
+
+		type = ResourceCopyTargetType::POOL;
+		evaluation_mode = ResourceCopyTargetEvaluationMode::POOL_RANGE;
 		return IniParserResult::TOKEN_FOUND;
 	}
 
@@ -2843,11 +2879,88 @@ constexpr bool token_equals(const wchar_t* str, size_t len, const wchar_t* token
 	return len == token_len && wmemcmp(str, token, token_len) == 0;
 }
 
-IniParserResult ResourceCopyTarget::ParseTargetPipelineSlot(const wchar_t*& target, size_t length, bool is_source)
+// Slot given in brackets: ps-t[$i] (any slot type) or ps-t[$a:$b] (t, u, cb).
+IniParserResult ResourceCopyTarget::ParseTargetSlotExpression(Globals& G, const wchar_t* text, size_t length, const std::wstring* ini_namespace, CommandListScope* scope)
+{
+	struct SlotTypeInfo {
+		const wchar_t* keyword; // Follows the stage letter when has_stage
+		size_t len;
+		ResourceCopyTargetType type;
+		bool has_stage;
+		bool range_allowed;
+		unsigned max_slot_count;
+	};
+
+	static constexpr SlotTypeInfo slot_types[] = {
+		{ L"o",    1, ResourceCopyTargetType::RENDER_TARGET,         false, false, D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT            },
+		{ L"vb",   2, ResourceCopyTargetType::VERTEX_BUFFER,         false, false, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT         },
+		{ L"so",   2, ResourceCopyTargetType::STREAM_OUTPUT,         false, false, D3D11_SO_STREAM_COUNT                             },
+		{ L"s-t",  3, ResourceCopyTargetType::SHADER_RESOURCE,       true,  true,  D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT      },
+		{ L"s-u",  3, ResourceCopyTargetType::UNORDERED_ACCESS_VIEW, true,  true,  D3D11_1_UAV_SLOT_COUNT                            },
+		{ L"s-cb", 4, ResourceCopyTargetType::CONSTANT_BUFFER,       true,  true,  D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT },
+	};
+
+	const wchar_t* open = wmemchr(text, L'[', length);
+	if (!open || text[length - 1] != L']')
+		return IniParserResult::TOKEN_NOT_FOUND;
+
+	size_t prefix_len = open - text;
+	const SlotTypeInfo* info = nullptr;
+	for (const auto& t : slot_types) {
+		if (t.has_stage) {
+			if (prefix_len == t.len + 1 && is_shader_resource(text[0]) && !wmemcmp(text + 1, t.keyword, t.len)) {
+				shader_type = text[0];
+				info = &t;
+				break;
+			}
+		}
+		else if (prefix_len == t.len && !wmemcmp(text, t.keyword, t.len)) {
+			info = &t;
+			break;
+		}
+	}
+	if (!info)
+		return IniParserResult::TOKEN_NOT_FOUND;
+
+	if (info->type == ResourceCopyTargetType::UNORDERED_ACCESS_VIEW && shader_type != L'p' && shader_type != L'c')
+		return IniParserResult::SYNTAX_ERROR;
+
+	type = info->type;
+	max_slot = info->max_slot_count;
+
+	std::wstring inner(open + 1, text + length - 1);
+	size_t colon = inner.find(L':');
+
+	if (colon == std::wstring::npos) {
+		slot_expression = std::make_unique<CommandListExpression>();
+		if (!slot_expression->parse(G, &inner, ini_namespace, scope)) {
+			slot_expression.reset();
+			return IniParserResult::SYNTAX_ERROR;
+		}
+		return IniParserResult::TOKEN_FOUND;
+	}
+
+	if (!info->range_allowed || evaluation_mode != ResourceCopyTargetEvaluationMode::RESOURCE)
+		return IniParserResult::SYNTAX_ERROR;
+
+	if (!ParseRangeBounds(G, inner, colon, ini_namespace, scope))
+		return IniParserResult::SYNTAX_ERROR;
+
+	evaluation_mode = ResourceCopyTargetEvaluationMode::SLOT_RANGE;
+	return IniParserResult::TOKEN_FOUND;
+}
+
+IniParserResult ResourceCopyTarget::ParseTargetPipelineSlot(Globals& G, const wchar_t*& target, size_t length, bool is_source, const std::wstring* ini_namespace, CommandListScope* scope)
 {
 	//LogInfo("ParseTargetPipelineSlot: target=%ls, length=%d, is_source=%d\n", target, length, is_source);
 
 	int ret, len;
+
+	if (length > 2 && target[length - 1] == L']') {
+		IniParserResult expression_ret = ParseTargetSlotExpression(G, target, length, ini_namespace, scope);
+		if (expression_ret != IniParserResult::TOKEN_NOT_FOUND)
+			return expression_ret;
+	}
 
 	struct TargetInfo {
 		const wchar_t* keyword;
@@ -2953,7 +3066,18 @@ bool contains_whitespace(const wchar_t* str, size_t len)
 	return false;
 }
 
-bool ResourceCopyTarget::ParseTarget(Globals& G, const wchar_t* target, bool is_source, const std::wstring* ini_namespace, CommandListScope* scope, bool allow_custom)
+bool ResourceCopyTarget::IsRange() const
+{
+	return evaluation_mode == ResourceCopyTargetEvaluationMode::SLOT_RANGE
+		|| evaluation_mode == ResourceCopyTargetEvaluationMode::POOL_RANGE;
+}
+
+bool ResourceCopyTarget::AcceptParsedTarget(IniParserResult ret, bool allow_range) const
+{
+	return ret == IniParserResult::TOKEN_FOUND && (allow_range || !IsRange());
+}
+
+bool ResourceCopyTarget::ParseTarget(Globals& G, const wchar_t* target, bool is_source, const std::wstring* ini_namespace, CommandListScope* scope, bool allow_custom, bool allow_range)
 {
 	IniParserResult ret;
 	size_t length = wcslen(target);
@@ -2978,7 +3102,7 @@ bool ResourceCopyTarget::ParseTarget(Globals& G, const wchar_t* target, bool is_
 			// Parse pool variable (e.g. `$PoolFoo[0]`).
 			ret = ParseTargetPool(G, target, length, ini_namespace, scope, is_source);
 			//LogInfo("ParseTarget: %d at ParseTargetPool\n", ret);
-			return ret == IniParserResult::TOKEN_FOUND;
+			return AcceptParsedTarget(ret, allow_range);
 		}
 
 		// Consume an optional resource member suffix (e.g. `->HashRegion(0, 16)` or `->Length`).
@@ -2991,20 +3115,20 @@ bool ResourceCopyTarget::ParseTarget(Globals& G, const wchar_t* target, bool is_
 		ret = ParseTargetCustomResource(G, target, length, ini_namespace, scope);
 		//LogInfo("ParseTarget: %d at ParseTargetCustomResource\n", ret);
 		if (ret != IniParserResult::TOKEN_NOT_FOUND)
-			return ret == IniParserResult::TOKEN_FOUND;
+			return AcceptParsedTarget(ret, allow_range);
 
 		// Parse the remainder as a resource pool (e.g. `PoolFoo`).
 		ret = ParseTargetPool(G, target, length, ini_namespace, scope, is_source);
 		//LogInfo("ParseTarget: %d at ParseTargetPool\n", ret);
 		if (ret != IniParserResult::TOKEN_NOT_FOUND)
-			return ret == IniParserResult::TOKEN_FOUND;
+			return AcceptParsedTarget(ret, allow_range);
 	}
 
 	// Parse the remainder as a pipeline slot (e.g. `vb0`, `this`, `null`).
-	ret = ParseTargetPipelineSlot(target, length, is_source);
+	ret = ParseTargetPipelineSlot(G, target, length, is_source, ini_namespace, scope);
 	//LogInfo("ParseTarget: %d at ParseTargetPipelineSlot\n", ret);
 	if (ret != IniParserResult::TOKEN_NOT_FOUND)
-		return ret == IniParserResult::TOKEN_FOUND;
+		return AcceptParsedTarget(ret, allow_range);
 
 	//LogInfo("ParseTarget: 0 at END\n");
 	return false;

@@ -8,6 +8,7 @@
 #include <map>
 #include <string>
 #include <windows.h>
+#include <d3d11.h>
 
 //defined Globals.h, do not include Globals.h, because Globals.h also include this file
 struct Globals;
@@ -99,16 +100,16 @@ typedef std::unordered_map<std::wstring, class ExplicitCommandListSection> Expli
 
 enum class CustomResourceBindFlags {
 	INVALID = 0x00000000,
-	VERTEX_BUFFER = 0x00000001,
-	INDEX_BUFFER = 0x00000002,
-	CONSTANT_BUFFER = 0x00000004,
-	SHADER_RESOURCE = 0x00000008,
-	STREAM_OUTPUT = 0x00000010,
-	RENDER_TARGET = 0x00000020,
-	DEPTH_STENCIL = 0x00000040,
-	UNORDERED_ACCESS = 0x00000080,
-	DECODER = 0x00000200,
-	VIDEO_ENCODER = 0x00000400,
+	VERTEX_BUFFER   = D3D11_BIND_VERTEX_BUFFER,
+	INDEX_BUFFER    = D3D11_BIND_INDEX_BUFFER,
+	CONSTANT_BUFFER = D3D11_BIND_CONSTANT_BUFFER,
+	SHADER_RESOURCE = D3D11_BIND_SHADER_RESOURCE,
+	STREAM_OUTPUT   = D3D11_BIND_STREAM_OUTPUT,
+	RENDER_TARGET   = D3D11_BIND_RENDER_TARGET,
+	DEPTH_STENCIL   = D3D11_BIND_DEPTH_STENCIL,
+	UNORDERED_ACCESS= D3D11_BIND_UNORDERED_ACCESS,
+	DECODER         = D3D11_BIND_DECODER,
+	VIDEO_ENCODER   = D3D11_BIND_VIDEO_ENCODER,
 };
 SENSIBLE_ENUM(CustomResourceBindFlags);
 static EnumName_t<const wchar_t*, CustomResourceBindFlags> CustomResourceBindFlagNames[] = {
@@ -233,40 +234,43 @@ enum class ResourceCopyTargetEvaluationMode : uint32_t {
 	INVALID                = 0b00000000000000000000000000000000,
 
 	// RESOURCE
-	RESOURCE               = 0b00000000000000000000000000000001,
-	RESOURCE_IDENTITY      = 0b00000000000000000000000000000010,
-	RESOURCE_STRIDE        = 0b00000000000000000000000000000100,
-	RESOURCE_SOURCE_STRIDE = 0b00000000000000000000000000001000,
-	RESOURCE_SIZE          = 0b00000000000000000000000000010000,
-	RESOURCE_OFFSET        = 0b00000000000000000000000000100000,
-	RESOURCE_REGION_HASH   = 0b00000000000000000000000001000000,
-	RESOURCE_SPATIAL_HASH  = 0b00000000000000000000000010000000,
-	RESOURCE_REGION        = 0b00000000000000000000000100000000,
-	RESOURCE_FORMAT        = 0b00000000000000000000001000000000,
-	RESOURCE_WIDTH         = 0b00000000000000000000010000000000,
-	RESOURCE_HEIGHT        = 0b00000000000000000000100000000000,
-	RESOURCE_ARRAY		   = 0b00000000000000000001000000000000,
-	RESOURCE_MIPS		   = 0b00000000000000000010000000000000,
-	RESOURCE_BIND_FLAGS	   = 0b00000000000000000100000000000000,
-	RESOURCE_MASK		   = 0b00000000000000000111111111111111,
+	RESOURCE                 = 0b00000000000000000000000000000001,
+	RESOURCE_IDENTITY        = 0b00000000000000000000000000000010,
+	RESOURCE_STRIDE          = 0b00000000000000000000000000000100,
+	RESOURCE_SOURCE_STRIDE   = 0b00000000000000000000000000001000,
+	RESOURCE_SIZE            = 0b00000000000000000000000000010000,
+	RESOURCE_OFFSET          = 0b00000000000000000000000000100000,
+	RESOURCE_REGION_HASH     = 0b00000000000000000000000001000000,
+	RESOURCE_SPATIAL_HASH    = 0b00000000000000000000000010000000,
+	RESOURCE_REGION          = 0b00000000000000000000000100000000,
+	RESOURCE_FORMAT          = 0b00000000000000000000001000000000,
+	RESOURCE_WIDTH           = 0b00000000000000000000010000000000,
+	RESOURCE_HEIGHT          = 0b00000000000000000000100000000000,
+	RESOURCE_ARRAY           = 0b00000000000000000001000000000000,
+	RESOURCE_MIPS            = 0b00000000000000000010000000000000,
+	RESOURCE_BIND_FLAGS      = 0b00000000000000000100000000000000,
+	RESOURCE_MASK            = 0b00000000000000000111111111111111,
 
 	// POOL
-	POOL_IDENTITY		   = 0b00000000000000001000000000000000,
-	POOL_SIZE			   = 0b00000000000000010000000000000000,
-	POOL_INDEX			   = 0b00000000000000100000000000000000,
-	POOL_FULL_RANGE		   = 0b00000000000001000000000000000000,
-	POOL_LAST_FRAME		   = 0b00000000000010000000000000000000,
+	POOL_IDENTITY            = 0b00000000000000001000000000000000,
+	POOL_SIZE                = 0b00000000000000010000000000000000,
+	POOL_INDEX               = 0b00000000000000100000000000000000,
+	POOL_FULL_RANGE_RESOURCE = 0b00000000000001000000000000000000,
+	POOL_FULL_RANGE_VARIABLE = 0b00000000000010000000000000000000,
+	POOL_LAST_FRAME          = 0b00000000000100000000000000000000,
+	POOL_RANGE               = 0b00000000001000000000000000000000, // PoolFoo[$a:$b]
 
-	POOL_MASK			   = 0b00000000000011111000000000000000,
+	POOL_MASK                = 0b00000000001111111000000000000000,
 
 	// VARIABLE
-	VARIABLE			   = 0b00000000000100000000000000000000,
+	VARIABLE                 = 0b00000000010000000000000000000000,
 
 	// LAYOUT
-	LAYOUT_ELEMENT_FORMAT  = 0b00000000001000000000000000000000,
-	LAYOUT_ELEMENT_OFFSET  = 0b00000000010000000000000000000000,
+	LAYOUT_ELEMENT_FORMAT    = 0b00000000100000000000000000000000,
+	LAYOUT_ELEMENT_OFFSET    = 0b00000001000000000000000000000000,
 
-	LAYOUT_MASK			   = 0b00000000011000000000000000000000
+	// PIPELINE SLOT
+	SLOT_RANGE               = 0b00000010000000000000000000000000, // ps-t[$a:$b]
 };
 SENSIBLE_ENUM(ResourceCopyTargetEvaluationMode);
 static EnumName_t<const wchar_t*, ResourceCopyTargetEvaluationMode> ResourceCopyTargetEvaluationModeNames[] = {
@@ -288,7 +292,10 @@ static EnumName_t<const wchar_t*, ResourceCopyTargetEvaluationMode> ResourceCopy
 	{L"PoolIdentity", ResourceCopyTargetEvaluationMode::POOL_IDENTITY},
 	{L"PoolSize", ResourceCopyTargetEvaluationMode::POOL_SIZE},
 	{L"PoolIndex", ResourceCopyTargetEvaluationMode::POOL_INDEX},
-	{L"PoolFullRange", ResourceCopyTargetEvaluationMode::POOL_FULL_RANGE},
+	{L"PoolFullRangeResource", ResourceCopyTargetEvaluationMode::POOL_FULL_RANGE_RESOURCE},
+	{L"PoolFullRangeVariable", ResourceCopyTargetEvaluationMode::POOL_FULL_RANGE_VARIABLE},
+	{L"PoolRange", ResourceCopyTargetEvaluationMode::POOL_RANGE},
+	{L"SlotRange", ResourceCopyTargetEvaluationMode::SLOT_RANGE},
 
 	{L"Variable", ResourceCopyTargetEvaluationMode::VARIABLE},
 
@@ -425,14 +432,31 @@ public:
 	CustomResourcePool* custom_resource_pool = nullptr;
 	std::unique_ptr<CommandListExpression> pool_dynamic_index_expression = nullptr;
 
+	// Pipeline slot given as an expression (ps-t[$i]); slot is resolved
+	// at runtime and must stay below max_slot:
+	std::unique_ptr<CommandListExpression> slot_expression = nullptr;
+	unsigned max_slot = 0;
+
+	// Inclusive bounds for SLOT_RANGE (ps-t[$a:$b]) and POOL_RANGE
+	// (PoolFoo[$a:$b]) targets. Null for a bare "ps-t" / "PoolFoo" side,
+	// which inherits the other side's bounds:
+	std::unique_ptr<CommandListExpression> range_start = nullptr;
+	std::unique_ptr<CommandListExpression> range_end = nullptr;
+
 	bool forbid_view_cache = false;
 
-	bool ParseTarget(Globals& G, const wchar_t* target, bool is_source, const std::wstring* ini_namespace, CommandListScope* scope, bool allow_custom = true);
+	// allow_range: accept ps-t[$a:$b] / PoolFoo[$a:$b] / bare ps-t targets,
+	// only meaningful for commands that iterate the range.
+	bool ParseTarget(Globals& G, const wchar_t* target, bool is_source, const std::wstring* ini_namespace, CommandListScope* scope, bool allow_custom = true, bool allow_range = false);
+	bool IsRange() const;
 
 private:
+	bool AcceptParsedTarget(IniParserResult ret, bool allow_range) const;
+	bool ParseRangeBounds(Globals& G, const std::wstring& text, size_t colon, const std::wstring* ini_namespace, CommandListScope* scope);
 	IniParserResult ParseTargetPrefix(const wchar_t*& target, size_t& length);
 	IniParserResult ParseTargetMember(Globals& G, const wchar_t*& target, size_t& length, std::wstring& temp_target, const std::wstring* ini_namespace, CommandListScope* scope);
-	IniParserResult ParseTargetPipelineSlot(const wchar_t*& target, size_t length, bool is_source);
+	IniParserResult ParseTargetPipelineSlot(Globals& G, const wchar_t*& target, size_t length, bool is_source, const std::wstring* ini_namespace, CommandListScope* scope);
+	IniParserResult ParseTargetSlotExpression(Globals& G, const wchar_t* text, size_t length, const std::wstring* ini_namespace, CommandListScope* scope);
 	IniParserResult ParseTargetCustomResource(Globals& G, const wchar_t*& target, size_t length, const std::wstring* ini_namespace, CommandListScope* scope);
 	IniParserResult ParseTargetPool(Globals& G, const wchar_t*& target, size_t length, const std::wstring* ini_namespace, CommandListScope* scope, bool is_source);
 
@@ -877,7 +901,7 @@ public:
 	template<typename T>
 	bool GetEnum(const EnumName_t<const wchar_t*, T>* names, T invalid, T* out);
 	bool GetVariable(Globals& G, CommandListVariable*& out, bool is_source, PeekMode mode = PeekMode::Token);
-	bool GetTarget(Globals& G, ResourceCopyTarget* out, bool is_source, PeekMode mode = PeekMode::Token, bool validate = true);
+	bool GetTarget(Globals& G, ResourceCopyTarget* out, bool is_source, PeekMode mode = PeekMode::Token, bool validate = true, bool allow_range = false);
 	bool GetFloat(float* out);
 	bool GetExpression(Globals& G, std::unique_ptr<CommandListExpression>* out);
 
