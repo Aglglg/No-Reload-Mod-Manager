@@ -3353,11 +3353,19 @@ String getCurrentModsPath(TargetGame targetGame) {
 }
 
 Future<void> openFileExplorerToSpecifiedPath(String path) async {
-  if (!Platform.isWindows) return;
   if (!await Directory(path).exists()) return;
 
+  final String command;
+  if (Platform.isWindows) {
+    command = 'explorer';
+  } else if (Platform.isLinux) {
+    command = 'xdg-open';
+  } else {
+    return;
+  }
+
   try {
-    await Process.run('explorer', [path]);
+    await Process.run(command, [path]);
   } catch (_) {}
 }
 

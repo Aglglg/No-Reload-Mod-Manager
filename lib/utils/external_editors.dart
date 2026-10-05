@@ -35,7 +35,6 @@ void findExternalCodeEditors() {
 }
 
 Future<void> openVsCodeToSpecifiedPath(String vsCodePath, String path) async {
-  if (!Platform.isWindows) return;
   if (!await Directory(path).exists()) return;
 
   final environment = Map<String, String>.from(Platform.environment);
@@ -51,7 +50,6 @@ Future<void> openVsCodeToSpecifiedPath(String vsCodePath, String path) async {
 }
 
 Future<void> openZedToSpecifiedPath(String zedPath, String path) async {
-  if (!Platform.isWindows) return;
   if (!await Directory(path).exists()) return;
 
   await Process.start(zedPath, [
@@ -64,7 +62,6 @@ Future<void> openNotepadPlusPlusToSpecifiedPath(
   String notepadPlusPlusPath,
   String path,
 ) async {
-  if (!Platform.isWindows) return;
   if (!await Directory(path).exists()) return;
 
   await Process.start(notepadPlusPlusPath, [
@@ -79,14 +76,12 @@ Future<void> openSublimeTextToSpecifiedPath(
   String sublimeTextPath,
   String path,
 ) async {
-  if (!Platform.isWindows) return;
   if (!await Directory(path).exists()) return;
 
   await Process.start(sublimeTextPath, [path], mode: ProcessStartMode.detached);
 }
 
 Future<void> openKateToSpecifiedPath(String katePath, String path) async {
-  if (!Platform.isWindows) return;
   if (!await Directory(path).exists()) return;
 
   await Process.start(katePath, [path], mode: ProcessStartMode.detached);
