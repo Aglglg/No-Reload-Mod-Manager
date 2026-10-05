@@ -2052,7 +2052,9 @@ Future<void> _createBackgroundKeypressIni(
 
   // Load the .txt template from assets
   final template = await rootBundle.loadString(
-    nrmmCustomXXMIDll
+    Platform.isLinux
+        ? 'assets/template_txt/listen_keypress_even_on_background.txt' // always listen on background for linux, game runs on wine/proton
+        : nrmmCustomXXMIDll
         ? 'assets/template_txt/listen_keypress_manager.txt'
         : xxmiSupportAdditionalWindow
         ? 'assets/template_txt/listen_keypress_additional_window.txt'
