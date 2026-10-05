@@ -53,3 +53,5 @@ dsa_priv.pem
 /android
 /ios
 /macos
+# Widget Preview related
+.widget_preview/

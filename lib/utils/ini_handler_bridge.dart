@@ -1,5 +1,7 @@
 import 'dart:ffi';
 import 'package:ffi/ffi.dart';
+import 'package:no_reload_mod_manager/linux_wine_helper/linux_wine_helper_client.dart';
+import 'package:no_reload_mod_manager/main.dart';
 import 'dart:convert';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/get_cloud_data.dart';
@@ -28,6 +30,39 @@ class ErroredLinesReport {
       final int lineIndex = item.lineIndex;
       final String trimmedLine = item.trimmedLine.toDartString();
       final String reason = item.reason.toDartString();
+
+      if (reason.startsWith("CRASH LINE")) {
+        (crashLines[filePath] ??= []).add(ErroredLine(lineIndex, trimmedLine));
+      } else if (reason.startsWith("DUPLICATE LIB:")) {
+        final rawLibName =
+            reason.replaceFirst("DUPLICATE LIB:", "").trim().toLowerCase();
+        final libName = knownModdingLibs[rawLibName] ?? rawLibName;
+        (duplicateLibs[libName] ??= []).add(filePath);
+      } else if (reason.startsWith("NON EXISTENT LIB:")) {
+        final rawLibName =
+            reason.replaceFirst("NON EXISTENT LIB:", "").trim().toLowerCase();
+        final libName = knownModdingLibs[rawLibName] ?? rawLibName;
+        nonExistentLibs[libName] = filePath;
+      } else if (reason == "Missing \"endif\"") {
+        (otherErrorMissingEndif[filePath] ??= []).add(
+          ErroredLine(lineIndex, trimmedLine),
+        );
+      } else {
+        (otherError[filePath] ??= []).add(ErroredLine(lineIndex, trimmedLine));
+      }
+    }
+  }
+
+  ErroredLinesReport.fromWineHelper(
+    List<IniCheckError> errorList,
+    Map<String, String> knownModdingLibs,
+  ) {
+    for (var i = 0; i < errorList.length; i++) {
+      final item = errorList[i];
+      final String filePath = p.normalize(item.filePath);
+      final int lineIndex = item.lineIndex;
+      final String trimmedLine = item.trimmedLine;
+      final String reason = item.reason;
 
       if (reason.startsWith("CRASH LINE")) {
         (crashLines[filePath] ??= []).add(ErroredLine(lineIndex, trimmedLine));
@@ -107,63 +142,81 @@ final _freeErroredFlowControlLinesSnapshot = _lib.lookupFunction<
 >('FreeErroredFlowControlLinesSnapshot');
 
 class IniHandlerException implements Exception {
-  const IniHandlerException();
+  const IniHandlerException(e);
 }
 //////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////
 
-ErroredLinesReport getErroredLines(
+Future<ErroredLinesReport> getErroredLines(
   String path,
   String basePath,
   Map<String, String> knownModdingLibs,
-) {
+) async {
   final List<String> knownLibNamespaces = knownModdingLibs.keys.toList();
-  final pathPtr = path.toNativeUtf8();
-  final basePtr = basePath.toNativeUtf8();
-  final countPtr = calloc<Int32>();
 
-  final knownLibNamespacesPtrs = calloc<Pointer<Utf8>>(
-    knownLibNamespaces.length,
-  );
+  if (Platform.isWindows) {
+    final pathPtr = path.toNativeUtf8();
+    final basePtr = basePath.toNativeUtf8();
+    final countPtr = calloc<Int32>();
 
-  for (int i = 0; i < knownLibNamespaces.length; i++) {
-    knownLibNamespacesPtrs[i] = knownLibNamespaces[i].toNativeUtf8();
-  }
-
-  Pointer<ErroredLineFFI> resultPtr = nullptr;
-  int count = 0;
-
-  try {
-    resultPtr = _getErroredLines(
-      pathPtr,
-      basePtr,
-      knownLibNamespacesPtrs,
+    final knownLibNamespacesPtrs = calloc<Pointer<Utf8>>(
       knownLibNamespaces.length,
-      countPtr,
     );
-    count = countPtr.value;
-
-    if (resultPtr == nullptr) {
-      throw IniHandlerException();
-    }
-
-    return ErroredLinesReport.fromPointer(resultPtr, count, knownModdingLibs);
-  } catch (_) {
-    throw IniHandlerException();
-  } finally {
-    if (resultPtr != nullptr) {
-      _freeErroredFlowControlLinesSnapshot(resultPtr, count);
-    }
 
     for (int i = 0; i < knownLibNamespaces.length; i++) {
-      malloc.free(knownLibNamespacesPtrs[i]);
+      knownLibNamespacesPtrs[i] = knownLibNamespaces[i].toNativeUtf8();
     }
-    calloc.free(knownLibNamespacesPtrs);
-    malloc.free(pathPtr);
-    malloc.free(basePtr);
-    calloc.free(countPtr);
+
+    Pointer<ErroredLineFFI> resultPtr = nullptr;
+    int count = 0;
+
+    try {
+      resultPtr = _getErroredLines(
+        pathPtr,
+        basePtr,
+        knownLibNamespacesPtrs,
+        knownLibNamespaces.length,
+        countPtr,
+      );
+      count = countPtr.value;
+
+      if (resultPtr == nullptr) {
+        throw IniHandlerException(null);
+      }
+
+      return ErroredLinesReport.fromPointer(resultPtr, count, knownModdingLibs);
+    } catch (_) {
+      throw IniHandlerException(null);
+    } finally {
+      if (resultPtr != nullptr) {
+        _freeErroredFlowControlLinesSnapshot(resultPtr, count);
+      }
+
+      for (int i = 0; i < knownLibNamespaces.length; i++) {
+        malloc.free(knownLibNamespacesPtrs[i]);
+      }
+      calloc.free(knownLibNamespacesPtrs);
+      malloc.free(pathPtr);
+      malloc.free(basePtr);
+      calloc.free(countPtr);
+    }
+  } else if (Platform.isLinux) {
+    try {
+      final checkIniResult = await wineHelper.checkIni(
+        iniPath: path,
+        basePath: basePath,
+        knownLibNamespaces: knownLibNamespaces,
+      );
+      return ErroredLinesReport.fromWineHelper(
+        checkIniResult,
+        knownModdingLibs,
+      );
+    } catch (e) {
+      throw IniHandlerException(e);
+    }
   }
+  throw IniHandlerException(null);
 }
 
 Future<Map<String, String>> fetchKnownModdingLib() async {

@@ -1092,8 +1092,10 @@ Future<List<TextSpan>> updateModData(
     );
 
     //Get errored lines from xxmi ini handler
-    errorReport = await Isolate.run(
-      () => getErroredLines(d3dxIni, basePath, knownModdingLibraries),
+    final errorReport = await getErroredLines(
+      d3dxIni,
+      basePath,
+      knownModdingLibraries,
     );
 
     //Show duplicate known libs, libDisplayName <> files of the lib
@@ -1404,7 +1406,7 @@ Future<List<TextSpan>> updateModData(
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );
-  } on IniHandlerException catch (_) {
+  } on IniHandlerException catch (e) {
     operationLogs.clear();
     operationLogs.add(
       TextSpan(
@@ -1412,6 +1414,16 @@ Future<List<TextSpan>> updateModData(
             'Failed to call function to detect errored lines, if issue persist please contact NRMM creator.'
                 .tr(),
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
+      ),
+    );
+    operationLogs.add(
+      TextSpan(
+        text: e.toString(),
+        style: GoogleFonts.poppins(
+          color: Colors.grey,
+          fontSize: 13,
+          fontWeight: FontWeight.w400,
+        ),
       ),
     );
   } catch (e) {
