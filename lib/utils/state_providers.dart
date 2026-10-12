@@ -178,7 +178,7 @@ final explorerViewOpenedForwardPathsEndfield =
 
 final triggerRefreshModName = StateProvider<bool>((ref) => false);
 final showVerina = StateProvider<bool>((ref) => false);
-
+final replicatedContextMenuProvider = StateProvider<bool>((ref) => false);
 String? vsCodePath;
 String? notepadppPath;
 String? sublimeTextPath;

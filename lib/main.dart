@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:no_reload_mod_manager/linux_wine_helper/linux_wine_helper_client.dart';
+import 'package:no_reload_mod_manager/tabs/replicated_context_menu.dart';
 import 'package:no_reload_mod_manager/utils/check_admin_privillege.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
@@ -1409,6 +1410,19 @@ class _MainViewState extends ConsumerState<MainView>
     });
   }
 
+  Future<void> showReplicatedContextMenu() async {
+    ref.read(replicatedContextMenuProvider.notifier).state = true;
+    ref.read(windowIsPinnedProvider.notifier).state = false;
+
+    final sss = ref.watch(zoomScaleProvider);
+
+    bitsdojo.appWindow.minSize = Size(190, 325) * sss;
+    await windowManager.setSize(Size(190, 325) * sss);
+    bitsdojo.appWindow.maxSize = Size(190, 325) * sss;
+    await windowManager.show();
+    await windowManager.focus();
+  }
+
   Future<void> toggleWindow() async {
     if (await windowManager.isVisible()) {
       if (!ref.read(alertDialogShownProvider)) {
@@ -1472,7 +1486,9 @@ class _MainViewState extends ConsumerState<MainView>
         await windowManager.focus();
       } else {
         if (ref.read(showMenuWhenTogglingOutsideGameProvider)) {
-          await tray.trayManager.popUpContextMenu();
+          Platform.isWindows
+              ? await tray.trayManager.popUpContextMenu()
+              : await showReplicatedContextMenu();
         }
       }
     }
@@ -1494,116 +1510,119 @@ class _MainViewState extends ConsumerState<MainView>
   @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
-    return Stack(
-      children: [
-        if (kDebugMode)
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Text(
-              'Experimental Version',
-              style: GoogleFonts.poppins(
-                color: Colors.transparent,
-                fontSize: 10 * sss,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-
-        ///Tab views
-        IndexedStack(index: ref.watch(tabIndexProvider), children: _views),
-
-        ///Tab bars
-        Padding(
-          padding: EdgeInsets.only(top: 25 * sss),
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: Transform.scale(
-              scale: sss,
-              alignment: Alignment.topCenter,
-              child: SizedBox(
-                width: 350,
-
-                child: SegmentedTabControl(
-                  controller: _tabController,
-                  height: 42,
-                  selectedTabTextColor: Colors.black,
-                  tabTextColor: Colors.white,
-                  textStyle: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 13,
-                  ),
-                  indicatorDecoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  barDecoration: BoxDecoration(
+    return ref.watch(replicatedContextMenuProvider)
+        ? ReplicatedContextMenu()
+        : Stack(
+          children: [
+            if (kDebugMode)
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Text(
+                  'Experimental Version',
+                  style: GoogleFonts.poppins(
                     color: Colors.transparent,
-                    border: Border.all(
-                      color: const Color.fromARGB(127, 255, 255, 255),
-                      width: 3,
+                    fontSize: 10 * sss,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+
+            ///Tab views
+            IndexedStack(index: ref.watch(tabIndexProvider), children: _views),
+
+            ///Tab bars
+            Padding(
+              padding: EdgeInsets.only(top: 25 * sss),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Transform.scale(
+                  scale: sss,
+                  alignment: Alignment.topCenter,
+                  child: SizedBox(
+                    width: 350,
+
+                    child: SegmentedTabControl(
+                      controller: _tabController,
+                      height: 42,
+                      selectedTabTextColor: Colors.black,
+                      tabTextColor: Colors.white,
+                      textStyle: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 13,
+                      ),
+                      indicatorDecoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                      barDecoration: BoxDecoration(
+                        color: Colors.transparent,
+                        border: Border.all(
+                          color: const Color.fromARGB(127, 255, 255, 255),
+                          width: 3,
+                        ),
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                      tabs: [
+                        SegmentTab(label: "Keybinds".tr()),
+                        SegmentTab(label: "Mods".tr()),
+                        SegmentTab(label: "Settings".tr()),
+                      ],
                     ),
-                    borderRadius: BorderRadius.circular(100),
                   ),
-                  tabs: [
-                    SegmentTab(label: "Keybinds".tr()),
-                    SegmentTab(label: "Mods".tr()),
-                    SegmentTab(label: "Settings".tr()),
-                  ],
                 ),
               ),
             ),
-          ),
-        ),
 
-        ///Random tips
-        if (showRandomTips) RandomTips(),
+            ///Random tips
+            if (showRandomTips) RandomTips(),
 
-        if (ref.watch(showVerina))
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Transform.translate(
-              offset: Offset(0, 7) * sss,
+            if (ref.watch(showVerina))
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Transform.translate(
+                  offset: Offset(0, 7) * sss,
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () async {
+                        ref.read(showVerina.notifier).state = false;
+                        ref.read(alertDialogShownProvider.notifier).state =
+                            true;
+                        await showDialog(
+                          barrierDismissible: false,
+                          context: context,
+                          builder: (context) => SupportAndStatsDialog(),
+                        );
+                        await SharedPrefUtils().setLastOpened(DateTime.now());
+                      },
+                      child: Image.asset(
+                        'assets/images/verina_plant.webp',
+                        height: 95 * sss,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+            Align(
+              alignment: Alignment.bottomCenter,
               child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: GestureDetector(
-                  onTap: () async {
-                    ref.read(showVerina.notifier).state = false;
-                    ref.read(alertDialogShownProvider.notifier).state = true;
-                    await showDialog(
-                      barrierDismissible: false,
-                      context: context,
-                      builder: (context) => SupportAndStatsDialog(),
-                    );
-                    await SharedPrefUtils().setLastOpened(DateTime.now());
-                  },
-                  child: Image.asset(
-                    'assets/images/verina_plant.webp',
-                    height: 95 * sss,
-                  ),
-                ),
+                hitTestBehavior: HitTestBehavior.translucent,
+                onEnter: (_) {
+                  setState(() {
+                    showRandomTips = true;
+                  });
+                },
+                onExit: (_) {
+                  setState(() {
+                    showRandomTips = false;
+                  });
+                },
+                child: Container(height: bitsdojo.appWindow.size.height / 2),
               ),
             ),
-          ),
-
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: MouseRegion(
-            hitTestBehavior: HitTestBehavior.translucent,
-            onEnter: (_) {
-              setState(() {
-                showRandomTips = true;
-              });
-            },
-            onExit: (_) {
-              setState(() {
-                showRandomTips = false;
-              });
-            },
-            child: Container(height: bitsdojo.appWindow.size.height / 2),
-          ),
-        ),
-      ],
-    );
+          ],
+        );
   }
 
   @override
