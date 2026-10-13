@@ -16,7 +16,12 @@ G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 
 // Called when first Flutter frame received.
 static void first_frame_cb(MyApplication* self, FlView* view) {
-  gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
+  GtkWidget* window = gtk_widget_get_toplevel(GTK_WIDGET(view));
+  gtk_window_set_keep_above(GTK_WINDOW(window), TRUE);
+
+#ifndef NDEBUG
+  gtk_widget_show(window);
+#endif
 }
 
 // Implements GApplication::activate.
@@ -24,6 +29,8 @@ static void my_application_activate(GApplication* application) {
   MyApplication* self = MY_APPLICATION(application);
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
+
+  gtk_window_set_keep_above(window, TRUE);
 
   // X11 needs an RGBA visual, otherwise transparent pixels render black.
   GdkScreen* screenA = gtk_window_get_screen(window);
@@ -149,6 +156,9 @@ static void ignore_gdk_axis_warning(const gchar* log_domain,
                                     const gchar* message,
                                     gpointer user_data) {
   if (message != nullptr && g_strstr_len(message, -1, "gdk_device_get_axis") != nullptr) {
+    return;
+  }
+  if (message != nullptr && g_strstr_len(message, -1, "gdk_device_get_source") != nullptr) {
     return;
   }
   g_log_default_handler(log_domain, log_level, message, user_data);
