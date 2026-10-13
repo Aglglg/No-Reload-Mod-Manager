@@ -278,7 +278,8 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
             ref.read(replicatedContextMenuProvider)) {
           ref.read(targetGameProvider.notifier).state = TargetGame.none;
           changeWindowTitleName("");
-          await windowManager.hide();
+          unawaited(windowManager.hide());
+          await windowManager.minimize();
 
           ref.read(replicatedContextMenuProvider.notifier).state = false;
         }
@@ -589,7 +590,8 @@ class _BackgroundState extends ConsumerState<Background> {
                               onSelected: () async {
                                 ref.read(targetGameProvider.notifier).state =
                                     TargetGame.none;
-                                await windowManager.hide();
+                                unawaited(windowManager.hide());
+                                await windowManager.minimize();
                                 clearImagesCache();
                                 DynamicDirectoryWatcher.stop();
                               },
@@ -1023,6 +1025,7 @@ class _MainViewState extends ConsumerState<MainView>
           onClick: (menuItem) {
             ref.read(replicatedContextMenuProvider.notifier).state = false;
             bitsdojo.appWindow.hide();
+            windowManager.minimize();
             clearImagesCache();
             DynamicDirectoryWatcher.stop();
           },
@@ -1500,7 +1503,8 @@ class _MainViewState extends ConsumerState<MainView>
         ref.read(targetGameProvider.notifier).state = TargetGame.none;
         changeWindowTitleName("");
       }
-      await windowManager.hide();
+      unawaited(windowManager.hide());
+      await windowManager.minimize();
       clearImagesCache();
       DynamicDirectoryWatcher.stop();
 
@@ -1583,7 +1587,8 @@ class _MainViewState extends ConsumerState<MainView>
         ref.read(targetGameProvider.notifier).state = TargetGame.none;
         changeWindowTitleName("");
       }
-      await windowManager.hide();
+      unawaited(windowManager.hide());
+      await windowManager.minimize();
       clearImagesCache();
       DynamicDirectoryWatcher.stop();
 

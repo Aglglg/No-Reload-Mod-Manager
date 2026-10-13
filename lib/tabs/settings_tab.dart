@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
@@ -114,7 +115,8 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                     onSelected: () async {
                       ref.read(targetGameProvider.notifier).state =
                           TargetGame.none;
-                      await windowManager.hide();
+                      unawaited(windowManager.hide());
+                      await windowManager.minimize();
                       clearImagesCache();
                       DynamicDirectoryWatcher.stop();
                     },

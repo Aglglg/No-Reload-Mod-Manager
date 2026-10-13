@@ -177,6 +177,7 @@ class ReplicatedContextMenu extends ConsumerWidget {
                 ref.read(replicatedContextMenuProvider.notifier).state = false;
 
                 bitsdojo.appWindow.hide();
+                windowManager.minimize();
                 clearImagesCache();
                 DynamicDirectoryWatcher.stop();
               },
