@@ -1,8 +1,16 @@
+import 'dart:io';
+
+import 'package:bitsdojo_window/bitsdojo_window.dart' as bitsdojo;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:no_reload_mod_manager/main.dart';
+import 'package:no_reload_mod_manager/utils/constant_var.dart';
+import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
+import 'package:no_reload_mod_manager/utils/mod_manager.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
+import 'package:window_manager/window_manager.dart';
 
 class ReplicatedContextMenu extends ConsumerWidget {
   const ReplicatedContextMenu({super.key});
@@ -18,7 +26,19 @@ class ReplicatedContextMenu extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             TextButton(
-              onPressed: () {},
+              onPressed: () {
+                ref.read(replicatedContextMenuProvider.notifier).state = false;
+
+                if (!ref.read(alertDialogShownProvider)) {
+                  ref.read(targetGameProvider.notifier).state =
+                      TargetGame.Wuthering_Waves;
+                  changeWindowTitleName(
+                    TargetGame.Wuthering_Waves.name,
+                    ref: ref,
+                  );
+                }
+                ref.read(windowIsPinnedProvider.notifier).state = true;
+              },
               child: Padding(
                 padding: EdgeInsets.all(10.0 * sss),
                 child: Text(
@@ -32,7 +52,19 @@ class ReplicatedContextMenu extends ConsumerWidget {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: () {
+                ref.read(replicatedContextMenuProvider.notifier).state = false;
+
+                if (!ref.read(alertDialogShownProvider)) {
+                  ref.read(targetGameProvider.notifier).state =
+                      TargetGame.Genshin_Impact;
+                  changeWindowTitleName(
+                    TargetGame.Genshin_Impact.name,
+                    ref: ref,
+                  );
+                }
+                ref.read(windowIsPinnedProvider.notifier).state = true;
+              },
               child: Padding(
                 padding: EdgeInsets.all(10.0 * sss),
                 child: Text(
@@ -46,7 +78,19 @@ class ReplicatedContextMenu extends ConsumerWidget {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: () {
+                ref.read(replicatedContextMenuProvider.notifier).state = false;
+
+                if (!ref.read(alertDialogShownProvider)) {
+                  ref.read(targetGameProvider.notifier).state =
+                      TargetGame.Honkai_Star_Rail;
+                  changeWindowTitleName(
+                    TargetGame.Honkai_Star_Rail.name,
+                    ref: ref,
+                  );
+                }
+                ref.read(windowIsPinnedProvider.notifier).state = true;
+              },
               child: Padding(
                 padding: EdgeInsets.all(10.0 * sss),
                 child: Text(
@@ -60,7 +104,19 @@ class ReplicatedContextMenu extends ConsumerWidget {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: () {
+                ref.read(replicatedContextMenuProvider.notifier).state = false;
+
+                if (!ref.read(alertDialogShownProvider)) {
+                  ref.read(targetGameProvider.notifier).state =
+                      TargetGame.Zenless_Zone_Zero;
+                  changeWindowTitleName(
+                    TargetGame.Zenless_Zone_Zero.name,
+                    ref: ref,
+                  );
+                }
+                ref.read(windowIsPinnedProvider.notifier).state = true;
+              },
               child: Padding(
                 padding: EdgeInsets.all(10.0 * sss),
                 child: Text(
@@ -74,7 +130,19 @@ class ReplicatedContextMenu extends ConsumerWidget {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: () {
+                ref.read(replicatedContextMenuProvider.notifier).state = false;
+
+                if (!ref.read(alertDialogShownProvider)) {
+                  ref.read(targetGameProvider.notifier).state =
+                      TargetGame.Arknights_Endfield;
+                  changeWindowTitleName(
+                    TargetGame.Arknights_Endfield.name,
+                    ref: ref,
+                  );
+                }
+                ref.read(windowIsPinnedProvider.notifier).state = true;
+              },
               child: Padding(
                 padding: EdgeInsets.all(10.0 * sss),
                 child: Text(
@@ -89,7 +157,9 @@ class ReplicatedContextMenu extends ConsumerWidget {
             ),
             SizedBox(height: 6 * sss),
             TextButton(
-              onPressed: () {},
+              onPressed: () async {
+                await windowManager.center();
+              },
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 10.0 * sss),
                 child: Text(
@@ -103,7 +173,13 @@ class ReplicatedContextMenu extends ConsumerWidget {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: () {
+                ref.read(replicatedContextMenuProvider.notifier).state = false;
+
+                bitsdojo.appWindow.hide();
+                clearImagesCache();
+                DynamicDirectoryWatcher.stop();
+              },
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 10.0 * sss),
                 child: Text(
@@ -118,7 +194,9 @@ class ReplicatedContextMenu extends ConsumerWidget {
             ),
             SizedBox(height: 6 * sss),
             TextButton(
-              onPressed: () {},
+              onPressed: () {
+                exit(0);
+              },
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 10.0 * sss),
                 child: Text(

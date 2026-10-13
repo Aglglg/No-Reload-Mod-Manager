@@ -1370,6 +1370,9 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
   @override
   void initState() {
     super.initState();
+    final targetGame = ref.read(targetGameProvider);
+    loadTextFieldModsPath(targetGame);
+    loadTextFieldTargetProcess(targetGame);
 
     ref.listenManual(targetGameProvider, (previous, next) {
       loadTextFieldModsPath(next);

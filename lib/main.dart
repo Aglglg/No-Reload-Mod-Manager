@@ -256,7 +256,9 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
   void debouncedSaveWindowSize() {
     _resizeDebounce?.cancel();
     _resizeDebounce = Timer(const Duration(milliseconds: 500), () async {
-      await SharedPrefUtils().setSavedWindow(await windowManager.getSize());
+      if (!ref.read(replicatedContextMenuProvider)) {
+        await SharedPrefUtils().setSavedWindow(await windowManager.getSize());
+      }
     });
   }
 
@@ -272,6 +274,12 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
   Widget build(BuildContext context) {
     return KeyboardListener(
       onKeyEvent: (value) async {
+        if (value.physicalKey == PhysicalKeyboardKey.escape &&
+            ref.read(replicatedContextMenuProvider)) {
+          ref.read(targetGameProvider.notifier).state = TargetGame.none;
+          changeWindowTitleName("");
+          await windowManager.hide();
+        }
         if (value is KeyUpEvent ||
             ref.read(alertDialogShownProvider) ||
             ref.read(popupMenuShownProvider)) {
@@ -901,6 +909,7 @@ class _MainViewState extends ConsumerState<MainView>
           key: 'Show (WuWa)',
           label: 'Show (WuWa)'.tr(),
           onClick: (menuItem) async {
+            ref.read(replicatedContextMenuProvider.notifier).state = false;
             if (!ref.read(alertDialogShownProvider)) {
               ref.read(targetGameProvider.notifier).state =
                   TargetGame.Wuthering_Waves;
@@ -915,6 +924,7 @@ class _MainViewState extends ConsumerState<MainView>
           key: 'Show (Genshin)',
           label: 'Show (Genshin)'.tr(),
           onClick: (menuItem) async {
+            ref.read(replicatedContextMenuProvider.notifier).state = false;
             if (!ref.read(alertDialogShownProvider)) {
               ref.read(targetGameProvider.notifier).state =
                   TargetGame.Genshin_Impact;
@@ -929,6 +939,7 @@ class _MainViewState extends ConsumerState<MainView>
           key: 'Show (HSR)',
           label: 'Show (HSR)'.tr(),
           onClick: (menuItem) async {
+            ref.read(replicatedContextMenuProvider.notifier).state = false;
             if (!ref.read(alertDialogShownProvider)) {
               ref.read(targetGameProvider.notifier).state =
                   TargetGame.Honkai_Star_Rail;
@@ -943,6 +954,7 @@ class _MainViewState extends ConsumerState<MainView>
           key: 'Show (ZZZ)',
           label: 'Show (ZZZ)'.tr(),
           onClick: (menuItem) async {
+            ref.read(replicatedContextMenuProvider.notifier).state = false;
             if (!ref.read(alertDialogShownProvider)) {
               ref.read(targetGameProvider.notifier).state =
                   TargetGame.Zenless_Zone_Zero;
@@ -960,6 +972,7 @@ class _MainViewState extends ConsumerState<MainView>
           key: 'Show (Endfield)',
           label: 'Show (Endfield)'.tr(),
           onClick: (menuItem) async {
+            ref.read(replicatedContextMenuProvider.notifier).state = false;
             if (!ref.read(alertDialogShownProvider)) {
               ref.read(targetGameProvider.notifier).state =
                   TargetGame.Arknights_Endfield;
@@ -985,6 +998,7 @@ class _MainViewState extends ConsumerState<MainView>
           key: 'Hide',
           label: 'Hide'.tr(),
           onClick: (menuItem) {
+            ref.read(replicatedContextMenuProvider.notifier).state = false;
             bitsdojo.appWindow.hide();
             clearImagesCache();
             DynamicDirectoryWatcher.stop();
@@ -1064,6 +1078,34 @@ class _MainViewState extends ConsumerState<MainView>
     ref.listenManual(modKeybindProvider, (previous, next) {
       if (next != null) {
         _tabController.animateTo(0);
+      }
+    });
+
+    //Reset window size, min size, max size after showing replicated context menu
+    ref.listenManual(replicatedContextMenuProvider, (previous, next) {
+      if (next == false) {
+        bitsdojo.appWindow.maxSize = Size(9999, 9999);
+        final minSize = Size(
+          ConstantVar.minWindowWidth * SharedPrefUtils().getOverallScale(),
+          ConstantVar.minWindowHeight * SharedPrefUtils().getOverallScale(),
+        );
+
+        Size? savedSize = SharedPrefUtils().getSavedWindowSize();
+
+        savedSize ??= minSize;
+
+        double savedSizeWidth =
+            savedSize.width < minSize.width ? minSize.width : savedSize.width;
+        double savedSizeHeight =
+            savedSize.height < minSize.height
+                ? minSize.height
+                : savedSize.height;
+
+        savedSize = Size(savedSizeWidth, savedSizeHeight);
+
+        bitsdojo.appWindow.minSize = minSize;
+        bitsdojo.appWindow.size = savedSize;
+        windowManager.setSize(savedSize);
       }
     });
   }
@@ -1411,14 +1453,20 @@ class _MainViewState extends ConsumerState<MainView>
   }
 
   Future<void> showReplicatedContextMenu() async {
+    if (ref.read(alertDialogShownProvider)) {
+      await windowManager.show();
+      await windowManager.focus();
+      return;
+    }
     ref.read(replicatedContextMenuProvider.notifier).state = true;
-    ref.read(windowIsPinnedProvider.notifier).state = false;
+    ref.read(windowIsPinnedProvider.notifier).state = true;
 
     final sss = ref.watch(zoomScaleProvider);
 
     bitsdojo.appWindow.minSize = Size(190, 325) * sss;
     await windowManager.setSize(Size(190, 325) * sss);
     bitsdojo.appWindow.maxSize = Size(190, 325) * sss;
+    await windowManager.center();
     await windowManager.show();
     await windowManager.focus();
   }
@@ -1498,6 +1546,7 @@ class _MainViewState extends ConsumerState<MainView>
     if (!ref.read(windowIsPinnedProvider)) {
       if (!ref.read(alertDialogShownProvider)) {
         ref.read(targetGameProvider.notifier).state = TargetGame.none;
+        changeWindowTitleName("");
       }
       await windowManager.hide();
       clearImagesCache();
