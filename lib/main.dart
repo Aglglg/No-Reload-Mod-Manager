@@ -279,6 +279,8 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
           ref.read(targetGameProvider.notifier).state = TargetGame.none;
           changeWindowTitleName("");
           await windowManager.hide();
+
+          ref.read(replicatedContextMenuProvider.notifier).state = false;
         }
         if (value is KeyUpEvent ||
             ref.read(alertDialogShownProvider) ||
@@ -1501,6 +1503,8 @@ class _MainViewState extends ConsumerState<MainView>
       await windowManager.hide();
       clearImagesCache();
       DynamicDirectoryWatcher.stop();
+
+      ref.read(replicatedContextMenuProvider.notifier).state = false;
     } else {
       String foregroundProcessName = getForegroundWindowProcessName();
       bool autoPinWindow = ref.read(isAutoPinWindowProvider);
@@ -1513,6 +1517,8 @@ class _MainViewState extends ConsumerState<MainView>
         ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
         await windowManager.focus();
+
+        ref.read(replicatedContextMenuProvider.notifier).state = false;
       } else if (foregroundProcessName ==
           SharedPrefUtils().getGenshinTargetProcess()) {
         if (!ref.read(alertDialogShownProvider)) {
@@ -1523,6 +1529,8 @@ class _MainViewState extends ConsumerState<MainView>
         ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
         await windowManager.focus();
+
+        ref.read(replicatedContextMenuProvider.notifier).state = false;
       } else if (foregroundProcessName ==
           SharedPrefUtils().getHsrTargetProcess()) {
         if (!ref.read(alertDialogShownProvider)) {
@@ -1533,6 +1541,8 @@ class _MainViewState extends ConsumerState<MainView>
         ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
         await windowManager.focus();
+
+        ref.read(replicatedContextMenuProvider.notifier).state = false;
       } else if (foregroundProcessName ==
           SharedPrefUtils().getZzzTargetProcess()) {
         if (!ref.read(alertDialogShownProvider)) {
@@ -1543,6 +1553,8 @@ class _MainViewState extends ConsumerState<MainView>
         ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
         await windowManager.focus();
+
+        ref.read(replicatedContextMenuProvider.notifier).state = false;
       } else if (foregroundProcessName ==
           SharedPrefUtils().getEndfieldTargetProcess()) {
         if (!ref.read(alertDialogShownProvider)) {
@@ -1553,6 +1565,8 @@ class _MainViewState extends ConsumerState<MainView>
         ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
         await windowManager.focus();
+
+        ref.read(replicatedContextMenuProvider.notifier).state = false;
       } else {
         if (ref.read(showMenuWhenTogglingOutsideGameProvider)) {
           Platform.isWindows
@@ -1572,6 +1586,8 @@ class _MainViewState extends ConsumerState<MainView>
       await windowManager.hide();
       clearImagesCache();
       DynamicDirectoryWatcher.stop();
+
+      ref.read(replicatedContextMenuProvider.notifier).state = false;
     }
   }
 
