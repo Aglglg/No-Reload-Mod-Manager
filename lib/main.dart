@@ -412,7 +412,8 @@ class _BackgroundState extends ConsumerState<Background> {
                 if (ref.watch(tabIndexProvider) == 1 &&
                     !ref.watch(alertDialogShownProvider) &&
                     ref.watch(validModsPath) != null &&
-                    ref.watch(modGroupDataProvider).isNotEmpty)
+                    ref.watch(modGroupDataProvider).isNotEmpty &&
+                    !ref.read(replicatedContextMenuProvider))
                   ModsDropZone(
                     acceptArchived: true,
                     checkForMaxMods: true,
@@ -433,146 +434,166 @@ class _BackgroundState extends ConsumerState<Background> {
                             .groupPath,
                   ),
                 RightClickMenuRegion(
-                  menuItems: <ContextMenuEntry>[
-                    if (ref.watch(tabIndexProvider) == 1 &&
-                        ref.watch(modGroupDataProvider).isEmpty &&
-                        ref.watch(validModsPath) != null)
-                      CustomMenuItem(
-                        scale: sss,
-                        onSelected: () async {
-                          await addGroup(
-                            ref,
-                            p.join(
-                              getCurrentModsPath(ref.read(targetGameProvider)),
-                              ConstantVar.managedFolderName,
-                            ),
-                          );
-                        },
-                        label: 'Add group'.tr(),
-                      ),
-                    if (ref.watch(tabIndexProvider) != 2)
-                      CustomMenuItem(
-                        scale: sss,
-                        onSelected: () async {
-                          triggerRefresh(ref);
-                        },
-                        label: 'Refresh'.tr(),
-                      ),
-                    if (ref.watch(tabIndexProvider) == 1 &&
-                        ref.watch(modGroupDataProvider).isNotEmpty)
-                      CustomMenuItem(
-                        scale: sss,
-                        onSelected: () {
-                          ref.read(searchBarShownProvider.notifier).state =
-                              true;
-                        },
-                        label: 'Search'.tr(),
-                      ),
-                    if (ref.watch(tabIndexProvider) == 1)
-                      CustomMenuItem.submenu(
-                        scale: sss,
-                        items: [
-                          CustomMenuItem(
-                            leftIcon: Icons.laptop_windows_outlined,
-                            rightIcon:
-                                ref.watch(layoutModeProvider) == 0
-                                    ? Icons.check
-                                    : null,
-                            label: 'Auto'.tr(),
-                            scale: sss,
-                            onSelected: () {
-                              SharedPrefUtils().setLayoutMode(0);
-                              ref.read(layoutModeProvider.notifier).state = 0;
-                            },
-                          ),
-                          CustomMenuItem(
-                            leftIcon: Icons.view_carousel_outlined,
-                            rightIcon:
-                                ref.watch(layoutModeProvider) == 1
-                                    ? Icons.check
-                                    : null,
-                            label: 'Carousel'.tr(),
-                            scale: sss,
-                            onSelected: () {
-                              SharedPrefUtils().setLayoutMode(1);
-                              ref.read(layoutModeProvider.notifier).state = 1;
-                              ref.read(isCarouselProvider.notifier).state =
-                                  true;
-                            },
-                          ),
-                          CustomMenuItem(
-                            leftIcon: Icons.window_outlined,
-                            rightIcon:
-                                ref.watch(layoutModeProvider) == 2
-                                    ? Icons.check
-                                    : null,
-                            label: 'Grid'.tr(),
-                            scale: sss,
-                            onSelected: () {
-                              SharedPrefUtils().setLayoutMode(2);
-                              ref.read(layoutModeProvider.notifier).state = 2;
-                              ref.read(isCarouselProvider.notifier).state =
-                                  false;
-                            },
-                          ),
-                        ],
-                        label: 'Layout'.tr(),
-                      ),
-                    ref.watch(windowIsPinnedProvider)
-                        ? CustomMenuItem(
-                          scale: sss,
-                          onSelected:
-                              () =>
+                  menuItems:
+                      ref.read(replicatedContextMenuProvider)
+                          ? []
+                          : <ContextMenuEntry>[
+                            if (ref.watch(tabIndexProvider) == 1 &&
+                                ref.watch(modGroupDataProvider).isEmpty &&
+                                ref.watch(validModsPath) != null)
+                              CustomMenuItem(
+                                scale: sss,
+                                onSelected: () async {
+                                  await addGroup(
+                                    ref,
+                                    p.join(
+                                      getCurrentModsPath(
+                                        ref.read(targetGameProvider),
+                                      ),
+                                      ConstantVar.managedFolderName,
+                                    ),
+                                  );
+                                },
+                                label: 'Add group'.tr(),
+                              ),
+                            if (ref.watch(tabIndexProvider) != 2)
+                              CustomMenuItem(
+                                scale: sss,
+                                onSelected: () async {
+                                  triggerRefresh(ref);
+                                },
+                                label: 'Refresh'.tr(),
+                              ),
+                            if (ref.watch(tabIndexProvider) == 1 &&
+                                ref.watch(modGroupDataProvider).isNotEmpty)
+                              CustomMenuItem(
+                                scale: sss,
+                                onSelected: () {
                                   ref
-                                      .read(windowIsPinnedProvider.notifier)
-                                      .state = false,
-                          label: 'Unpin window'.tr(),
-                        )
-                        : CustomMenuItem(
-                          scale: sss,
-                          onSelected:
-                              () =>
-                                  ref
-                                      .read(windowIsPinnedProvider.notifier)
-                                      .state = true,
-                          label: 'Pin window'.tr(),
-                        ),
+                                      .read(searchBarShownProvider.notifier)
+                                      .state = true;
+                                },
+                                label: 'Search'.tr(),
+                              ),
+                            if (ref.watch(tabIndexProvider) == 1)
+                              CustomMenuItem.submenu(
+                                scale: sss,
+                                items: [
+                                  CustomMenuItem(
+                                    leftIcon: Icons.laptop_windows_outlined,
+                                    rightIcon:
+                                        ref.watch(layoutModeProvider) == 0
+                                            ? Icons.check
+                                            : null,
+                                    label: 'Auto'.tr(),
+                                    scale: sss,
+                                    onSelected: () {
+                                      SharedPrefUtils().setLayoutMode(0);
+                                      ref
+                                          .read(layoutModeProvider.notifier)
+                                          .state = 0;
+                                    },
+                                  ),
+                                  CustomMenuItem(
+                                    leftIcon: Icons.view_carousel_outlined,
+                                    rightIcon:
+                                        ref.watch(layoutModeProvider) == 1
+                                            ? Icons.check
+                                            : null,
+                                    label: 'Carousel'.tr(),
+                                    scale: sss,
+                                    onSelected: () {
+                                      SharedPrefUtils().setLayoutMode(1);
+                                      ref
+                                          .read(layoutModeProvider.notifier)
+                                          .state = 1;
+                                      ref
+                                          .read(isCarouselProvider.notifier)
+                                          .state = true;
+                                    },
+                                  ),
+                                  CustomMenuItem(
+                                    leftIcon: Icons.window_outlined,
+                                    rightIcon:
+                                        ref.watch(layoutModeProvider) == 2
+                                            ? Icons.check
+                                            : null,
+                                    label: 'Grid'.tr(),
+                                    scale: sss,
+                                    onSelected: () {
+                                      SharedPrefUtils().setLayoutMode(2);
+                                      ref
+                                          .read(layoutModeProvider.notifier)
+                                          .state = 2;
+                                      ref
+                                          .read(isCarouselProvider.notifier)
+                                          .state = false;
+                                    },
+                                  ),
+                                ],
+                                label: 'Layout'.tr(),
+                              ),
+                            ref.watch(windowIsPinnedProvider)
+                                ? CustomMenuItem(
+                                  scale: sss,
+                                  onSelected:
+                                      () =>
+                                          ref
+                                              .read(
+                                                windowIsPinnedProvider.notifier,
+                                              )
+                                              .state = false,
+                                  label: 'Unpin window'.tr(),
+                                )
+                                : CustomMenuItem(
+                                  scale: sss,
+                                  onSelected:
+                                      () =>
+                                          ref
+                                              .read(
+                                                windowIsPinnedProvider.notifier,
+                                              )
+                                              .state = true,
+                                  label: 'Pin window'.tr(),
+                                ),
 
-                    if (ref.watch(tabIndexProvider) == 0)
-                      CustomMenuItem(
-                        scale: sss,
-                        onSelected: () async {
-                          try {
-                            if (!await launchUrl(
-                              Uri.parse(ConstantVar.urlValidKeysExample),
-                            )) {}
-                          } catch (_) {}
-                        },
-                        label: 'Valid keys'.tr(),
-                      ),
-                    CustomMenuItem(
-                      scale: sss,
-                      onSelected: () async {
-                        try {
-                          if (!await launchUrl(
-                            Uri.parse(ref.read(tutorialLinkProvider)),
-                          )) {}
-                        } catch (_) {}
-                      },
-                      label: 'Tutorial'.tr(),
-                    ),
-                    CustomMenuItem(
-                      scale: sss,
-                      onSelected: () async {
-                        ref.read(targetGameProvider.notifier).state =
-                            TargetGame.none;
-                        await windowManager.hide();
-                        clearImagesCache();
-                        DynamicDirectoryWatcher.stop();
-                      },
-                      label: 'Hide window'.tr(),
-                    ),
-                  ],
+                            if (ref.watch(tabIndexProvider) == 0)
+                              CustomMenuItem(
+                                scale: sss,
+                                onSelected: () async {
+                                  try {
+                                    if (!await launchUrl(
+                                      Uri.parse(
+                                        ConstantVar.urlValidKeysExample,
+                                      ),
+                                    )) {}
+                                  } catch (_) {}
+                                },
+                                label: 'Valid keys'.tr(),
+                              ),
+                            CustomMenuItem(
+                              scale: sss,
+                              onSelected: () async {
+                                try {
+                                  if (!await launchUrl(
+                                    Uri.parse(ref.read(tutorialLinkProvider)),
+                                  )) {}
+                                } catch (_) {}
+                              },
+                              label: 'Tutorial'.tr(),
+                            ),
+                            CustomMenuItem(
+                              scale: sss,
+                              onSelected: () async {
+                                ref.read(targetGameProvider.notifier).state =
+                                    TargetGame.none;
+                                await windowManager.hide();
+                                clearImagesCache();
+                                DynamicDirectoryWatcher.stop();
+                              },
+                              label: 'Hide window'.tr(),
+                            ),
+                          ],
                   child: bitsdojo.MoveWindow(onDoubleTap: () {}),
                 ),
                 MainView(),
