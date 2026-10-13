@@ -244,115 +244,9 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                         color: getAccentColor(ref, alpha: 127),
                         thickness: 1 * sss,
                       ),
-                      Container(height: 10 * sss),
 
-                      Text(
-                        'Group Folder Icon'.tr(),
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 14 * sss,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Container(height: 1 * sss),
-                      Text(
-                        "Optionally show group folder icons within File Explorer."
-                            .tr(),
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
-                          color: const Color.fromARGB(200, 255, 255, 255),
-                          fontSize: 11 * sss,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-
-                      Container(height: 15 * sss),
-
-                      ElevatedButton(
-                        onPressed: () async {
-                          if (ref.read(validModsPath) == null) return;
-                          ref.read(alertDialogShownProvider.notifier).state =
-                              true;
-                          await showDialog(
-                            barrierDismissible: false,
-                            context: context,
-                            builder:
-                                (context) => GenerateGroupIcoFileDialog(
-                                  validModsPath: ref.read(validModsPath)!,
-                                ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          overlayColor: Colors.white,
-                          backgroundColor: const Color.fromARGB(
-                            127,
-                            255,
-                            255,
-                            255,
-                          ),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 8 * sss),
-                          child: Text(
-                            'Generate Group Folder Icon'.tr(),
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12 * sss,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Container(height: 10 * sss),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            height: 25 * sss,
-                            width: 35 * sss,
-                            child: FittedBox(
-                              fit: BoxFit.fill,
-                              child: Switch(
-                                value: ref.watch(
-                                  isAutoGenerateFolderIconProvider,
-                                ),
-                                onChanged: (value) {
-                                  SharedPrefUtils().setAutoGenerateFolderIcon(
-                                    value,
-                                  );
-                                  ref
-                                      .read(
-                                        isAutoGenerateFolderIconProvider
-                                            .notifier,
-                                      )
-                                      .state = value;
-                                },
-                                activeColor: getAccentColor(ref),
-                                trackOutlineWidth: WidgetStatePropertyAll(0),
-                                trackOutlineColor: WidgetStatePropertyAll(
-                                  Colors.transparent,
-                                ),
-                              ),
-                            ),
-                          ),
-                          Container(width: 15 * sss),
-                          Text(
-                            'Auto generate folder icon when changing group icon'
-                                .tr(),
-                            style: GoogleFonts.poppins(
-                              color: const Color.fromARGB(255, 255, 255, 255),
-                              fontSize: 12 * sss,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Container(height: 15 * sss),
-                      Divider(
-                        color: getAccentColor(ref, alpha: 127),
-                        thickness: 1 * sss,
-                      ),
+                      if (Platform.isWindows)
+                        ...(groupFolderIconSection(context, ref, sss)),
                       Container(height: 10 * sss),
 
                       Text(
@@ -2107,4 +2001,101 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
       ),
     );
   }
+}
+
+List<Widget> groupFolderIconSection(
+  BuildContext context,
+  WidgetRef ref,
+  double sss,
+) {
+  return [
+    Container(height: 10 * sss),
+
+    Text(
+      'Group Folder Icon'.tr(),
+      style: GoogleFonts.poppins(
+        color: Colors.white,
+        fontSize: 14 * sss,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+    Container(height: 1 * sss),
+    Text(
+      "Optionally show group folder icons within File Explorer.".tr(),
+      textAlign: TextAlign.center,
+      style: GoogleFonts.poppins(
+        color: const Color.fromARGB(200, 255, 255, 255),
+        fontSize: 11 * sss,
+        fontWeight: FontWeight.w500,
+      ),
+    ),
+
+    Container(height: 15 * sss),
+
+    ElevatedButton(
+      onPressed: () async {
+        if (ref.read(validModsPath) == null) return;
+        ref.read(alertDialogShownProvider.notifier).state = true;
+        await showDialog(
+          barrierDismissible: false,
+          context: context,
+          builder:
+              (context) => GenerateGroupIcoFileDialog(
+                validModsPath: ref.read(validModsPath)!,
+              ),
+        );
+      },
+      style: ElevatedButton.styleFrom(
+        overlayColor: Colors.white,
+        backgroundColor: const Color.fromARGB(127, 255, 255, 255),
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 8 * sss),
+        child: Text(
+          'Generate Group Folder Icon'.tr(),
+          textAlign: TextAlign.center,
+          style: GoogleFonts.poppins(
+            fontSize: 12 * sss,
+            fontWeight: FontWeight.w500,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    ),
+    Container(height: 10 * sss),
+    Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(
+          height: 25 * sss,
+          width: 35 * sss,
+          child: FittedBox(
+            fit: BoxFit.fill,
+            child: Switch(
+              value: ref.watch(isAutoGenerateFolderIconProvider),
+              onChanged: (value) {
+                SharedPrefUtils().setAutoGenerateFolderIcon(value);
+                ref.read(isAutoGenerateFolderIconProvider.notifier).state =
+                    value;
+              },
+              activeColor: getAccentColor(ref),
+              trackOutlineWidth: WidgetStatePropertyAll(0),
+              trackOutlineColor: WidgetStatePropertyAll(Colors.transparent),
+            ),
+          ),
+        ),
+        Container(width: 15 * sss),
+        Text(
+          'Auto generate folder icon when changing group icon'.tr(),
+          style: GoogleFonts.poppins(
+            color: const Color.fromARGB(255, 255, 255, 255),
+            fontSize: 12 * sss,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    ),
+    Container(height: 15 * sss),
+    Divider(color: getAccentColor(ref, alpha: 127), thickness: 1 * sss),
+  ];
 }
