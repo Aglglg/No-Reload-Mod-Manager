@@ -53,7 +53,6 @@ import 'package:easy_localization/easy_localization.dart';
 final wineHelper = WineHelperClient();
 
 void main(List<String> args) async {
-  await wineHelper.connect();
   unawaited(prewarmDll());
   findExternalCodeEditors();
   WidgetsFlutterBinding.ensureInitialized();
