@@ -76,44 +76,65 @@ void main(List<String> args) async {
   );
 }
 
+InitializationSettings _buildInitSettings() {
+  return InitializationSettings(
+    windows: Platform.isWindows ? _windowsSettings() : null,
+    linux: Platform.isLinux ? _linuxSettings() : null,
+  );
+}
+
+WindowsInitializationSettings _windowsSettings() {
+  final iconPath = p.join(
+    p.dirname(Platform.resolvedExecutable),
+    'data',
+    'flutter_assets',
+    'assets',
+    'images',
+    'app_icon.ico',
+  );
+
+  return WindowsInitializationSettings(
+    appName: 'No Reload Mod Manager',
+    appUserModelId: 'com.aglg.NoReloadModManager',
+    guid: 'DF5B0F87-8365-499D-B8B3-58211FBF6F2A',
+    iconPath: iconPath,
+  );
+}
+
+LinuxInitializationSettings _linuxSettings() {
+  return LinuxInitializationSettings(
+    defaultActionName: 'Open',
+    defaultIcon: AssetsLinuxIcon('assets/images/app_icon.png'),
+  );
+}
+
+final _notificationDetails = NotificationDetails(
+  windows: const WindowsNotificationDetails(
+    duration: WindowsNotificationDuration.short,
+  ),
+  linux: LinuxNotificationDetails(
+    urgency: LinuxNotificationUrgency.low,
+    timeout: LinuxNotificationTimeout.fromDuration(const Duration(seconds: 3)),
+    transient: true,
+  ),
+);
+
+int _newNotificationId() => DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+final _notifications = FlutterLocalNotificationsPlugin();
+
 Future<void> initializeAndShowNotification() async {
   try {
-    if (!Platform.isWindows) return;
-    FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-        FlutterLocalNotificationsPlugin();
-
-    //Cannot use something like 'assets/images/app_icon.ico"
-    final String iconPath = p.join(
-      p.dirname(Platform.resolvedExecutable),
-      r"data\flutter_assets\assets\images\app_icon.ico",
-    );
-
-    final WindowsInitializationSettings
-    initializationSettingsWindows = WindowsInitializationSettings(
-      appName: 'No Reload Mod Manager',
-      appUserModelId: 'com.aglg.NoReloadModManager',
-      //guid same as app id from inno setup (\windows\packaging\exe\make_config.yaml)
-      guid: 'DF5B0F87-8365-499D-B8B3-58211FBF6F2A',
-      iconPath: iconPath,
-    );
-
-    final InitializationSettings initializationSettings =
-        InitializationSettings(windows: initializationSettingsWindows);
-
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-
-    const WindowsNotificationDetails windowsNotificationDetails =
-        WindowsNotificationDetails(duration: WindowsNotificationDuration.short);
-    const NotificationDetails notificationDetails = NotificationDetails(
-      windows: windowsNotificationDetails,
-    );
-    await flutterLocalNotificationsPlugin.show(
-      0,
+    await _notifications.initialize(_buildInitSettings());
+    await _notifications.show(
+      Platform.isLinux ? _newNotificationId() : 0,
       'No Reload Mod Manager is running'.tr(),
       'Access it from Tray or Alt+W(default) while in your target game'.tr(),
-      notificationDetails,
+      _notificationDetails,
     );
-  } catch (_) {}
+  } catch (e) {
+    print('Startup notification failed: $e');
+  }
 }
 
 // Drag & Drop file won't work if this tool is run with administrator privillage, while explorer.exe is not.
