@@ -25,6 +25,7 @@ import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:no_reload_mod_manager/utils/ui_dialogues.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart' as p;
 
 import 'package:bitsdojo_window/bitsdojo_window.dart' as bitsdojo;
@@ -201,8 +202,7 @@ Future<void> setupWindow(List<String> args) async {
   await checkToRelaunch();
 
   if (Platform.isWindows) {
-    String feedURL =
-        'https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/appcast.xml';
+    String feedURL = ConstantVar.urlAppcastAppUpdate;
     await autoUpdater.setFeedURL(feedURL);
     await autoUpdater.setScheduledCheckInterval(0);
   }
@@ -1171,6 +1171,44 @@ class _MainViewState extends ConsumerState<MainView>
     });
   }
 
+  Future<bool> _isUpdateAvailable() async {
+    final info = await PackageInfo.fromPlatform();
+    final appVersion = "v${info.version}+${info.buildNumber}";
+
+    final appcastXmlContent = await CloudData().loadTextFromCloud(
+      ConstantVar.urlAppcastAppUpdate,
+      "",
+    );
+    final match = RegExp(
+      r'sparkle:version="([^"]+)"',
+    ).firstMatch(appcastXmlContent);
+    if (match == null) return false;
+
+    final latestVersion = match.group(1)!; // "3.2.2+1"
+    return _isNewer(latestVersion, appVersion);
+  }
+
+  bool _isNewer(String latest, String current) {
+    final latestNumbers = _toNumbers(latest);
+    final currentNumbers = _toNumbers(current);
+
+    for (var i = 0; i < latestNumbers.length; i++) {
+      if (latestNumbers[i] > currentNumbers[i]) return true;
+      if (latestNumbers[i] < currentNumbers[i]) return false;
+    }
+    return false; // same version
+  }
+
+  // "v3.2.2+1" -> [3, 2, 2, 1]
+  List<int> _toNumbers(String version) {
+    final parts = version.replaceAll('v', '').split(RegExp(r'[.+]'));
+    final numbers = parts.map((part) => int.tryParse(part) ?? 0).toList();
+    while (numbers.length < 4) {
+      numbers.add(0);
+    }
+    return numbers;
+  }
+
   Future<void> checkToShowInfoMessage(
     TargetGame? prevTargetGame,
     TargetGame targetGame,
@@ -1298,6 +1336,52 @@ class _MainViewState extends ConsumerState<MainView>
         break;
       default:
         break;
+    }
+
+    //Get latest version information manually
+    if (await _isUpdateAvailable() && !ref.read(dismissedUpdateSnackbar)) {
+      if (!mounted) return;
+      await ScaffoldMessenger.of(context)
+          .showSnackBar(
+            SnackBar(
+              backgroundColor: const Color(0xFF2B2930),
+              margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
+              duration: Duration(days: 1),
+              behavior: SnackBarBehavior.floating,
+              closeIconColor: getAccentColor(ref),
+              showCloseIcon: true,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              content: Text(
+                "Please update to the latest version".tr(),
+                style: GoogleFonts.poppins(
+                  color: Colors.yellow,
+                  fontSize: 14 * ref.read(zoomScaleProvider),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              action: SnackBarAction(
+                textColor: getAccentColor(ref),
+                label: "Check for Updates".tr(),
+                onPressed: () async {
+                  try {
+                    if (!await launchUrl(
+                      Uri.parse(ConstantVar.urlNrmmReleases),
+                    )) {}
+                  } catch (_) {}
+                },
+              ),
+              dismissDirection: DismissDirection.none,
+            ),
+          )
+          .closed
+          .then((reason) {
+            if (reason == SnackBarClosedReason.action ||
+                reason == SnackBarClosedReason.dismiss) {
+              ref.read(dismissedUpdateSnackbar.notifier).state = true;
+            }
+          });
     }
   }
 

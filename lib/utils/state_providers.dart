@@ -53,6 +53,10 @@ final StateProvider<String> messageZzzDismissedProvider = StateProvider<String>(
 final StateProvider<String> messageEndfieldDismissedProvider =
     StateProvider<String>((ref) => '');
 
+final StateProvider<bool> dismissedUpdateSnackbar = StateProvider<bool>(
+  (ref) => false,
+);
+
 final StateProvider<HotkeyKeyboard> hotkeyKeyboardProvider =
     StateProvider<HotkeyKeyboard>((ref) {
       SharedPrefUtils().tryInit();

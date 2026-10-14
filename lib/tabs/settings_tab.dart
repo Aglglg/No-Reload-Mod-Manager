@@ -46,7 +46,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
   Future<void> _getAppVersion() async {
     final info = await PackageInfo.fromPlatform();
     setState(() {
-      appVersion = "v${info.version}";
+      appVersion = "v${info.version}+${info.buildNumber}";
     });
   }
 
@@ -1122,7 +1122,7 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                             child: Column(
                               children: [
                                 Text(
-                                  "Stats".tr(),
+                                  "Stats",
                                   style: GoogleFonts.poppins(
                                     color: Colors.white,
                                     fontSize: 12 * sss,
