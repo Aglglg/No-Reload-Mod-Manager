@@ -698,8 +698,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
                       onSelected: () async {
                         ref.read(targetGameProvider.notifier).state =
                             TargetGame.none;
-                        unawaited(windowManager.hide());
-                        await windowManager.minimize();
+                        await windowManager.hide();
                         clearImagesCache();
                         DynamicDirectoryWatcher.stop();
                       },
