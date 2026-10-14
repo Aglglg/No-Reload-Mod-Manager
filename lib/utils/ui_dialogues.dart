@@ -444,13 +444,8 @@ class _SupportAndStatsDialogState extends ConsumerState<SupportAndStatsDialog> {
       _modsCount += group.modsInGroup.length - 1;
     }
 
-    String prefPath = p.join(
-      SharedPrefUtils().getUserProfilePath(),
-      r'AppData\Roaming\com.aglg\No Reload Mod Manager',
-    );
-
     DateTime? firstLaunch;
-    final prefDir = Directory(prefPath);
+    final prefDir = Directory(p.dirname(SharedPrefUtils().getSharedPrefPath()));
     if (await prefDir.exists()) {
       final ttfFiles =
           await prefDir

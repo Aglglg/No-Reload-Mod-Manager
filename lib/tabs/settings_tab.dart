@@ -1578,13 +1578,15 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
     });
 
     String initialDir =
-        await Directory(_modsPathTextFieldController.text).exists() == true &&
+        await Directory(_modsPathTextFieldController.text).exists() &&
                 _modsPathTextFieldController.text.trim() != ''
             ? _modsPathTextFieldController.text
-            : p.join(
-              SharedPrefUtils().getUserProfilePath(),
+            : Platform.isWindows
+            ? p.join(
+              SharedPrefUtils().getUserProfilePathWindows(),
               r'AppData\Roaming',
-            );
+            )
+            : '';
     try {
       String? selectedDirectory = await FilePicker.platform.getDirectoryPath(
         lockParentWindow: true,

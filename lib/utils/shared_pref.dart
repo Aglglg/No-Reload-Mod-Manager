@@ -14,12 +14,28 @@ class SharedPrefUtils {
   SharedPrefUtils._internal();
 
   String getSharedPrefPath() {
-    String prefPath = p.join(
-      getUserProfilePath(),
-      r'AppData\Roaming\com.aglg\No Reload Mod Manager\shared_preferences.json',
-    );
+    if (Platform.isWindows) {
+      return p.join(
+        getUserProfilePathWindows(),
+        r'AppData\Roaming\com.aglg\No Reload Mod Manager\shared_preferences.json',
+      );
+    } else if (Platform.isLinux) {
+      // Linux: $XDG_DATA_HOME, or ~/.local/share if it's not set
+      final home = Platform.environment['HOME'] ?? '';
+      final xdgDataHome = Platform.environment['XDG_DATA_HOME'];
+      final dataFolder =
+          (xdgDataHome != null && xdgDataHome.isNotEmpty)
+              ? xdgDataHome
+              : p.join(home, '.local', 'share');
 
-    return prefPath;
+      return p.join(
+        dataFolder,
+        'com.aglg.no_reload_mod_manager',
+        'shared_preferences.json',
+      );
+    } else {
+      return '';
+    }
   }
 
   Future<bool> tryInit() async {
@@ -173,7 +189,7 @@ class SharedPrefUtils {
   String getWuwaModsPath() {
     String? result = _prefs?.getString(keyModsPathWuwa);
     String defaultPath = p.join(
-      getUserProfilePath(),
+      getUserProfilePathWindows(),
       r'AppData\Roaming\XXMI Launcher\WWMI\Mods',
     );
     if (result == null) {
@@ -193,7 +209,7 @@ class SharedPrefUtils {
   String getGenshinModsPath() {
     String? result = _prefs?.getString(keyModsPathGenshin);
     String defaultPath = p.join(
-      getUserProfilePath(),
+      getUserProfilePathWindows(),
       r'AppData\Roaming\XXMI Launcher\GIMI\Mods',
     );
     if (result == null) {
@@ -213,7 +229,7 @@ class SharedPrefUtils {
   String getHsrModsPath() {
     String? result = _prefs?.getString(keyModsPathHsr);
     String defaultPath = p.join(
-      getUserProfilePath(),
+      getUserProfilePathWindows(),
       r'AppData\Roaming\XXMI Launcher\SRMI\Mods',
     );
     if (result == null) {
@@ -233,7 +249,7 @@ class SharedPrefUtils {
   String getZzzModsPath() {
     String? result = _prefs?.getString(keyModsPathZzz);
     String defaultPath = p.join(
-      getUserProfilePath(),
+      getUserProfilePathWindows(),
       r'AppData\Roaming\XXMI Launcher\ZZMI\Mods',
     );
     if (result == null) {
@@ -253,7 +269,7 @@ class SharedPrefUtils {
   String getEndfieldModsPath() {
     String? result = _prefs?.getString(keyModsPathEndfield);
     String defaultPath = p.join(
-      getUserProfilePath(),
+      getUserProfilePathWindows(),
       r'AppData\Roaming\XXMI Launcher\EFMI\Mods',
     );
     if (result == null) {
@@ -574,7 +590,7 @@ class SharedPrefUtils {
 
   static const String keyLastOpened = "lastOpened";
 
-  String getUserProfilePath() {
+  String getUserProfilePathWindows() {
     if (Platform.isWindows) {
       final userProfile = Platform.environment['USERPROFILE'];
       if (userProfile != null) {
