@@ -37,6 +37,7 @@ import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:top_snackbar_flutter/top_snack_bar.dart';
 import 'package:tray_manager/tray_manager.dart' as tray;
+import 'package:unix_single_instance/unix_single_instance.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:animated_segmented_tab_control/animated_segmented_tab_control.dart';
@@ -172,17 +173,23 @@ Future<void> setupWindow(List<String> args) async {
   await windowManager.ensureInitialized();
   await hotKeyManager.unregisterAll();
 
-  await WindowsSingleInstance.ensureSingleInstance(
-    args,
-    "no_reload_mod_manager",
-    onSecondWindow: (args) {
-      for (var element in args) {
-        print(element);
-      }
-    },
-    bringWindowToFront:
-        false, //IMPORTANT, or else it will mess up with always on top or it will be hidden even when it's pinned or blue outline/border, IDK why
-  );
+  if (Platform.isWindows) {
+    await WindowsSingleInstance.ensureSingleInstance(
+      args,
+      "no_reload_mod_manager",
+      onSecondWindow: (args) {
+        for (var element in args) {
+          print(element);
+        }
+      },
+      bringWindowToFront:
+          false, //IMPORTANT, or else it will mess up with always on top or it will be hidden even when it's pinned or blue outline/border, IDK why
+    );
+  } else if (Platform.isLinux) {
+    if (!await unixSingleInstance([], (args) {})) {
+      exit(0);
+    }
+  }
 
   await checkToRelaunch();
 

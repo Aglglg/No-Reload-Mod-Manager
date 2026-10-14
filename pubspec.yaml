@@ -66,6 +66,7 @@ dependencies:
   auto_updater: ^1.0.0
   easy_localization: ^3.0.7+1
   windows_single_instance: ^1.0.1
+  unix_single_instance: ^0.0.4
   flutter_context_menu: ^0.2.2
   top_snackbar_flutter: ^3.3.0
   flutter_local_notifications: ^19.4.2
