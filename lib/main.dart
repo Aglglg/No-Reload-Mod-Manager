@@ -143,9 +143,16 @@ Future<void> initializeAndShowNotification() async {
 Future<void> relaunchAsNormalUser() async {
   final exePath = Platform.resolvedExecutable;
 
-  await Process.start('explorer.exe', [
-    exePath,
-  ], mode: ProcessStartMode.detached);
+  if (Platform.isWindows) {
+    // explorer.exe starts the app un-elevated
+    await Process.start('explorer.exe', [
+      exePath,
+    ], mode: ProcessStartMode.detached);
+  } else {
+    //only for restart purpose, won't relaunch automatically when run as elevated
+    await Process.start(exePath, [], mode: ProcessStartMode.detached);
+  }
+
   exit(0);
 }
 
