@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart' as bitsdojo;
@@ -26,7 +27,8 @@ class ReplicatedContextMenu extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             TextButton(
-              onPressed: () {
+              onPressed: () async {
+                await windowManager.hide();
                 ref.read(replicatedContextMenuProvider.notifier).state = false;
 
                 if (!ref.read(alertDialogShownProvider)) {
@@ -38,6 +40,8 @@ class ReplicatedContextMenu extends ConsumerWidget {
                   );
                 }
                 ref.read(windowIsPinnedProvider.notifier).state = true;
+
+                await windowManager.show();
               },
               child: Padding(
                 padding: EdgeInsets.all(10.0 * sss),
@@ -52,7 +56,9 @@ class ReplicatedContextMenu extends ConsumerWidget {
               ),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
+                await windowManager.hide();
+
                 ref.read(replicatedContextMenuProvider.notifier).state = false;
 
                 if (!ref.read(alertDialogShownProvider)) {
@@ -64,6 +70,8 @@ class ReplicatedContextMenu extends ConsumerWidget {
                   );
                 }
                 ref.read(windowIsPinnedProvider.notifier).state = true;
+
+                await windowManager.show();
               },
               child: Padding(
                 padding: EdgeInsets.all(10.0 * sss),
@@ -78,7 +86,9 @@ class ReplicatedContextMenu extends ConsumerWidget {
               ),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
+                await windowManager.hide();
+
                 ref.read(replicatedContextMenuProvider.notifier).state = false;
 
                 if (!ref.read(alertDialogShownProvider)) {
@@ -90,6 +100,8 @@ class ReplicatedContextMenu extends ConsumerWidget {
                   );
                 }
                 ref.read(windowIsPinnedProvider.notifier).state = true;
+
+                await windowManager.show();
               },
               child: Padding(
                 padding: EdgeInsets.all(10.0 * sss),
@@ -104,7 +116,9 @@ class ReplicatedContextMenu extends ConsumerWidget {
               ),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
+                await windowManager.hide();
+
                 ref.read(replicatedContextMenuProvider.notifier).state = false;
 
                 if (!ref.read(alertDialogShownProvider)) {
@@ -116,6 +130,8 @@ class ReplicatedContextMenu extends ConsumerWidget {
                   );
                 }
                 ref.read(windowIsPinnedProvider.notifier).state = true;
+
+                await windowManager.show();
               },
               child: Padding(
                 padding: EdgeInsets.all(10.0 * sss),
@@ -130,7 +146,9 @@ class ReplicatedContextMenu extends ConsumerWidget {
               ),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
+                await windowManager.hide();
+
                 ref.read(replicatedContextMenuProvider.notifier).state = false;
 
                 if (!ref.read(alertDialogShownProvider)) {
@@ -142,6 +160,8 @@ class ReplicatedContextMenu extends ConsumerWidget {
                   );
                 }
                 ref.read(windowIsPinnedProvider.notifier).state = true;
+
+                await windowManager.show();
               },
               child: Padding(
                 padding: EdgeInsets.all(10.0 * sss),
