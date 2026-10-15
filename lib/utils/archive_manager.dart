@@ -41,7 +41,35 @@ class SevenZip {
     final exeDir = p.dirname(Platform.resolvedExecutable);
     final sevenZipDir = Directory(p.join(exeDir, '7z'));
 
-    _exePath = p.join(sevenZipDir.path, '7z.exe');
+    final exeName = Platform.isWindows ? '7z.exe' : '7zz';
+    _exePath = p.join(sevenZipDir.path, exeName);
+
+    // Linux: make sure the file is allowed to run
+    if (Platform.isLinux) {
+      await Process.run('chmod', ['+x', _exePath!]);
+    }
+  }
+
+  /// Linux: some Windows zips use "\" as folder separator, fix those names
+  Future<void> _fixBackslashNames(String outputDir) async {
+    final entities = await Directory(outputDir).list(recursive: true).toList();
+
+    for (final entity in entities) {
+      final name = p.basename(entity.path);
+      if (!name.contains(r'\')) continue;
+
+      final fixedPath = p.join(
+        p.dirname(entity.path),
+        name.replaceAll(r'\', '/'),
+      );
+
+      if (entity is File) {
+        await Directory(p.dirname(fixedPath)).create(recursive: true);
+        await entity.rename(fixedPath);
+      } else if (entity is Directory) {
+        await entity.delete(); // leftover empty "something\" entry
+      }
+    }
   }
 
   /// Checks if the archive is password-protected without extracting
@@ -58,16 +86,14 @@ class SevenZip {
         args,
       ).timeout(const Duration(seconds: 10));
 
-      final output = result.stdout.toString();
+      final output = '${result.stdout} ${result.stderr}'.toLowerCase();
 
-      // Looks for the "Encrypted = +" line in the -slt output, means encrypted
-      if (output.contains('Encrypted = +')) {
-        return true;
-      }
-
-      return false;
+      // Normal case: files are marked as encrypted
+      // Header-encrypted case: the list itself fails with a password error
+      return output.contains('encrypted = +') ||
+          output.contains('wrong password') ||
+          output.contains('cannot open encrypted archive');
     } catch (_) {
-      // If the process fails or times out, assume we can't read it (safest bet)
       return false;
     }
   }
@@ -112,6 +138,10 @@ class SevenZip {
         return -1;
       },
     );
+
+    if (exitCode == 0 && Platform.isLinux && archivePath.endsWith('.zip')) {
+      await _fixBackslashNames(outputDir);
+    }
 
     return SevenZipResult(
       success: exitCode == 0,
