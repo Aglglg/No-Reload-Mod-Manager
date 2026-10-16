@@ -132,3 +132,24 @@ install(DIRECTORY "${CMAKE_SOURCE_DIR}/../7z_linux/"
   DESTINATION "${CMAKE_INSTALL_PREFIX}/7z"
   USE_SOURCE_PERMISSIONS
   COMPONENT Runtime)
+
+# Wine helper (a Windows exe, built with MinGW)
+find_program(MINGW_CXX x86_64-w64-mingw32-g++)
+if(NOT MINGW_CXX)
+  message(FATAL_ERROR "MinGW not found. Install mingw64-gcc-c++ (Fedora) or g++-mingw-w64-x86-64 (Ubuntu).")
+endif()
+
+set(WINE_HELPER_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/../lib/linux_wine_helper/linux_wine_helper.cpp")
+set(WINE_HELPER_EXE "${CMAKE_BINARY_DIR}/nrmm_wine_helper.exe")
+
+add_custom_command(
+  OUTPUT ${WINE_HELPER_EXE}
+  COMMAND ${MINGW_CXX} ${WINE_HELPER_SOURCE} -o ${WINE_HELPER_EXE} -lws2_32 -O2 -s -static
+  DEPENDS ${WINE_HELPER_SOURCE}
+  COMMENT "Building Wine helper"
+)
+add_custom_target(wine_helper ALL DEPENDS ${WINE_HELPER_EXE})
+
+install(FILES ${WINE_HELPER_EXE}
+  DESTINATION "${INSTALL_BUNDLE_DATA_DIR}/flutter_assets/assets/wine_helper"
+  COMPONENT Runtime)

@@ -5,9 +5,11 @@ import 'package:auto_updater/auto_updater.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/services.dart';
+import 'package:no_reload_mod_manager/linux_wine_helper/linux_wine_helper_client.dart';
 import 'package:no_reload_mod_manager/main.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
+import 'package:no_reload_mod_manager/utils/detect_game_wine.dart';
 import 'package:no_reload_mod_manager/utils/languages_name.dart';
 import 'package:no_reload_mod_manager/utils/managedfolder_watcher.dart';
 import 'package:no_reload_mod_manager/utils/mods_dropzone.dart';
@@ -1378,12 +1380,21 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
       loadTextFieldModsPath(next);
       loadTextFieldTargetProcess(next);
     });
+
+    wineHelper.onStopped =
+        _helperStoppedListener; // game closed or helper crashed
   }
 
   @override
   void dispose() {
     _targetProcessTextFieldController.dispose();
     _modsPathTextFieldController.dispose();
+
+    // Only clear it if it is still ours (a newer page may have replaced it)
+    if (wineHelper.onStopped == _helperStoppedListener) {
+      wineHelper.onStopped = null;
+    }
+
     super.dispose();
   }
 
@@ -1643,6 +1654,54 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
           ),
     );
   }
+
+  //WINE HELPER
+
+  WineHelperState _helperState = WineHelperState.notConnected;
+  String _helperMessage = ''; // error text when failed
+
+  late final VoidCallback _helperStoppedListener =
+      () => _setHelperState(WineHelperState.notConnected);
+
+  void _setHelperState(WineHelperState state, [String message = '']) {
+    if (!mounted) return;
+    setState(() {
+      _helperState = state;
+      _helperMessage = message;
+    });
+  }
+
+  Future<void> _onConnectHelperClicked() async {
+    _setHelperState(WineHelperState.connecting);
+
+    final game = await WineGame.find(_targetProcessTextFieldController.text);
+    if (game == null) {
+      _setHelperState(WineHelperState.failed, 'Start the game first'.tr());
+      return;
+    }
+
+    try {
+      // Same prefix already running: instant. Other game's prefix: switches helper.
+      await wineHelper.start(game);
+      _setHelperState(WineHelperState.connected);
+    } catch (error) {
+      _setHelperState(WineHelperState.failed, error.toString());
+    }
+  }
+
+  String _helperStatusText() => switch (_helperState) {
+    WineHelperState.notConnected => 'Not Connected'.tr(),
+    WineHelperState.connecting => 'Connecting...'.tr(),
+    WineHelperState.connected => 'Connected'.tr(),
+    WineHelperState.failed => _helperMessage,
+  };
+
+  Color _helperStatusColor() => switch (_helperState) {
+    WineHelperState.connected => const Color.fromARGB(255, 120, 220, 140),
+    WineHelperState.failed => const Color.fromARGB(255, 255, 140, 140),
+    _ => const Color.fromARGB(200, 255, 255, 255),
+  };
+  //WINE HELPER
 
   @override
   Widget build(BuildContext context) {
@@ -1917,6 +1976,49 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
             ),
           ),
 
+          //WINE HELPER
+          if (Platform.isLinux) ...[
+            Container(height: 15 * sss),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed:
+                        _helperState == WineHelperState.connecting
+                            ? null
+                            : _onConnectHelperClicked,
+                    style: ElevatedButton.styleFrom(
+                      overlayColor: Colors.white,
+                      backgroundColor: const Color.fromARGB(127, 255, 255, 255),
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12 * sss),
+                      child: Text(
+                        'Connect to Wine Helper'.tr(),
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12 * sss,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Container(height: 2 * sss),
+            Text(
+              _helperStatusText(),
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                color: _helperStatusColor(),
+                fontSize: 11 * sss,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+          //WINE HELPER
           Container(height: 8 * sss),
           Divider(
             color: const Color.fromARGB(127, 33, 149, 243),
@@ -1929,8 +2031,23 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
             children: [
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     _onSaveModsCustomizationsClicked();
+
+                    final game = await WineGame.find('launcher_main.exe');
+                    if (game != null) {
+                      print('Prefix: ${game.prefixPath}');
+                      print(
+                        game.isProton
+                            ? 'Proton: ${game.protonFolder}'
+                            : 'Wine: ${game.wineBinary}',
+                      );
+
+                      // final helperPid = await game.runExeOnce(
+                      //   '/path/to/nrmm_helper.exe',
+                      // );
+                      // print('Helper pid: $helperPid');
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     overlayColor: Colors.white,

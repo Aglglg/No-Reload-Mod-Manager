@@ -8,7 +8,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:no_reload_mod_manager/linux_wine_helper/linux_wine_helper_client.dart';
 import 'package:no_reload_mod_manager/tabs/replicated_context_menu.dart';
 import 'package:no_reload_mod_manager/utils/check_admin_privillege.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
@@ -49,8 +48,6 @@ import 'package:windows_single_instance/windows_single_instance.dart';
 import 'package:xinput_gamepad/xinput_gamepad.dart';
 
 import 'package:easy_localization/easy_localization.dart';
-
-final wineHelper = WineHelperClient();
 
 void main(List<String> args) async {
   unawaited(prewarmDll());
@@ -141,14 +138,15 @@ Future<void> initializeAndShowNotification() async {
 // Drag & Drop file won't work if this tool is run with administrator privillage, while explorer.exe is not.
 // So relaunch it with explorer.exe to get the same privillage level (normal user)
 Future<void> relaunchAsNormalUser() async {
-  final exePath = Platform.resolvedExecutable;
-
   if (Platform.isWindows) {
     // explorer.exe starts the app un-elevated
+    final exePath = Platform.resolvedExecutable;
     await Process.start('explorer.exe', [
       exePath,
     ], mode: ProcessStartMode.detached);
   } else {
+    final appImagePath = Platform.environment['APPIMAGE'];
+    final exePath = appImagePath ?? Platform.resolvedExecutable;
     //only for restart purpose, won't relaunch automatically when run as elevated
     await Process.start(exePath, [], mode: ProcessStartMode.detached);
   }

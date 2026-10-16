@@ -1,7 +1,6 @@
 import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 import 'package:no_reload_mod_manager/linux_wine_helper/linux_wine_helper_client.dart';
-import 'package:no_reload_mod_manager/main.dart';
 import 'dart:convert';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/get_cloud_data.dart';
@@ -142,7 +141,12 @@ final _freeErroredFlowControlLinesSnapshot = _lib.lookupFunction<
 >('FreeErroredFlowControlLinesSnapshot');
 
 class IniHandlerException implements Exception {
-  const IniHandlerException(e);
+  final String message;
+
+  const IniHandlerException(this.message);
+
+  @override
+  String toString() => message;
 }
 //////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////
@@ -182,12 +186,12 @@ Future<ErroredLinesReport> getErroredLines(
       count = countPtr.value;
 
       if (resultPtr == nullptr) {
-        throw IniHandlerException(null);
+        throw IniHandlerException('DLL Failed');
       }
 
       return ErroredLinesReport.fromPointer(resultPtr, count, knownModdingLibs);
     } catch (_) {
-      throw IniHandlerException(null);
+      throw IniHandlerException('DLL Failed');
     } finally {
       if (resultPtr != nullptr) {
         _freeErroredFlowControlLinesSnapshot(resultPtr, count);
@@ -203,20 +207,23 @@ Future<ErroredLinesReport> getErroredLines(
     }
   } else if (Platform.isLinux) {
     try {
+      wineHelper.onLog = print;
+      final stopwatch = Stopwatch()..start();
       final checkIniResult = await wineHelper.checkIni(
         iniPath: path,
         basePath: basePath,
         knownLibNamespaces: knownLibNamespaces,
       );
+      print('checkIni total: ${stopwatch.elapsedMilliseconds} ms');
       return ErroredLinesReport.fromWineHelper(
         checkIniResult,
         knownModdingLibs,
       );
     } catch (e) {
-      throw IniHandlerException(e);
+      throw IniHandlerException(e.toString());
     }
   }
-  throw IniHandlerException(null);
+  throw IniHandlerException('Platform not supported');
 }
 
 Future<Map<String, String>> fetchKnownModdingLib() async {

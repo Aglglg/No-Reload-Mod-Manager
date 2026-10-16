@@ -1039,8 +1039,6 @@ Future<List<TextSpan>> updateModData(
   final d3dxIni = p.join(basePath, "d3dx.ini");
   final dllPath = p.join(basePath, "d3d11.dll");
 
-  ErroredLinesReport errorReport;
-
   Ref<bool> errorShouldTryAgain = Ref(false);
   Ref<bool> usingCustomXxmiDll = Ref(false);
   Ref<bool> usingSupportedXxmiDll = Ref(false);
@@ -1411,8 +1409,7 @@ Future<List<TextSpan>> updateModData(
     operationLogs.add(
       TextSpan(
         text:
-            'Failed to call function to detect errored lines, if issue persist please contact NRMM creator.'
-                .tr(),
+            "${'Failed to call function to detect errored lines, if issue persist please contact NRMM creator.'.tr()}\n",
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );

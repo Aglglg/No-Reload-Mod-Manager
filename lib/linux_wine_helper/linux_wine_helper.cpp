@@ -1,4 +1,4 @@
-//x86_64-w64-mingw32-g++ linux_wine_helper.cpp -o wine_helper.exe -lws2_32 -O2 -s -static
+//x86_64-w64-mingw32-g++ linux_wine_helper.cpp -o nrmm_wine_helper.exe -lws2_32 -O2 -s -static
 #include <winsock2.h>
 #include <windows.h>
 #include <cstdint>
@@ -6,8 +6,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
-const int PORT = 38271;
+#include <cstdlib>
 
 // Keyboard and mouse
 
@@ -162,9 +161,9 @@ std::string RunIniCheck(const std::vector<std::string>& fields) {
         std::string text = WideToUtf8(errors[i].trimmed_line);
         std::string reason = WideToUtf8(errors[i].reason);
 
-        printf("[inicheck] error %d: line=%d file=%s\n", i, errors[i].line_index, file.c_str());
-        printf("[inicheck]          text=%s\n", text.c_str());
-        printf("[inicheck]          reason=%s\n", reason.c_str());
+        // printf("[inicheck] error %d: line=%d file=%s\n", i, errors[i].line_index, file.c_str());
+        // printf("[inicheck]          text=%s\n", text.c_str());
+        // printf("[inicheck]          reason=%s\n", reason.c_str());
 
         if (i > 0) reply += ",";
         reply += "{\"line\":" + std::to_string(errors[i].line_index)
@@ -219,7 +218,27 @@ void SendAll(SOCKET client, const std::string& text) {
     }
 }
 
-void HandleClient(SOCKET client) {
+// Waits until someone connects, or the time runs out
+bool WaitForConnection(SOCKET server, long long milliseconds) {
+    if (milliseconds <= 0) return false;
+
+    fd_set readable;
+    FD_ZERO(&readable);
+    FD_SET(server, &readable);
+    timeval timeout = { (long)(milliseconds / 1000), (long)(milliseconds % 1000) * 1000 };
+
+    return select(0, &readable, nullptr, nullptr, &timeout) > 0;
+}
+
+// Returns true if the client logged in with the right secret (= it was our app)
+bool HandleClient(SOCKET client, const std::string& expectedAuthLine) {
+    const ULONGLONG connectedAt = GetTickCount64();
+
+    // Strangers only get 3 seconds to send the secret
+    DWORD timeoutMs = 3000;
+    setsockopt(client, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeoutMs, sizeof(timeoutMs));
+    bool loggedIn = false;
+
     std::string pending;   // bytes received but not yet a full line
     char chunk[4096];
 
@@ -233,40 +252,69 @@ void HandleClient(SOCKET client) {
             std::string line = pending.substr(0, lineEnd);
             pending.erase(0, lineEnd + 1);
 
+            if (!loggedIn) {
+                if (line != expectedAuthLine) {
+                    printf("[network] wrong secret, dropping client\n");
+                    return false;
+                }
+                loggedIn = true;
+                timeoutMs = 0;   // logged in, no more timeout
+                setsockopt(client, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeoutMs, sizeof(timeoutMs));
+                continue;
+            }
+
             printf("[command] received: %s\n", line.c_str());
             SendAll(client, HandleCommand(line));
         }
 
+        // Before login: drop slow or oversized strangers
+        if (!loggedIn && (pending.size() > 256 || GetTickCount64() - connectedAt > 3000))
+            return false;
+
         if (pending.size() > 1000000) {
             printf("[network] pending data too large, cleared\n");
-            pending.clear();   // safety: ignore garbage
+            pending.clear();
         }
     }
+    return loggedIn;
 }
 
 int main() {
     setvbuf(stdout, nullptr, _IONBF, 0);
+
+    const char* token = getenv("WINE_HELPER_TOKEN");
+    if (!token || !*token) {
+        printf("WINE_HELPER_TOKEN env var is missing\n");
+        return 1;
+    }
+    const std::string expectedAuthLine = std::string("auth ") + token;
 
     WSADATA wsaData;
     WSAStartup(MAKEWORD(2, 2), &wsaData);
 
     SOCKET server = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-    int yes = 1;
-    setsockopt(server, SOL_SOCKET, SO_REUSEADDR, (const char*)&yes, sizeof(yes));
-
     sockaddr_in address = {};
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = inet_addr("127.0.0.1");
-    address.sin_port = htons(PORT);
+    address.sin_port = 0;   // 0 = the OS picks a free port
 
     if (bind(server, (sockaddr*)&address, sizeof(address)) != 0 || listen(server, 1) != 0) {
-        printf("Could not listen on port %d\n", PORT);
+        printf("Could not listen\n");
         return 1;
     }
-    printf("Wine helper listening on 127.0.0.1:%d\n", PORT);
 
-    for (;;) {
+    // Ask which port we got
+    int addressSize = sizeof(address);
+    getsockname(server, (sockaddr*)&address, &addressSize);
+
+    // The app reads this exact line. It is printed after listen(), so connecting right away works.
+    printf("WINE_HELPER_READY port=%d\n", ntohs(address.sin_port));
+
+    // The app has 30 seconds to connect, otherwise we quit (no orphan helpers)
+    const ULONGLONG connectDeadline = GetTickCount64() + 30000;
+
+    while (WaitForConnection(server, (long long)connectDeadline - (long long)GetTickCount64())) {
         SOCKET client = accept(server, nullptr, nullptr);
         if (client == INVALID_SOCKET) continue;
 
@@ -274,8 +322,14 @@ int main() {
         setsockopt(client, IPPROTO_TCP, TCP_NODELAY, (const char*)&noDelay, sizeof(noDelay));
 
         printf("[network] Client connected\n");
-        HandleClient(client);
+        bool wasOurApp = HandleClient(client, expectedAuthLine);
         closesocket(client);
         printf("[network] Client disconnected\n");
+
+        // Our app left, so the helper is not needed anymore
+        if (wasOurApp) return 0;
     }
+
+    printf("[network] app never connected, exiting\n");
+    return 1;
 }
