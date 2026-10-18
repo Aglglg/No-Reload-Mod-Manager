@@ -1408,8 +1408,7 @@ Future<List<TextSpan>> updateModData(
     operationLogs.clear();
     operationLogs.add(
       TextSpan(
-        text:
-            "${'Failed to call function to detect errored lines, if issue persist please contact NRMM creator.'.tr()}\n",
+        text: "${'Failed to call function to detect errored lines.'.tr()}\n",
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );

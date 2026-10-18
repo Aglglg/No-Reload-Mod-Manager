@@ -1007,9 +1007,17 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
 
                       ElevatedButton(
                         onPressed: () async {
-                          ref.read(windowIsPinnedProvider.notifier).state =
-                              false;
-                          await autoUpdater.checkForUpdates();
+                          if (Platform.isWindows) {
+                            ref.read(windowIsPinnedProvider.notifier).state =
+                                false;
+                            await autoUpdater.checkForUpdates();
+                          } else if (Platform.isLinux) {
+                            try {
+                              if (!await launchUrl(
+                                Uri.parse(ConstantVar.urlNrmmReleases),
+                              )) {}
+                            } catch (_) {}
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           overlayColor: Colors.white,

@@ -203,7 +203,7 @@
   "Missing modding library": "Missing {}.\nRequired by {}.\nYou may ignore this warning.\n\n",
   "Duplicate modding library": "Multiple copies of {} were found:\n{}\n",
   "Keep only one copy of modding library": "Keep only one copy of {}.\n\n",
-  "Failed to call function to detect errored lines, if issue persist please contact NRMM creator.": "Failed to call function to detect errored lines.\nIf issue persist please contact NRMM creator.",
+  "Failed to call function to detect errored lines.": "Failed to call function to detect errored lines.",
   "Show (Endfield)": "Show (Endfield)",
   "Arknights Endfield": "Arknights Endfield",
   "Save mod customizations?": "This saves your current mod customizations (such as hats, hair color, clothing color, etc.) as the default.\nThey will not be lost if the mod is disabled or renamed.",

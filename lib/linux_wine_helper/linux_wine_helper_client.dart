@@ -237,7 +237,9 @@ class WineHelperClient {
   }) {
     final socket = _socket;
     if (socket == null) {
-      return Future.error(WineHelperException('Wine helper is not running'));
+      return Future.error(
+        WineHelperException('Wine helper is not running, run it first.'),
+      );
     }
 
     final reply = Completer<String>();
