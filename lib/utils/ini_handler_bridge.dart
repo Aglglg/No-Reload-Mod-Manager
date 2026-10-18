@@ -207,14 +207,11 @@ Future<ErroredLinesReport> getErroredLines(
     }
   } else if (Platform.isLinux) {
     try {
-      wineHelper.onLog = print;
-      final stopwatch = Stopwatch()..start();
       final checkIniResult = await wineHelper.checkIni(
         iniPath: path,
         basePath: basePath,
         knownLibNamespaces: knownLibNamespaces,
       );
-      print('checkIni total: ${stopwatch.elapsedMilliseconds} ms');
       return ErroredLinesReport.fromWineHelper(
         checkIniResult,
         knownModdingLibs,

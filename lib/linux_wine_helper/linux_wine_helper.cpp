@@ -11,7 +11,7 @@
 // Keyboard and mouse
 
 void PressKey(WORD key) {
-    printf("[key] down: key=%d\n", key);
+    //printf("[key] down: key=%d\n", key);
 
     INPUT input = {};
     input.type = INPUT_KEYBOARD;
@@ -19,11 +19,11 @@ void PressKey(WORD key) {
     input.ki.dwExtraInfo = GetMessageExtraInfo();
     UINT sent = SendInput(1, &input, sizeof(INPUT));
 
-    printf("[key] down: sent=%u\n", sent);
+    //printf("[key] down: sent=%u\n", sent);
 }
 
 void ReleaseKey(WORD key) {
-    printf("[key] up: key=%d\n", key);
+    //printf("[key] up: key=%d\n", key);
 
     INPUT input = {};
     input.type = INPUT_KEYBOARD;
@@ -32,12 +32,12 @@ void ReleaseKey(WORD key) {
     input.ki.dwExtraInfo = GetMessageExtraInfo();
     UINT sent = SendInput(1, &input, sizeof(INPUT));
 
-    printf("[key] up: sent=%u\n", sent);
+    //printf("[key] up: sent=%u\n", sent);
 }
 
 void MoveCursor(int x, int y) {
     BOOL success = SetCursorPos(x, y);
-    printf("[mouse] setcursor: x=%d y=%d success=%d\n", x, y, success);
+    //printf("[mouse] setcursor: x=%d y=%d success=%d\n", x, y, success);
 }
 
 // INI Handler DLL
@@ -79,7 +79,7 @@ std::string EscapeForJson(const std::string& text) {
 }
 
 std::string ErrorReply(const std::string& message) {
-    printf("[inicheck] FAILED: %s\n", message.c_str());
+    //printf("[inicheck] FAILED: %s\n", message.c_str());
     return "{\"error\":\"" + EscapeForJson(message) + "\"}\n";
 }
 
@@ -104,12 +104,12 @@ std::string WindowsToLinuxPath(WindowsToLinuxFunction convert, const wchar_t* wi
 // fields: [0]="inicheck", [1]=ini path, [2]=base path, [3...]=known lib namespaces
 // All paths are Linux paths
 std::string RunIniCheck(const std::vector<std::string>& fields) {
-    printf("[inicheck] start\n");
+    //printf("[inicheck] start\n");
     if (fields.size() < 3) return ErrorReply("bad_command");
 
-    printf("[inicheck] linux ini path : %s\n", fields[1].c_str());
-    printf("[inicheck] linux base path: %s\n", fields[2].c_str());
-    printf("[inicheck] namespaces     : %d\n", (int)fields.size() - 3);
+    //printf("[inicheck] linux ini path : %s\n", fields[1].c_str());
+    //printf("[inicheck] linux base path: %s\n", fields[2].c_str());
+    //printf("[inicheck] namespaces     : %d\n", (int)fields.size() - 3);
 
     // Load everything once, reuse on every call
     static HMODULE dll = LoadLibraryA("xxmi_lib_ini_handler.dll");
@@ -127,8 +127,8 @@ std::string RunIniCheck(const std::vector<std::string>& fields) {
     std::string basePath = LinuxToWindowsPath(toWindows, fields[2]);
     if (iniPath.empty() || basePath.empty()) return ErrorReply("path_conversion_failed");
 
-    printf("[inicheck] windows ini path : %s\n", iniPath.c_str());
-    printf("[inicheck] windows base path: %s\n", basePath.c_str());
+    //printf("[inicheck] windows ini path : %s\n", iniPath.c_str());
+    //printf("[inicheck] windows base path: %s\n", basePath.c_str());
 
     // Wine had no drive letter for this path, so XXMI path code may misbehave
     if (iniPath.rfind("\\\\?\\unix\\", 0) == 0 || basePath.rfind("\\\\?\\unix\\", 0) == 0)
@@ -140,7 +140,7 @@ std::string RunIniCheck(const std::vector<std::string>& fields) {
 
     std::vector<const char*> namespaces;
     for (size_t i = 3; i < fields.size(); ++i) {
-        printf("[inicheck] namespace: %s\n", fields[i].c_str());
+        //printf("[inicheck] namespace: %s\n", fields[i].c_str());
         namespaces.push_back(fields[i].c_str());
     }
 
@@ -150,8 +150,8 @@ std::string RunIniCheck(const std::vector<std::string>& fields) {
     ErroredLine* errors = getErrors(iniPath.c_str(), basePath.c_str(),
                                     namespaces.data(), (int32_t)namespaces.size(), &count);
 
-    printf("[inicheck] dll finished in %llu ms, errors=%d\n",
-           (unsigned long long)(GetTickCount64() - startTime), count);
+    //printf("[inicheck] dll finished in %llu ms, errors=%d\n",
+        //    (unsigned long long)(GetTickCount64() - startTime), count);
 
     if (!errors) return ErrorReply("dll_call_failed");
 
@@ -161,9 +161,9 @@ std::string RunIniCheck(const std::vector<std::string>& fields) {
         std::string text = WideToUtf8(errors[i].trimmed_line);
         std::string reason = WideToUtf8(errors[i].reason);
 
-        // printf("[inicheck] error %d: line=%d file=%s\n", i, errors[i].line_index, file.c_str());
-        // printf("[inicheck]          text=%s\n", text.c_str());
-        // printf("[inicheck]          reason=%s\n", reason.c_str());
+        //printf("[inicheck] error %d: line=%d file=%s\n", i, errors[i].line_index, file.c_str());
+        //printf("[inicheck]          text=%s\n", text.c_str());
+        //printf("[inicheck]          reason=%s\n", reason.c_str());
 
         if (i > 0) reply += ",";
         reply += "{\"line\":" + std::to_string(errors[i].line_index)
@@ -175,7 +175,7 @@ std::string RunIniCheck(const std::vector<std::string>& fields) {
 
     freeErrors(errors, count);
 
-    printf("[inicheck] done, reply size=%d bytes\n", (int)reply.size());
+    //printf("[inicheck] done, reply size=%d bytes\n", (int)reply.size());
     return reply;
 }
 
@@ -201,7 +201,7 @@ std::string HandleCommand(const std::string& line) {
     if (command == "keydown")        { int key; words >> key; PressKey((WORD)key); }
     else if (command == "keyup")     { int key; words >> key; ReleaseKey((WORD)key); }
     else if (command == "setcursor") { int x, y; words >> x >> y; MoveCursor(x, y); }
-    else printf("[command] Bad command: %s\n", line.c_str());
+    //else printf("[command] Bad command: %s\n", line.c_str());
 
     return "done\n";
 }
@@ -211,7 +211,7 @@ void SendAll(SOCKET client, const std::string& text) {
     while (sent < text.size()) {
         int result = send(client, text.c_str() + sent, (int)(text.size() - sent), 0);
         if (result <= 0) {
-            printf("[network] send failed after %d of %d bytes\n", (int)sent, (int)text.size());
+            //printf("[network] send failed after %d of %d bytes\n", (int)sent, (int)text.size());
             return;
         }
         sent += result;
@@ -254,7 +254,7 @@ bool HandleClient(SOCKET client, const std::string& expectedAuthLine) {
 
             if (!loggedIn) {
                 if (line != expectedAuthLine) {
-                    printf("[network] wrong secret, dropping client\n");
+                    //printf("[network] wrong secret, dropping client\n");
                     return false;
                 }
                 loggedIn = true;
@@ -263,7 +263,7 @@ bool HandleClient(SOCKET client, const std::string& expectedAuthLine) {
                 continue;
             }
 
-            printf("[command] received: %s\n", line.c_str());
+            //printf("[command] received: %s\n", line.c_str());
             SendAll(client, HandleCommand(line));
         }
 
@@ -272,7 +272,7 @@ bool HandleClient(SOCKET client, const std::string& expectedAuthLine) {
             return false;
 
         if (pending.size() > 1000000) {
-            printf("[network] pending data too large, cleared\n");
+            //printf("[network] pending data too large, cleared\n");
             pending.clear();
         }
     }
@@ -284,7 +284,7 @@ int main() {
 
     const char* token = getenv("WINE_HELPER_TOKEN");
     if (!token || !*token) {
-        printf("WINE_HELPER_TOKEN env var is missing\n");
+        //printf("WINE_HELPER_TOKEN env var is missing\n");
         return 1;
     }
     const std::string expectedAuthLine = std::string("auth ") + token;
@@ -300,7 +300,7 @@ int main() {
     address.sin_port = 0;   // 0 = the OS picks a free port
 
     if (bind(server, (sockaddr*)&address, sizeof(address)) != 0 || listen(server, 1) != 0) {
-        printf("Could not listen\n");
+        //printf("Could not listen\n");
         return 1;
     }
 
@@ -321,15 +321,15 @@ int main() {
         int noDelay = 1;
         setsockopt(client, IPPROTO_TCP, TCP_NODELAY, (const char*)&noDelay, sizeof(noDelay));
 
-        printf("[network] Client connected\n");
+        //printf("[network] Client connected\n");
         bool wasOurApp = HandleClient(client, expectedAuthLine);
         closesocket(client);
-        printf("[network] Client disconnected\n");
+        //printf("[network] Client disconnected\n");
 
         // Our app left, so the helper is not needed anymore
         if (wasOurApp) return 0;
     }
 
-    printf("[network] app never connected, exiting\n");
+    //printf("[network] app never connected, exiting\n");
     return 1;
 }
