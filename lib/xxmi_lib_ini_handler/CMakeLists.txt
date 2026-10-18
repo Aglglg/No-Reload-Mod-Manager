@@ -46,7 +46,7 @@ if (MSVC)
 
     # Runtime Library (Flutter/Windows Standard)
     set_property(TARGET xxmi_lib_ini_handler PROPERTY
-        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
+        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
     )
 endif()
 
