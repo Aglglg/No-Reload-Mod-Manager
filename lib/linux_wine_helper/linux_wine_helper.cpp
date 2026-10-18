@@ -1,4 +1,8 @@
 //x86_64-w64-mingw32-g++ linux_wine_helper.cpp -o nrmm_wine_helper.exe -lws2_32 -O2 -s -static
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0601
+#endif
+
 #include <winsock2.h>
 #include <windows.h>
 #include <cstdint>
