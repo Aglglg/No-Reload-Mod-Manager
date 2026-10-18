@@ -147,6 +147,13 @@ class WineGame {
         )).split('\u0000');
         if (!_hasExactExeName(arguments, exeName)) continue;
 
+        // Wrapper processes (umu.exe) mention the game in their command line but are not the game.
+        // Wine names each process after its exe (cut to 15 characters), so compare that name too.
+        final processName = (await _readProcFile('/proc/$pid/comm')).trim();
+        if (!exeName.toLowerCase().startsWith(processName.toLowerCase())) {
+          continue;
+        }
+
         // Only real wine processes, skips helpers like "proton waitforexitandrun" (python).
         final executablePath =
             await File('/proc/$pid/exe').resolveSymbolicLinks();
