@@ -1039,8 +1039,6 @@ Future<List<TextSpan>> updateModData(
   final d3dxIni = p.join(basePath, "d3dx.ini");
   final dllPath = p.join(basePath, "d3d11.dll");
 
-  ErroredLinesReport errorReport;
-
   Ref<bool> errorShouldTryAgain = Ref(false);
   Ref<bool> usingCustomXxmiDll = Ref(false);
   Ref<bool> usingSupportedXxmiDll = Ref(false);
@@ -1092,8 +1090,10 @@ Future<List<TextSpan>> updateModData(
     );
 
     //Get errored lines from xxmi ini handler
-    errorReport = await Isolate.run(
-      () => getErroredLines(d3dxIni, basePath, knownModdingLibraries),
+    final errorReport = await getErroredLines(
+      d3dxIni,
+      basePath,
+      knownModdingLibraries,
     );
 
     //Show duplicate known libs, libDisplayName <> files of the lib
@@ -1404,14 +1404,22 @@ Future<List<TextSpan>> updateModData(
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
       ),
     );
-  } on IniHandlerException catch (_) {
+  } on IniHandlerException catch (e) {
     operationLogs.clear();
     operationLogs.add(
       TextSpan(
-        text:
-            'Failed to call function to detect errored lines, if issue persist please contact NRMM creator.'
-                .tr(),
+        text: "${'Failed to call function to detect errored lines.'.tr()}\n",
         style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
+      ),
+    );
+    operationLogs.add(
+      TextSpan(
+        text: e.toString(),
+        style: GoogleFonts.poppins(
+          color: Colors.grey,
+          fontSize: 13,
+          fontWeight: FontWeight.w400,
+        ),
       ),
     );
   } catch (e) {
@@ -2040,7 +2048,9 @@ Future<void> _createBackgroundKeypressIni(
 
   // Load the .txt template from assets
   final template = await rootBundle.loadString(
-    nrmmCustomXXMIDll
+    Platform.isLinux
+        ? 'assets/template_txt/listen_keypress_even_on_background.txt' // always listen on background for linux, game runs on wine/proton
+        : nrmmCustomXXMIDll
         ? 'assets/template_txt/listen_keypress_manager.txt'
         : xxmiSupportAdditionalWindow
         ? 'assets/template_txt/listen_keypress_additional_window.txt'
@@ -3260,25 +3270,38 @@ String _getLiteralIni(List<IniSection> sections) {
 }
 
 Future<List<String>> _findIniFilesRecursive(String mainFolder) async {
-  final directory = Directory(
-    r"\\?\" + mainFolder.replaceFirst(r"\\?\", ''),
-  ); // workaround \\?\ for long paths, only for Windows
+  Directory directory;
+  if (Platform.isWindows) {
+    directory = Directory(r"\\?\" + mainFolder.replaceFirst(r"\\?\", ''));
+  } else {
+    directory = Directory(mainFolder);
+  }
+
   if (!await directory.exists()) return [];
 
   return await directory
       .list(recursive: true)
       .where((file) => file is File && file.path.endsWith('.ini'))
       .where((file) => p.basename(file.path).toLowerCase() != "desktop.ini")
-      .map((file) => file.path.replaceFirst(r"\\?\", ''))
+      .map(
+        (file) =>
+            Platform.isWindows
+                ? file.path.replaceFirst(r"\\?\", '')
+                : file.path,
+      )
       .toList();
 }
 
 Future<List<String>> findIniFilesRecursiveExcludeDisabled(
   String mainFolderPath,
 ) async {
-  final directory = Directory(
-    r"\\?\" + mainFolderPath.replaceFirst(r"\\?\", ''),
-  ); // workaround \\?\ for long paths, only for Windows
+  Directory directory;
+  if (Platform.isWindows) {
+    directory = Directory(r"\\?\" + mainFolderPath.replaceFirst(r"\\?\", ''));
+  } else {
+    directory = Directory(mainFolderPath);
+  }
+
   if (!await directory.exists()) return [];
 
   bool containsDisabledSegment(String path) {
@@ -3293,7 +3316,12 @@ Future<List<String>> findIniFilesRecursiveExcludeDisabled(
   return directory
       .list(recursive: true)
       .where((entity) => entity is File)
-      .map((entity) => entity.path.replaceFirst(r"\\?\", ''))
+      .map(
+        (entity) =>
+            Platform.isWindows
+                ? entity.path.replaceFirst(r"\\?\", '')
+                : entity.path,
+      )
       .where((path) => path.toLowerCase().endsWith('.ini'))
       .where((path) => p.basename(path).toLowerCase() != 'desktop.ini')
       .where(
@@ -3321,11 +3349,19 @@ String getCurrentModsPath(TargetGame targetGame) {
 }
 
 Future<void> openFileExplorerToSpecifiedPath(String path) async {
-  if (!Platform.isWindows) return;
   if (!await Directory(path).exists()) return;
 
+  final String command;
+  if (Platform.isWindows) {
+    command = 'explorer';
+  } else if (Platform.isLinux) {
+    command = 'xdg-open';
+  } else {
+    return;
+  }
+
   try {
-    await Process.run('explorer', [path]);
+    await Process.run(command, [path]);
   } catch (_) {}
 }
 

@@ -87,6 +87,12 @@ class ConstantVar {
   static const String urlValidKeysExample =
       "https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes";
 
+  static const String urlAppcastAppUpdate =
+      "https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/appcast.xml";
+
+  static const String urlNrmmReleases =
+      'https://github.com/Aglglg/No-Reload-Mod-Manager/releases';
+
   //LOWER CASED
   //namespace <> display name
   static final Map<String, String> knownModdingLibraries = {

@@ -53,6 +53,10 @@ final StateProvider<String> messageZzzDismissedProvider = StateProvider<String>(
 final StateProvider<String> messageEndfieldDismissedProvider =
     StateProvider<String>((ref) => '');
 
+final StateProvider<bool> dismissedUpdateSnackbar = StateProvider<bool>(
+  (ref) => false,
+);
+
 final StateProvider<HotkeyKeyboard> hotkeyKeyboardProvider =
     StateProvider<HotkeyKeyboard>((ref) {
       SharedPrefUtils().tryInit();
@@ -101,6 +105,16 @@ final zoomScaleProvider = StateProvider<double>((ref) {
 final bgTransparencyProvider = StateProvider<int>((ref) {
   SharedPrefUtils().tryInit();
   return SharedPrefUtils().getBgTransparency();
+});
+
+final borderOpacityProvider = StateProvider<int>((ref) {
+  SharedPrefUtils().tryInit();
+  return SharedPrefUtils().getBorderOpacity();
+});
+
+final windowCornerRadiusProvider = StateProvider<double>((ref) {
+  SharedPrefUtils().tryInit();
+  return SharedPrefUtils().getWindowCornerRadius();
 });
 
 final searchBarShownProvider = StateProvider<bool>((ref) => false);
@@ -178,7 +192,7 @@ final explorerViewOpenedForwardPathsEndfield =
 
 final triggerRefreshModName = StateProvider<bool>((ref) => false);
 final showVerina = StateProvider<bool>((ref) => false);
-
+final replicatedContextMenuProvider = StateProvider<bool>((ref) => false);
 String? vsCodePath;
 String? notepadppPath;
 String? sublimeTextPath;

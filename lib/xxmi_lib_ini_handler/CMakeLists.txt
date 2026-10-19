@@ -44,9 +44,21 @@ if (MSVC)
         $<$<CONFIG:Release>:/LTCG /OPT:REF /OPT:ICF /INCREMENTAL:NO /DEBUG:NONE>
     )
 
+    # Flutter's top-level project can leave /MD in the default flags, and the
+    # MSVC_RUNTIME_LIBRARY property is ignored when policy CMP0091 isn't set early enough.
+    # So remove any /MD or /MT from the flags here and let the property or MSVC's default decide.
+    foreach(flags_variable
+        CMAKE_CXX_FLAGS
+        CMAKE_CXX_FLAGS_DEBUG
+        CMAKE_CXX_FLAGS_RELEASE
+        CMAKE_CXX_FLAGS_RELWITHDEBINFO
+        CMAKE_CXX_FLAGS_MINSIZEREL)
+        string(REGEX REPLACE "/M[DT]d?( |$)" "" ${flags_variable} "${${flags_variable}}")
+    endforeach()
+
     # Runtime Library (Flutter/Windows Standard)
     set_property(TARGET xxmi_lib_ini_handler PROPERTY
-        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
+        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
     )
 endif()
 

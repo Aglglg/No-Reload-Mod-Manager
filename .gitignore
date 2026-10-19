@@ -32,6 +32,7 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+generated_plugins.cmake
 
 # Symbolication related
 app.*.symbols
@@ -49,3 +50,9 @@ dsa_priv.pem
 
 #Dist
 /dist
+
+/android
+/ios
+/macos
+# Widget Preview related
+.widget_preview/

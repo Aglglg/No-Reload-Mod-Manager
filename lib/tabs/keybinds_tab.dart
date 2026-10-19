@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
@@ -108,6 +109,9 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
   }
 
   bool recalculate = true;
+  Timer? _resizeDebounceTimer;
+  static const _resizeDebounceDelay = Duration(milliseconds: 250);
+
   @override
   void onWindowResize() {
     _rowComputeGeneration++;
@@ -115,7 +119,22 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
       recalculate = false;
       _rowsComputePending = false;
     });
+
+    // Linux never fires onWindowResized, so wait until resize events stop
+    if (Platform.isLinux) {
+      _restartResizeDebounce();
+    }
     super.onWindowResize();
+  }
+
+  void _restartResizeDebounce() {
+    _resizeDebounceTimer?.cancel();
+    _resizeDebounceTimer = Timer(_resizeDebounceDelay, () {
+      if (!mounted) return;
+      setState(() {
+        recalculate = true;
+      });
+    });
   }
 
   @override
@@ -129,6 +148,7 @@ class _TabKeybindsState extends ConsumerState<TabKeybinds> with WindowListener {
   @override
   void dispose() {
     windowManager.removeListener(this);
+    _resizeDebounceTimer?.cancel();
     super.dispose();
   }
 

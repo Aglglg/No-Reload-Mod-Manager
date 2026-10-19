@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:no_reload_mod_manager/tabs/replicated_context_menu.dart';
 import 'package:no_reload_mod_manager/utils/check_admin_privillege.dart';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/custom_menu_item.dart';
@@ -23,6 +24,7 @@ import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
 import 'package:no_reload_mod_manager/utils/rightclick_menu.dart';
 import 'package:no_reload_mod_manager/utils/state_providers.dart';
 import 'package:no_reload_mod_manager/utils/ui_dialogues.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart' as p;
 
 import 'package:bitsdojo_window/bitsdojo_window.dart' as bitsdojo;
@@ -35,6 +37,7 @@ import 'package:no_reload_mod_manager/utils/shared_pref.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:top_snackbar_flutter/top_snack_bar.dart';
 import 'package:tray_manager/tray_manager.dart' as tray;
+import 'package:unix_single_instance/unix_single_instance.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:animated_segmented_tab_control/animated_segmented_tab_control.dart';
@@ -71,54 +74,83 @@ void main(List<String> args) async {
   );
 }
 
+InitializationSettings _buildInitSettings() {
+  return InitializationSettings(
+    windows: Platform.isWindows ? _windowsSettings() : null,
+    linux: Platform.isLinux ? _linuxSettings() : null,
+  );
+}
+
+WindowsInitializationSettings _windowsSettings() {
+  final iconPath = p.join(
+    p.dirname(Platform.resolvedExecutable),
+    'data',
+    'flutter_assets',
+    'assets',
+    'images',
+    'app_icon.ico',
+  );
+
+  return WindowsInitializationSettings(
+    appName: 'No Reload Mod Manager',
+    appUserModelId: 'com.aglg.NoReloadModManager',
+    guid: 'DF5B0F87-8365-499D-B8B3-58211FBF6F2A',
+    iconPath: iconPath,
+  );
+}
+
+LinuxInitializationSettings _linuxSettings() {
+  return LinuxInitializationSettings(
+    defaultActionName: 'Open',
+    defaultIcon: AssetsLinuxIcon('assets/images/app_icon.png'),
+  );
+}
+
+final _notificationDetails = NotificationDetails(
+  windows: const WindowsNotificationDetails(
+    duration: WindowsNotificationDuration.short,
+  ),
+  linux: LinuxNotificationDetails(
+    urgency: LinuxNotificationUrgency.low,
+    timeout: LinuxNotificationTimeout.fromDuration(const Duration(seconds: 3)),
+    transient: true,
+  ),
+);
+
+int _newNotificationId() => DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+final _notifications = FlutterLocalNotificationsPlugin();
+
 Future<void> initializeAndShowNotification() async {
   try {
-    if (!Platform.isWindows) return;
-    FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-        FlutterLocalNotificationsPlugin();
-
-    //Cannot use something like 'assets/images/app_icon.ico"
-    final String iconPath = p.join(
-      p.dirname(Platform.resolvedExecutable),
-      r"data\flutter_assets\assets\images\app_icon.ico",
-    );
-
-    final WindowsInitializationSettings
-    initializationSettingsWindows = WindowsInitializationSettings(
-      appName: 'No Reload Mod Manager',
-      appUserModelId: 'com.aglg.NoReloadModManager',
-      //guid same as app id from inno setup (\windows\packaging\exe\make_config.yaml)
-      guid: 'DF5B0F87-8365-499D-B8B3-58211FBF6F2A',
-      iconPath: iconPath,
-    );
-
-    final InitializationSettings initializationSettings =
-        InitializationSettings(windows: initializationSettingsWindows);
-
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-
-    const WindowsNotificationDetails windowsNotificationDetails =
-        WindowsNotificationDetails(duration: WindowsNotificationDuration.short);
-    const NotificationDetails notificationDetails = NotificationDetails(
-      windows: windowsNotificationDetails,
-    );
-    await flutterLocalNotificationsPlugin.show(
-      0,
+    await _notifications.initialize(_buildInitSettings());
+    await _notifications.show(
+      Platform.isLinux ? _newNotificationId() : 0,
       'No Reload Mod Manager is running'.tr(),
       'Access it from Tray or Alt+W(default) while in your target game'.tr(),
-      notificationDetails,
+      _notificationDetails,
     );
-  } catch (_) {}
+  } catch (e) {
+    print('Startup notification failed: $e');
+  }
 }
 
 // Drag & Drop file won't work if this tool is run with administrator privillage, while explorer.exe is not.
 // So relaunch it with explorer.exe to get the same privillage level (normal user)
 Future<void> relaunchAsNormalUser() async {
-  final exePath = Platform.resolvedExecutable;
+  if (Platform.isWindows) {
+    // explorer.exe starts the app un-elevated
+    final exePath = Platform.resolvedExecutable;
+    await Process.start('explorer.exe', [
+      exePath,
+    ], mode: ProcessStartMode.detached);
+  } else {
+    final appImagePath = Platform.environment['APPIMAGE'];
+    final exePath = appImagePath ?? Platform.resolvedExecutable;
+    //only for restart purpose, won't relaunch automatically when run as elevated
+    await Process.start(exePath, [], mode: ProcessStartMode.detached);
+  }
 
-  await Process.start('explorer.exe', [
-    exePath,
-  ], mode: ProcessStartMode.detached);
   exit(0);
 }
 
@@ -146,24 +178,31 @@ Future<void> setupWindow(List<String> args) async {
   await windowManager.ensureInitialized();
   await hotKeyManager.unregisterAll();
 
-  await WindowsSingleInstance.ensureSingleInstance(
-    args,
-    "no_reload_mod_manager",
-    onSecondWindow: (args) {
-      for (var element in args) {
-        print(element);
-      }
-    },
-    bringWindowToFront:
-        false, //IMPORTANT, or else it will mess up with always on top or it will be hidden even when it's pinned or blue outline/border, IDK why
-  );
+  if (Platform.isWindows) {
+    await WindowsSingleInstance.ensureSingleInstance(
+      args,
+      "no_reload_mod_manager",
+      onSecondWindow: (args) {
+        for (var element in args) {
+          print(element);
+        }
+      },
+      bringWindowToFront:
+          false, //IMPORTANT, or else it will mess up with always on top or it will be hidden even when it's pinned or blue outline/border, IDK why
+    );
+  } else if (Platform.isLinux) {
+    if (!await unixSingleInstance([], (args) {})) {
+      exit(0);
+    }
+  }
 
   await checkToRelaunch();
 
-  String feedURL =
-      'https://raw.githubusercontent.com/Aglglg/No-Reload-Mod-Manager/refs/heads/main/appcast.xml';
-  await autoUpdater.setFeedURL(feedURL);
-  await autoUpdater.setScheduledCheckInterval(0);
+  if (Platform.isWindows) {
+    String feedURL = ConstantVar.urlAppcastAppUpdate;
+    await autoUpdater.setFeedURL(feedURL);
+    await autoUpdater.setScheduledCheckInterval(0);
+  }
 
   bitsdojo.doWhenWindowReady(() async {
     final minSize = Size(
@@ -249,7 +288,9 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
   void debouncedSaveWindowSize() {
     _resizeDebounce?.cancel();
     _resizeDebounce = Timer(const Duration(milliseconds: 500), () async {
-      await SharedPrefUtils().setSavedWindow(await windowManager.getSize());
+      if (!ref.read(replicatedContextMenuProvider)) {
+        await SharedPrefUtils().setSavedWindow(await windowManager.getSize());
+      }
     });
   }
 
@@ -265,6 +306,14 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
   Widget build(BuildContext context) {
     return KeyboardListener(
       onKeyEvent: (value) async {
+        if (value.physicalKey == PhysicalKeyboardKey.escape &&
+            ref.read(replicatedContextMenuProvider)) {
+          ref.read(targetGameProvider.notifier).state = TargetGame.none;
+          changeWindowTitleName("");
+          await windowManager.hide();
+
+          ref.read(replicatedContextMenuProvider.notifier).state = false;
+        }
         if (value is KeyUpEvent ||
             ref.read(alertDialogShownProvider) ||
             ref.read(popupMenuShownProvider)) {
@@ -345,9 +394,14 @@ class _BackgroundState extends ConsumerState<Background> {
 
   Color getBorderColor(WidgetRef ref) {
     if (ref.watch(windowIsPinnedProvider)) {
-      return getAccentColor(ref);
+      return getAccentColor(ref, alpha: ref.watch(borderOpacityProvider));
     } else {
-      return const Color.fromARGB(127, 255, 255, 255);
+      return Color.fromARGB(
+        (ref.watch(borderOpacityProvider) * 0.4).round(),
+        255,
+        255,
+        255,
+      );
     }
   }
 
@@ -381,11 +435,13 @@ class _BackgroundState extends ConsumerState<Background> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: Padding(
-          padding: const EdgeInsets.only(top: 1),
+          padding: EdgeInsets.only(top: Platform.isWindows ? 1 : 0),
           child: Container(
             decoration: BoxDecoration(
               color: Color.fromARGB(ref.watch(bgTransparencyProvider), 0, 0, 0),
-              borderRadius: BorderRadius.circular(30 * sss),
+              borderRadius: BorderRadius.circular(
+                ref.watch(windowCornerRadiusProvider) * sss,
+              ),
               border: Border.all(
                 strokeAlign: BorderSide.strokeAlignInside,
                 width: 3 * sss,
@@ -397,7 +453,8 @@ class _BackgroundState extends ConsumerState<Background> {
                 if (ref.watch(tabIndexProvider) == 1 &&
                     !ref.watch(alertDialogShownProvider) &&
                     ref.watch(validModsPath) != null &&
-                    ref.watch(modGroupDataProvider).isNotEmpty)
+                    ref.watch(modGroupDataProvider).isNotEmpty &&
+                    !ref.read(replicatedContextMenuProvider))
                   ModsDropZone(
                     acceptArchived: true,
                     checkForMaxMods: true,
@@ -418,146 +475,166 @@ class _BackgroundState extends ConsumerState<Background> {
                             .groupPath,
                   ),
                 RightClickMenuRegion(
-                  menuItems: <ContextMenuEntry>[
-                    if (ref.watch(tabIndexProvider) == 1 &&
-                        ref.watch(modGroupDataProvider).isEmpty &&
-                        ref.watch(validModsPath) != null)
-                      CustomMenuItem(
-                        scale: sss,
-                        onSelected: () async {
-                          await addGroup(
-                            ref,
-                            p.join(
-                              getCurrentModsPath(ref.read(targetGameProvider)),
-                              ConstantVar.managedFolderName,
-                            ),
-                          );
-                        },
-                        label: 'Add group'.tr(),
-                      ),
-                    if (ref.watch(tabIndexProvider) != 2)
-                      CustomMenuItem(
-                        scale: sss,
-                        onSelected: () async {
-                          triggerRefresh(ref);
-                        },
-                        label: 'Refresh'.tr(),
-                      ),
-                    if (ref.watch(tabIndexProvider) == 1 &&
-                        ref.watch(modGroupDataProvider).isNotEmpty)
-                      CustomMenuItem(
-                        scale: sss,
-                        onSelected: () {
-                          ref.read(searchBarShownProvider.notifier).state =
-                              true;
-                        },
-                        label: 'Search'.tr(),
-                      ),
-                    if (ref.watch(tabIndexProvider) == 1)
-                      CustomMenuItem.submenu(
-                        scale: sss,
-                        items: [
-                          CustomMenuItem(
-                            leftIcon: Icons.laptop_windows_outlined,
-                            rightIcon:
-                                ref.watch(layoutModeProvider) == 0
-                                    ? Icons.check
-                                    : null,
-                            label: 'Auto'.tr(),
-                            scale: sss,
-                            onSelected: () {
-                              SharedPrefUtils().setLayoutMode(0);
-                              ref.read(layoutModeProvider.notifier).state = 0;
-                            },
-                          ),
-                          CustomMenuItem(
-                            leftIcon: Icons.view_carousel_outlined,
-                            rightIcon:
-                                ref.watch(layoutModeProvider) == 1
-                                    ? Icons.check
-                                    : null,
-                            label: 'Carousel'.tr(),
-                            scale: sss,
-                            onSelected: () {
-                              SharedPrefUtils().setLayoutMode(1);
-                              ref.read(layoutModeProvider.notifier).state = 1;
-                              ref.read(isCarouselProvider.notifier).state =
-                                  true;
-                            },
-                          ),
-                          CustomMenuItem(
-                            leftIcon: Icons.window_outlined,
-                            rightIcon:
-                                ref.watch(layoutModeProvider) == 2
-                                    ? Icons.check
-                                    : null,
-                            label: 'Grid'.tr(),
-                            scale: sss,
-                            onSelected: () {
-                              SharedPrefUtils().setLayoutMode(2);
-                              ref.read(layoutModeProvider.notifier).state = 2;
-                              ref.read(isCarouselProvider.notifier).state =
-                                  false;
-                            },
-                          ),
-                        ],
-                        label: 'Layout'.tr(),
-                      ),
-                    ref.watch(windowIsPinnedProvider)
-                        ? CustomMenuItem(
-                          scale: sss,
-                          onSelected:
-                              () =>
+                  menuItems:
+                      ref.read(replicatedContextMenuProvider)
+                          ? []
+                          : <ContextMenuEntry>[
+                            if (ref.watch(tabIndexProvider) == 1 &&
+                                ref.watch(modGroupDataProvider).isEmpty &&
+                                ref.watch(validModsPath) != null)
+                              CustomMenuItem(
+                                scale: sss,
+                                onSelected: () async {
+                                  await addGroup(
+                                    ref,
+                                    p.join(
+                                      getCurrentModsPath(
+                                        ref.read(targetGameProvider),
+                                      ),
+                                      ConstantVar.managedFolderName,
+                                    ),
+                                  );
+                                },
+                                label: 'Add group'.tr(),
+                              ),
+                            if (ref.watch(tabIndexProvider) != 2)
+                              CustomMenuItem(
+                                scale: sss,
+                                onSelected: () async {
+                                  triggerRefresh(ref);
+                                },
+                                label: 'Refresh'.tr(),
+                              ),
+                            if (ref.watch(tabIndexProvider) == 1 &&
+                                ref.watch(modGroupDataProvider).isNotEmpty)
+                              CustomMenuItem(
+                                scale: sss,
+                                onSelected: () {
                                   ref
-                                      .read(windowIsPinnedProvider.notifier)
-                                      .state = false,
-                          label: 'Unpin window'.tr(),
-                        )
-                        : CustomMenuItem(
-                          scale: sss,
-                          onSelected:
-                              () =>
-                                  ref
-                                      .read(windowIsPinnedProvider.notifier)
-                                      .state = true,
-                          label: 'Pin window'.tr(),
-                        ),
+                                      .read(searchBarShownProvider.notifier)
+                                      .state = true;
+                                },
+                                label: 'Search'.tr(),
+                              ),
+                            if (ref.watch(tabIndexProvider) == 1)
+                              CustomMenuItem.submenu(
+                                scale: sss,
+                                items: [
+                                  CustomMenuItem(
+                                    leftIcon: Icons.laptop_windows_outlined,
+                                    rightIcon:
+                                        ref.watch(layoutModeProvider) == 0
+                                            ? Icons.check
+                                            : null,
+                                    label: 'Auto'.tr(),
+                                    scale: sss,
+                                    onSelected: () {
+                                      SharedPrefUtils().setLayoutMode(0);
+                                      ref
+                                          .read(layoutModeProvider.notifier)
+                                          .state = 0;
+                                    },
+                                  ),
+                                  CustomMenuItem(
+                                    leftIcon: Icons.view_carousel_outlined,
+                                    rightIcon:
+                                        ref.watch(layoutModeProvider) == 1
+                                            ? Icons.check
+                                            : null,
+                                    label: 'Carousel'.tr(),
+                                    scale: sss,
+                                    onSelected: () {
+                                      SharedPrefUtils().setLayoutMode(1);
+                                      ref
+                                          .read(layoutModeProvider.notifier)
+                                          .state = 1;
+                                      ref
+                                          .read(isCarouselProvider.notifier)
+                                          .state = true;
+                                    },
+                                  ),
+                                  CustomMenuItem(
+                                    leftIcon: Icons.window_outlined,
+                                    rightIcon:
+                                        ref.watch(layoutModeProvider) == 2
+                                            ? Icons.check
+                                            : null,
+                                    label: 'Grid'.tr(),
+                                    scale: sss,
+                                    onSelected: () {
+                                      SharedPrefUtils().setLayoutMode(2);
+                                      ref
+                                          .read(layoutModeProvider.notifier)
+                                          .state = 2;
+                                      ref
+                                          .read(isCarouselProvider.notifier)
+                                          .state = false;
+                                    },
+                                  ),
+                                ],
+                                label: 'Layout'.tr(),
+                              ),
+                            ref.watch(windowIsPinnedProvider)
+                                ? CustomMenuItem(
+                                  scale: sss,
+                                  onSelected:
+                                      () =>
+                                          ref
+                                              .read(
+                                                windowIsPinnedProvider.notifier,
+                                              )
+                                              .state = false,
+                                  label: 'Unpin window'.tr(),
+                                )
+                                : CustomMenuItem(
+                                  scale: sss,
+                                  onSelected:
+                                      () =>
+                                          ref
+                                              .read(
+                                                windowIsPinnedProvider.notifier,
+                                              )
+                                              .state = true,
+                                  label: 'Pin window'.tr(),
+                                ),
 
-                    if (ref.watch(tabIndexProvider) == 0)
-                      CustomMenuItem(
-                        scale: sss,
-                        onSelected: () async {
-                          try {
-                            if (!await launchUrl(
-                              Uri.parse(ConstantVar.urlValidKeysExample),
-                            )) {}
-                          } catch (_) {}
-                        },
-                        label: 'Valid keys'.tr(),
-                      ),
-                    CustomMenuItem(
-                      scale: sss,
-                      onSelected: () async {
-                        try {
-                          if (!await launchUrl(
-                            Uri.parse(ref.read(tutorialLinkProvider)),
-                          )) {}
-                        } catch (_) {}
-                      },
-                      label: 'Tutorial'.tr(),
-                    ),
-                    CustomMenuItem(
-                      scale: sss,
-                      onSelected: () async {
-                        ref.read(targetGameProvider.notifier).state =
-                            TargetGame.none;
-                        await windowManager.hide();
-                        clearImagesCache();
-                        DynamicDirectoryWatcher.stop();
-                      },
-                      label: 'Hide window'.tr(),
-                    ),
-                  ],
+                            if (ref.watch(tabIndexProvider) == 0)
+                              CustomMenuItem(
+                                scale: sss,
+                                onSelected: () async {
+                                  try {
+                                    if (!await launchUrl(
+                                      Uri.parse(
+                                        ConstantVar.urlValidKeysExample,
+                                      ),
+                                    )) {}
+                                  } catch (_) {}
+                                },
+                                label: 'Valid keys'.tr(),
+                              ),
+                            CustomMenuItem(
+                              scale: sss,
+                              onSelected: () async {
+                                try {
+                                  if (!await launchUrl(
+                                    Uri.parse(ref.read(tutorialLinkProvider)),
+                                  )) {}
+                                } catch (_) {}
+                              },
+                              label: 'Tutorial'.tr(),
+                            ),
+                            CustomMenuItem(
+                              scale: sss,
+                              onSelected: () async {
+                                ref.read(targetGameProvider.notifier).state =
+                                    TargetGame.none;
+                                await windowManager.hide();
+                                clearImagesCache();
+                                DynamicDirectoryWatcher.stop();
+                              },
+                              label: 'Hide window'.tr(),
+                            ),
+                          ],
                   child: bitsdojo.MoveWindow(onDoubleTap: () {}),
                 ),
                 MainView(),
@@ -599,6 +676,7 @@ class _MainViewState extends ConsumerState<MainView>
   }
 
   void setupGamepadNavigation() {
+    if (!Platform.isWindows) return;
     XInputManager.enableXInput();
     final Controller controller = Controller(
       index: 0,
@@ -883,7 +961,9 @@ class _MainViewState extends ConsumerState<MainView>
           : 'assets/images/app_icon.png',
     );
 
-    await tray.trayManager.setToolTip("Mod Manager for Gacha Games");
+    if (Platform.isWindows) {
+      await tray.trayManager.setToolTip("Mod Manager for Gacha Games");
+    }
 
     tray.Menu menu = tray.Menu(
       items: [
@@ -891,6 +971,7 @@ class _MainViewState extends ConsumerState<MainView>
           key: 'Show (WuWa)',
           label: 'Show (WuWa)'.tr(),
           onClick: (menuItem) async {
+            ref.read(replicatedContextMenuProvider.notifier).state = false;
             if (!ref.read(alertDialogShownProvider)) {
               ref.read(targetGameProvider.notifier).state =
                   TargetGame.Wuthering_Waves;
@@ -905,6 +986,7 @@ class _MainViewState extends ConsumerState<MainView>
           key: 'Show (Genshin)',
           label: 'Show (Genshin)'.tr(),
           onClick: (menuItem) async {
+            ref.read(replicatedContextMenuProvider.notifier).state = false;
             if (!ref.read(alertDialogShownProvider)) {
               ref.read(targetGameProvider.notifier).state =
                   TargetGame.Genshin_Impact;
@@ -919,6 +1001,7 @@ class _MainViewState extends ConsumerState<MainView>
           key: 'Show (HSR)',
           label: 'Show (HSR)'.tr(),
           onClick: (menuItem) async {
+            ref.read(replicatedContextMenuProvider.notifier).state = false;
             if (!ref.read(alertDialogShownProvider)) {
               ref.read(targetGameProvider.notifier).state =
                   TargetGame.Honkai_Star_Rail;
@@ -933,6 +1016,7 @@ class _MainViewState extends ConsumerState<MainView>
           key: 'Show (ZZZ)',
           label: 'Show (ZZZ)'.tr(),
           onClick: (menuItem) async {
+            ref.read(replicatedContextMenuProvider.notifier).state = false;
             if (!ref.read(alertDialogShownProvider)) {
               ref.read(targetGameProvider.notifier).state =
                   TargetGame.Zenless_Zone_Zero;
@@ -950,6 +1034,7 @@ class _MainViewState extends ConsumerState<MainView>
           key: 'Show (Endfield)',
           label: 'Show (Endfield)'.tr(),
           onClick: (menuItem) async {
+            ref.read(replicatedContextMenuProvider.notifier).state = false;
             if (!ref.read(alertDialogShownProvider)) {
               ref.read(targetGameProvider.notifier).state =
                   TargetGame.Arknights_Endfield;
@@ -975,6 +1060,7 @@ class _MainViewState extends ConsumerState<MainView>
           key: 'Hide',
           label: 'Hide'.tr(),
           onClick: (menuItem) {
+            ref.read(replicatedContextMenuProvider.notifier).state = false;
             bitsdojo.appWindow.hide();
             clearImagesCache();
             DynamicDirectoryWatcher.stop();
@@ -1056,6 +1142,72 @@ class _MainViewState extends ConsumerState<MainView>
         _tabController.animateTo(0);
       }
     });
+
+    //Reset window size, min size, max size after showing replicated context menu
+    ref.listenManual(replicatedContextMenuProvider, (previous, next) {
+      if (next == false) {
+        bitsdojo.appWindow.maxSize = Size(9999, 9999);
+        final minSize = Size(
+          ConstantVar.minWindowWidth * SharedPrefUtils().getOverallScale(),
+          ConstantVar.minWindowHeight * SharedPrefUtils().getOverallScale(),
+        );
+
+        Size? savedSize = SharedPrefUtils().getSavedWindowSize();
+
+        savedSize ??= minSize;
+
+        double savedSizeWidth =
+            savedSize.width < minSize.width ? minSize.width : savedSize.width;
+        double savedSizeHeight =
+            savedSize.height < minSize.height
+                ? minSize.height
+                : savedSize.height;
+
+        savedSize = Size(savedSizeWidth, savedSizeHeight);
+
+        bitsdojo.appWindow.minSize = minSize;
+        bitsdojo.appWindow.size = savedSize;
+        windowManager.setSize(savedSize);
+      }
+    });
+  }
+
+  Future<bool> _isUpdateAvailable() async {
+    final info = await PackageInfo.fromPlatform();
+    final appVersion = "v${info.version}+${info.buildNumber}";
+
+    final appcastXmlContent = await CloudData().loadTextFromCloud(
+      ConstantVar.urlAppcastAppUpdate,
+      "",
+    );
+    final match = RegExp(
+      r'sparkle:version="([^"]+)"',
+    ).firstMatch(appcastXmlContent);
+    if (match == null) return false;
+
+    final latestVersion = match.group(1)!; // "3.2.2+1"
+    return _isNewer(latestVersion, appVersion);
+  }
+
+  bool _isNewer(String latest, String current) {
+    final latestNumbers = _toNumbers(latest);
+    final currentNumbers = _toNumbers(current);
+
+    for (var i = 0; i < latestNumbers.length; i++) {
+      if (latestNumbers[i] > currentNumbers[i]) return true;
+      if (latestNumbers[i] < currentNumbers[i]) return false;
+    }
+    return false; // same version
+  }
+
+  // "v3.2.2+1" -> [3, 2, 2, 1]
+  List<int> _toNumbers(String version) {
+    final parts = version.replaceAll('v', '').split(RegExp(r'[.+]'));
+    final numbers = parts.map((part) => int.tryParse(part) ?? 0).toList();
+    while (numbers.length < 4) {
+      numbers.add(0);
+    }
+    return numbers;
   }
 
   Future<void> checkToShowInfoMessage(
@@ -1185,6 +1337,52 @@ class _MainViewState extends ConsumerState<MainView>
         break;
       default:
         break;
+    }
+
+    //Get latest version information manually
+    if (await _isUpdateAvailable() && !ref.read(dismissedUpdateSnackbar)) {
+      if (!mounted) return;
+      await ScaffoldMessenger.of(context)
+          .showSnackBar(
+            SnackBar(
+              backgroundColor: const Color(0xFF2B2930),
+              margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
+              duration: Duration(days: 1),
+              behavior: SnackBarBehavior.floating,
+              closeIconColor: getAccentColor(ref),
+              showCloseIcon: true,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              content: Text(
+                "Please update to the latest version".tr(),
+                style: GoogleFonts.poppins(
+                  color: Colors.yellow,
+                  fontSize: 14 * ref.read(zoomScaleProvider),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              action: SnackBarAction(
+                textColor: getAccentColor(ref),
+                label: "Check for Updates".tr(),
+                onPressed: () async {
+                  try {
+                    if (!await launchUrl(
+                      Uri.parse(ConstantVar.urlNrmmReleases),
+                    )) {}
+                  } catch (_) {}
+                },
+              ),
+              dismissDirection: DismissDirection.none,
+            ),
+          )
+          .closed
+          .then((reason) {
+            if (reason == SnackBarClosedReason.action ||
+                reason == SnackBarClosedReason.dismiss) {
+              ref.read(dismissedUpdateSnackbar.notifier).state = true;
+            }
+          });
     }
   }
 
@@ -1374,10 +1572,14 @@ class _MainViewState extends ConsumerState<MainView>
       );
       ref.read(currentGroupIndexProvider.notifier).state = groupIndex;
 
-      DynamicDirectoryWatcher.watch(
-        r"\\?\" + managedPath.replaceFirst(r"\\?\", ''),
-        ref: ref,
-      ); //if somehow there's long path, \\?\ workaround, only for Windows
+      if (Platform.isWindows) {
+        DynamicDirectoryWatcher.watch(
+          r"\\?\" + managedPath.replaceFirst(r"\\?\", ''),
+          ref: ref,
+        );
+      } else {
+        DynamicDirectoryWatcher.watch(managedPath, ref: ref);
+      }
     } else {
       DynamicDirectoryWatcher.stop();
     }
@@ -1396,6 +1598,27 @@ class _MainViewState extends ConsumerState<MainView>
     });
   }
 
+  Future<void> showReplicatedContextMenu() async {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+    if (ref.read(alertDialogShownProvider)) {
+      await windowManager.show();
+      await windowManager.focus();
+      return;
+    }
+    ref.read(replicatedContextMenuProvider.notifier).state = true;
+    ref.read(windowIsPinnedProvider.notifier).state = true;
+
+    final sss = ref.watch(zoomScaleProvider);
+
+    bitsdojo.appWindow.minSize = Size(190, 325) * sss;
+    await windowManager.setSize(Size(190, 325) * sss);
+    bitsdojo.appWindow.maxSize = Size(190, 325) * sss;
+    await windowManager.center();
+    await windowManager.show();
+    await windowManager.focus();
+  }
+
   Future<void> toggleWindow() async {
     if (await windowManager.isVisible()) {
       if (!ref.read(alertDialogShownProvider)) {
@@ -1405,6 +1628,8 @@ class _MainViewState extends ConsumerState<MainView>
       await windowManager.hide();
       clearImagesCache();
       DynamicDirectoryWatcher.stop();
+
+      ref.read(replicatedContextMenuProvider.notifier).state = false;
     } else {
       String foregroundProcessName = getForegroundWindowProcessName();
       bool autoPinWindow = ref.read(isAutoPinWindowProvider);
@@ -1417,6 +1642,8 @@ class _MainViewState extends ConsumerState<MainView>
         ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
         await windowManager.focus();
+
+        ref.read(replicatedContextMenuProvider.notifier).state = false;
       } else if (foregroundProcessName ==
           SharedPrefUtils().getGenshinTargetProcess()) {
         if (!ref.read(alertDialogShownProvider)) {
@@ -1427,6 +1654,8 @@ class _MainViewState extends ConsumerState<MainView>
         ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
         await windowManager.focus();
+
+        ref.read(replicatedContextMenuProvider.notifier).state = false;
       } else if (foregroundProcessName ==
           SharedPrefUtils().getHsrTargetProcess()) {
         if (!ref.read(alertDialogShownProvider)) {
@@ -1437,6 +1666,8 @@ class _MainViewState extends ConsumerState<MainView>
         ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
         await windowManager.focus();
+
+        ref.read(replicatedContextMenuProvider.notifier).state = false;
       } else if (foregroundProcessName ==
           SharedPrefUtils().getZzzTargetProcess()) {
         if (!ref.read(alertDialogShownProvider)) {
@@ -1447,6 +1678,8 @@ class _MainViewState extends ConsumerState<MainView>
         ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
         await windowManager.focus();
+
+        ref.read(replicatedContextMenuProvider.notifier).state = false;
       } else if (foregroundProcessName ==
           SharedPrefUtils().getEndfieldTargetProcess()) {
         if (!ref.read(alertDialogShownProvider)) {
@@ -1457,9 +1690,13 @@ class _MainViewState extends ConsumerState<MainView>
         ref.read(windowIsPinnedProvider.notifier).state = autoPinWindow;
         await windowManager.show();
         await windowManager.focus();
+
+        ref.read(replicatedContextMenuProvider.notifier).state = false;
       } else {
         if (ref.read(showMenuWhenTogglingOutsideGameProvider)) {
-          await tray.trayManager.popUpContextMenu();
+          Platform.isWindows
+              ? await tray.trayManager.popUpContextMenu()
+              : await showReplicatedContextMenu();
         }
       }
     }
@@ -1469,10 +1706,13 @@ class _MainViewState extends ConsumerState<MainView>
     if (!ref.read(windowIsPinnedProvider)) {
       if (!ref.read(alertDialogShownProvider)) {
         ref.read(targetGameProvider.notifier).state = TargetGame.none;
+        changeWindowTitleName("");
       }
       await windowManager.hide();
       clearImagesCache();
       DynamicDirectoryWatcher.stop();
+
+      ref.read(replicatedContextMenuProvider.notifier).state = false;
     }
   }
 
@@ -1481,116 +1721,121 @@ class _MainViewState extends ConsumerState<MainView>
   @override
   Widget build(BuildContext context) {
     final sss = ref.watch(zoomScaleProvider);
-    return Stack(
-      children: [
-        if (kDebugMode)
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Text(
-              'Experimental Version',
-              style: GoogleFonts.poppins(
-                color: Colors.transparent,
-                fontSize: 10 * sss,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-
-        ///Tab views
-        IndexedStack(index: ref.watch(tabIndexProvider), children: _views),
-
-        ///Tab bars
-        Padding(
-          padding: EdgeInsets.only(top: 25 * sss),
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: Transform.scale(
-              scale: sss,
-              alignment: Alignment.topCenter,
-              child: SizedBox(
-                width: 350,
-
-                child: SegmentedTabControl(
-                  controller: _tabController,
-                  height: 42,
-                  selectedTabTextColor: Colors.black,
-                  tabTextColor: Colors.white,
-                  textStyle: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 13,
-                  ),
-                  indicatorDecoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  barDecoration: BoxDecoration(
+    return ref.watch(replicatedContextMenuProvider)
+        ? ReplicatedContextMenu()
+        : Stack(
+          children: [
+            if (kDebugMode)
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Text(
+                  'Experimental Version',
+                  style: GoogleFonts.poppins(
                     color: Colors.transparent,
-                    border: Border.all(
-                      color: const Color.fromARGB(127, 255, 255, 255),
-                      width: 3,
+                    fontSize: 10 * sss,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+
+            ///Tab views
+            IndexedStack(index: ref.watch(tabIndexProvider), children: _views),
+
+            ///Tab bars
+            Padding(
+              padding: EdgeInsets.only(top: 25 * sss),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Transform.scale(
+                  scale: sss,
+                  alignment: Alignment.topCenter,
+                  child: SizedBox(
+                    width: 350,
+
+                    child: SegmentedTabControl(
+                      controller: _tabController,
+                      height: 42,
+                      selectedTabTextColor: Colors.black,
+                      tabTextColor: Colors.white,
+                      textStyle: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 13,
+                      ),
+                      indicatorDecoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                      barDecoration: BoxDecoration(
+                        color: Colors.transparent,
+                        border: Border.all(
+                          color: const Color.fromARGB(127, 255, 255, 255),
+                          width: 3,
+                        ),
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                      tabs: [
+                        SegmentTab(label: "Keybinds".tr()),
+                        SegmentTab(label: "Mods".tr()),
+                        SegmentTab(label: "Settings".tr()),
+                      ],
                     ),
-                    borderRadius: BorderRadius.circular(100),
                   ),
-                  tabs: [
-                    SegmentTab(label: "Keybinds".tr()),
-                    SegmentTab(label: "Mods".tr()),
-                    SegmentTab(label: "Settings".tr()),
-                  ],
                 ),
               ),
             ),
-          ),
-        ),
 
-        ///Random tips
-        if (showRandomTips) RandomTips(),
+            ///Random tips
+            if (showRandomTips) RandomTips(),
 
-        if (ref.watch(showVerina))
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Transform.translate(
-              offset: Offset(0, 7) * sss,
+            if (ref.watch(showVerina))
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Transform.translate(
+                  offset: Offset(0, 7) * sss,
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () async {
+                        ref.read(showVerina.notifier).state = false;
+                        ref.read(alertDialogShownProvider.notifier).state =
+                            true;
+                        await showDialog(
+                          barrierDismissible: false,
+                          context: context,
+                          builder: (context) => SupportAndStatsDialog(),
+                        );
+                        await SharedPrefUtils().setLastOpened(DateTime.now());
+                      },
+                      child: Image.asset(
+                        'assets/images/verina_plant.webp',
+                        height: 95 * sss,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+            Align(
+              alignment: Alignment.bottomCenter,
               child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: GestureDetector(
-                  onTap: () async {
-                    ref.read(showVerina.notifier).state = false;
-                    ref.read(alertDialogShownProvider.notifier).state = true;
-                    await showDialog(
-                      barrierDismissible: false,
-                      context: context,
-                      builder: (context) => SupportAndStatsDialog(),
-                    );
-                    await SharedPrefUtils().setLastOpened(DateTime.now());
-                  },
-                  child: Image.asset(
-                    'assets/images/verina_plant.webp',
-                    height: 95 * sss,
-                  ),
+                hitTestBehavior: HitTestBehavior.translucent,
+                onEnter: (_) {
+                  setState(() {
+                    showRandomTips = true;
+                  });
+                },
+                onExit: (_) {
+                  setState(() {
+                    showRandomTips = false;
+                  });
+                },
+                child: Container(
+                  height: MediaQuery.of(context).size.height / 2,
                 ),
               ),
             ),
-          ),
-
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: MouseRegion(
-            hitTestBehavior: HitTestBehavior.translucent,
-            onEnter: (_) {
-              setState(() {
-                showRandomTips = true;
-              });
-            },
-            onExit: (_) {
-              setState(() {
-                showRandomTips = false;
-              });
-            },
-            child: Container(height: bitsdojo.appWindow.size.height / 2),
-          ),
-        ),
-      ],
-    );
+          ],
+        );
   }
 
   @override
@@ -1971,5 +2216,7 @@ String getRandomTips(String previousTips) {
 
 Future<void> prewarmDll() async {
   print("PREWARM");
-  await Isolate.run(() => getErroredLines('', '', {}));
+  try {
+    await Isolate.run(() => getErroredLines('', '', {}));
+  } catch (_) {}
 }

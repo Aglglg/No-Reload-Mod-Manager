@@ -1,4 +1,4 @@
-name: Flutter Windows Build Installer & Portable and Scan on VirusTotal
+name: Flutter Windows & Linux Build, Installer & Portable and Scan on VirusTotal
 
 on:
   push:
@@ -45,6 +45,14 @@ jobs:
         #build flutter project with fastforge, auto do flutter clean & flutter pub get, etc
       - name: Build Windows EXE with FastForge
         run: fastforge package --platform windows --target exe
+
+        #save the dll so the linux job can use it (must be before the folder gets renamed below)
+      - name: Upload DLL for Linux build
+        uses: actions/upload-artifact@v4
+        with:
+          name: xxmi-ini-handler-dll
+          path: build/windows/x64/runner/Release/xxmi_lib_ini_handler.dll
+          if-no-files-found: error
 
         #get app version by reading pubspec.yaml file in the repo
       - name: Get app version from pubspec.yaml
@@ -118,5 +126,75 @@ jobs:
             dist/${{ steps.version.outputs.version }}/no_reload_mod_manager-${{ steps.version.outputs.version }}-windows-portable.zip
             dist/${{ steps.version.outputs.version }}/virustotalscans.txt
             dist/${{ steps.version.outputs.version }}/signresult.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build_linux:
+    name: Build Flutter Linux
+    runs-on: ubuntu-22.04
+    #wait for windows job, we need its dll and its release
+    needs: build_windows
+
+    steps:
+        # get the repo
+      - name: Checkout repository
+        uses: actions/checkout@v5.0.0
+
+        #install flutter
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2.21.0
+        with:
+          flutter-version: '3.32.8'
+          channel: 'stable'
+          cache: true
+
+        #flutter linux build tools + mingw (wine helper exe) + plugin libs (hotkey_manager, tray_manager) + fuse (appimage)
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev g++-mingw-w64-x86-64 libkeybinder-3.0-dev libayatana-appindicator3-dev libx11-dev libxi-dev libfuse2
+
+        #build flutter linux (cmake also builds the wine helper exe)
+      - name: Build Linux
+        run: flutter build linux --release
+
+        #put the dll next to the wine helper (must be AFTER the build, the build recreates this folder)
+      - name: Download DLL from Windows build
+        uses: actions/download-artifact@v4
+        with:
+          name: xxmi-ini-handler-dll
+          path: build/linux/x64/release/bundle/data/flutter_assets/assets/wine_helper/
+
+        #get app version by reading pubspec.yaml file in the repo
+      - name: Get app version from pubspec.yaml
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //')
+          VERSION_NO_BUILD=$(echo "$VERSION" | cut -d'+' -f1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version_no_build=$VERSION_NO_BUILD" >> $GITHUB_OUTPUT
+
+        #run the appimage script from the project root (it packs the bundle, now including the dll)
+      - name: Create AppImage
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: 1
+        run: |
+          chmod +x appimage.sh
+          ./appimage.sh
+
+        #appimage.sh outputs to build/appimage/, give the file a clean name
+      - name: Rename AppImage
+        run: |
+          mkdir -p dist
+          mv build/appimage/*.AppImage "dist/no_reload_mod_manager-${{ steps.version.outputs.version }}-linux.AppImage"
+
+        #add the linux file to the same pre-release the windows job created
+      - name: Upload to Pre-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version_no_build }}
+          prerelease: true
+          files: |
+            dist/no_reload_mod_manager-${{ steps.version.outputs.version }}-linux.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

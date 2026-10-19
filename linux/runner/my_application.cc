@@ -1,0 +1,190 @@
+#include "my_application.h"
+
+#include <flutter_linux/flutter_linux.h>
+#ifdef GDK_WINDOWING_X11
+#include <gdk/gdkx.h>
+#endif
+
+#include "flutter/generated_plugin_registrant.h"
+
+struct _MyApplication {
+  GtkApplication parent_instance;
+  char** dart_entrypoint_arguments;
+};
+
+G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
+
+#ifdef GDK_WINDOWING_X11
+// Tells KWin to blur everything behind the window.
+static void enable_kde_blur(GtkWidget* window) {
+  GdkWindow* gdk_window = gtk_widget_get_window(window);
+  if (!GDK_IS_X11_WINDOW(gdk_window)) return;
+
+  GdkAtom blur_property = gdk_atom_intern("_KDE_NET_WM_BLUR_BEHIND_REGION", FALSE);
+  GdkAtom cardinal_type = gdk_atom_intern("CARDINAL", FALSE);
+  gulong empty_region = 0;  // empty region = blur the whole window
+
+  gdk_property_change(gdk_window, blur_property, cardinal_type, 32,
+                      GDK_PROP_MODE_REPLACE,
+                      reinterpret_cast<const guchar*>(&empty_region), 0);
+}
+#endif
+
+// Called when first Flutter frame received.
+static void first_frame_cb(MyApplication* self, FlView* view) {
+  GtkWidget* window = gtk_widget_get_toplevel(GTK_WIDGET(view));
+    gtk_window_set_keep_above(GTK_WINDOW(window), TRUE);
+    
+#ifdef GDK_WINDOWING_X11
+  enable_kde_blur(window);
+#endif
+
+#ifndef NDEBUG
+  gtk_widget_show(window);
+#endif
+}
+
+// Implements GApplication::activate.
+static void my_application_activate(GApplication* application) {
+  MyApplication* self = MY_APPLICATION(application);
+  GtkWindow* window =
+      GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
+
+  g_autofree gchar* exe_path = g_file_read_link("/proc/self/exe", nullptr);
+  g_autofree gchar* exe_folder = g_path_get_dirname(exe_path);
+  g_autofree gchar* icon_path = g_build_filename(
+    exe_folder, "data", "flutter_assets", "assets", "images", "app_icon.png", nullptr);
+  gtk_window_set_icon_from_file(window, icon_path, nullptr);
+
+  gtk_window_set_keep_above(window, TRUE);
+
+    GdkScreen* screen = gtk_window_get_screen(window);
+  GdkVisual* rgba_visual = gdk_screen_get_rgba_visual(screen);
+  if (rgba_visual != nullptr && gdk_screen_is_composited(screen)) {
+    gtk_widget_set_visual(GTK_WIDGET(window), rgba_visual);
+  }
+  gtk_widget_set_app_paintable(GTK_WIDGET(window), TRUE);
+
+  // Disable Client-Side Decorations (CSD) to use KDE Plasma's native server-side decorations 
+  gboolean use_header_bar = FALSE;
+
+  if (use_header_bar) {
+    GtkHeaderBar* header_bar = GTK_HEADER_BAR(gtk_header_bar_new());
+    gtk_widget_show(GTK_WIDGET(header_bar));
+    gtk_header_bar_set_title(header_bar, "no_reload_mod_manager");
+    gtk_header_bar_set_show_close_button(header_bar, TRUE);
+    gtk_window_set_titlebar(window, GTK_WIDGET(header_bar));
+  } else {
+    gtk_window_set_title(window, "no_reload_mod_manager");
+  }
+
+  gtk_window_set_default_size(window, 1280, 720);
+
+  g_autoptr(FlDartProject) project = fl_dart_project_new();
+  fl_dart_project_set_dart_entrypoint_arguments(
+      project, self->dart_entrypoint_arguments);
+
+  FlView* view = fl_view_new(project);
+  GdkRGBA background_color;
+  // Background defaults to black, override it here if necessary, e.g. #00000000
+  // for transparent.
+  gdk_rgba_parse(&background_color, "#00000000");
+  fl_view_set_background_color(view, &background_color);
+  gtk_widget_show(GTK_WIDGET(view));
+  gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(view));
+
+  // Show the window when Flutter renders.
+  // Requires the view to be realized so we can start rendering.
+  g_signal_connect_swapped(view, "first-frame", G_CALLBACK(first_frame_cb),
+                           self);
+  gtk_widget_realize(GTK_WIDGET(view));
+
+  fl_register_plugins(FL_PLUGIN_REGISTRY(view));
+
+  gtk_widget_grab_focus(GTK_WIDGET(view));
+}
+
+// Implements GApplication::local_command_line.
+static gboolean my_application_local_command_line(GApplication* application,
+                                                  gchar*** arguments,
+                                                  int* exit_status) {
+  MyApplication* self = MY_APPLICATION(application);
+  // Strip out the first argument as it is the binary name.
+  self->dart_entrypoint_arguments = g_strdupv(*arguments + 1);
+
+  g_autoptr(GError) error = nullptr;
+  if (!g_application_register(application, nullptr, &error)) {
+    g_warning("Failed to register: %s", error->message);
+    *exit_status = 1;
+    return TRUE;
+  }
+
+  g_application_activate(application);
+  *exit_status = 0;
+
+  return TRUE;
+}
+
+// Implements GApplication::startup.
+static void my_application_startup(GApplication* application) {
+  // MyApplication* self = MY_APPLICATION(object);
+
+  // Perform any actions required at application startup.
+
+  G_APPLICATION_CLASS(my_application_parent_class)->startup(application);
+}
+
+// Implements GApplication::shutdown.
+static void my_application_shutdown(GApplication* application) {
+  // MyApplication* self = MY_APPLICATION(object);
+
+  // Perform any actions required at application shutdown.
+
+  G_APPLICATION_CLASS(my_application_parent_class)->shutdown(application);
+}
+
+// Implements GObject::dispose.
+static void my_application_dispose(GObject* object) {
+  MyApplication* self = MY_APPLICATION(object);
+  g_clear_pointer(&self->dart_entrypoint_arguments, g_strfreev);
+  G_OBJECT_CLASS(my_application_parent_class)->dispose(object);
+}
+
+static void my_application_class_init(MyApplicationClass* klass) {
+  G_APPLICATION_CLASS(klass)->activate = my_application_activate;
+  G_APPLICATION_CLASS(klass)->local_command_line =
+      my_application_local_command_line;
+  G_APPLICATION_CLASS(klass)->startup = my_application_startup;
+  G_APPLICATION_CLASS(klass)->shutdown = my_application_shutdown;
+  G_OBJECT_CLASS(klass)->dispose = my_application_dispose;
+}
+
+static void my_application_init(MyApplication* self) {}
+
+// Hides the harmless "gdk_device_get_axis" warning.
+static void ignore_gdk_axis_warning(const gchar* log_domain,
+                                    GLogLevelFlags log_level,
+                                    const gchar* message,
+                                    gpointer user_data) {
+  if (message != nullptr && g_strstr_len(message, -1, "gdk_device_get_axis") != nullptr) {
+    return;
+  }
+  if (message != nullptr && g_strstr_len(message, -1, "gdk_device_get_source") != nullptr) {
+    return;
+  }
+  g_log_default_handler(log_domain, log_level, message, user_data);
+}
+
+MyApplication* my_application_new() {
+  g_log_set_handler("Gdk", G_LOG_LEVEL_CRITICAL, ignore_gdk_axis_warning, nullptr);
+
+  // Set the program name to the application ID, which helps various systems
+  // like GTK and desktop environments map this running application to its
+  // corresponding .desktop file. This ensures better integration by allowing
+  // the application to be recognized beyond its binary name.
+  g_set_prgname(APPLICATION_ID);
+
+  return MY_APPLICATION(g_object_new(my_application_get_type(),
+                                     "application-id", APPLICATION_ID, "flags",
+                                     G_APPLICATION_NON_UNIQUE, nullptr));
+}
