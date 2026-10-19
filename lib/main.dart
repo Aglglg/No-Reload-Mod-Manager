@@ -174,6 +174,11 @@ Future<void> checkToRelaunch({bool forcedRelaunch = false}) async {
   }
 }
 
+//For linux only, delay onWindowResize setSavedWindow
+//without that setSavedWindow will be called when a code from my_application.cc set the window to 1280x720
+//which will corrupt the actual saved size
+bool isWindowSizeSavingEnabled = !Platform.isLinux;
+
 Future<void> setupWindow(List<String> args) async {
   await windowManager.ensureInitialized();
   await hotKeyManager.unregisterAll();
@@ -237,6 +242,10 @@ Future<void> setupWindow(List<String> args) async {
       await windowManager.setAsFrameless();
       await windowManager.setClosable(false);
     });
+
+    if (Platform.isLinux) {
+      isWindowSizeSavingEnabled = true;
+    }
   });
 }
 
@@ -286,6 +295,9 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener {
 
   Timer? _resizeDebounce;
   void debouncedSaveWindowSize() {
+    //Prevent being called too early when app initialize on Linux, and accidentally save unnecessary size
+    if (!isWindowSizeSavingEnabled) return;
+
     _resizeDebounce?.cancel();
     _resizeDebounce = Timer(const Duration(milliseconds: 500), () async {
       if (!ref.read(replicatedContextMenuProvider)) {
