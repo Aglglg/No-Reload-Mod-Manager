@@ -107,6 +107,16 @@ final bgTransparencyProvider = StateProvider<int>((ref) {
   return SharedPrefUtils().getBgTransparency();
 });
 
+final borderOpacityProvider = StateProvider<int>((ref) {
+  SharedPrefUtils().tryInit();
+  return SharedPrefUtils().getBorderOpacity();
+});
+
+final windowCornerRadiusProvider = StateProvider<double>((ref) {
+  SharedPrefUtils().tryInit();
+  return SharedPrefUtils().getWindowCornerRadius();
+});
+
 final searchBarShownProvider = StateProvider<bool>((ref) => false);
 final searchBarMode = StateProvider<int>((ref) => 0);
 

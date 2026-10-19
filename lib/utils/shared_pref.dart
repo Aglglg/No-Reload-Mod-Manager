@@ -342,12 +342,38 @@ class SharedPrefUtils {
     }
   }
 
+  int getBorderOpacity() {
+    int? result = _prefs?.getInt(keyBorderOpacity);
+    if (result == null) {
+      return 255;
+    } else {
+      return result.clamp(0, 255).toInt();
+    }
+  }
+
+  double getWindowCornerRadius() {
+    double? result = _prefs?.getDouble(keyWindowCornerRadius);
+    if (result == null) {
+      return 25;
+    } else {
+      return result.clamp(0, 50);
+    }
+  }
+
   Future<void> setOverallScale(double scale) async {
     await _prefs?.setDouble(keyOverallScale, scale);
   }
 
   Future<void> setBgTransparency(int alpha) async {
     await _prefs?.setInt(keyBgTransparency, alpha);
+  }
+
+  Future<void> setBorderOpacity(int alpha) async {
+    await _prefs?.setInt(keyBorderOpacity, alpha);
+  }
+
+  Future<void> setWindowCornerRadius(double radius) async {
+    await _prefs?.setDouble(keyWindowCornerRadius, radius);
   }
 
   Future<void> setGroupSort(int sortMethod) async {
@@ -567,6 +593,8 @@ class SharedPrefUtils {
 
   static const String keyOverallScale = "overallScale";
   static const String keyBgTransparency = "backgroundTransparency";
+  static const String keyBorderOpacity = "borderOpacity";
+  static const String keyWindowCornerRadius = "windowCornerRadius";
 
   static const String keySortGroupMethod = "sortGroup";
 

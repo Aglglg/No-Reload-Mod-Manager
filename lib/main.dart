@@ -394,9 +394,14 @@ class _BackgroundState extends ConsumerState<Background> {
 
   Color getBorderColor(WidgetRef ref) {
     if (ref.watch(windowIsPinnedProvider)) {
-      return getAccentColor(ref);
+      return getAccentColor(ref, alpha: ref.watch(borderOpacityProvider));
     } else {
-      return const Color.fromARGB(127, 255, 255, 255);
+      return Color.fromARGB(
+        (ref.watch(borderOpacityProvider) * 0.4).round(),
+        255,
+        255,
+        255,
+      );
     }
   }
 
@@ -430,11 +435,13 @@ class _BackgroundState extends ConsumerState<Background> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: Padding(
-          padding: const EdgeInsets.only(top: 1),
+          padding: EdgeInsets.only(top: Platform.isWindows ? 1 : 0),
           child: Container(
             decoration: BoxDecoration(
               color: Color.fromARGB(ref.watch(bgTransparencyProvider), 0, 0, 0),
-              borderRadius: BorderRadius.circular(30 * sss),
+              borderRadius: BorderRadius.circular(
+                ref.watch(windowCornerRadiusProvider) * sss,
+              ),
               border: Border.all(
                 strokeAlign: BorderSide.strokeAlignInside,
                 width: 3 * sss,

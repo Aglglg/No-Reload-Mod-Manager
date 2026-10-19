@@ -324,7 +324,120 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                           max: 255,
                         ),
                       ),
+                      Container(height: 10 * sss),
+                      Text(
+                        'Window Border Opacity'.tr(),
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 14 * sss,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 4.0 * sss,
+                          thumbShape: RoundSliderThumbShape(
+                            enabledThumbRadius: 9.0 * sss,
+                          ),
+                        ),
+                        child: Slider(
+                          activeColor: getAccentColor(ref),
+                          value: ref.watch(borderOpacityProvider).toDouble(),
+                          onChangeEnd: (value) {
+                            SharedPrefUtils().setBorderOpacity(value.round());
+                          },
+                          onChanged: (value) {
+                            ref.read(borderOpacityProvider.notifier).state =
+                                value.round();
+                          },
+                          min: 0,
+                          max: 255,
+                        ),
+                      ),
+                      Container(height: 10 * sss),
+                      Text(
+                        'Window Corner Radius'.tr(),
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 14 * sss,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 4.0 * sss,
+                          thumbShape: RoundSliderThumbShape(
+                            enabledThumbRadius: 9.0 * sss,
+                          ),
+                        ),
+                        child: Slider(
+                          activeColor: getAccentColor(ref),
+                          value: ref.watch(windowCornerRadiusProvider),
+                          onChangeEnd: (value) {
+                            SharedPrefUtils().setWindowCornerRadius(value);
+                          },
+                          onChanged: (value) {
+                            ref
+                                .read(windowCornerRadiusProvider.notifier)
+                                .state = value;
+                          },
+                          min: 0,
+                          max: 50,
+                        ),
+                      ),
 
+                      // Container(height: 10 * sss),
+                      // Text(
+                      //   'Accent Color'.tr(),
+                      //   style: GoogleFonts.poppins(
+                      //     color: Colors.white,
+                      //     fontSize: 14 * sss,
+                      //     fontWeight: FontWeight.w600,
+                      //   ),
+                      // ),
+                      // SizedBox(height: 10 * sss),
+                      // Row(
+                      //   mainAxisAlignment: MainAxisAlignment.center,
+                      //   children: [
+                      //     SizedBox(
+                      //       width: 80 * sss,
+                      //       child: TextField(
+                      //         textAlign: TextAlign.center,
+                      //         // controller: textSectionController,
+                      //         // onChanged: widget.onSectionChanged,
+                      //         decoration: InputDecoration(
+                      //           isDense: true,
+                      //           disabledBorder: InputBorder.none,
+                      //           enabledBorder: InputBorder.none,
+                      //           border: UnderlineInputBorder(),
+                      //           hintText: '#2195f3',
+                      //           hintStyle: GoogleFonts.poppins(
+                      //             fontWeight: FontWeight.w500,
+                      //             color: const Color.fromARGB(
+                      //               60,
+                      //               255,
+                      //               255,
+                      //               255,
+                      //             ),
+                      //             fontSize: 13 * sss,
+                      //           ),
+                      //         ),
+                      //         maxLines: 1,
+                      //         keyboardType: TextInputType.none,
+                      //         style: GoogleFonts.poppins(
+                      //           fontWeight: FontWeight.w500,
+                      //           color: Colors.white,
+                      //           fontSize: 13 * sss,
+                      //         ),
+                      //         inputFormatters: [
+                      //           FilteringTextInputFormatter.deny(
+                      //             RegExp(r'[\n\r\u0085\u2028\u2029]'),
+                      //           ),
+                      //         ],
+                      //       ),
+                      //     ),
+                      //   ],
+                      // ),
                       Container(height: 15 * sss),
                       Divider(
                         color: getAccentColor(ref, alpha: 127),
