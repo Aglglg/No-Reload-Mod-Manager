@@ -288,5 +288,6 @@
   "Wine helper did not answer": "Wine helper 沒有回應",
   "Start the game first": "請先啟動遊戲",
   "Window Border Opacity": "視窗邊框透明度",
-  "Window Corner Radius": "視窗圓角半徑"
+  "Window Corner Radius": "視窗圓角半徑",
+  "If the hotkey (Alt+W by default) does nothing in-game": "如果遊戲中快捷鍵（預設 Alt+W）沒有反應，請確認遊戲未處於全螢幕模式。\n詳情請查閱桌面環境（KDE Plasma、GNOME 等）的文件。"
 }

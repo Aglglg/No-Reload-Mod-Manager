@@ -288,5 +288,6 @@
   "Wine helper did not answer": "Wine helper не отвечает",
   "Start the game first": "Сначала запустите игру",
   "Window Border Opacity": "Непрозрачность границы окна",
-  "Window Corner Radius": "Радиус скругления окна"
+  "Window Corner Radius": "Радиус скругления окна",
+  "If the hotkey (Alt+W by default) does nothing in-game": "Если горячая клавиша (по умолчанию Alt+W) не работает в игре, убедитесь, что игра не в полноэкранном режиме.\nПодробности смотрите в документации вашей среды рабочего стола (KDE Plasma, GNOME и т. д.)."
 }

@@ -288,5 +288,6 @@
   "Wine helper did not answer": "Wine helper did not answer",
   "Start the game first": "Start the game first",
   "Window Border Opacity": "Window Border Opacity",
-  "Window Corner Radius": "Window Corner Radius"
+  "Window Corner Radius": "Window Corner Radius",
+  "If the hotkey (Alt+W by default) does nothing in-game": "If the hotkey (Alt+W by default) does nothing in-game, make sure the game is not in Fullscreen.\nCheck your desktop environment's docs (KDE Plasma, GNOME, etc.) for details."
 }

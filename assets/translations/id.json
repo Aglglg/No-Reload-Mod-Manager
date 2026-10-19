@@ -288,5 +288,6 @@
   "Wine helper did not answer": "Wine helper tidak merespons",
   "Start the game first": "Jalankan game-nya dulu",
   "Window Border Opacity": "Transparansi Border Window",
-  "Window Corner Radius": "Radius Pojok Window"
+  "Window Corner Radius": "Radius Pojok Window",
+  "If the hotkey (Alt+W by default) does nothing in-game": "Kalau hotkey (Alt+W secara default) tidak bereaksi di dalam game, pastikan game tidak dalam mode Fullscreen.\nCek dokumentasi desktop environment (KDE Plasma, GNOME, dll.) untuk detailnya."
 }

@@ -2099,7 +2099,8 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
               fontWeight: FontWeight.w500,
             ),
           ),
-
+          //
+          //
           //WINE HELPER
           if (Platform.isLinux) ...[
             Container(height: 15 * sss),
@@ -2141,8 +2142,26 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
                 fontWeight: FontWeight.w500,
               ),
             ),
+
+            Container(height: 8 * sss),
+            Divider(
+              color: const Color.fromARGB(127, 33, 149, 243),
+              thickness: 1 * sss,
+            ),
+            Container(height: 8 * sss),
+            Text(
+              "If the hotkey (Alt+W by default) does nothing in-game".tr(),
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                color: Colors.yellow,
+                fontSize: 11 * sss,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
           //WINE HELPER
+          //
+          //
           Container(height: 8 * sss),
           Divider(
             color: const Color.fromARGB(127, 33, 149, 243),
