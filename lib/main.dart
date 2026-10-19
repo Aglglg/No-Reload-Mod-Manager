@@ -1822,7 +1822,9 @@ class _MainViewState extends ConsumerState<MainView>
                     showRandomTips = false;
                   });
                 },
-                child: Container(height: bitsdojo.appWindow.size.height / 2),
+                child: Container(
+                  height: MediaQuery.of(context).size.height / 2,
+                ),
               ),
             ),
           ],
