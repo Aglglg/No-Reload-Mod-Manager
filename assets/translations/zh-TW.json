@@ -274,5 +274,16 @@
   "VS Code": "VS Code",
   "Sublime Text": "Sublime Text",
   "Notepad++": "Notepad++",
-  "Zed": "Zed"
+  "Zed": "Zed",
+  "Connect to Wine Helper": "連線到 Wine Helper",
+  "Open the target game and connect to it to use the mod manager on Linux": "在 Linux 上使用模組管理器，需先開啟目標遊戲並連線",
+  "Connecting...": "正在連線。。。",
+  "Connected": "已連線",
+  "Could not start Wine helper": "無法啟動 Wine helper：{}",
+  "Wine helper stopped": "Wine helper 已停止",
+  "Wine helper file is missing": "缺少 Wine helper 檔案：{}",
+  "Wine helper exited with code": "Wine helper 已結束，代碼 {}",
+  "Wine helper start timed out": "Wine helper 啟動逾時",
+  "Wine helper is not connected, connect to it first.": "Wine helper 未連線，請先連線。",
+  "Wine helper did not answer": "Wine helper 沒有回應"
 }

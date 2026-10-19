@@ -274,5 +274,16 @@
   "VS Code": "VS Code",
   "Sublime Text": "Sublime Text",
   "Notepad++": "Notepad++",
-  "Zed": "Zed"
+  "Zed": "Zed",
+  "Connect to Wine Helper": "Hubungkan ke Wine Helper",
+  "Open the target game and connect to it to use the mod manager on Linux": "Buka target game dan hubungkan untuk menggunakan mod manager di Linux",
+  "Connecting...": "Menghubungkan...",
+  "Connected": "Terhubung",
+  "Could not start Wine helper": "Gagal menjalankan Wine helper: {}",
+  "Wine helper stopped": "Wine helper dihentikan",
+  "Wine helper file is missing": "File Wine helper tidak ditemukan: {}",
+  "Wine helper exited with code": "Wine helper berhenti dengan kode {}",
+  "Wine helper start timed out": "Timeout saat menjalankan Wine helper",
+  "Wine helper is not connected, connect to it first.": "Wine helper belum terhubung, hubungkan terlebih dahulu.",
+  "Wine helper did not answer": "Wine helper tidak merespons"
 }

@@ -1698,15 +1698,18 @@ class _GameSettingsState extends ConsumerState<GameSettings> {
   }
 
   String _helperStatusText() => switch (_helperState) {
-    WineHelperState.notConnected => 'Not Connected'.tr(),
+    WineHelperState.notConnected =>
+      'Open the target game and connect to it to use the mod manager on Linux'
+          .tr(),
     WineHelperState.connecting => 'Connecting...'.tr(),
     WineHelperState.connected => 'Connected'.tr(),
     WineHelperState.failed => _helperMessage,
   };
 
   Color _helperStatusColor() => switch (_helperState) {
-    WineHelperState.connected => const Color.fromARGB(255, 120, 220, 140),
-    WineHelperState.failed => const Color.fromARGB(255, 255, 140, 140),
+    WineHelperState.connected => Colors.green,
+    WineHelperState.failed => Colors.red,
+    WineHelperState.notConnected => Colors.yellow,
     _ => const Color.fromARGB(200, 255, 255, 255),
   };
   //WINE HELPER

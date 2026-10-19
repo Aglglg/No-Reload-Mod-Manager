@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:no_reload_mod_manager/utils/detect_game_wine.dart';
 
 class IniCheckError {
@@ -93,7 +94,9 @@ class WineHelperClient {
     } catch (error) {
       await stop();
       if (error is WineHelperException) rethrow;
-      throw WineHelperException('Could not start Wine helper: $error');
+      throw WineHelperException(
+        'Could not start Wine helper'.tr(args: [error.toString()]),
+      );
     }
   }
 
@@ -127,7 +130,7 @@ class WineHelperClient {
 
     while (_waitingForReply.isNotEmpty) {
       _waitingForReply.removeFirst().completeError(
-        WineHelperException('Wine helper stopped'),
+        WineHelperException('Wine helper stopped'.tr()),
       );
     }
   }
@@ -147,7 +150,7 @@ class WineHelperClient {
     final path =
         '$appFolder/data/flutter_assets/assets/wine_helper/nrmm_wine_helper.exe';
     if (!File(path).existsSync()) {
-      throw WineHelperException('Wine helper file is missing: $path');
+      throw WineHelperException('Wine helper file is missing'.tr(args: [path]));
     }
     return path;
   }
@@ -184,7 +187,9 @@ class WineHelperClient {
     process.exitCode.then((code) {
       if (!portFound.isCompleted) {
         portFound.completeError(
-          WineHelperException('Wine helper exited with code $code'),
+          WineHelperException(
+            'Wine helper exited with code'.tr(args: [code.toString()]),
+          ),
         );
       }
     });
@@ -192,7 +197,7 @@ class WineHelperClient {
     return portFound.future.timeout(
       const Duration(seconds: 20),
       onTimeout:
-          () => throw WineHelperException('Wine helper did not start in time'),
+          () => throw WineHelperException('Wine helper start timed out'.tr()),
     );
   }
 
@@ -238,7 +243,9 @@ class WineHelperClient {
     final socket = _socket;
     if (socket == null) {
       return Future.error(
-        WineHelperException('Wine helper is not running, run it first.'),
+        WineHelperException(
+          'Wine helper is not connected, connect to it first.'.tr(),
+        ),
       );
     }
 
@@ -251,7 +258,7 @@ class WineHelperClient {
       onTimeout: () {
         // Replies are matched by order, so after a missed reply the connection can't be trusted
         _helperLost();
-        throw WineHelperException('Wine helper did not answer');
+        throw WineHelperException('Wine helper did not answer'.tr());
       },
     );
   }
