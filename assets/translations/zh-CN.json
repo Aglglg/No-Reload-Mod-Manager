@@ -285,5 +285,6 @@
   "Wine helper exited with code": "Wine helper 已退出，代码 {}",
   "Wine helper start timed out": "Wine helper 启动超时",
   "Wine helper is not connected, connect to it first.": "Wine helper 未连接，请先连接。",
-  "Wine helper did not answer": "Wine helper 没有响应"
+  "Wine helper did not answer": "Wine helper 没有响应",
+  "Start the game first": "请先启动游戏"
 }

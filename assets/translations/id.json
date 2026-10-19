@@ -285,5 +285,6 @@
   "Wine helper exited with code": "Wine helper berhenti dengan kode {}",
   "Wine helper start timed out": "Timeout saat menjalankan Wine helper",
   "Wine helper is not connected, connect to it first.": "Wine helper belum terhubung, hubungkan terlebih dahulu.",
-  "Wine helper did not answer": "Wine helper tidak merespons"
+  "Wine helper did not answer": "Wine helper tidak merespons",
+  "Start the game first": "Jalankan game-nya dulu"
 }

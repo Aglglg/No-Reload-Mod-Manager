@@ -285,5 +285,6 @@
   "Wine helper exited with code": "Wine helper завершился с кодом {}",
   "Wine helper start timed out": "Тайм-аут запуска Wine helper",
   "Wine helper is not connected, connect to it first.": "Wine helper не подключен, сначала подключитесь к нему.",
-  "Wine helper did not answer": "Wine helper не отвечает"
+  "Wine helper did not answer": "Wine helper не отвечает",
+  "Start the game first": "Сначала запустите игру"
 }
