@@ -286,5 +286,7 @@
   "Wine helper start timed out": "Wine helper 啟動逾時",
   "Wine helper is not connected, connect to it first.": "Wine helper 未連線，請先連線。",
   "Wine helper did not answer": "Wine helper 沒有回應",
-  "Start the game first": "請先啟動遊戲"
+  "Start the game first": "請先啟動遊戲",
+  "Window Border Opacity": "視窗邊框透明度",
+  "Window Corner Radius": "視窗圓角半徑"
 }

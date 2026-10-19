@@ -286,5 +286,7 @@
   "Wine helper start timed out": "Тайм-аут запуска Wine helper",
   "Wine helper is not connected, connect to it first.": "Wine helper не подключен, сначала подключитесь к нему.",
   "Wine helper did not answer": "Wine helper не отвечает",
-  "Start the game first": "Сначала запустите игру"
+  "Start the game first": "Сначала запустите игру",
+  "Window Border Opacity": "Непрозрачность границы окна",
+  "Window Corner Radius": "Радиус скругления окна"
 }

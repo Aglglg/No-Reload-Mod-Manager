@@ -286,5 +286,7 @@
   "Wine helper start timed out": "Wine helper start timed out",
   "Wine helper is not connected, connect to it first.": "Wine helper is not connected, connect to it first.",
   "Wine helper did not answer": "Wine helper did not answer",
-  "Start the game first": "Start the game first"
+  "Start the game first": "Start the game first",
+  "Window Border Opacity": "Window Border Opacity",
+  "Window Corner Radius": "Window Corner Radius"
 }
