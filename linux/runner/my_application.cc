@@ -14,10 +14,30 @@ struct _MyApplication {
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 
+#ifdef GDK_WINDOWING_X11
+// Tells KWin to blur everything behind the window.
+static void enable_kde_blur(GtkWidget* window) {
+  GdkWindow* gdk_window = gtk_widget_get_window(window);
+  if (!GDK_IS_X11_WINDOW(gdk_window)) return;
+
+  GdkAtom blur_property = gdk_atom_intern("_KDE_NET_WM_BLUR_BEHIND_REGION", FALSE);
+  GdkAtom cardinal_type = gdk_atom_intern("CARDINAL", FALSE);
+  gulong empty_region = 0;  // empty region = blur the whole window
+
+  gdk_property_change(gdk_window, blur_property, cardinal_type, 32,
+                      GDK_PROP_MODE_REPLACE,
+                      reinterpret_cast<const guchar*>(&empty_region), 0);
+}
+#endif
+
 // Called when first Flutter frame received.
 static void first_frame_cb(MyApplication* self, FlView* view) {
   GtkWidget* window = gtk_widget_get_toplevel(GTK_WIDGET(view));
-  gtk_window_set_keep_above(GTK_WINDOW(window), TRUE);
+    gtk_window_set_keep_above(GTK_WINDOW(window), TRUE);
+    
+#ifdef GDK_WINDOWING_X11
+  enable_kde_blur(window);
+#endif
 
 #ifndef NDEBUG
   gtk_widget_show(window);
@@ -38,31 +58,16 @@ static void my_application_activate(GApplication* application) {
 
   gtk_window_set_keep_above(window, TRUE);
 
-  // X11 needs an RGBA visual, otherwise transparent pixels render black.
-  GdkScreen* screenA = gtk_window_get_screen(window);
-  GdkVisual* rgba_visual = gdk_screen_get_rgba_visual(screenA);
-  if (rgba_visual != nullptr && gdk_screen_is_composited(screenA)) {
+    GdkScreen* screen = gtk_window_get_screen(window);
+  GdkVisual* rgba_visual = gdk_screen_get_rgba_visual(screen);
+  if (rgba_visual != nullptr && gdk_screen_is_composited(screen)) {
     gtk_widget_set_visual(GTK_WIDGET(window), rgba_visual);
   }
   gtk_widget_set_app_paintable(GTK_WIDGET(window), TRUE);
 
-  // Use a header bar when running in GNOME as this is the common style used
-  // by applications and is the setup most users will be using (e.g. Ubuntu
-  // desktop).
-  // If running on X and not using GNOME then just use a traditional title bar
-  // in case the window manager does more exotic layout, e.g. tiling.
-  // If running on Wayland assume the header bar will work (may need changing
-  // if future cases occur).
-  gboolean use_header_bar = TRUE;
-#ifdef GDK_WINDOWING_X11
-  GdkScreen* screen = gtk_window_get_screen(window);
-  if (GDK_IS_X11_SCREEN(screen)) {
-    const gchar* wm_name = gdk_x11_screen_get_window_manager_name(screen);
-    if (g_strcmp0(wm_name, "GNOME Shell") != 0) {
-      use_header_bar = FALSE;
-    }
-  }
-#endif
+  // Disable Client-Side Decorations (CSD) to use KDE Plasma's native server-side decorations 
+  gboolean use_header_bar = FALSE;
+
   if (use_header_bar) {
     GtkHeaderBar* header_bar = GTK_HEADER_BAR(gtk_header_bar_new());
     gtk_widget_show(GTK_WIDGET(header_bar));
