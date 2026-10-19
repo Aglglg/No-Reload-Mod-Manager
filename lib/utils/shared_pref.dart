@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:no_reload_mod_manager/utils/constant_var.dart';
 import 'package:no_reload_mod_manager/utils/mods_path_validator.dart';
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SharedPrefUtils {
@@ -13,26 +14,16 @@ class SharedPrefUtils {
 
   SharedPrefUtils._internal();
 
-  String getSharedPrefPath() {
+  Future<String> getSharedPrefPath() async {
     if (Platform.isWindows) {
       return p.join(
         getUserProfilePathWindows(),
         r'AppData\Roaming\com.aglg\No Reload Mod Manager\shared_preferences.json',
       );
     } else if (Platform.isLinux) {
-      // Linux: $XDG_DATA_HOME, or ~/.local/share if it's not set
-      final home = Platform.environment['HOME'] ?? '';
-      final xdgDataHome = Platform.environment['XDG_DATA_HOME'];
-      final dataFolder =
-          (xdgDataHome != null && xdgDataHome.isNotEmpty)
-              ? xdgDataHome
-              : p.join(home, '.local', 'share');
-
-      return p.join(
-        dataFolder,
-        'com.aglg.no_reload_mod_manager',
-        'shared_preferences.json',
-      );
+      // Same folder the shared_preferences plugin writes to, normal build or AppImage
+      final supportFolder = await getApplicationSupportDirectory();
+      return p.join(supportFolder.path, 'shared_preferences.json');
     } else {
       return '';
     }
@@ -43,7 +34,7 @@ class SharedPrefUtils {
       _prefs ??= await SharedPreferences.getInstance();
       return true;
     } catch (_) {
-      await File(getSharedPrefPath()).delete();
+      await File(await getSharedPrefPath()).delete();
       _prefs ??= await SharedPreferences.getInstance();
       return false;
     }

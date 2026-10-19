@@ -445,7 +445,9 @@ class _SupportAndStatsDialogState extends ConsumerState<SupportAndStatsDialog> {
     }
 
     DateTime? firstLaunch;
-    final prefDir = Directory(p.dirname(SharedPrefUtils().getSharedPrefPath()));
+    final prefDir = Directory(
+      p.dirname(await SharedPrefUtils().getSharedPrefPath()),
+    );
     if (await prefDir.exists()) {
       final ttfFiles =
           await prefDir

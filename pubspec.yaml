@@ -50,6 +50,7 @@ dependencies:
   package_info_plus: ^8.3.0
   url_launcher: ^6.3.1
   shared_preferences: ^2.5.3
+  path_provider: any
   file_picker: ^10.1.2
   path: ^1.9.1
   flutter_riverpod: ^2.6.1
