@@ -228,6 +228,7 @@ Future<void> setupWindow(List<String> args) async {
 
     bitsdojo.appWindow.minSize = minSize;
     bitsdojo.appWindow.size = savedSize;
+    await windowManager.setSize(savedSize);
     bitsdojo.appWindow.alignment = Alignment.center;
 
     WindowOptions windowOptions = WindowOptions(
