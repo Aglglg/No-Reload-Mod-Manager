@@ -1,0 +1,1 @@
+NRMM now runs on Linux! Try it and report any bugs. || https://github.com/Aglglg/No-Reload-Mod-Manager/releases
