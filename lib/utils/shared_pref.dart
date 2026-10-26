@@ -393,6 +393,48 @@ class SharedPrefUtils {
     }
   }
 
+  Future<void> setSavedAccentColor(int r, int g, int b) async {
+    await _prefs?.setInt(keyAccentR, r);
+    await _prefs?.setInt(keyAccentG, g);
+    await _prefs?.setInt(keyAccentB, b);
+  }
+
+  (int, int, int) getSavedAccentColor() {
+    int? resultR = _prefs?.getInt(keyAccentR);
+    int? resultG = _prefs?.getInt(keyAccentG);
+    int? resultB = _prefs?.getInt(keyAccentB);
+    if (resultR == null || resultG == null || resultB == null) {
+      //default blue
+      return (33, 149, 243);
+    } else {
+      final r = resultR.clamp(0, 255).toInt();
+      final g = resultG.clamp(0, 255).toInt();
+      final b = resultB.clamp(0, 255).toInt();
+      return (r, g, b);
+    }
+  }
+
+  Future<void> setSavedBgColor(int r, int g, int b) async {
+    await _prefs?.setInt(keyBakgroundR, r);
+    await _prefs?.setInt(keyBakgroundG, g);
+    await _prefs?.setInt(keyBakgroundB, b);
+  }
+
+  (int, int, int) getSavedBgColor() {
+    int? resultR = _prefs?.getInt(keyBakgroundR);
+    int? resultG = _prefs?.getInt(keyBakgroundG);
+    int? resultB = _prefs?.getInt(keyBakgroundB);
+    if (resultR == null || resultG == null || resultB == null) {
+      //default black
+      return (0, 0, 0);
+    } else {
+      final r = resultR.clamp(0, 255).toInt();
+      final g = resultG.clamp(0, 255).toInt();
+      final b = resultB.clamp(0, 255).toInt();
+      return (r, g, b);
+    }
+  }
+
   Future<void> setSavedWindow(Size windowSize) async {
     await _prefs?.setDouble(keyWindowWidth, windowSize.width);
     await _prefs?.setDouble(keyWindowHeight, windowSize.height);
@@ -590,6 +632,14 @@ class SharedPrefUtils {
   static const String keySortGroupMethod = "sortGroup";
 
   static const String keyLayoutMode = "layoutMode";
+
+  static const String keyAccentR = "accentR";
+  static const String keyAccentG = "accentG";
+  static const String keyAccentB = "accentB";
+
+  static const String keyBakgroundR = "bgR";
+  static const String keyBakgroundG = "bgG";
+  static const String keyBakgroundB = "bgB";
 
   static const String keyWindowWidth = "windowWidth";
   static const String keyWindowHeight = "windowHeight";

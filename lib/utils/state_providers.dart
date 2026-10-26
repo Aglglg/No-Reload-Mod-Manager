@@ -193,6 +193,17 @@ final explorerViewOpenedForwardPathsEndfield =
 final triggerRefreshModName = StateProvider<bool>((ref) => false);
 final showVerina = StateProvider<bool>((ref) => false);
 final replicatedContextMenuProvider = StateProvider<bool>((ref) => false);
+
+final accentColorProvider = StateProvider<(int, int, int)>((ref) {
+  SharedPrefUtils().tryInit();
+  return SharedPrefUtils().getSavedAccentColor();
+});
+
+final backgroundColorProvider = StateProvider<(int, int, int)>((ref) {
+  SharedPrefUtils().tryInit();
+  return SharedPrefUtils().getSavedBgColor();
+});
+
 String? vsCodePath;
 String? notepadppPath;
 String? sublimeTextPath;

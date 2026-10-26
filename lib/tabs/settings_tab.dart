@@ -38,10 +38,23 @@ class TabSettings extends ConsumerStatefulWidget {
 
 class _TabSettingsState extends ConsumerState<TabSettings> {
   String appVersion = "appVersion";
+  TextEditingController accentColorTextController = TextEditingController();
+  TextEditingController bgColorTextController = TextEditingController();
+
   @override
   void initState() {
     _getAppVersion();
     super.initState();
+
+    accentColorTextController.text = rgbToHex(ref.read(accentColorProvider));
+    bgColorTextController.text = rgbToHex(ref.read(backgroundColorProvider));
+  }
+
+  @override
+  void dispose() {
+    accentColorTextController.dispose();
+    bgColorTextController.dispose();
+    super.dispose();
   }
 
   Future<void> _getAppVersion() async {
@@ -66,6 +79,47 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
       context: context,
       builder: (context) => RestoreModDialog(modDirs: modDirs),
     );
+  }
+
+  final _sixDigitHex = RegExp(r'^[0-9a-fA-F]{6}$');
+
+  /// (33, 149, 243) -> "#2195f3"
+  String rgbToHex((int red, int green, int blue) rgb) {
+    final red = rgb.$1.clamp(0, 255);
+    final green = rgb.$2.clamp(0, 255);
+    final blue = rgb.$3.clamp(0, 255);
+
+    final rgbValue = (red << 16) | (green << 8) | blue;
+    return '#${rgbValue.toRadixString(16).padLeft(6, '0')}';
+  }
+
+  /// "#FF8800" -> (255, 136, 0), or defaultRgb if invalid
+  (int red, int green, int blue) hexToRgb(
+    String hex,
+    (int, int, int) defaultRgb,
+  ) {
+    final cleanHex = hex.replaceFirst('#', '');
+    if (!_sixDigitHex.hasMatch(cleanHex)) return defaultRgb;
+
+    final rgbValue = int.parse(cleanHex, radix: 16); // safe, already validated
+
+    final red = (rgbValue >> 16) & 0xFF;
+    final green = (rgbValue >> 8) & 0xFF;
+    final blue = rgbValue & 0xFF;
+
+    return (red, green, blue);
+  }
+
+  void onAccentColorTextChanged(WidgetRef ref, String text) {
+    final rgb = hexToRgb(text, (33, 149, 243));
+    ref.read(accentColorProvider.notifier).state = rgb;
+    SharedPrefUtils().setSavedAccentColor(rgb.$1, rgb.$2, rgb.$3);
+  }
+
+  void onBackgroundColorTextChanged(WidgetRef ref, String text) {
+    final rgb = hexToRgb(text, (0, 0, 0));
+    ref.read(backgroundColorProvider.notifier).state = rgb;
+    SharedPrefUtils().setSavedBgColor(rgb.$1, rgb.$2, rgb.$3);
   }
 
   @override
@@ -386,58 +440,136 @@ class _TabSettingsState extends ConsumerState<TabSettings> {
                         ),
                       ),
 
-                      // Container(height: 10 * sss),
-                      // Text(
-                      //   'Accent Color'.tr(),
-                      //   style: GoogleFonts.poppins(
-                      //     color: Colors.white,
-                      //     fontSize: 14 * sss,
-                      //     fontWeight: FontWeight.w600,
-                      //   ),
-                      // ),
-                      // SizedBox(height: 10 * sss),
-                      // Row(
-                      //   mainAxisAlignment: MainAxisAlignment.center,
-                      //   children: [
-                      //     SizedBox(
-                      //       width: 80 * sss,
-                      //       child: TextField(
-                      //         textAlign: TextAlign.center,
-                      //         // controller: textSectionController,
-                      //         // onChanged: widget.onSectionChanged,
-                      //         decoration: InputDecoration(
-                      //           isDense: true,
-                      //           disabledBorder: InputBorder.none,
-                      //           enabledBorder: InputBorder.none,
-                      //           border: UnderlineInputBorder(),
-                      //           hintText: '#2195f3',
-                      //           hintStyle: GoogleFonts.poppins(
-                      //             fontWeight: FontWeight.w500,
-                      //             color: const Color.fromARGB(
-                      //               60,
-                      //               255,
-                      //               255,
-                      //               255,
-                      //             ),
-                      //             fontSize: 13 * sss,
-                      //           ),
-                      //         ),
-                      //         maxLines: 1,
-                      //         keyboardType: TextInputType.none,
-                      //         style: GoogleFonts.poppins(
-                      //           fontWeight: FontWeight.w500,
-                      //           color: Colors.white,
-                      //           fontSize: 13 * sss,
-                      //         ),
-                      //         inputFormatters: [
-                      //           FilteringTextInputFormatter.deny(
-                      //             RegExp(r'[\n\r\u0085\u2028\u2029]'),
-                      //           ),
-                      //         ],
-                      //       ),
-                      //     ),
-                      //   ],
-                      // ),
+                      Container(height: 0 * sss),
+                      Text(
+                        'Accent Color'.tr(),
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 14 * sss,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 10 * sss),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 80 * sss,
+                            child: TextField(
+                              textAlign: TextAlign.center,
+                              controller: accentColorTextController,
+                              onChanged: (String text) {
+                                onAccentColorTextChanged(ref, text);
+                              },
+                              onTap: () {
+                                accentColorTextController
+                                    .selection = TextSelection(
+                                  baseOffset: 0,
+                                  extentOffset:
+                                      accentColorTextController.text.length,
+                                );
+                              },
+                              decoration: InputDecoration(
+                                isDense: true,
+                                disabledBorder: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                border: UnderlineInputBorder(),
+                                hintText: '#2195f3',
+                                hintStyle: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color.fromARGB(
+                                    60,
+                                    255,
+                                    255,
+                                    255,
+                                  ),
+                                  fontSize: 13 * sss,
+                                ),
+                              ),
+                              maxLines: 1,
+                              keyboardType: TextInputType.none,
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                                fontSize: 13 * sss,
+                              ),
+                              inputFormatters: [
+                                // Only allow "#", 0-9, a-f, A-F
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'[#0-9a-fA-F]'),
+                                ),
+                                // Max length: "#" + 6 digits
+                                LengthLimitingTextInputFormatter(7),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(height: 15 * sss),
+                      Text(
+                        'Background Color'.tr(),
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 14 * sss,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 10 * sss),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 80 * sss,
+                            child: TextField(
+                              textAlign: TextAlign.center,
+                              controller: bgColorTextController,
+                              onChanged: (String text) {
+                                onBackgroundColorTextChanged(ref, text);
+                              },
+                              onTap: () {
+                                bgColorTextController.selection = TextSelection(
+                                  baseOffset: 0,
+                                  extentOffset:
+                                      bgColorTextController.text.length,
+                                );
+                              },
+                              decoration: InputDecoration(
+                                isDense: true,
+                                disabledBorder: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                border: UnderlineInputBorder(),
+                                hintText: '#000000',
+                                hintStyle: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color.fromARGB(
+                                    60,
+                                    255,
+                                    255,
+                                    255,
+                                  ),
+                                  fontSize: 13 * sss,
+                                ),
+                              ),
+                              maxLines: 1,
+                              keyboardType: TextInputType.none,
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                                fontSize: 13 * sss,
+                              ),
+                              inputFormatters: [
+                                // Only allow "#", 0-9, a-f, A-F
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'[#0-9a-fA-F]'),
+                                ),
+                                // Max length: "#" + 6 digits
+                                LengthLimitingTextInputFormatter(7),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
                       Container(height: 15 * sss),
                       Divider(
                         color: getAccentColor(ref, alpha: 127),
