@@ -1619,6 +1619,14 @@ class _MainViewState extends ConsumerState<MainView>
 
   Future<void> showReplicatedContextMenu() async {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    try {
+      final listAnimController = ref.read(animControllerSpecialSnackbar);
+      for (var controller in listAnimController) {
+        try {
+          unawaited(controller.reverse());
+        } catch (_) {}
+      }
+    } catch (_) {}
 
     if (ref.read(alertDialogShownProvider)) {
       await windowManager.show();
