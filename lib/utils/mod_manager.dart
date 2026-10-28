@@ -3351,18 +3351,70 @@ String getCurrentModsPath(TargetGame targetGame) {
 Future<void> openFileExplorerToSpecifiedPath(String path) async {
   if (!await Directory(path).exists()) return;
 
-  final String command;
   if (Platform.isWindows) {
-    command = 'explorer';
+    await Process.run('explorer', [path]);
   } else if (Platform.isLinux) {
-    command = 'xdg-open';
-  } else {
-    return;
+    await _openFolderOnLinux(path);
+  }
+}
+
+Future<void> _openFolderOnLinux(String path) async {
+  final cleanEnvironment = _removeAppImageParts(Platform.environment);
+
+  // Try each opener until one works.
+  final openers = [
+    ['xdg-open', path],
+    ['gio', 'open', path],
+  ];
+
+  for (final opener in openers) {
+    try {
+      final result = await Process.run(
+        opener.first,
+        opener.sublist(1),
+        environment: cleanEnvironment,
+        includeParentEnvironment: false,
+      );
+      if (result.exitCode == 0) return;
+      print('${opener.first} failed (${result.exitCode}): ${result.stderr}');
+    } catch (error) {
+      print('${opener.first} could not start: $error');
+    }
+  }
+}
+
+/// Removes everything that points inside the AppImage from ALL variables.
+Map<String, String> _removeAppImageParts(Map<String, String> original) {
+  final appDir = original['APPDIR'];
+  final cleaned = <String, String>{};
+
+  for (final entry in original.entries) {
+    // Not running as AppImage: keep everything.
+    if (appDir == null) {
+      cleaned[entry.key] = entry.value;
+      continue;
+    }
+
+    // Drop AppImage's own variables.
+    if (entry.key == 'APPDIR' ||
+        entry.key == 'APPIMAGE' ||
+        entry.key == 'ARGV0') {
+      continue;
+    }
+
+    // Keep only the parts that are NOT inside the AppImage.
+    final keptParts =
+        entry.value
+            .split(':')
+            .where((part) => !part.startsWith(appDir))
+            .toList();
+
+    if (keptParts.isNotEmpty) {
+      cleaned[entry.key] = keptParts.join(':');
+    }
   }
 
-  try {
-    await Process.run(command, [path]);
-  } catch (_) {}
+  return cleaned;
 }
 
 Future<bool> completeDisableMod(String modPath) async {
