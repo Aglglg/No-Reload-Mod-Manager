@@ -1,15 +1,23 @@
-### To-do list
-- Bugfixes 
+# No Reload Mod Manager
+
+A mod organizer and switcher for games supported by [XXMI Launcher](https://github.com/SpectrumQT/XXMI-Launcher) and 3DMigoto. Switch mods in real-time without reloading the mods.
+
+> **Note:** This tool **only manages mod files and folders**. It will also modify mod `.ini` files so it can be switched without reload ([see below](https://github.com/Aglglg/No-Reload-Mod-Manager#how-it-works)). It does **not** inject into the game process or load mods itself — that's handled by 3DMigoto or [XXMI Launcher](https://github.com/SpectrumQT/XXMI-Launcher). This app ships **empty** by default; no mods are included. You must source and install your own mods.
+
 ---
 
-# No Reload Mod Manager / Skin Selection
-(for XXMI Launcher supported games, or 3dmigoto mod)
-
 ## Quick Start
-1. Download.
-2. Install normally.
-3. Run it. Open from system tray or press Alt+W in-game.
-4. Check that your Mods path in Settings is correct (don’t rely on auto-detect).
+
+1. **Download** the latest release for your platform:
+   - **Windows**: installer `.exe` or portable `.zip`
+   - **Linux**: `.AppImage`
+2. **Run** the application and look for the icon in your system tray
+3. Verify your **Mods Path** in Settings (auto-detect may target wrong path)
+4. Click **Update Mod Data**
+5. **Create a group** and **drag and drop** your mods, a single group is meant for a single character
+6. Press **Alt+W** (default) in-game to open the manager
+
+---
 
 ## Main Features
 - Select and manage mods
@@ -27,129 +35,133 @@
 
 ---
 
-## Guide
-
-### How To Install
-1. **Download** the installer setup file.
-2. **Double-click** the installer exe file and install as usual.
-4. **Open** the installed program.
-5. If the program running, you can see its icon on **System Tray** (bottom-right corner).
-6. **Click** the icon on system tray, select your target game. It will open the Mod Manager window.
-7. Go to **Settings** tab, make sure **Mods Path** is correct for your specified game.
-8. **Click Update Mod Data**
-9. Done.
-
-...
-
-### How To Open Mod Manager Window Without Going To System Tray
-1. Make sure your current window is your target game's window.
-2. Press **Alt+W**(default), this will show/hide mod manager window.
-3. If it does nothing, make sure it's running & on system tray. And then, check on **Settings** tab, make sure **Target Process** is correct. Make sure **Toggle Window Shortcuts** is correct.
-
-...
-
-### How To Automatically Run When Opening Game With XXMI (Optional)
-1. Make sure it's already installed.
-2. Search **No Reload Mod Manager** with Windows Search.
-3. You should see option to **Open File Location**. Click it.
-4. Right-click on it, select **Copy as path**.
-5. Open your XXMI, on your target game, go to XXMI Setting, Go to Advanced, Tick Run-Post Launch/Run Pre-Launch (up to you, choose one).
-6. Paste the copied path there.
-
-...
-
-### How To Add Group/Mod
-1. Make sure your **Mods Path** is valid.
-2. While on **Mods** tab right click anywhere and look for **Add group**.
-3. Right-click on mods selection area and select **Add mod**.
-4. Now you can drag & drop mod folders. 1 folder = 1 mod.
-5. Press F10 to reload **if not automatically reloaded**.
-6. Max mods per group is **500 mods**. Max group is **500 groups.**
-### How To Add Group/Mod directly via File Explorer
-1. Go to your **\_MANAGED\_** folder on your **Mods** folder.
-2. In there, you can create new folder, it is group folder. The naming format is **group_x** where x is 1-500. Make sure the naming format is exactly correct and in lower-case. **Example: group_1, group_14, group_48.**
-3. Go to group folder, you can paste your mods folder here. 1 folder = 1 mod.
-4. Open Mod Manager Window. Press **Update Mod Data**. This step is **very important**.
-5. Press F10 to reload **if not automatically reloaded**.
-
-...
-
-### How To Remove Group/Mod
-1. Make sure your **Mods Path** is valid.
-2. While on **Mods** tab right click on group/mod and select remove group/mod.
-3. This will move your mod/group folder to **DISABLED_MANAGED_REMOVED** on your **Mods** folder.
-4. It will automatically restore the mod's .ini files by removing mod manager-specific lines only. The rest of the mod files are not affected.
-5. Press F10 to reload **if not automatically reloaded**.
-### How To Remove Group/Mod directly via File Explorer
-1. Go to your **\_MANAGED\_** folder on your **Mods** folder.
-2. In there, you can delete/move group or mod folder.
-3. In case you moved it and not delete it, open Mod Manager Window and go to **Settings** tab. Drag and drop the folders to the **Restorer**. This step is **very important**.
-4. It will restore the mod's .ini files by removing mod manager-specific lines only. Your original mod content remains untouched.
-5. Open Mod Manager Window. Press **Update Mod Data**. This step is **very important**.
+## Preview
+(These are taken on Linux, Windows may differs)
+<p align="center">
+  <img src="screenshots/ACarousel.png" width="600" alt="Carousel mod view">
+  <img src="screenshots/AGrid.png" width="600" alt="Grid mod view">
+  <br>
+  <img src="screenshots/AKeybind.png" width="600" alt="Keybind editor">
+  <img src="screenshots/ASetting.png" width="600" alt="Settings window">
+  <br>
+  <img src="screenshots/ATray.png" width="300" alt="Tray menu">
+</p>
 
 ---
 
-## Disclaimer & Warnings
-Even though this is not main mod loader or mod tool, and only tool to organize mod folders, but:
-- **Use at your own risk.**
-- **Not responsible for account issues due to mod usage.**
-- By downloading and using this tool, you **accept full responsibility**.
+## Usage
+
+### Opening the Mod Manager Window
+
+- **System Tray**: Right-click the tray icon → select your game
+- **In-Game Shortcut**: Press **Alt+W** (default). Works when the target game window is active. If nothing happens, verify:
+  - The app is running (check system tray)
+  - **Target Process** matches your game's executable in Settings
+  - **Toggle Window Shortcuts** (Alt+W) is set correctly
+
+### Auto-start with XXMI Launcher (Optional)
+
+1. Right-click the Start menu entry → **Open File Location**
+2. Right-click the shortcut → **Copy as path**
+3. Open XXMI Launcher → Settings → Advanced
+4. Enable **Run Pre-Launch** or **Run Post-Launch**
+5. Paste the path
+
+### Adding Groups and Mods
+
+**Via UI:**
+1. Go to the **Mods** tab
+2. Right-click → **Add Group** (then optionally **Add Mod**)
+3. Drag & drop mod folders into the group area (1 folder = 1 mod)
+4. A single group is meant for one character
+4. Click **Update Mod Data** to modify the `.ini` files
+
+**Via File Explorer:**
+1. Navigate to `Mods\_MANAGED_\`
+2. Create a group folder named `group_1`, `group_2`, etc. (lowercase, sequential)
+3. Place mod folders inside the group folder
+4. Open Mod Manager window → click **Update Mod Data**
+
+> **Limits:** 500 mods per group, 500 groups total.
+
+### Removing Groups and Mods
+
+**Via UI:**
+1. Right-click a group or mod → **Remove Group/Mod**
+2. The folder moves to `Mods\DISABLED_MANAGED_REMOVED\`
+3. `.ini` files are restored (manager lines removed automatically)
+
+**Via File Explorer:**
+1. Move or delete the folder inside `Mods\_MANAGED_\`
+2. Drag the folder to the **Restorer** area in Settings to remove manager lines
+3. Click **Update Mod Data**
+
+---
+
+## How It Works
+
+No Reload Mod Manager switches mods in real-time by patching `.ini` files that XXMI/3DMigoto reads at runtime.
+
+### Mod File Modification
+- Happens when you press **Update Mod Data**
+- Only `.ini` files inside `_MANAGED_` are modified
+- Changes are **minimal** — no new sections are added
+- The manager adds `if-endif` blocks around [TextureOverride], [ShaderOverride], [ShaderRegex] main, [Present] sections and sets `$managed_slot_id` in the `[Constants]` section
+- Duplicated namespaces across mods are automatically renamed to avoid conflicts
+- Broken `if-elif-endif` structures detected by the XXMI/3DMigoto parser are commented out (prefixed with `;-;`)
+
+### Update Mod Data Process
+
+1. Reads the configured **Mods Path** and verifies `d3dx.ini` + `d3d11.dll` exist alongside it
+2. Creates the `_MANAGED_` folder for managed mods
+3. Generates helper files (`nrmm_keypress.txt`, `manager_group.ini`)
+4. Scans all `group_x` folders for mods
+5. Renames duplicate namespaces across mods
+6. Parses each mod's `.ini` files against the XXMI/3DMigoto ruleset
+7. Comments out Broken `if-elif-endif` lines, adds `$managed_slot_id` assignments, wraps command sections in `if-endif`
+8. Creates backup of the original `.ini` files before modification, if not present yet
+9. Displays a report of missing/duplicate libraries and issues
+10. Saves via temp file (atomic write) to prevent corruption
+
+> **Tip:** Use the **Restorer** in Settings to remove manager-added lines before distributing your mods or using the mods without mod manager.
+
+### Keybinds Simulated
+
+The manager simulates input for in-game mod switching:
+- **VK_CLEAR**, **Space**, **Enter** keys
+- **Mouse coordinates** (x, y) — determines group and mod index
+- Any key defined by your mods' `.ini` files (when click-to-simulate is enabled)
+
+---
 
 ## Technical Details
-- Built with **Flutter (Dart)**.
-- Toggle window shortcuts (Alt+W) works by reading **target game process names** (e.g., `Client-Win64-Shipping.exe`).
-- In order to change selected mods, this tool will do VK_KEYS keypress simulation & mouse movement.
-- The mods that you added also being modified, you can remove the lines that were added by the mod manager, by dragging it to Restorer area on Settings.
 
-## Mod Ini Files Modification
-- In order to switch selected mod in realtime without reload, ini files modification is needed.
-- Only mods inside `_MANAGED_` that are modified.
-- The changes made to the `.ini` files are minimal, and no new sections are ever added.
-- The changes made to the `.ini` files are guaranteed to be valid, as it is already smart enough to determine _bad_ lines from modder.
-- The manager only adds `if-endif` lines to the `Command List` sections and the `$managed_slot_id` variable to the existing `Constants` section.
-- **It is really recommended to remove the `if-endif` lines added by the manager, by using Restorer in Settings if you’re not using it anymore or if you wanted to post/distribute your mods**.
-- The restorer has been programmed to removes only mod manager specific lines/words without reverting everything back to zero (v2.8.3++).
-<details>
- <summary><h3>(CLICK TO EXPAND AND READ THE DETAILED PROCESS)</h3></summary>
-
-**When you press the Update Mod Data button, the following process occurs:**  
-1. The manager gets the `Mods` path from the field you filled in.
-2. It checks for `d3dx.ini` and `d3d11.dll` files in the same directory as your `Mods` path (for example: `GIMI\Mods`, `GIMI\d3dx.ini`, and `GIMI\d3d11.dll`). The `d3dx.ini` file is necessary to identify errored lines in your mod files later. And the `d3d11.dll` is just to make sure that you're in modding environment.
-3. If the path is valid, it sets up a `_MANAGED_` folder inside the `Mods` folder. This is where all managed mods are stored. **Only the mods inside this folder will have their .ini files modified.**
-4. It creates the files needed for the mod manager to work, such as `nrmm_keypress.txt` (which ensures simulated keypresses reach XXMI or 3DMigoto seamlessly) and `manager_group.ini` (to handle switching mods between groups).
-5. The manager looks through all group folders inside the `_MANAGED_` folder and identifies every managed mod within them.
-6. It searches for duplicate namespaces between mods. Since modders often use generic namespaces that can clash, the manager will automatically rename them if a conflict is found. This is an "all or nothing" process, meaning it guarantees that no `.ini` file will be left referencing an old namespace once the change is made. But, multiple ini files within the same mod could define `namespace =` line with the same value and it is fine and sometimes intended.
-7. It then uses a function to read the modding environment exactly like the internal parser of `XXMI` or `3DMigoto`. This helps identify errored lines accurately, specifically invalid `if-elif-endif` structures that could interfere with the manager's modifications.
-8. For every group folder, the manager deletes the old `group_x.ini` config file (where x is the group index) and creates a new one. It then processes each mod inside those groups.
-9. It looks for `.ini` files inside the mod folder.
-10. It creates a backup of the `.ini` files if one does not already exist.
-11. For each `.ini` files, it will add `;-;` to the start of any errored lines found during the parsing phase, marking them as ignored or `comments`.
-12. For each `.ini` file, it will look for the `[Constants]` section or create one if not found, and add the variable `global $managed_slot_id = x`, where `x` is the mod's index based on the folder name's sort order.
-13. It looks for `command list` sections (which are: `[Present]`, `[ClearRenderTargetView]`, `[ClearDepthStencilView]`, `[ClearUnorderedAccessViewUint]`, `[ClearUnorderedAccessViewFloat]`, `[BuiltInCustomShader...]`, `[CustomShader...]`, `[BuiltInCommandList...]`, `[CommandList...]`, `[ShaderOverride...]`, `[TextureOverride...]`, main `[ShaderRegex...]`). It adds a manager `if` line (`if $managed_slot_id == $\modmanageragl\group_x\active_slot`) at the first line in the section. And an `endif` at the bottom line of the section. **Because errored lines are already handled previously, adding `if-endif` is safe here**.
-14. It modifies `[Key...]` sections by adding the same manager expression to the `condition =` line.
-15. In sections  `[TextureOverride...]`, `[CustomShader...]`, `[ShaderOverride...]`, and main `[ShaderRegex...]`, certain lines (like `hash`, `match_priority`, `shader_model`, etc) are executed by XXMI or 3dmigoto regardless of the `if-endif` logic. The manager places these lines above the `if` line, **for better readability**.
-16. It also adds four spaces of `indentation` for every line inside an `if` block and removes them after an `endif`. **This is also for better readability only**.
-17. It then saves the modified `.ini` files by writing a temporary file first. Once the save is successful, it renames the temporary file to the original filename. This prevents empty or corrupted files if the app crashes during the process.
-18. Additionally, it also checks for specific lines that are known to crash the game due to flaws in XXMI or 3DMigoto logic. These include a single `[` on a line or a preamble `condition =` line with no value. The manager will remove or mark as `comment` these lines even if the `.ini` file is not part of a managed mod.
-19. The manager also provides a report in the `Update Mod Data` popup regarding duplicated or missing common modding `libraries` (OrFix, Slotfix, RabbitFx, etc) referenced by your mods.
-20. **Congrats for reading it all!**
-</details>
-
-## Keybindings Simulated
-- **Clear Key (VK_CLEAR), Space Key (VK_SPACE), Enter Key (VK_RETURN)**
-- **Mouse position x, y coordinate** - determine group index & mod index
-- **Any keys listed from your mods** - if you enable click to simulate mod keybinds
+| Detail | Information |
+|--------|-------------|
+| **Framework** | Flutter (Dart) |
+| **Target Games** | XXMI Launcher supported games + any 3DMigoto mod |
+| **Window Detection** | Reads target game process name (e.g., `Client-Win64-Shipping.exe`) |
+| **Ini Modifications** | `if-endif` blocks in Command List sections + `$managed_slot_id` in Constants |
+| **File Safety** | Atomic writes via temp file + automatic `.ini` backup |
 
 ---
 
-## Security Concerns
-- Runs in the **background**, app icon can be seen on Tray.
-- **VirusTotal Reports**: Some antivirus programs may flag this tool's files.
-- **If unsure, check the GitHub source code before use.** Or build it yourself if you understand flutter(for personal use only). Or just don't use it.
+## Security
+
+- Runs in the background with a system tray icon
+- VirusTotal reports may falsely flag the installer
+- Source code is available on GitHub — build it yourself for peace of mind
 
 ---
 
 ## Credits
+
 Special thanks to:
-- **All bug reporters, contributors, testers, users, and especially _supporters_!** ❤️
+- All bug reporters, contributors, testers, and users
+- And especially our **supporters** ❤️
+
 ---
+
+## Disclaimer
+
+This is a mod organizer, not a mod loader. Use at your own risk — the developers are **not responsible** for account issues caused by mod usage. By downloading, you accept full responsibility.
