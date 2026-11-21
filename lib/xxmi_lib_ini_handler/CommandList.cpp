@@ -654,6 +654,49 @@ inline bool ParseFloatToken(const std::wstring& input, float& out, size_t& lengt
 	return true;
 }
 
+inline bool ParseHashToken(const std::wstring& input, uint64_t& out, size_t& length)
+{
+	out = 0;
+	length = 0;
+
+	const wchar_t* begin = input.c_str();
+	const wchar_t* p = begin;
+
+	// Optional 0x prefix.
+	if (p[0] == L'0' && (p[1] == L'x'))
+		p += 2;
+
+	uint64_t value = 0;
+	size_t digits = 0;
+
+	for (; *p; ++p)
+	{
+		unsigned int digit;
+
+		if (*p >= L'0' && *p <= L'9')
+			digit = *p - L'0';
+		else if (*p >= L'a' && *p <= L'f')
+			digit = *p - L'a' + 10;
+		else
+			break;
+
+		// Maximum 64-bit hash: 16 hexadecimal digits.
+		if (digits >= 16)
+			return false;
+
+		value = (value << 4) | digit;
+		++digits;
+	}
+
+	if (digits == 0)
+		return false;
+
+	out = value;
+	length = static_cast<size_t>(p - begin);
+
+	return true;
+}
+
 #pragma region CommandArgumentReader
 
 bool CommandArgumentReader::PeekToken(std::wstring* token, PeekMode mode)
@@ -803,6 +846,32 @@ bool CommandArgumentReader::GetTarget(Globals& G, ResourceCopyTarget* out, bool 
 	return true;
 }
 
+bool CommandArgumentReader::GetFilter(Globals& G, ResourceFilterTarget* out, bool is_source, PeekMode mode, bool validate)
+{
+	std::wstring token;
+
+	if (!PeekToken(&token, mode))
+		return false;
+
+	if (validate && FindResourceCopyTargetTokenEnd(token, 0) != token.size())
+	{
+		SetError(L"Invalid filter: " + token, m_peek_start_pos);
+		return false;
+	}
+
+	if (!out->ParseTarget(G, token.c_str(), is_source, m_ini_namespace, m_scope))
+	{
+		SetError(L"Unknown filter: " + token, m_peek_start_pos);
+		return false;
+	}
+
+	ConsumeToken();
+
+	//LogDebugW(L"  ResourceFilterTarget: '%ls'\n", token.c_str());
+
+	return true;
+}
+
 bool CommandArgumentReader::GetFloat(float* out)
 {
 	std::wstring token;
@@ -821,6 +890,28 @@ bool CommandArgumentReader::GetFloat(float* out)
 	ConsumeToken();
 
 	//LogDebugW(L"  Float: '%ls'\n", token.c_str());
+
+	return true;
+}
+
+bool CommandArgumentReader::GetHash(uint64_t* out)
+{
+	std::wstring token;
+
+	if (!PeekToken(&token))
+		return false;
+
+	size_t len;
+
+	if (!ParseHashToken(token, *out, len) || len != token.size())
+	{
+		SetError(L"Invalid hash: " + token, m_peek_start_pos);
+		return false;
+	}
+
+	ConsumeToken();
+
+	//LogDebugW(L"  Hash: '%ls'\n", token.c_str());
 
 	return true;
 }
@@ -1404,6 +1495,14 @@ static void tokenise(Globals& G, const std::wstring* expression, CommandListSynt
 			if (operand->parse_target(G, &token, ini_namespace, scope))
 			{
 				//LogDebugW(L"      ResourceCopyTarget: \"%ls\"\n", token.c_str());
+				pos += len_target;
+				goto import_operand;
+			}
+
+			// Parse Filter section value getters (e.g. `FilterA`).
+			if (operand->parse_resource_filter(G, &token, ini_namespace, scope))
+			{
+				//LogDebug("      Filter: \"%S\"\n", token.c_str());
 				pos += len_target;
 				goto import_operand;
 			}
@@ -2210,6 +2309,17 @@ bool CommandListOperand::parse_shader(Globals& G, const std::wstring* operand, c
 	return false;
 }
 
+bool CommandListOperand::parse_resource_filter(Globals& G, const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope)
+{
+	int ret;
+	ret = filter_target.ParseTarget(G, operand->c_str(), true, ini_namespace, scope);
+	if (ret) {
+		type = ParamOverrideType::RESOURCE_FILTER;
+		return operand_allowed_in_context(type, scope);
+	}
+	return false;
+}
+
 bool CommandListOperand::parse_scissor(const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope)
 {
 	int len1 = 0;
@@ -2348,6 +2458,142 @@ bail:
 	return false;
 }
 
+ResourceFilter* ResourceFilter::ResolveFilter()
+{
+	return source_filter ? source_filter->ResolveFilter() : this;
+}
+
+bool ResourceFilter::SetSource(ResourceFilter* src)
+{
+	if (src == source_filter)
+		return true;
+
+	if (!src)
+	{
+		source_filter = nullptr;
+		return true;
+	}
+
+	ResourceFilter* root = src->ResolveFilter();
+
+	// Prevent self-reference.
+	if (root == this) {
+		/*LogOverlayW(LOG_NOTICE, L"Ignoring cyclic filter reference `%ls` <=> `%ls`\n",
+			name.c_str(), src->name.c_str());*/
+		return false;
+	}
+
+	source_filter = root;
+	return true;
+}
+
+void ResourceFilter::CopyMetadataFrom(const ResourceFilter& src)
+{
+	is_empty = src.is_empty;
+
+	match_dhash = src.match_dhash;
+	match_format = src.match_format;
+	match_confidence = src.match_confidence;
+}
+
+IniParserResult ResourceFilterTarget::ParseTargetPrefix(const wchar_t*& target, size_t& length)
+{
+	switch (target[0]) {
+	case L'@':
+		evaluation_mode = ResourceFilterTargetEvaluationMode::FILTER_IDENTITY;
+		target++;
+		length--;
+		return IniParserResult::TOKEN_FOUND;
+	}
+	return IniParserResult::TOKEN_NOT_FOUND;
+}
+
+IniParserResult ResourceFilterTarget::ParseTargetMember(
+	Globals& G, const wchar_t*& target, size_t& length, std::wstring& temp_target, const std::wstring* ini_namespace, CommandListScope* scope
+)
+{
+	//LogInfo("ResourceFilterTarget::ParseTargetMember: target=%ls, length=%d\n", target, length);
+
+	if (length < 15) // Smallest possible match is "filtera->format".
+		return IniParserResult::TOKEN_NOT_FOUND;
+
+	static constexpr MemberInfo members[] = {
+		{ L"->format",      8, ResourceFilterTargetEvaluationMode::FORMAT },
+		{ L"->confidence", 12, ResourceFilterTargetEvaluationMode::CONFIDENCE },
+	};
+
+	return SyntaxTarget::ParseTargetMember(G, members, target, length, temp_target, evaluation_mode, ini_namespace, scope);
+}
+
+bool ResourceFilterTarget::ParseTarget(Globals & G, const wchar_t* target, bool is_source, const std::wstring* ini_namespace, CommandListScope* scope)
+{
+	IniParserResult ret;
+	size_t length = wcslen(target);
+	std::wstring temp_target;
+
+	filter = nullptr;
+
+	if (!target)
+		return false;
+
+	if (length == 4 && is_source && !_wcsnicmp(target, L"null", 4))
+	{
+		type = ResourceFilterTargetType::EMPTY;
+		return true;
+	}
+
+	// Consume an optional target prefix (`@`).
+	ret = ParseTargetPrefix(target, length);
+	//LogInfo("ParseTarget: %d at ParseTargetPrefix\n", ret);
+	if (ret == IniParserResult::SYNTAX_ERROR)
+		return false;
+
+	// Target must start with "filter".
+	if (length < 7 || _wcsnicmp(target, L"filter", 6))
+		return false;
+
+	// Consume an optional member suffix. Not compatible with identity prefix.
+	if (evaluation_mode != ResourceFilterTargetEvaluationMode::FILTER_IDENTITY)
+	{
+		ret = ParseTargetMember(G, target, length, temp_target, ini_namespace, scope);
+		//LogInfo("ParseTarget: %d at ParseTargetMember\n", ret);
+		if (ret == IniParserResult::SYNTAX_ERROR)
+			return false;
+	}
+
+	std::wstring filter_id(target);
+	std::wstring namespaced_section;
+
+	ResourceFilters::iterator resource_filter = G.resourceFilters.end();
+	if (get_namespaced_section_name_lower(&filter_id, ini_namespace, &namespaced_section))
+		resource_filter = G.resourceFilters.find(namespaced_section);
+	if (resource_filter == G.resourceFilters.end())
+		resource_filter = G.resourceFilters.find(filter_id);
+	if (resource_filter == G.resourceFilters.end())
+		return false;
+
+	filter = &resource_filter->second;
+
+	type = ResourceFilterTargetType::FILTER;
+
+	return true;
+}
+
+//float ResourceFilterTarget::GetFilterId(CommandListState* state)
+//{
+//	ResourceFilter* resource_filter = GetFilter();
+//
+//	if (!resource_filter || resource_filter->is_empty)
+//		return 0.0f;
+//
+//	// Hash 64-bit pointer to mix bits
+//	uint64_t hash = HashPointer(resource_filter);
+//
+//	// Encode 64-bit hash as float30 to preserve as much precision as possible at low cost.
+//	return EncodeFloat30((uint32_t)hash);
+//}
+
+
 //float MemberArg::GetValue(CommandListState* state)
 //{
 //	if (expression)
@@ -2477,6 +2723,42 @@ bool SyntaxTarget::ParseMemberArguments(
 			break;
 		}
 
+		case MemberArg::Type::Hash:
+		{
+			uint64_t hash;
+
+			if (!args.GetHash(&hash))
+				return args.Fail();
+
+			member_args[i].constant_hash = hash;
+			member_args[i].type = MemberArg::Type::Hash;
+			break;
+		}
+
+		case MemberArg::Type::Resource:
+		{
+			auto resource = std::make_unique<ResourceCopyTarget>();
+
+			if (!args.GetTarget(G, resource.get(), true, CommandArgumentReader::PeekMode::Token, false, false))
+				return args.Fail();
+
+			member_args[i].resource = std::move(resource);
+			member_args[i].type = MemberArg::Type::Resource;
+			break;
+		}
+
+		case MemberArg::Type::Filter:
+		{
+			auto filter = std::make_unique<ResourceFilterTarget>();
+
+			if (!args.GetFilter(G, filter.get(), true, CommandArgumentReader::PeekMode::Token, true))
+				return args.Fail();
+
+			member_args[i].filter = std::move(filter);
+			member_args[i].type = MemberArg::Type::Filter;
+			break;
+		}
+
 		case MemberArg::Type::Unsigned:
 		case MemberArg::Type::Signed:
 		case MemberArg::Type::Float:
@@ -2584,9 +2866,15 @@ IniParserResult ShaderTarget::ParseTargetMember(
 		{ L"->srv_stride",     12, ShaderTargetEvaluationMode::DCL_SRV_STRIDE, {{
 			MemberArg::Type::Unsigned, // Slot ID
 		}} },
+		{ L"->cb_last_slot",   14, ShaderTargetEvaluationMode::DCL_CB_LAST_SLOT },
 		{ L"->srv_dimension",  15, ShaderTargetEvaluationMode::DCL_SRV_DIMENSION, {{
 			MemberArg::Type::Unsigned, // Slot ID
 		}} },
+		{ L"->cb_slot_count",  15, ShaderTargetEvaluationMode::DCL_CB_SLOT_COUNT },
+		{ L"->cb_first_slot",  15, ShaderTargetEvaluationMode::DCL_CB_FIRST_SLOT },
+		{ L"->srv_last_slot",  15, ShaderTargetEvaluationMode::DCL_SRV_LAST_SLOT },
+		{ L"->srv_slot_count", 16, ShaderTargetEvaluationMode::DCL_SRV_SLOT_COUNT },
+		{ L"->srv_first_slot", 16, ShaderTargetEvaluationMode::DCL_SRV_FIRST_SLOT },
 	};
 
 	return SyntaxTarget::ParseTargetMember(G, members, target, length, temp_target, evaluation_mode, ini_namespace, scope);
@@ -2662,6 +2950,9 @@ IniParserResult ResourceCopyTarget::ParseTargetMember(
 		{ L"->elementoffset", 15, ResourceCopyTargetEvaluationMode::LAYOUT_ELEMENT_OFFSET, {{
 			MemberArg::Type::String,  // Semantic Name
 			MemberArg::Type::Unsigned // Semantic Index
+		}} },
+		{ L"->hammingdistance", 17, ResourceCopyTargetEvaluationMode::RESOURCE_HAMMING_DISTANCE, {{
+			MemberArg::Type::Filter,  // Dhash Filter
 		}} },
 	};
 
@@ -2929,6 +3220,14 @@ IniParserResult ResourceCopyTarget::ParseTargetSlotExpression(Globals& G, const 
 	max_slot = info->max_slot_count;
 
 	std::wstring inner(open + 1, text + length - 1);
+
+	ResourceFilterTarget filter;
+	if (filter.ParseTarget(G, inner.c_str(), false, ini_namespace, scope)) {
+		slot_filter = filter.GetFilter();
+		evaluation_mode = ResourceCopyTargetEvaluationMode::SLOT_FILTER;
+		return IniParserResult::TOKEN_FOUND;
+	}
+
 	size_t colon = inner.find(L':');
 
 	if (colon == std::wstring::npos) {

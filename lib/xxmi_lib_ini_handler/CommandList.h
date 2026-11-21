@@ -126,6 +126,26 @@ static EnumName_t<const wchar_t*, CustomResourceBindFlags> CustomResourceBindFla
 	{NULL, CustomResourceBindFlags::INVALID} // End of list marker
 };
 
+class ResourceFilter
+{
+public:
+	std::wstring name;
+	bool is_empty = true;
+
+	uint64_t match_dhash = 0;
+	DXGI_FORMAT match_format = DXGI_FORMAT_UNKNOWN;
+	float match_confidence = 0.75f;
+
+	ResourceFilter* ResolveFilter();
+	bool SetSource(ResourceFilter* source);
+	void CopyMetadataFrom(const ResourceFilter& src);
+
+private:
+	ResourceFilter* source_filter = nullptr;
+};
+
+typedef std::unordered_map<std::wstring, class ResourceFilter> ResourceFilters;
+
 //CONCRETE
 class CustomResource
 {
@@ -231,46 +251,50 @@ static EnumName_t<const wchar_t*, ResourceCopyTargetType> ResourceCopyTargetType
 };
 
 enum class ResourceCopyTargetEvaluationMode : uint32_t {
-	INVALID                = 0b00000000000000000000000000000000,
+	INVALID                   = 0b00000000000000000000000000000000,
 
 	// RESOURCE
-	RESOURCE                 = 0b00000000000000000000000000000001,
-	RESOURCE_IDENTITY        = 0b00000000000000000000000000000010,
-	RESOURCE_STRIDE          = 0b00000000000000000000000000000100,
-	RESOURCE_SOURCE_STRIDE   = 0b00000000000000000000000000001000,
-	RESOURCE_SIZE            = 0b00000000000000000000000000010000,
-	RESOURCE_OFFSET          = 0b00000000000000000000000000100000,
-	RESOURCE_REGION_HASH     = 0b00000000000000000000000001000000,
-	RESOURCE_SPATIAL_HASH    = 0b00000000000000000000000010000000,
-	RESOURCE_REGION          = 0b00000000000000000000000100000000,
-	RESOURCE_FORMAT          = 0b00000000000000000000001000000000,
-	RESOURCE_WIDTH           = 0b00000000000000000000010000000000,
-	RESOURCE_HEIGHT          = 0b00000000000000000000100000000000,
-	RESOURCE_ARRAY           = 0b00000000000000000001000000000000,
-	RESOURCE_MIPS            = 0b00000000000000000010000000000000,
-	RESOURCE_BIND_FLAGS      = 0b00000000000000000100000000000000,
-	RESOURCE_MASK            = 0b00000000000000000111111111111111,
+	RESOURCE                  = 0b00000000000000000000000000000001,
+	RESOURCE_IDENTITY         = 0b00000000000000000000000000000010,
+	RESOURCE_STRIDE           = 0b00000000000000000000000000000100,
+	RESOURCE_SOURCE_STRIDE    = 0b00000000000000000000000000001000,
+	RESOURCE_SIZE             = 0b00000000000000000000000000010000,
+	RESOURCE_OFFSET           = 0b00000000000000000000000000100000,
+	RESOURCE_REGION_HASH      = 0b00000000000000000000000001000000,
+	RESOURCE_SPATIAL_HASH     = 0b00000000000000000000000010000000,
+	RESOURCE_REGION           = 0b00000000000000000000000100000000,
+	RESOURCE_FORMAT           = 0b00000000000000000000001000000000,
+	RESOURCE_WIDTH            = 0b00000000000000000000010000000000,
+	RESOURCE_HEIGHT           = 0b00000000000000000000100000000000,
+	RESOURCE_ARRAY            = 0b00000000000000000001000000000000,
+	RESOURCE_MIPS             = 0b00000000000000000010000000000000,
+	RESOURCE_BIND_FLAGS       = 0b00000000000000000100000000000000,
+	// Placeholder            = 0b00000000000000001000000000000000,
+	RESOURCE_HAMMING_DISTANCE = 0b00000000000000010000000000000000,
+	// Placeholder            = 0b00000000000000100000000000000000,
+	RESOURCE_MASK             = 0b00000000000000111111111111111111,
 
 	// POOL
-	POOL_IDENTITY            = 0b00000000000000001000000000000000,
-	POOL_SIZE                = 0b00000000000000010000000000000000,
-	POOL_INDEX               = 0b00000000000000100000000000000000,
-	POOL_FULL_RANGE_RESOURCE = 0b00000000000001000000000000000000,
-	POOL_FULL_RANGE_VARIABLE = 0b00000000000010000000000000000000,
-	POOL_LAST_FRAME          = 0b00000000000100000000000000000000,
-	POOL_RANGE               = 0b00000000001000000000000000000000, // PoolFoo[$a:$b]
+	POOL_IDENTITY             = 0b00000000000001000000000000000000,
+	POOL_SIZE                 = 0b00000000000010000000000000000000,
+	POOL_INDEX                = 0b00000000000100000000000000000000,
+	POOL_FULL_RANGE_RESOURCE  = 0b00000000001000000000000000000000,
+	POOL_FULL_RANGE_VARIABLE  = 0b00000000010000000000000000000000,
+	POOL_LAST_FRAME           = 0b00000000100000000000000000000000,
+	POOL_RANGE                = 0b00000001000000000000000000000000, // PoolFoo[$a:$b]
 
-	POOL_MASK                = 0b00000000001111111000000000000000,
+	POOL_MASK                 = 0b00000001111111000000000000000000,
 
 	// VARIABLE
-	VARIABLE                 = 0b00000000010000000000000000000000,
+	VARIABLE                  = 0b00000010000000000000000000000000,
 
 	// LAYOUT
-	LAYOUT_ELEMENT_FORMAT    = 0b00000000100000000000000000000000,
-	LAYOUT_ELEMENT_OFFSET    = 0b00000001000000000000000000000000,
+	LAYOUT_ELEMENT_FORMAT     = 0b00000100000000000000000000000000,
+	LAYOUT_ELEMENT_OFFSET     = 0b00001000000000000000000000000000,
 
 	// PIPELINE SLOT
-	SLOT_RANGE               = 0b00000010000000000000000000000000, // ps-t[$a:$b]
+	SLOT_RANGE                = 0b00010000000000000000000000000000, // ps-t[$a:$b]
+	SLOT_FILTER               = 0b00100000000000000000000000000000, // ps-t[FilterA]
 };
 SENSIBLE_ENUM(ResourceCopyTargetEvaluationMode);
 static EnumName_t<const wchar_t*, ResourceCopyTargetEvaluationMode> ResourceCopyTargetEvaluationModeNames[] = {
@@ -287,6 +311,7 @@ static EnumName_t<const wchar_t*, ResourceCopyTargetEvaluationMode> ResourceCopy
 	{L"ResourceHeight", ResourceCopyTargetEvaluationMode::RESOURCE_HEIGHT},
 	{L"ResourceArray", ResourceCopyTargetEvaluationMode::RESOURCE_ARRAY},
 	{L"ResourceMips", ResourceCopyTargetEvaluationMode::RESOURCE_MIPS},
+	{L"ResourceHammingDistance", ResourceCopyTargetEvaluationMode::RESOURCE_HAMMING_DISTANCE},
 	{L"ResourceBindFlags", ResourceCopyTargetEvaluationMode::RESOURCE_BIND_FLAGS},
 
 	{L"PoolIdentity", ResourceCopyTargetEvaluationMode::POOL_IDENTITY},
@@ -296,7 +321,7 @@ static EnumName_t<const wchar_t*, ResourceCopyTargetEvaluationMode> ResourceCopy
 	{L"PoolFullRangeVariable", ResourceCopyTargetEvaluationMode::POOL_FULL_RANGE_VARIABLE},
 	{L"PoolRange", ResourceCopyTargetEvaluationMode::POOL_RANGE},
 	{L"SlotRange", ResourceCopyTargetEvaluationMode::SLOT_RANGE},
-
+	//TODO AAAA?
 	{L"Variable", ResourceCopyTargetEvaluationMode::VARIABLE},
 
 	{L"LayoutElementFormat", ResourceCopyTargetEvaluationMode::LAYOUT_ELEMENT_FORMAT},
@@ -306,6 +331,8 @@ static EnumName_t<const wchar_t*, ResourceCopyTargetEvaluationMode> ResourceCopy
 };
 
 class CommandListExpression;
+class ResourceCopyTarget;
+class ResourceFilterTarget;
 
 struct MemberArg
 {
@@ -315,6 +342,9 @@ struct MemberArg
 		Signed,
 		Unsigned,
 		String,
+		Hash,
+		Resource,
+		Filter,
 	};
 
 	Type type = Type::None;
@@ -322,6 +352,9 @@ struct MemberArg
 	std::unique_ptr<CommandListExpression> expression;
 
 	std::wstring constant_string;
+	uint64_t constant_hash;
+	std::unique_ptr<ResourceCopyTarget> resource;
+	std::unique_ptr<ResourceFilterTarget> filter;
 
 	//float GetValue(CommandListState* state);
 	const std::wstring& GetString() const;
@@ -396,6 +429,14 @@ enum class ShaderTargetEvaluationMode : uint32_t {
 	DCL_SRV_TYPE = 0b00000000000000000000000000100000,
 	DCL_SRV_DIMENSION = 0b00000000000000000000000001000000,
 	DCL_SRV_STRIDE = 0b00000000000000000000000010000000,
+
+	DCL_CB_SLOT_COUNT = 0b00000000000000000000000100000000,
+	DCL_CB_FIRST_SLOT = 0b00000000000000000000001000000000,
+	DCL_CB_LAST_SLOT = 0b00000000000000000000010000000000,
+
+	DCL_SRV_SLOT_COUNT = 0b00000000000000000000100000000000,
+	DCL_SRV_FIRST_SLOT = 0b00000000000000000001000000000000,
+	DCL_SRV_LAST_SLOT = 0b00000000000000000010000000000000,
 };
 SENSIBLE_ENUM(ShaderTargetEvaluationMode);
 //static EnumName_t<const wchar_t*, ShaderTargetEvaluationMode> ShaderTargetEvaluationModeNames[] = {
@@ -443,6 +484,8 @@ public:
 	std::unique_ptr<CommandListExpression> range_start = nullptr;
 	std::unique_ptr<CommandListExpression> range_end = nullptr;
 
+	ResourceFilter* slot_filter = nullptr;
+
 	bool forbid_view_cache = false;
 
 	// allow_range: accept ps-t[$a:$b] / PoolFoo[$a:$b] / bare ps-t targets,
@@ -462,6 +505,68 @@ private:
 
 	//CustomResource* static_custom_resource = nullptr;  // Read access should go via GetCustomResource
 	//CommandListVariable* static_pool_variable = nullptr;
+};
+
+enum class ResourceFilterTargetType : uint32_t {
+	INVALID = 0b00000000000000000000000000000000,
+
+	FILTER = 0b00000000000000000000000000000001,
+	EMPTY = 0b00000000000000000000000000000010,
+};
+SENSIBLE_ENUM(ResourceFilterTargetType);
+static EnumName_t<const wchar_t*, ResourceFilterTargetType> ResourceFilterTypeNames[] = {
+	{L"Filter", ResourceFilterTargetType::FILTER},
+	{L"Empty", ResourceFilterTargetType::EMPTY},
+
+	{NULL, ResourceFilterTargetType::INVALID} // End of list marker
+};
+
+enum class ResourceFilterTargetEvaluationMode : uint32_t {
+	INVALID = 0b00000000000000000000000000000000,
+
+	FILTER_IDENTITY = 0b00000000000000000000000000000001,
+	FORMAT = 0b00000000000000000000000000000010,
+	CONFIDENCE = 0b00000000000000000000000000000100,
+};
+SENSIBLE_ENUM(ResourceFilterTargetEvaluationMode);
+static EnumName_t<const wchar_t*, ResourceFilterTargetEvaluationMode> ResourceFilterTargetEvaluationModeNames[] = {
+	{L"FilterIdentity", ResourceFilterTargetEvaluationMode::FILTER_IDENTITY},
+	{L"Format", ResourceFilterTargetEvaluationMode::FORMAT},
+	{L"Confidence", ResourceFilterTargetEvaluationMode::CONFIDENCE},
+
+	{NULL, ResourceFilterTargetEvaluationMode::INVALID} // End of list marker
+};
+
+class ResourceFilterTarget : public SyntaxTarget
+{
+public:
+	using MemberInfo = SyntaxTarget::MemberInfo<ResourceFilterTargetEvaluationMode>;
+
+	ResourceFilterTargetType type = ResourceFilterTargetType::INVALID;
+	ResourceFilterTargetEvaluationMode evaluation_mode = ResourceFilterTargetEvaluationMode::INVALID;
+
+	bool ParseTarget(Globals& G, const wchar_t* target, bool is_source, const std::wstring* ini_namespace, CommandListScope* scope);
+	ResourceFilter* GetFilter() { return filter ? filter->ResolveFilter() : nullptr; }
+
+	//float GetFilterId(CommandListState* state);
+
+	ResourceFilter* filter = nullptr;
+
+private:
+	IniParserResult ParseTargetPrefix(const wchar_t*& target, size_t& length);
+	IniParserResult ParseTargetMember(Globals& G, const wchar_t*& target, size_t& length, std::wstring& temp_target, const std::wstring* ini_namespace, CommandListScope* scope);
+};
+
+
+class ResourceFilterCopyOperation : public CommandListCommand {
+public:
+	ResourceFilterTarget src;
+	ResourceFilterTarget dst;
+
+	void run() override;
+
+private:
+	ResourceFilter* failed_root = nullptr;
 };
 
 //CONCRETE, Inheritted by CommandListSyntaxTree, CommandListOperand, CommandListOperatorToken
@@ -648,6 +753,7 @@ enum class ParamOverrideType {
 	DISPATCH_NUMBER,
 	FRAME_TIME,
 	FPS,
+	RESOURCE_FILTER,
 };
 static EnumName_t<const wchar_t*, ParamOverrideType> ParamOverrideTypeNames[] = {
 	{L"rt_width", ParamOverrideType::RT_WIDTH},
@@ -692,6 +798,7 @@ static EnumName_t<const wchar_t*, ParamOverrideType> ParamOverrideTypeNames[] = 
 	{L"dispatch_number", ParamOverrideType::DISPATCH_NUMBER},
 	{L"frame_time", ParamOverrideType::FRAME_TIME},
 	{L"fps", ParamOverrideType::FPS},
+	{L"resource_filter", ParamOverrideType::RESOURCE_FILTER},
 	{NULL, ParamOverrideType::INVALID} // End of list marker
 };
 
@@ -711,6 +818,7 @@ public:
 
 	ResourceCopyTarget texture_filter_target;
 	ShaderTarget shader_target;
+	ResourceFilterTarget filter_target;
 
 	unsigned scissor;
 
@@ -730,6 +838,7 @@ public:
 	bool parse_slot(Globals& G, const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope);
 	bool parse_target(Globals& G, const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope);
 	bool parse_shader(Globals& G, const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope);
+	bool parse_resource_filter(Globals& G, const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope);
 	bool parse_scissor(const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope);
 	bool parse_ini_keywords(const std::wstring* operand, const std::wstring* ini_namespace, CommandListScope* scope);
 
@@ -902,7 +1011,9 @@ public:
 	bool GetEnum(const EnumName_t<const wchar_t*, T>* names, T invalid, T* out);
 	bool GetVariable(Globals& G, CommandListVariable*& out, bool is_source, PeekMode mode = PeekMode::Token);
 	bool GetTarget(Globals& G, ResourceCopyTarget* out, bool is_source, PeekMode mode = PeekMode::Token, bool validate = true, bool allow_range = false);
+	bool GetFilter(Globals& G, ResourceFilterTarget* out, bool is_source, PeekMode mode = PeekMode::Token, bool validate = true);
 	bool GetFloat(float* out);
+	bool GetHash(uint64_t* out);
 	bool GetExpression(Globals& G, std::unique_ptr<CommandListExpression>* out);
 
 	bool ConsumeSeparator(SeparatorMode separator_mode);
