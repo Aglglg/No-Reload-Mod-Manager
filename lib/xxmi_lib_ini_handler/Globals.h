@@ -67,6 +67,7 @@ struct Globals
 	ExplicitCommandListSections customShaderSections;
 	CustomResourcePools customResourcePools;
 	CustomResources customResources;
+	ResourceFilters resourceFilters;
 	ShaderRegexGroups shader_regex_groups;
 	std::vector<std::shared_ptr<CommandList>> dynamically_allocated_command_lists;
 };
